@@ -357,7 +357,8 @@
         const receiptNumber = String(receiptCount).padStart(3, '0');
 
         const currentDate = new Date(receipt.date);
-        const smsMessage = `Dear parent to ${student.name}, Receipt No. ${receiptNumber} for ${amount} received for ${student.class} on ${currentDate.toLocaleDateString('en-GB')} at ${currentDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}. Balance: ${updatedStudent.balance}.`;
+        const smsMessage = `Dear parent to ${student.name}, grade ${student.class}, we have received payment of KES ${amount} and issued receipt No. ${receiptNumber}. Fee balance is ${updatedStudent.balance} as at ${currentDate.toLocaleDateString('en-GB')} ${currentDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()`;
+        console.log("SMS Message:", smsMessage); // Debug log
         const smsSent = await sendSMS(student.phone, smsMessage);
         showStatus(`Receipt saved${smsSent ? ' and SMS sent' : ''} successfully!`, "success");
 
