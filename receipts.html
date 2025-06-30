@@ -658,58 +658,45 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr class="fees-row">
-                    <td>Tuition</td>
-                    <td>${student.tuition > 0 ? student.tuition.toLocaleString() : '0'}</td>
-                    <td>${student.tuition > 0 ? (student.tuition > receipt.paid ? receipt.paid.toLocaleString() : student.tuition.toLocaleString()) : '0'}</td>
-                    <td>${student.tuition > 0 ? (student.tuition - (student.tuition > receipt.paid ? receipt.paid : student.tuition)).toLocaleString() : '0'}</td>
-                  </tr>
-                  <tr class="fees-row">
-                    <td>Adm Fee</td>
-                    <td>${student.adm > 0 ? student.adm.toLocaleString() : '0'}</td>
-                    <td>${student.adm > 0 ? (student.adm > (receipt.paid - (student.tuition > 0 ? student.tuition : 0)) ? (receipt.paid - (student.tuition > 0 ? student.tuition : 0)).toLocaleString() : student.adm.toLocaleString()) : '0'}</td>
-                    <td>${student.adm > 0 ? (student.adm - (student.adm > (receipt.paid - (student.tuition > 0 ? student.tuition : 0)) ? (receipt.paid - (student.tuition > 0 ? student.tuition : 0)) : student.adm)).toLocaleString() : '0'}</td>
-                  </tr>
-                  <tr class="fees-row">
-                    <td>Lunch</td>
-                    <td>${student.lunch > 0 ? student.lunch.toLocaleString() : '0'}</td>
-                    <td>${student.lunch > 0 ? (student.lunch > (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0)) ? (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0)).toLocaleString() : student.lunch.toLocaleString()) : '0'}</td>
-                    <td>${student.lunch > 0 ? (student.lunch - (student.lunch > (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0)) ? (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0)) : student.lunch)).toLocaleString() : '0'}</td>
-                  </tr>
-                  <tr class="fees-row">
-                    <td>Uniform</td>
-                    <td>${student.uniform > 0 ? student.uniform.toLocaleString() : '0'}</td>
-                    <td>${student.uniform > 0 ? (student.uniform > (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0)) ? (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0)).toLocaleString() : student.uniform.toLocaleString()) : '0'}</td>
-                    <td>${student.uniform > 0 ? (student.uniform - (student.uniform > (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0)) ? (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0)) : student.uniform)).toLocaleString() : '0'}</td>
-                  </tr>
-                  <tr class="fees-row">
-                    <td>Book Fund</td>
-                    <td>${student.books > 0 ? student.books.toLocaleString() : '0'}</td>
-                    <td>${student.books > 0 ? (student.books > (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0) - (student.uniform > 0 ? student.uniform : 0)) ? (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0) - (student.uniform > 0 ? student.uniform : 0)).toLocaleString() : student.books.toLocaleString()) : '0'}</td>
-                    <td>${student.books > 0 ? (student.books - (student.books > (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0) - (student.uniform > 0 ? student.uniform : 0)) ? (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0) - (student.uniform > 0 ? student.uniform : 0)) : student.books)).toLocaleString() : '0'}</td>
-                  </tr>
-                  <tr class="fees-row">
-                    <td>Stationery</td>
-                    <td>${student.stationery > 0 ? student.stationery.toLocaleString() : '0'}</td>
-                    <td>${student.stationery > 0 ? (student.stationery > (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0) - (student.uniform > 0 ? student.uniform : 0) - (student.books > 0 ? student.books : 0)) ? (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0) - (student.uniform > 0 ? student.uniform : 0) - (student.books > 0 ? student.books : 0)).toLocaleString() : student.stationery.toLocaleString()) : '0'}</td>
-                    <td>${student.stationery > 0 ? (student.stationery - (student.stationery > (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0) - (student.uniform > 0 ? student.uniform : 0) - (student.books > 0 ? student.books : 0)) ? (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0) - (student.uniform > 0 ? student.uniform : 0) - (student.books > 0 ? student.books : 0)) : student.stationery)).toLocaleString() : '0'}</td>
-                  </tr>
-                  <tr class="fees-row">
-                    <td>Transport</td>
-                    <td>${student.transport > 0 ? student.transport.toLocaleString() : '0'}</td>
-                    <td>${student.transport > 0 ? (student.transport > (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0) - (student.uniform > 0 ? student.uniform : 0) - (student.books > 0 ? student.books : 0) - (student.stationery > 0 ? student.stationery : 0)) ? (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0) - (student.uniform > 0 ? student.uniform : 0) - (student.books > 0 ? student.books : 0) - (student.stationery > 0 ? student.stationery : 0)).toLocaleString() : student.transport.toLocaleString()) : '0'}</td>
-                    <td>${student.transport > 0 ? (student.transport - (student.transport > (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0) - (student.uniform > 0 ? student.uniform : 0) - (student.books > 0 ? student.books : 0) - (student.stationery > 0 ? student.stationery : 0)) ? (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0) - (student.uniform > 0 ? student.uniform : 0) - (student.books > 0 ? student.books : 0) - (student.stationery > 0 ? student.stationery : 0)) : student.transport)).toLocaleString() : '0'}</td>
-                  </tr>
-                  <tr class="fees-row">
-                    <td>Trip</td>
-                    <td>${student.trip > 0 ? student.trip.toLocaleString() : '0'}</td>
-                    <td>${student.trip > 0 ? (student.trip > (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0) - (student.uniform > 0 ? student.uniform : 0) - (student.books > 0 ? student.books : 0) - (student.stationery > 0 ? student.stationery : 0) - (student.transport > 0 ? student.transport : 0)) ? (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0) - (student.uniform > 0 ? student.uniform : 0) - (student.books > 0 ? student.books : 0) - (student.stationery > 0 ? student.stationery : 0) - (student.transport > 0 ? student.transport : 0)).toLocaleString() : student.trip.toLocaleString()) : '0'}</td>
-                    <td>${student.trip > 0 ? (student.trip - (student.trip > (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0) - (student.uniform > 0 ? student.uniform : 0) - (student.books > 0 ? student.books : 0) - (student.stationery > 0 ? student.stationery : 0) - (student.transport > 0 ? student.transport : 0)) ? (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0) - (student.uniform > 0 ? student.uniform : 0) - (student.books > 0 ? student.books : 0) - (student.stationery > 0 ? student.stationery : 0) - (student.transport > 0 ? student.transport : 0)) : student.trip)).toLocaleString() : '0'}</td>
-                  </tr>
-                  <tr class="total-row">
-                    <td colspan="3" style="text-align: right; padding-right: 10px;"><strong>Receipt Balance</strong></td>
-                    <td><strong>${receipt.balance.toLocaleString()}</strong></td>
-                  </tr>
+                  ${(() => {
+                    let remainingPaid = receipt.paid;
+                    const fees = [
+                      { name: 'Tuition', amount: student.tuition || 0 },
+                      { name: 'Adm Fee', amount: student.adm || 0 },
+                      { name: 'Lunch', amount: student.lunch || 0 },
+                      { name: 'Uniform', amount: student.uniform || 0 },
+                      { name: 'Book Fund', amount: student.books || 0 },
+                      { name: 'Stationery', amount: student.stationery || 0 },
+                      { name: 'Transport', amount: student.transport || 0 },
+                      { name: 'Trip', amount: student.trip || 0 }
+                    ];
+                    let rows = '';
+
+                    fees.forEach(fee => {
+                      const feePaid = Math.min(remainingPaid, fee.amount);
+                      const feeBalance = fee.amount - feePaid;
+                      remainingPaid -= feePaid;
+
+                      rows += `
+                        <tr class="fees-row">
+                          <td>${fee.name}</td>
+                          <td>${fee.amount > 0 ? fee.amount.toLocaleString() : '0'}</td>
+                          <td>${feePaid > 0 ? feePaid.toLocaleString() : '0'}</td>
+                          <td>${feeBalance > 0 ? feeBalance.toLocaleString() : '0'}</td>
+                        </tr>
+                      `;
+                    });
+
+                    // Add receipt balance row
+                    rows += `
+                      <tr class="total-row">
+                        <td colspan="3" style="text-align: right; padding-right: 10px;"><strong>Receipt Balance</strong></td>
+                        <td><strong>${remainingPaid > 0 ? remainingPaid.toLocaleString() : '0'}</strong></td>
+                      </tr>
+                    `;
+
+                    return rows;
+                  })()}
                 </tbody>
               </table>
 
