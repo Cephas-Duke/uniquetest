@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>Receipts | School Office Management</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     body { font-family: Arial; background: #f0f0f0; margin: 0; padding: 0; }
     header { background: #0077cc; color: white; padding: 20px; text-align: center; }
@@ -44,7 +45,9 @@
   <h2>Issue Fee Receipt</h2>
   <div style="padding: 0 20px;">
     <button onclick="openStudentManager()">Manage Students</button>
+    <button onclick="exportByClassPDF()">Export by Class to PDF</button>
     <button onclick="exportConsolidatedPDF()">Export All Receipts to PDF</button>
+    <button onclick="exportToExcel()">Export to Excel</button>
     <button onclick="window.print()">Print</button>
   </div>
 
@@ -111,6 +114,7 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <script>
     // Initialize Firebase
@@ -797,6 +801,98 @@
       }
     }
 
+    async function exportByClassPDF() {
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const logoImg = new Image();
+        logoImg.src = 'photos/school-logo.jpg';
+
+        const snapshot = await receiptsCollection.orderBy('date', 'desc').get();
+        let isFirstClass = true;
+
+        const classes = [
+          "Play Group", "PP1", "PP2",
+          "Grade 1", "Grade 2", "Grade 3",
+          "Grade 4", "Grade 5", "Grade 6"
+        ];
+
+        for (const cls of classes) {
+          const classReceipts = snapshot.docs.filter(doc => doc.data().class === cls).map(doc => ({ id: doc.id, ...doc.data() }));
+          if (classReceipts.length === 0) continue;
+
+          if (!isFirstClass) {
+            doc.addPage();
+          }
+          isFirstClass = false;
+
+          try {
+            doc.addImage(logoImg, 'PNG', 95, 8, 20, 20);
+          } catch (e) {
+            console.log('Logo not loaded, continuing without logo');
+          }
+
+          doc.setFontSize(18);
+          doc.setFont(undefined, 'bold');
+          doc.text("HERIWADI CHRISTIAN SCHOOLS", 105, 35, { align: 'center' });
+
+          doc.setFontSize(14);
+          doc.text(`Class: ${cls}`, 105, 50, { align: 'center' });
+
+          doc.setFontSize(10);
+          doc.text("P.O. Box 921 - 0511 Ongata Rongai", 105, 57, { align: 'center' });
+          doc.text("Contact: 0723 322449", 105, 62, { align: 'center' });
+          doc.text("Email: heriwadis@gmail.com", 105, 67, { align: 'center' });
+
+          doc.line(20, 73, 190, 73);
+
+          doc.setFontSize(16);
+          doc.text("RECEIPT SUMMARY", 20, 85);
+
+          if (typeof doc.autoTable === 'function') {
+            const tableData = classReceipts.map(r => {
+              const studentSnapshot = studentsCollection.where('name', '==', r.name).get();
+              return studentSnapshot.then(snap => {
+                if (!snap.empty) {
+                  const student = snap.docs[0].data();
+                  return [
+                    r.name,
+                    student.tuition || 0,
+                    student.adm || 0,
+                    student.lunch || 0,
+                    student.uniform || 0,
+                    student.books || 0,
+                    student.stationery || 0,
+                    student.transport || 0,
+                    student.trip || 0,
+                    r.paid,
+                    r.balance
+                  ];
+                }
+                return [];
+              });
+            });
+
+            Promise.all(tableData).then(data => {
+              doc.autoTable({
+                startY: 95,
+                head: [['Student', 'Tuition', 'Adm Fee', 'Lunch', 'Uniform', 'Book Fund', 'Stationery', 'Transport', 'Trip', 'Paid', 'Balance']],
+                body: data.flat(),
+                theme: 'grid',
+                styles: { fontSize: 8, cellPadding: 2 },
+                headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] }
+              });
+              doc.save(`heriwadi_receipts_${cls}.pdf`);
+            });
+          }
+        }
+        showStatus("Export by class to PDF completed!", "success");
+      } catch (error) {
+        console.error('Error exporting by class to PDF:', error);
+        showStatus("Error exporting by class to PDF: " + error.message, "error");
+      }
+    }
+
     async function exportConsolidatedPDF() {
       try {
         const { jsPDF } = window.jspdf;
@@ -968,6 +1064,65 @@
         if (error.code === 'permission-denied') {
           showStatus("Permission denied. Update Firestore rules to allow read access.", "error");
         }
+      }
+    }
+
+    async function exportToExcel() {
+      try {
+        const snapshot = await receiptsCollection.get();
+        const data = [];
+        const feeItems = ['tuition', 'adm', 'lunch', 'uniform', 'books', 'stationery', 'transport', 'trip'];
+        const totals = { tuition: 0, adm: 0, lunch: 0, uniform: 0, books: 0, stationery: 0, transport: 0, trip: 0 };
+
+        await Promise.all(snapshot.docs.map(async doc => {
+          const receipt = doc.data();
+          const studentSnapshot = await studentsCollection.where('name', '==', receipt.name).get();
+          if (!studentSnapshot.empty) {
+            const student = studentSnapshot.docs[0].data();
+            const remainingPaid = receipt.paid;
+            const fees = [
+              { name: 'Tuition', amount: student.tuition || 0 },
+              { name: 'Adm Fee', amount: student.adm || 0 },
+              { name: 'Lunch', amount: student.lunch || 0 },
+              { name: 'Uniform', amount: student.uniform || 0 },
+              { name: 'Book Fund', amount: student.books || 0 },
+              { name: 'Stationery', amount: student.stationery || 0 },
+              { name: 'Transport', amount: student.transport || 0 },
+              { name: 'Trip', amount: student.trip || 0 }
+            ];
+
+            let paidSoFar = 0;
+            fees.forEach(fee => {
+              const feePaid = Math.min(remainingPaid - paidSoFar, fee.amount);
+              paidSoFar += feePaid;
+              if (feePaid > 0) {
+                totals[feeItems[fees.indexOf(fee)]] += feePaid;
+                data.push({
+                  Student: receipt.name,
+                  Class: receipt.class,
+                  FeeItem: fee.name,
+                  AmountPaid: feePaid,
+                  Date: new Date(receipt.date).toLocaleDateString('en-GB')
+                });
+              }
+            });
+          }
+        }));
+
+        // Add total row
+        data.push({ Student: 'Total', Class: '', FeeItem: '', AmountPaid: '', Date: '' });
+        feeItems.forEach(item => {
+          data.push({ Student: '', Class: '', FeeItem: item.charAt(0).toUpperCase() + item.slice(1), AmountPaid: totals[item], Date: '' });
+        });
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(data);
+        XLSX.utils.book_append_sheet(wb, ws, "Fee Income");
+        XLSX.writeFile(wb, "fee_income.xlsx");
+        showStatus("Export to Excel completed!", "success");
+      } catch (error) {
+        console.error('Error exporting to Excel:', error);
+        showStatus("Error exporting to Excel: " + error.message, "error");
       }
     }
 
