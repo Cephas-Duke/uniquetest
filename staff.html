@@ -19,6 +19,9 @@
     th { background: #0077cc; color: white; }
     .tools { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
     #searchInput { width: 200px; padding: 5px; }
+    .success { color: green; font-weight: bold; }
+    .error { color: red; font-weight: bold; }
+    .loading { color: blue; font-style: italic; }
     @media print {
       .tools, form, nav, header { display: none; }
       main { box-shadow: none; }
@@ -111,165 +114,236 @@
   <div id="monthlyReport"></div>
 </main>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+
 <script>
-let staffList = JSON.parse(localStorage.getItem("staffList")) || [];
-
-function getPerformanceGrade(score) {
-  if (score >= 9) return "Excellent";
-  if (score >= 7) return "Good";
-  if (score >= 5) return "Fair";
-  return "Needs Improvement";
-}
-
-function updatePayrollData() {
-  const payrollData = staffList.map(s => ({
-    name: s.fullName,
-    grossPay: s.salary,
-    advance: s.advance
-  }));
-  localStorage.setItem("staffData", JSON.stringify(payrollData));
-}
-
-function renderStaff(filtered = staffList) {
-  const tbody = document.querySelector("#staffTable tbody");
-  tbody.innerHTML = "";
-  filtered.forEach((s, i) => {
-    const grade = getPerformanceGrade(s.performance);
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${s.fullName}</td>
-      <td>${s.role}</td>
-      <td>${s.salary}</td>
-      <td>${s.leaveDays}</td>
-      <td>${s.attendance}</td>
-      <td>${s.bonus}</td>
-      <td>${s.advance}</td>
-      <td>${s.performance}/10 (${grade})</td>
-      <td>
-        <button onclick="editStaff(${i})">Edit</button>
-        <button onclick="deleteStaff(${i})">Delete</button>
-      </td>
-    `;
-    tbody.appendChild(row);
-  });
-  updatePayrollData();
-}
-
-document.getElementById("staffForm").addEventListener("submit", function(e) {
-  e.preventDefault();
-  const staff = {
-    fullName: document.getElementById("fullName").value,
-    staffId: document.getElementById("staffId").value,
-    gender: document.getElementById("gender").value,
-    role: document.getElementById("role").value,
-    employmentDate: document.getElementById("employmentDate").value,
-    phone: document.getElementById("phone").value,
-    email: document.getElementById("email").value,
-    salary: parseFloat(document.getElementById("salary").value),
-    performance: parseInt(document.getElementById("performance").value),
-    leaveDays: parseInt(document.getElementById("leaveDays").value),
-    attendance: parseInt(document.getElementById("attendance").value),
-    bonus: parseFloat(document.getElementById("bonus").value),
-    advance: parseFloat(document.getElementById("advance").value)
+  // Initialize Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyBAA6zY40EwbTmWUx1op1cx52C3y0RK3m0",
+    authDomain: "heriwadi-manager.firebaseapp.com",
+    projectId: "heriwadi-manager",
+    storageBucket: "heriwadi-manager.firebasestorage.app",
+    messagingSenderId: "654632910809",
+    appId: "1:654632910809:web:7c65613d2510402a6663c8",
+    measurementId: "G-LLHS6GLB6E"
   };
-  staffList.push(staff);
-  localStorage.setItem("staffList", JSON.stringify(staffList));
-  this.reset();
-  renderStaff();
-});
 
-function editStaff(index) {
-  const s = staffList[index];
-  document.getElementById("fullName").value = s.fullName;
-  document.getElementById("staffId").value = s.staffId;
-  document.getElementById("gender").value = s.gender;
-  document.getElementById("role").value = s.role;
-  document.getElementById("employmentDate").value = s.employmentDate;
-  document.getElementById("phone").value = s.phone;
-  document.getElementById("email").value = s.email;
-  document.getElementById("salary").value = s.salary;
-  document.getElementById("performance").value = s.performance;
-  document.getElementById("leaveDays").value = s.leaveDays;
-  document.getElementById("attendance").value = s.attendance;
-  document.getElementById("bonus").value = s.bonus;
-  document.getElementById("advance").value = s.advance;
-  staffList.splice(index, 1);
-  localStorage.setItem("staffList", JSON.stringify(staffList));
-  renderStaff();
-}
-
-function deleteStaff(index) {
-  if (confirm("Delete this staff member?")) {
-    staffList.splice(index, 1);
-    localStorage.setItem("staffList", JSON.stringify(staffList));
-    renderStaff();
+  let app, db;
+  try {
+    app = firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+  } catch (error) {
+    console.error('Firebase initialization error:', error);
+    showStatus("Failed to initialize Firebase. Check your configuration.", "error");
+    throw error;
   }
-}
+  const staffCollection = db.collection('staff');
 
-function filterStaff() {
-  const query = document.getElementById("searchInput").value.toLowerCase();
-  const filtered = staffList.filter(s =>
-    s.fullName.toLowerCase().includes(query) ||
-    s.role.toLowerCase().includes(query)
-  );
-  renderStaff(filtered);
-}
+  function showStatus(message, type = 'info') {
+    const statusDiv = document.createElement('div');
+    statusDiv.className = type;
+    statusDiv.textContent = message;
+    document.querySelector('main').insertBefore(statusDiv, document.querySelector('main').firstChild);
+    setTimeout(() => statusDiv.remove(), 5000);
+  }
 
-function exportToExcel() {
-  let csv = "Name,Role,Salary,Leave,Attendance,Bonus,Advance,Performance\\n";
-  staffList.forEach(s => {
-    csv += `${s.fullName},${s.role},${s.salary},${s.leaveDays},${s.attendance},${s.bonus},${s.advance},${s.performance}\\n`;
-  });
-  const blob = new Blob([csv], { type: "text/csv" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "staff_records.csv";
-  a.click();
-}
+  function getPerformanceGrade(score) {
+    if (score >= 9) return "Excellent";
+    if (score >= 7) return "Good";
+    if (score >= 5) return "Fair";
+    return "Needs Improvement";
+  }
 
-function backupStaff() {
-  const blob = new Blob([JSON.stringify(staffList)], { type: "application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "staff_backup.json";
-  a.click();
-}
+  function renderStaff(filtered = []) {
+    const tbody = document.querySelector("#staffTable tbody");
+    tbody.innerHTML = "";
+    filtered.forEach((s, i) => {
+      const grade = getPerformanceGrade(s.performance);
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${s.fullName}</td>
+        <td>${s.role}</td>
+        <td>${s.salary}</td>
+        <td>${s.leaveDays}</td>
+        <td>${s.attendance}</td>
+        <td>${s.bonus}</td>
+        <td>${s.advance}</td>
+        <td>${s.performance}/10 (${grade})</td>
+        <td>
+          <button onclick="editStaff('${s.id}')">Edit</button>
+          <button onclick="deleteStaff('${s.id}')">Delete</button>
+        </td>
+      `;
+      tbody.appendChild(row);
+    });
+  }
 
-function restoreStaff(event) {
-  const file = event.target.files[0];
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const data = JSON.parse(e.target.result);
-      if (Array.isArray(data)) {
-        staffList = data;
-        localStorage.setItem("staffList", JSON.stringify(staffList));
-        renderStaff();
+  // Load staff from Firestore
+  function loadStaff() {
+    staffCollection.onSnapshot(snapshot => {
+      const staffData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      renderStaff(staffData);
+    }, error => {
+      console.error('Error loading staff:', error);
+      showStatus(`Error loading staff: ${error.message}. Check Firebase rules or network.`, "error");
+    });
+  }
+
+  function editStaff(id) {
+    staffCollection.doc(id).get().then(doc => {
+      if (doc.exists) {
+        const s = doc.data();
+        document.getElementById("fullName").value = s.fullName;
+        document.getElementById("staffId").value = s.staffId;
+        document.getElementById("gender").value = s.gender;
+        document.getElementById("role").value = s.role;
+        document.getElementById("employmentDate").value = s.employmentDate;
+        document.getElementById("phone").value = s.phone || '';
+        document.getElementById("email").value = s.email || '';
+        document.getElementById("salary").value = s.salary;
+        document.getElementById("performance").value = s.performance;
+        document.getElementById("leaveDays").value = s.leaveDays;
+        document.getElementById("attendance").value = s.attendance;
+        document.getElementById("bonus").value = s.bonus || 0;
+        document.getElementById("advance").value = s.advance || 0;
       } else {
-        alert("Invalid file format.");
+        showStatus("Staff member not found.", "error");
       }
-    } catch {
-      alert("Failed to restore backup.");
+    }).catch(error => {
+      console.error('Error fetching staff:', error);
+      showStatus(`Error: ${error.message}.`, "error");
+    });
+  }
+
+  function deleteStaff(id) {
+    if (confirm("Delete this staff member?")) {
+      staffCollection.doc(id).delete().then(() => {
+        showStatus("Staff member deleted successfully", "success");
+      }).catch(error => {
+        console.error('Error deleting staff:', error);
+        showStatus(`Error: ${error.message}.`, "error");
+      });
     }
-  };
-  reader.readAsText(file);
-}
+  }
 
-function generateMonthlyReport() {
-  let totalSalary = 0;
-  let totalBonus = 0;
-  staffList.forEach(s => {
-    totalSalary += s.salary;
-    totalBonus += s.bonus;
+  document.getElementById("staffForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const staff = {
+      fullName: document.getElementById("fullName").value,
+      staffId: document.getElementById("staffId").value,
+      gender: document.getElementById("gender").value,
+      role: document.getElementById("role").value,
+      employmentDate: document.getElementById("employmentDate").value,
+      phone: document.getElementById("phone").value,
+      email: document.getElementById("email").value,
+      salary: parseFloat(document.getElementById("salary").value),
+      performance: parseInt(document.getElementById("performance").value),
+      leaveDays: parseInt(document.getElementById("leaveDays").value),
+      attendance: parseInt(document.getElementById("attendance").value),
+      bonus: parseFloat(document.getElementById("bonus").value),
+      advance: parseFloat(document.getElementById("advance").value)
+    };
+    staffCollection.add(staff).then(() => {
+      showStatus("Staff member added successfully", "success");
+      this.reset();
+    }).catch(error => {
+      console.error('Error adding staff:', error);
+      showStatus(`Error: ${error.message}. Check Firebase rules or network.`, "error");
+    });
   });
-  document.getElementById("monthlyReport").innerHTML = `
-    <h3>Monthly Summary</h3>
-    <p><strong>Total Salary Payout:</strong> KES ${totalSalary.toLocaleString()}</p>
-    <p><strong>Total Bonuses Paid:</strong> KES ${totalBonus.toLocaleString()}</p>
-  `;
-}
 
-renderStaff();
+  function filterStaff() {
+    const query = document.getElementById("searchInput").value.toLowerCase();
+    staffCollection.get().then(snapshot => {
+      const staffData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const filtered = staffData.filter(s =>
+        s.fullName.toLowerCase().includes(query) ||
+        s.role.toLowerCase().includes(query)
+      );
+      renderStaff(filtered);
+    }).catch(error => {
+      console.error('Error filtering staff:', error);
+      showStatus(`Error filtering staff: ${error.message}.`, "error");
+    });
+  }
+
+  function exportToExcel() {
+    staffCollection.get().then(snapshot => {
+      let csv = "Name,Role,Salary,Leave,Attendance,Bonus,Advance,Performance\n";
+      snapshot.forEach(doc => {
+        const s = doc.data();
+        csv += `${s.fullName},${s.role},${s.salary},${s.leaveDays},${s.attendance},${s.bonus},${s.advance},${s.performance}\n`;
+      });
+      const blob = new Blob([csv], { type: "text/csv" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "staff_records.csv";
+      a.click();
+    }).catch(error => {
+      console.error('Error exporting to Excel:', error);
+      showStatus(`Error exporting to Excel: ${error.message}.`, "error");
+    });
+  }
+
+  function backupStaff() {
+    staffCollection.get().then(snapshot => {
+      const staffData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const blob = new Blob([JSON.stringify(staffData)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "staff_backup.json";
+      a.click();
+    }).catch(error => {
+      console.error('Error creating backup:', error);
+      showStatus(`Error creating backup: ${error.message}.`, "error");
+    });
+  }
+
+  function restoreStaff(event) {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (Array.isArray(data)) {
+          data.forEach(staff => {
+            delete staff.id; // Remove id to avoid conflicts
+            staffCollection.add(staff).catch(error => console.error('Error restoring staff:', error));
+          });
+          showStatus("Staff restored successfully", "success");
+        } else {
+          showStatus("Invalid file format.", "error");
+        }
+      } catch {
+        showStatus("Failed to restore backup.", "error");
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function generateMonthlyReport() {
+    staffCollection.get().then(snapshot => {
+      let totalSalary = 0;
+      let totalBonus = 0;
+      snapshot.forEach(doc => {
+        const s = doc.data();
+        totalSalary += s.salary;
+        totalBonus += s.bonus || 0;
+      });
+      document.getElementById("monthlyReport").innerHTML = `
+        <h3>Monthly Summary</h3>
+        <p><strong>Total Salary Payout:</strong> KES ${totalSalary.toLocaleString()}</p>
+        <p><strong>Total Bonuses Paid:</strong> KES ${totalBonus.toLocaleString()}</p>
+      `;
+    }).catch(error => {
+      console.error('Error generating report:', error);
+      showStatus(`Error generating report: ${error.message}.`, "error");
+    });
+  }
+
+  // Initialize page
+  loadStaff();
 </script>
 </body>
 </html>
