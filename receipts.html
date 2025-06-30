@@ -358,13 +358,11 @@
       };
 
       try {
-        const docRef = await studentsCollection.add(newStudent);
-        const welcomeMessage = `Welcome ${name} to Heriwadi Christian Schools! Total Fee: KES ${total}, Paid: KES 0, Balance: KES ${total}. Thank you - Heriwadi Christian Schools`;
-        const smsSent = await sendSMS(phone, welcomeMessage);
-        showStatus(`Student ${name} added${smsSent ? ' and welcome SMS sent' : ''} successfully!`, "success");
-        this.reset();
-        renderStudentList();
-        populateStudents();
+      const docRef = await studentsCollection.add(newStudent);
+      showStatus(`Student ${name} added successfully!`, "success");
+      this.reset();
+      renderStudentList();
+      populateStudents();
       } catch (error) {
         console.error('Error adding student:', error);
         showStatus(`Error adding student: ${error.message}. Check Firebase rules or network.`, "error");
