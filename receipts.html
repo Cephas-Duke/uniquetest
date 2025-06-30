@@ -237,23 +237,14 @@
             <thead>
               <tr>
                 <th>Student</th>
-                <th>Tuition Paid</th>
-                <th>Tuition Balance</th>
-                <th>Adm Fee Paid</th>
-                <th>Adm Fee Balance</th>
-                <th>Lunch Paid</th>
-                <th>Lunch Balance</th>
-                <th>Uniform Paid</th>
-                <th>Uniform Balance</th>
-                <th>Book Fund Paid</th>
-                <th>Book Fund Balance</th>
-                <th>Stationery Paid</th>
-                <th>Stationery Balance</th>
-                <th>Transport Paid</th>
-                <th>Transport Balance</th>
-                <th>Trip Paid</th>
-                <th>Trip Balance</th>
-                <th>Total Paid</th>
+                <th>Tuition</th>
+                <th>Adm Fee</th>
+                <th>Lunch</th>
+                <th>Uniform</th>
+                <th>Book Fund</th>
+                <th>Stationery</th>
+                <th>Transport</th>
+                <th>Trip</th>
                 <th>Total Balance</th>
                 <th>Payment Mode</th>
                 <th>Date</th>
@@ -269,47 +260,17 @@
             studentSnapshot.then(snap => {
               if (!snap.empty) {
                 const student = snap.docs[0].data();
-                let remainingPaid = r.paid;
-                const fees = [
-                  { name: 'tuition', amount: student.tuition || 0 },
-                  { name: 'adm', amount: student.adm || 0 },
-                  { name: 'lunch', amount: student.lunch || 0 },
-                  { name: 'uniform', amount: student.uniform || 0 },
-                  { name: 'books', amount: student.books || 0 },
-                  { name: 'stationery', amount: student.stationery || 0 },
-                  { name: 'transport', amount: student.transport || 0 },
-                  { name: 'trip', amount: student.trip || 0 }
-                ];
-                const feePayments = {};
-                const feeBalances = {};
-
-                fees.forEach(fee => {
-                  const feePaid = Math.min(remainingPaid, fee.amount);
-                  feePayments[fee.name] = feePaid;
-                  feeBalances[fee.name] = fee.amount - feePaid;
-                  remainingPaid -= feePaid;
-                });
-
                 const row = document.createElement('tr');
                 row.innerHTML = `
                   <td>${r.name}</td>
-                  <td>KES ${feePayments.tuition.toFixed(2)}</td>
-                  <td>KES ${feeBalances.tuition.toFixed(2)}</td>
-                  <td>KES ${feePayments.adm.toFixed(2)}</td>
-                  <td>KES ${feeBalances.adm.toFixed(2)}</td>
-                  <td>KES ${feePayments.lunch.toFixed(2)}</td>
-                  <td>KES ${feeBalances.lunch.toFixed(2)}</td>
-                  <td>KES ${feePayments.uniform.toFixed(2)}</td>
-                  <td>KES ${feeBalances.uniform.toFixed(2)}</td>
-                  <td>KES ${feePayments.books.toFixed(2)}</td>
-                  <td>KES ${feeBalances.books.toFixed(2)}</td>
-                  <td>KES ${feePayments.stationery.toFixed(2)}</td>
-                  <td>KES ${feeBalances.stationery.toFixed(2)}</td>
-                  <td>KES ${feePayments.transport.toFixed(2)}</td>
-                  <td>KES ${feeBalances.transport.toFixed(2)}</td>
-                  <td>KES ${feePayments.trip.toFixed(2)}</td>
-                  <td>KES ${feeBalances.trip.toFixed(2)}</td>
-                  <td>KES ${r.paid.toFixed(2)}</td>
+                  <td>KES ${student.tuition || 0}</td>
+                  <td>KES ${student.adm || 0}</td>
+                  <td>KES ${student.lunch || 0}</td>
+                  <td>KES ${student.uniform || 0}</td>
+                  <td>KES ${student.books || 0}</td>
+                  <td>KES ${student.stationery || 0}</td>
+                  <td>KES ${student.transport || 0}</td>
+                  <td>KES ${student.trip || 0}</td>
                   <td>KES ${r.balance.toFixed(2)}</td>
                   <td>${r.mode}</td>
                   <td>${new Date(r.date).toLocaleDateString('en-GB')}</td>
