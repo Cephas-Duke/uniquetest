@@ -57,7 +57,7 @@ app.post("/send-sms", async (req, res) => {
 
   const smsPayload = {
     mobile: formattedPhone,
-    message: message,
+    message: message, // Use the message as provided by the client
     partnerID: "371",
     shortcode: "HCS-SCHOOL",
     apikey: "817ed995ee8b687ff0c17b7d64dde6d3"
@@ -76,46 +76,6 @@ app.post("/send-sms", async (req, res) => {
     res.json({ success: true, data: response.data });
   } catch (error) {
     console.error("SMS Sending Failed:", error.response?.data || error.message);
-    res.status(500).json({ 
-      success: false, 
-      error: error.response?.data || error.message 
-    });
-  }
-});
-
-// POST endpoint for school fee payment notification
-app.post("/notify-fee-payment", async (req, res) => {
-  const { studentName, amount, parentPhone, receiptNumber, balance } = req.body;
-  
-  const message = `Dear parent to ${studentName}, we have received KES ${amount}. Balance: KES ${balance}. Thank you Heriwadi Christian Schools`;
-  
-  try {
-    const formattedPhone = formatPhone(parentPhone);
-    
-    const smsPayload = {
-      mobile: formattedPhone,
-      message: message,
-      partnerID: "371",
-      shortcode: "HCS-SCHOOL",
-      apikey: "817ed995ee8b687ff0c17b7d64dde6d3"
-    };
-
-    console.log("Sending fee payment notification:", smsPayload);
-    
-    const response = await axios.post("https://isms.celcomafrica.com/api/services/sendsms", smsPayload, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    console.log("Fee payment notification sent:", response.data);
-    res.json({ 
-      success: true, 
-      message: "Fee payment notification sent successfully",
-      smsData: response.data 
-    });
-  } catch (error) {
-    console.error("Failed to send fee payment notification:", error.response?.data || error.message);
     res.status(500).json({ 
       success: false, 
       error: error.response?.data || error.message 
