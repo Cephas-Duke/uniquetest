@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Receipts | School Office Management</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body { font-family: Arial; background: #f0f0f0; margin: 0; padding: 0; }
+    header { background: #0077cc; color: white; padding: 20px; text-align: center; }
+    nav { background:#004080; padding:10px 20px; display:flex; gap:15px; flex-wrap:wrap; }
+    nav a { color:white; text-decoration:none; padding:6px 10px; border-radius:4px; transition: background 0.3s; }
+    nav a:hover { background:#0059b3; }
+    h2 { color: #333; padding: 0 20px; }
+    form, table { background: white; padding: 20px; border-radius: 8px; margin: 20px; }
+    input, select, button { margin: 5px 0; padding: 8px; width: 100%; border: 1px solid #ccc; border-radius: 4px; }
+    label { margin-top: 10px; display: block; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+    #studentManagerModal { overflow-y: auto; max-height: 90vh; }
+    .success { color: green; font-weight: bold; }
+    .error { color: red; font-weight: bold; }
+    .loading { color: blue; font-style: italic; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Heriwadi Christian Schools</h1>
+    <p>Fee Receipt Management</p>
+  </header>
+
+  <nav>
+    <a href="index.html">Dashboard</a>
+    <a href="receipts.html" style="font-weight:bold;">Receipts</a>
+    <a href="students.html">Students</a>
+    <a href="expenses.html">Expenses</a>
+    <a href="assets.html">Assets</a>
+    <a href="staff.html">Staff</a>
+    <a href="payroll.html">Payroll</a>
+  </nav>
+
+  <h2>Issue Fee Receipt</h2>
+  <div style="padding: 0 20px;">
+    <button onclick="openStudentManager()">Manage Students</button>
+    <button onclick="exportPDF()">Export PDF</button>
+    <button onclick="window.print()">Print</button>
+  </div>
+
+  <div id="statusMessage" style="padding: 0 20px; margin: 10px 0;"></div>
+
+  <form id="receiptForm">
+    <label for="studentSelect">Select Student</label>
+    <select id="studentSelect" required></select>
+
+    <label for="amountPaid">Amount Paid</label>
+    <input type="number" id="amountPaid" required />
+
+    <label for="paymentMode">Payment Mode</label>
+    <select id="paymentMode" required>
+      <option value="Cash">Cash</option>
+      <option value="M-Pesa">M-Pesa</option>
+      <option value="Bank">Bank</option>
+    </select>
+
+    <button type="submit" id="submitBtn">Save Receipt & Send SMS</button>
+  </form>
+
+  <table id="receiptsTable">
+    <thead>
+      <tr>
+        <th>Student</th>
+        <th>Class</th>
+        <th>Amount Paid</th>
+        <th>Balance</th>
+        <th>Payment Mode</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div id="studentManagerModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:9999;">
+    <div style="background:#fff; padding:20px; border-radius:10px; width:90%; max-width:600px; position:relative; max-height:90vh; overflow-y:auto;">
+      <span onclick="closeStudentManager()" style="position:absolute; top:10px; right:20px; font-size:18px; cursor:pointer;">×</span>
+      <h3>Add New Student</h3>
+      <form id="studentForm">
+        <label>Name:</label><input type="text" id="studentName" required>
+        <label>Class:</label><input type="text" id="studentClass" required>
+        <label>Phone:</label><input type="text" id="phone" required>
+        <label>Tuition:</label><input type="number" id="tuition" value="0">
+        <label>Adm Fee:</label><input type="number" id="adm" value="0">
+        <label>Book Fund:</label><input type="number" id="books" value="0">
+        <label>Stationery:</label><input type="number" id="stationery" value="0">
+        <label>Uniform:</label><input type="number" id="uniform" value="0">
+        <label>Lunch:</label><input type="number" id="lunch" value="0">
+        <label>Transport:</label><input type="number" id="transport" value="0">
+        <button type="submit">Add Student</button>
+      </form>
+      <hr>
+      <ul id="studentList"></ul>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBAA6zY40EwbTmWUx1op1cx52C3y0RK3m0",
+      authDomain: "heriwadi-manager.firebaseapp.com",
+      projectId: "heriwadi-manager",
+      storageBucket: "heriwadi-manager.firebasestorage.app",
+      messagingSenderId: "654632910809",
+      appId: "1:654632910809:web:7c65613d2510402a6663c8",
+      measurementId: "G-LLHS6GLB6E"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const studentsCollection = db.collection('students');
+    const receiptsCollection = db.collection('receipts');
+
+    const studentSelect = document.getElementById("studentSelect");
+    const receiptsTable = document.querySelector("#receiptsTable tbody");
+    const statusMessage = document.getElementById("statusMessage");
+    const submitBtn = document.getElementById("submitBtn");
+
+    function showStatus(message, type = 'info') {
+      statusMessage.innerHTML = `<div class="${type}">${message}</div>`;
+      setTimeout(() => {
+        statusMessage.innerHTML = '';
+      }, 5000);
+    }
+
+    async function populateStudents() {
+      try {
+        studentSelect.innerHTML = "<option value=''>Select a student...</option>";
+        const snapshot = await studentsCollection.get();
+        const students = [];
+        snapshot.forEach(doc => {
+          students.push({ id: doc.id, ...doc.data() });
+        });
+
+        students.forEach(s => {
+          const opt = document.createElement("option");
+          opt.value = s.id;
+          opt.textContent = `${s.name} (${s.class}) - Balance: KES ${s.balance}`;
+          studentSelect.appendChild(opt);
+        });
+      } catch (error) {
+        showStatus("Error loading students: " + error.message, "error");
+      }
+    }
+
+    async function updateReceiptTable() {
+      try {
+        receiptsTable.innerHTML = "";
+        const snapshot = await receiptsCollection.orderBy('date', 'desc').get();
+        snapshot.forEach(doc => {
+          const r = { id: doc.id, ...doc.data() };
+          const row = receiptsTable.insertRow();
+
+          row.insertCell().textContent = r.name;
+          row.insertCell().textContent = r.class;
+          row.insertCell().textContent = `KES ${r.paid}`;
+          row.insertCell().textContent = `KES ${r.balance}`;
+          row.insertCell().textContent = r.mode;
+
+          const actionCell = row.insertCell();
+          const printBtn = document.createElement("button");
+          printBtn.textContent = "Print";
+          printBtn.style.marginRight = "8px";
+          printBtn.onclick = () => printReceipt(r.id);
+
+          const deleteBtn = document.createElement("button");
+          deleteBtn.textContent = "Delete";
+          deleteBtn.style.backgroundColor = "#dc3545";
+          deleteBtn.style.color = "white";
+          deleteBtn.onclick = () => deleteReceipt(r.id);
+
+          actionCell.appendChild(printBtn);
+          actionCell.appendChild(deleteBtn);
+        });
+      } catch (error) {
+        showStatus("Error loading receipts: " + error.message, "error");
+      }
+    }
+
+    document.getElementById("receiptForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      
+      const studentId = studentSelect.value;
+      if (!studentId) {
+        showStatus("Please select a student", "error");
+        return;
+      }
+
+      const amount = parseFloat(document.getElementById("amountPaid").value);
+      const mode = document.getElementById("paymentMode").value;
+
+      if (amount <= 0) {
+        showStatus("Amount must be greater than 0", "error");
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Processing...";
+      showStatus("Processing payment and sending SMS...", "loading");
+
+      try {
+        const studentDoc = await studentsCollection.doc(studentId).get();
+        if (!studentDoc.exists) {
+          showStatus("Student not found", "error");
+          return;
+        }
+        const student = studentDoc.data();
+
+        const updatedStudent = {
+          ...student,
+          paid: (student.paid || 0) + amount,
+          balance: (student.total || 0) - ((student.paid || 0) + amount)
+        };
+
+        const receipt = { 
+          name: student.name, 
+          class: student.class, 
+          paid: amount, 
+          balance: updatedStudent.balance, 
+          mode: mode,
+          date: new Date().toISOString()
+        };
+
+        await db.runTransaction(async transaction => {
+          transaction.set(studentsCollection.doc(studentId), updatedStudent);
+          transaction.set(receiptsCollection.doc(), receipt);
+        });
+
+        const smsResponse = await fetch("/send-sms", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phone: student.phone,
+            message: `Dear parent to ${student.name}, we have received KES ${amount}. Balance: KES ${updatedStudent.balance}. Thank you - Heriwadi Christian Schools`
+          })
+        });
+
+        const smsResult = await smsResponse.json();
+        showStatus(`Receipt saved${smsResult.success ? ' and SMS sent' : ''} successfully!`, "success");
+
+        updateReceiptTable();
+        populateStudents();
+        this.reset();
+      } catch (error) {
+        showStatus(`Error: ${error.message}. Receipt may not have been saved.`, "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Save Receipt & Send SMS";
+      }
+    });
+
+    function openStudentManager() {
+      document.getElementById("studentManagerModal").style.display = "flex";
+      renderStudentList();
+    }
+
+    function closeStudentManager() {
+      document.getElementById("studentManagerModal").style.display = "none";
+    }
+
+    document.getElementById("studentForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      
+      const name = document.getElementById("studentName").value.trim();
+      const sclass = document.getElementById("studentClass").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const tuition = +document.getElementById("tuition").value;
+      const adm = +document.getElementById("adm").value;
+      const books = +document.getElementById("books").value;
+      const stationery = +document.getElementById("stationery").value;
+      const uniform = +document.getElementById("uniform").value;
+      const lunch = +document.getElementById("lunch").value;
+      const transport = +document.getElementById("transport").value;
+      
+      if (!name || !sclass || !phone) {
+        showStatus("Please fill in all required fields (Name, Class, Phone)", "error");
+        return;
+      }
+
+      const total = tuition + adm + books + stationery + uniform + lunch + transport;
+      const newStudent = { 
+        name, 
+        class: sclass, 
+        phone, 
+        tuition, 
+        adm, 
+        books, 
+        stationery, 
+        uniform, 
+        lunch, 
+        transport, 
+        total, 
+        paid: 0, 
+        balance: total 
+      };
+
+      try {
+        await studentsCollection.add(newStudent);
+        this.reset();
+        renderStudentList();
+        populateStudents();
+        showStatus(`Student ${name} added successfully!`, "success");
+      } catch (error) {
+        showStatus("Error adding student: " + error.message, "error");
+      }
+    });
+
+    async function renderStudentList() {
+      try {
+        const list = document.getElementById("studentList");
+        list.innerHTML = "";
+        const snapshot = await studentsCollection.get();
+        snapshot.forEach(doc => {
+          const s = { id: doc.id, ...doc.data() };
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <strong>${s.name}</strong> (${s.class}) - ${s.phone}<br>
+            <small>Total: KES ${s.total}, Paid: KES ${s.paid}, Balance: KES ${s.balance}</small>
+            <button onclick="deleteStudent('${s.id}')" style="margin-left:10px; background:#dc3545; color:white; border:none; padding:2px 6px; border-radius:3px;">Delete</button>
+          `;
+          list.appendChild(li);
+        });
+      } catch (error) {
+        showStatus("Error loading student list: " + error.message, "error");
+      }
+    }
+
+    async function deleteStudent(id) {
+      if (confirm("Are you sure you want to delete this student?")) {
+        try {
+          await studentsCollection.doc(id).delete();
+          renderStudentList();
+          populateStudents();
+          showStatus("Student deleted successfully", "success");
+        } catch (error) {
+          showStatus("Error deleting student: " + error.message, "error");
+        }
+      }
+    }
+
+    async function deleteReceipt(id) {
+      if (confirm("Are you sure you want to delete this receipt?")) {
+        try {
+          await receiptsCollection.doc(id).delete();
+          updateReceiptTable();
+          showStatus("Receipt deleted successfully", "success");
+        } catch (error) {
+          showStatus("Error deleting receipt: " + error.message, "error");
+        }
+      }
+    }
+
+    async function printReceipt(id) {
+      try {
+        const receiptDoc = await receiptsCollection.doc(id).get();
+        if (!receiptDoc.exists) {
+          showStatus("Receipt not found", "error");
+          return;
+        }
+        const receipt = receiptDoc.data();
+        const studentSnapshot = await studentsCollection.where('name', '==', receipt.name).get();
+        if (studentSnapshot.empty) {
+          showStatus("Associated student not found", "error");
+          return;
+        }
+        const student = studentSnapshot.docs[0].data();
+        const receiptNumber = String(receiptsCollection.doc(id).id).slice(0, 4).padStart(4, '0');
+        const currentDate = new Date(receipt.date);
+
+        const printWindow = window.open('', '', 'height=800,width=900');
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Official Receipt - ${receipt.name}</title>
+              <style>
+                @page { size: A4; margin: 15mm; }
+                body { 
+                  font-family: Arial, sans-serif; 
+                  margin: 0; 
+                  padding: 15px; 
+                  font-size: 11px; 
+                  line-height: 1.2;
+                  background: white;
+                }
+                .header { 
+                  text-align: center; 
+                  margin-bottom: 20px; 
+                  border-bottom: 2px solid #000;
+                  padding-bottom: 15px;
+                }
+                .school-logo {
+                  width: 50px;
+                  height: 50px;
+                  margin: 0 auto 10px;
+                  border: 2px solid #000;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-weight: bold;
+                  font-size: 8px;
+                }
+                .school-name { 
+                  font-size: 18px; 
+                  font-weight: bold; 
+                  color: #000; 
+                  margin: 8px 0 5px 0; 
+                  letter-spacing: 1px;
+                }
+                .contact-info { 
+                  font-size: 10px; 
+                  margin: 2px 0;
+                  color: #333;
+                }
+                .receipt-title { 
+                  font-size: 16px; 
+                  font-weight: bold; 
+                  margin: 20px 0 15px 0; 
+                  text-decoration: underline;
+                }
+                .receipt-header {
+                  display: flex;
+                  justify-content: space-between;
+                  margin-bottom: 20px;
+                  align-items: flex-end;
+                }
+                .receipt-number {
+                  font-size: 12px;
+                  font-weight: bold;
+                }
+                .paybill-info {
+                  font-size: 10px;
+                  text-align: right;
+                }
+                .student-info { 
+                  margin-bottom: 15px; 
+                  line-height: 1.5;
+                }
+                .student-info div {
+                  margin-bottom: 8px;
+                  display: flex;
+                }
+                .student-info strong {
+                  min-width: 180px;
+                  display: inline-block;
+                }
+                .payment-section {
+                  margin: 20px 0 15px 0;
+                  font-weight: bold;
+                  font-size: 12px;
+                }
+                .fees-table { 
+                  width: 100%; 
+                  border-collapse: collapse; 
+                  margin: 15px 0; 
+                  font-size: 9px;
+                }
+                .fees-table th, .fees-table td { 
+                  border: 1px solid #000; 
+                  padding: 6px 4px; 
+                  text-align: center;
+                  vertical-align: middle;
+                }
+                .fees-table th { 
+                  background-color: #f8f8f8; 
+                  font-weight: bold; 
+                  font-size: 8px;
+                  writing-mode: vertical-rl;
+                  text-orientation: mixed;
+                  height: 80px;
+                }
+                .fees-table .amount-header {
+                  writing-mode: horizontal-tb;
+                  text-orientation: initial;
+                  height: auto;
+                  font-size: 9px;
+                }
+                .fees-row td {
+                  font-size: 9px;
+                  height: 30px;
+                }
+                .total-row { 
+                  font-weight: bold; 
+                  background-color: #f0f0f0;
+                }
+                .total-row td {
+                  font-size: 10px;
+                }
+                .thanks-row {
+                  font-style: italic;
+                }
+                .payment-details {
+                  margin: 20px 0;
+                  display: flex;
+                  justify-content: space-between;
+                }
+                .payment-left, .payment-right {
+                  flex: 1;
+                }
+                .signatures { 
+                  margin-top: 40px;
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: flex-end;
+                }
+                .signature-box { 
+                  text-align: center; 
+                  width: 200px; 
+                }
+                .signature-line { 
+                  border-bottom: 1px solid #000; 
+                  margin-bottom: 5px; 
+                  height: 30px; 
+                }
+                .refund-policy {
+                  text-align: center;
+                  margin-top: 25px;
+                  font-size: 10px;
+                  font-weight: bold;
+                  border-top: 1px solid #000;
+                  padding-top: 10px;
+                }
+                @media print {
+                  body { margin: 0; padding: 10px; }
+                  .no-print { display: none; }
+                }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <div class="school-logo">
+                  <img src="photos/school-logo.png" alt="School Logo" style="width: 40px; height: 40px;" onerror="this.style.display='none'; this.parentNode.innerHTML='LOGO';">
+                </div>
+                <div class="school-name">HERIWADI CHRISTIAN SCHOOLS</div>
+                <div class="contact-info">P.O. Box 921 - 0511 Ongata Rongai</div>
+                <div class="contact-info">Contact: 0723 322449</div>
+                <div class="contact-info">Email: heriwadis@gmail.com</div>
+              </div>
+
+              <div class="receipt-header">
+                <div>
+                  <div class="receipt-title">OFFICIAL RECEIPT</div>
+                  <div class="receipt-number">Paybill No. 8713144</div>
+                </div>
+                <div class="paybill-info">
+                  <strong>A/c: Name of learner & Grade</strong><br>
+                  <strong>No. ${receiptNumber}</strong><br>
+                  <strong>Date:</strong> ${currentDate.toLocaleDateString()}
+                </div>
+              </div>
+
+              <div class="student-info">
+                <div><strong>Received from (Student Name):</strong> <span>${receipt.name}</span></div>
+                <div><strong>Grade:</strong> <span>${receipt.class}</span> <strong>Term:</strong> <span>________________</span></div>
+                <div><strong>Admission No.:</strong> <span>________________</span></div>
+              </div>
+
+              <div class="payment-section">BEING PAYMENT OF:-</div>
+
+              <table class="fees-table">
+                <thead>
+                  <tr>
+                    <th>School fees</th>
+                    <th>Admission fees</th>
+                    <th>Caution fees</th>
+                    <th>Interview</th>
+                    <th>Tuition</th>
+                    <th>Lunch</th>
+                    <th>Swimming</th>
+                    <th>Uniform</th>
+                    <th>Book fund</th>
+                    <th>Medical</th>
+                    <th>Stationery</th>
+                    <th>Transport</th>
+                    <th>School Activities</th>
+                    <th class="amount-header">AMOUNT (KSHS)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="fees-row">
+                    <td>${student?.tuition > 0 ? student.tuition.toLocaleString() : ''}</td>
+                    <td>${student?.adm > 0 ? student.adm.toLocaleString() : ''}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td>${student?.lunch > 0 ? student.lunch.toLocaleString() : ''}</td>
+                    <td></td>
+                    <td>${student?.uniform > 0 ? student.uniform.toLocaleString() : ''}</td>
+                    <td>${student?.books > 0 ? student.books.toLocaleString() : ''}</td>
+                    <td></td>
+                    <td>${student?.stationery > 0 ? student.stationery.toLocaleString() : ''}</td>
+                    <td>${student?.transport > 0 ? student.transport.toLocaleString() : ''}</td>
+                    <td></td>
+                    <td style="font-weight: bold;">${Number(receipt.paid).toLocaleString()}</td>
+                  </tr>
+                  <tr class="total-row">
+                    <td colspan="13" style="text-align: right; padding-right: 10px;"><strong>TOTAL</strong></td>
+                    <td><strong>${Number(receipt.paid).toLocaleString()}</strong></td>
+                  </tr>
+                  <tr class="thanks-row">
+                    <td colspan="13" style="text-align: right; padding-right: 10px;"><em>with Thanks</em></td>
+                    <td></td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div class="payment-details">
+                <div class="payment-left">
+                  <div><strong>Cash / Paybill:</strong> ${receipt.mode}</div>
+                  <div style="margin-top: 8px;"><strong>Fee Balance:</strong> KES ${Number(receipt.balance).toLocaleString()}</div>
+                  <div style="margin-top: 8px;"><strong>Subject:</strong> ________________</div>
+                </div>
+                <div class="payment-right" style="text-align: right;">
+                  <div><strong>For Heriwadi Christian Schools</strong></div>
+                </div>
+              </div>
+
+              <div class="signatures">
+                <div class="signature-box">
+                  <div class="signature-line"></div>
+                  <div style="font-size: 9px;">Accountant/Cashier</div>
+                </div>
+                <div class="signature-box">
+                  <div class="signature-line"></div>
+                  <div style="font-size: 9px;">For: Heriwadi Christian Schools</div>
+                </div>
+              </div>
+
+              <div class="refund-policy">
+                School Fees Once Paid is not Refundable
+              </div>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+      } catch (error) {
+        showStatus("Error printing receipt: " + error.message, "error");
+      }
+    }
+
+    async function exportPDF() {
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const logoImg = new Image();
+        logoImg.src = 'photos/school-logo.jpg';
+
+        const snapshot = await receiptsCollection.orderBy('date', 'desc').get();
+        let isFirstReceipt = true;
+
+        for (const docSnapshot of snapshot.docs) {
+          const receipt = { id: docSnapshot.id, ...docSnapshot.data() };
+          const studentSnapshot = await studentsCollection.where('name', '==', receipt.name).get();
+          if (studentSnapshot.empty) continue;
+          const student = studentSnapshot.docs[0].data();
+          const receiptNumber = String(docSnapshot.id).slice(0, 4).padStart(4, '0');
+          const currentDate = new Date(receipt.date);
+
+          if (!isFirstReceipt) {
+            doc.addPage();
+          }
+          isFirstReceipt = false;
+
+          try {
+            doc.addImage(logoImg, 'PNG', 95, 8, 20, 20);
+          } catch (e) {
+            console.log('Logo not loaded, continuing without logo');
+          }
+
+          doc.setFontSize(18);
+          doc.setFont(undefined, 'bold');
+          doc.text("HERIWADI CHRISTIAN SCHOOLS", 105, 35, { align: 'center' });
+
+          doc.setFontSize(10);
+          doc.setFont(undefined, 'normal');
+          doc.text("P.O. Box 921 - 0511 Ongata Rongai", 105, 42, { align: 'center' });
+          doc.text("Contact: 0723 322449", 105, 47, { align: 'center' });
+          doc.text("Email: heriwadis@gmail.com", 105, 52, { align: 'center' });
+
+          doc.line(20, 58, 190, 58);
+
+          doc.setFontSize(16);
+          doc.setFont(undefined, 'bold');
+          doc.text("OFFICIAL RECEIPT", 20, 70);
+
+          doc.setFontSize(10);
+          doc.setFont(undefined, 'normal');
+          doc.text("Paybill No. 8713144", 20, 78);
+
+          doc.text("A/c: Name of learner & Grade", 130, 65);
+          doc.text(`No. ${receiptNumber}`, 130, 72);
+          doc.text(`Date: ${currentDate.toLocaleDateString()}`, 130, 79);
+
+          doc.text(`Received from (Student Name): ${receipt.name}`, 20, 95);
+          doc.text(`Grade: ${receipt.class}`, 20, 103);
+          doc.text("Term: ________________", 100, 103);
+          doc.text("Admission No.: ________________", 20, 111);
+
+          doc.setFont(undefined, 'bold');
+          doc.text("BEING PAYMENT OF:-", 20, 125);
+
+          if (typeof doc.autoTable === 'function') {
+            const tableData = [[
+              student?.tuition > 0 ? student.tuition.toString() : '',
+              student?.adm > 0 ? student.adm.toString() : '',
+              '', '', '',
+              student?.lunch > 0 ? student.lunch.toString() : '',
+              '',
+              student?.uniform > 0 ? student.uniform.toString() : '',
+              student?.books > 0 ? student.books.toString() : '',
+              '',
+              student?.stationery > 0 ? student.stationery.toString() : '',
+              student?.transport > 0 ? student.transport.toString() : '',
+              '',
+              receipt.paid.toString()
+            ]];
+
+            doc.autoTable({
+              startY: 135,
+              head: [['School fees', 'Admission fees', 'Caution fees', 'Interview', 'Tuition', 
+                     'Lunch', 'Swimming', 'Uniform', 'Book fund', 'Medical', 
+                     'Stationery', 'Transport', 'School Activities', 'AMOUNT (KSHS)']],
+              body: tableData,
+              foot: [['', '', '', '', '', '', '', '', '', '', '', '', 'TOTAL', receipt.paid.toString()]],
+              theme: 'grid',
+              styles: { fontSize: 8, cellPadding: 2 },
+              headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] },
+              footStyles: { fillColor: [240, 240, 240], fontStyle: 'bold' }
+            });
+          } else {
+            let yPos = 135;
+            doc.setFontSize(8);
+
+            doc.text("Fee Breakdown:", 20, yPos);
+            yPos += 10;
+
+            if (student?.tuition > 0) {
+              doc.text(`School fees: KES ${student.tuition.toLocaleString()}`, 20, yPos);
+              yPos += 6;
+            }
+            if (student?.adm > 0) {
+              doc.text(`Admission fees: KES ${student.adm.toLocaleString()}`, 20, yPos);
+              yPos += 6;
+            }
+            if (student?.lunch > 0) {
+              doc.text(`Lunch: KES ${student.lunch.toLocaleString()}`, 20, yPos);
+              yPos += 6;
+            }
+            if (student?.uniform > 0) {
+              doc.text(`Uniform: KES ${student.uniform.toLocaleString()}`, 20, yPos);
+              yPos += 6;
+            }
+            if (student?.books > 0) {
+              doc.text(`Book fund: KES ${student.books.toLocaleString()}`, 20, yPos);
+              yPos += 6;
+            }
+            if (student?.stationery > 0) {
+              doc.text(`Stationery: KES ${student.stationery.toLocaleString()}`, 20, yPos);
+              yPos += 6;
+            }
+            if (student?.transport > 0) {
+              doc.text(`Transport: KES ${student.transport.toLocaleString()}`, 20, yPos);
+              yPos += 6;
+            }
+
+            yPos += 10;
+            doc.setFont(undefined, 'bold');
+            doc.text(`TOTAL AMOUNT PAID: KES ${Number(receipt.paid).toLocaleString()}`, 20, yPos);
+            yPos += 8;
+            doc.setFont(undefined, 'italic');
+            doc.text("with Thanks", 20, yPos);
+          }
+
+          let detailsY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 20 : 200;
+          doc.setFontSize(10);
+          doc.setFont(undefined, 'normal');
+
+          doc.text(`Cash/Paybill: ${receipt.mode}`, 20, detailsY);
+          doc.text(`Fee Balance: KES ${Number(receipt.balance).toLocaleString()}`, 20, detailsY + 8);
+          doc.text("Subject: ________________", 20, detailsY + 16);
+
+          doc.text("For: Heriwadi Christian Schools", 130, detailsY);
+
+          doc.line(20, detailsY + 35, 80, detailsY + 35);
+          doc.line(130, detailsY + 35, 190, detailsY + 35);
+
+          doc.setFontSize(8);
+          doc.text("Accountant/Cashier", 50, detailsY + 45, { align: 'center' });
+          doc.text("For: Heriwadi Christian Schools", 160, detailsY + 45, { align: 'center' });
+
+          doc.setFont(undefined, 'bold');
+          doc.text("School Fees Once Paid is not Refundable", 105, detailsY + 60, { align: 'center' });
+        }
+
+        doc.save("heriwadi_official_receipts.pdf");
+        showStatus("Official receipts PDF exported successfully!", "success");
+      } catch (error) {
+        showStatus("Error exporting PDF: " + error.message, "error");
+      }
+    }
+
+    populateStudents();
+    updateReceiptTable();
+  </script>
+</body>
+</html>
