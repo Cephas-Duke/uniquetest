@@ -177,7 +177,7 @@
           const s = { id: doc.id, ...doc.data() };
           const opt = document.createElement("option");
           opt.value = s.id;
-          opt.textContent = `${s.name} (${s.class}) - Balance: KES ${s.balance || s.total || 0}`;
+          opt.textContent = `${s.name} (${s.class}) - Balance: ${s.balance || s.total || 0}`;
           studentSelect.appendChild(opt);
         });
       } catch (error) {
@@ -263,15 +263,15 @@
                 const row = document.createElement('tr');
                 row.innerHTML = `
                   <td>${r.name}</td>
-                  <td>KES ${student.tuition || 0}</td>
-                  <td>KES ${student.adm || 0}</td>
-                  <td>KES ${student.lunch || 0}</td>
-                  <td>KES ${student.uniform || 0}</td>
-                  <td>KES ${student.books || 0}</td>
-                  <td>KES ${student.stationery || 0}</td>
-                  <td>KES ${student.transport || 0}</td>
-                  <td>KES ${student.trip || 0}</td>
-                  <td>KES ${r.balance.toFixed(2)}</td>
+                  <td>${student.tuition || 0}</td>
+                  <td>${student.adm || 0}</td>
+                  <td>${student.lunch || 0}</td>
+                  <td>${student.uniform || 0}</td>
+                  <td>${student.books || 0}</td>
+                  <td>${student.stationery || 0}</td>
+                  <td>${student.transport || 0}</td>
+                  <td>${student.trip || 0}</td>
+                  <td>${r.balance.toFixed(2)}</td>
                   <td>${r.mode}</td>
                   <td>${new Date(r.date).toLocaleDateString('en-GB')}</td>
                   <td>
@@ -346,7 +346,7 @@
           transaction.set(receiptsCollection.doc(), receipt);
         });
 
-        const smsMessage = `Dear parent to ${student.name}, we have received KES ${amount}. Balance: KES ${updatedStudent.balance}. Thank you - Heriwadi Christian Schools`;
+        const smsMessage = `Dear parent to ${student.name}, we have received ${amount}. Balance: ${updatedStudent.balance}. Thank you - Heriwadi Christian Schools`;
         const smsSent = await sendSMS(student.phone, smsMessage);
         showStatus(`Receipt saved${smsSent ? ' and SMS sent' : ''} successfully!`, "success");
 
@@ -447,7 +447,7 @@
           const li = document.createElement("li");
           li.innerHTML = `
             <strong>${s.name}</strong> (${s.class}) - ${s.phone}<br>
-            <small>Total: KES ${s.total}, Paid: KES ${s.paid}, Balance: KES ${s.balance}</small>
+            <small>Total: ${s.total}, Paid: ${s.paid}, Balance: ${s.balance}</small>
             <button onclick="deleteStudent('${s.id}')" style="margin-left:10px; background:#dc3545; color:white; border:none; padding:2px 6px; border-radius:3px;">Delete</button>
           `;
           list.appendChild(li);
@@ -762,7 +762,7 @@
 
               <div class="payment-details">
                 <div class="payment-left">
-                  <div><strong>Amount Paid:</strong> KES ${Number(receipt.paid).toLocaleString()}</div>
+                  <div><strong>Amount Paid:</strong> ${Number(receipt.paid).toLocaleString()}</div>
                 </div>
                 <div class="payment-right" style="text-align: right;">
                   <div><strong>For Heriwadi Christian Schools</strong></div>
@@ -899,41 +899,41 @@
             yPos += 10;
 
             if (student?.tuition > 0) {
-              doc.text(`School fees: KES ${student.tuition.toLocaleString()}`, 20, yPos);
+              doc.text(`School fees: ${student.tuition.toLocaleString()}`, 20, yPos);
               yPos += 6;
             }
             if (student?.adm > 0) {
-              doc.text(`Admission fees: KES ${student.adm.toLocaleString()}`, 20, yPos);
+              doc.text(`Admission fees: ${student.adm.toLocaleString()}`, 20, yPos);
               yPos += 6;
             }
             if (student?.lunch > 0) {
-              doc.text(`Lunch: KES ${student.lunch.toLocaleString()}`, 20, yPos);
+              doc.text(`Lunch: ${student.lunch.toLocaleString()}`, 20, yPos);
               yPos += 6;
             }
             if (student?.uniform > 0) {
-              doc.text(`Uniform: KES ${student.uniform.toLocaleString()}`, 20, yPos);
+              doc.text(`Uniform: ${student.uniform.toLocaleString()}`, 20, yPos);
               yPos += 6;
             }
             if (student?.books > 0) {
-              doc.text(`Book fund: KES ${student.books.toLocaleString()}`, 20, yPos);
+              doc.text(`Book fund: ${student.books.toLocaleString()}`, 20, yPos);
               yPos += 6;
             }
             if (student?.stationery > 0) {
-              doc.text(`Stationery: KES ${student.stationery.toLocaleString()}`, 20, yPos);
+              doc.text(`Stationery: ${student.stationery.toLocaleString()}`, 20, yPos);
               yPos += 6;
             }
             if (student?.transport > 0) {
-              doc.text(`Transport: KES ${student.transport.toLocaleString()}`, 20, yPos);
+              doc.text(`Transport: ${student.transport.toLocaleString()}`, 20, yPos);
               yPos += 6;
             }
             if (student?.trip > 0) {
-              doc.text(`Trip: KES ${student.trip.toLocaleString()}`, 20, yPos);
+              doc.text(`Trip: ${student.trip.toLocaleString()}`, 20, yPos);
               yPos += 6;
             }
 
             yPos += 10;
             doc.setFont(undefined, 'bold');
-            doc.text(`TOTAL AMOUNT PAID: KES ${Number(receipt.paid).toLocaleString()}`, 20, yPos);
+            doc.text(`TOTAL AMOUNT PAID: ${Number(receipt.paid).toLocaleString()}`, 20, yPos);
             yPos += 8;
             doc.setFont(undefined, 'italic');
             doc.text("with Thanks", 20, yPos);
@@ -944,7 +944,7 @@
           doc.setFont(undefined, 'normal');
 
           doc.text(`Cash/Paybill: ${receipt.mode}`, 20, detailsY);
-          doc.text(`Fee Balance: KES ${Number(receipt.balance).toLocaleString()}`, 20, detailsY + 8);
+          doc.text(`Fee Balance: ${Number(receipt.balance).toLocaleString()}`, 20, detailsY + 8);
           doc.text("Subject: ________________", 20, detailsY + 16);
 
           doc.text("For: Heriwadi Christian Schools", 130, detailsY);
