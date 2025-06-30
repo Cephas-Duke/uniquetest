@@ -347,10 +347,17 @@
 
         await db.runTransaction(async transaction => {
           transaction.set(studentsCollection.doc(studentId), updatedStudent);
-          transaction.set(receiptsCollection.doc(), receipt);
+          const receiptRef = transaction.set(receiptsCollection.doc(), receipt);
+          receipt.id = receiptRef.id; // Assign the auto-generated ID to the receipt
         });
 
-        const smsMessage = `Dear parent to ${student.name}, we have received ${amount}. Balance: ${updatedStudent.balance}. Thank you - Heriwadi Christian Schools`;
+        // Get total number of receipts for receipt number
+        const snapshot = await receiptsCollection.get();
+        const receiptCount = snapshot.size;
+        const receiptNumber = String(receiptCount).padStart(3, '0');
+
+        const currentDate = new Date(receipt.date);
+        const smsMessage = `Dear parent to ${student.name}, Receipt No. ${receiptNumber} for ${amount} received for ${student.class} on ${currentDate.toLocaleDateString('en-GB')} at ${currentDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}. Balance: ${updatedStudent.balance}.`;
         const smsSent = await sendSMS(student.phone, smsMessage);
         showStatus(`Receipt saved${smsSent ? ' and SMS sent' : ''} successfully!`, "success");
 
