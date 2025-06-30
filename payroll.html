@@ -21,6 +21,9 @@
       text-align: right;
     }
     button { padding: 5px 10px; cursor: pointer; margin: 5px 0; }
+    .success { color: green; font-weight: bold; }
+    .error { color: red; font-weight: bold; }
+    .loading { color: blue; font-style: italic; }
   </style>
 </head>
 <body>
@@ -32,7 +35,7 @@
     <a href="expense.html">Expenses</a>
     <a href="assets.html">Assets</a>
     <a href="staff.html">Staff</a>
-    <a href="payroll.html">Payroll</a>
+    <a href="payroll.html" style="text-decoration: underline;">Payroll</a>
   </nav>
 
   <div class="container">
@@ -48,142 +51,208 @@
     </table>
   </div>
 
-<script>
-function recalculateRow(row) {
-  const gross = parseFloat(row.querySelector(".gross").value) || 0;
-  const paye = parseFloat(row.querySelector(".paye").value) || 0;
-  const nssf = parseFloat(row.querySelector(".nssf").value) || 0;
-  const shif = parseFloat(row.querySelector(".shif").value) || 0;
-  const ahl = parseFloat(row.querySelector(".ahl").value) || 0;
-  const advance = parseFloat(row.querySelector(".advance").value) || 0;
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
 
-  const total = paye + nssf + shif + ahl + advance;
-  const net = gross - total;
-  const nssfEmp = gross * 0.06;
-  const ahlEmp = gross * 0.03;
-  const nita = gross * 0.01;
+  <script>
+    // Initialize Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyBAA6zY40EwbTmWUx1op1cx52C3y0RK3m0",
+      authDomain: "heriwadi-manager.firebaseapp.com",
+      projectId: "heriwadi-manager",
+      storageBucket: "heriwadi-manager.firebasestorage.app",
+      messagingSenderId: "654632910809",
+      appId: "1:654632910809:web:7c65613d2510402a6663c8",
+      measurementId: "G-LLHS6GLB6E"
+    };
 
-  row.querySelector(".total").textContent = total.toFixed(2);
-  row.querySelector(".net").textContent = net.toFixed(2);
-  row.querySelector(".nssfEmp").textContent = nssfEmp.toFixed(2);
-  row.querySelector(".ahlEmp").textContent = ahlEmp.toFixed(2);
-  row.querySelector(".nita").textContent = nita.toFixed(2);
-}
+    let app, db;
+    try {
+      app = firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+    } catch (error) {
+      console.error('Firebase initialization error:', error);
+      showStatus("Failed to initialize Firebase. Check your configuration.", "error");
+      throw error;
+    }
+    const staffCollection = db.collection('staff');
+    const payrollCollection = db.collection('payroll');
 
-function loadPayroll() {
-  const staffList = JSON.parse(localStorage.getItem("staffList") || "[]");
-  const tbody = document.getElementById("payrollBody");
-  tbody.innerHTML = "";
+    function showStatus(message, type = 'info') {
+      const statusDiv = document.createElement('div');
+      statusDiv.className = type;
+      statusDiv.textContent = message;
+      document.querySelector('.container').insertBefore(statusDiv, document.querySelector('.container').firstChild);
+      setTimeout(() => statusDiv.remove(), 5000);
+    }
 
-  staffList.forEach(staff => {
-    const row = document.createElement("tr");
-    const gross = staff.salary || 0;
-    const advance = staff.advance || 0;
-
-    const paye = gross * 0.1;
-    const nssf = gross * 0.06;
-    const shif = gross * 0.025;
-    const ahl = gross * 0.03;
-
-    row.innerHTML = `
-      <td>${staff.fullName}</td>
-      <td><input class="gross" type="number" value="${gross.toFixed(2)}" /></td>
-      <td><input class="paye" type="number" value="${paye.toFixed(2)}" /></td>
-      <td><input class="nssf" type="number" value="${nssf.toFixed(2)}" /></td>
-      <td><input class="shif" type="number" value="${shif.toFixed(2)}" /></td>
-      <td><input class="ahl" type="number" value="${ahl.toFixed(2)}" /></td>
-      <td><input class="advance" type="number" value="${advance.toFixed(2)}" /></td>
-      <td class="total"></td>
-      <td class="net"></td>
-      <td class="nssfEmp"></td>
-      <td class="ahlEmp"></td>
-      <td class="nita"></td>
-      <td><button class="payslipBtn">Print</button></td>
-    `;
-
-    tbody.appendChild(row);
-    recalculateRow(row);
-
-    row.querySelectorAll("input").forEach(input => {
-      input.addEventListener("input", () => recalculateRow(row));
-    });
-
-    row.querySelector(".payslipBtn").addEventListener("click", () => {
-      const name = staff.fullName;
+    function recalculateRow(row) {
       const gross = parseFloat(row.querySelector(".gross").value) || 0;
       const paye = parseFloat(row.querySelector(".paye").value) || 0;
       const nssf = parseFloat(row.querySelector(".nssf").value) || 0;
       const shif = parseFloat(row.querySelector(".shif").value) || 0;
       const ahl = parseFloat(row.querySelector(".ahl").value) || 0;
       const advance = parseFloat(row.querySelector(".advance").value) || 0;
+
       const total = paye + nssf + shif + ahl + advance;
       const net = gross - total;
       const nssfEmp = gross * 0.06;
       const ahlEmp = gross * 0.03;
       const nita = gross * 0.01;
 
-      const win = window.open("", "Payslip", "width=800,height=600");
-      win.document.write(`
-        <h2>Payslip</h2>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Gross Pay:</strong> ${gross.toFixed(2)}</p>
-        <p><strong>PAYE:</strong> ${paye.toFixed(2)}</p>
-        <p><strong>NSSF:</strong> ${nssf.toFixed(2)}</p>
-        <p><strong>SHIF:</strong> ${shif.toFixed(2)}</p>
-        <p><strong>AHL:</strong> ${ahl.toFixed(2)}</p>
-        <p><strong>Advance:</strong> ${advance.toFixed(2)}</p>
-        <p><strong>Total Deductions:</strong> ${total.toFixed(2)}</p>
-        <p><strong>Net Pay:</strong> ${net.toFixed(2)}</p>
-        <p><strong>NSSF - Employer:</strong> ${nssfEmp.toFixed(2)}</p>
-        <p><strong>AHL - Employer:</strong> ${ahlEmp.toFixed(2)}</p>
-        <p><strong>NITA:</strong> ${nita.toFixed(2)}</p>
-      `);
-      win.print();
-      win.document.close();
-    });
-  });
-}
-
-function downloadPayrollPDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  doc.setFontSize(12);
-  doc.text("Consolidated Payroll Report", 70, 15);
-
-  const headers = ["Name", "Gross", "PAYE", "NSSF", "SHIF", "AHL", "Advance", "Total", "Net", "NSSF-Empl", "AHL-Empl", "NITA"];
-  let y = 25;
-
-  doc.setFont("helvetica", "bold");
-  headers.forEach((h, i) => {
-    doc.text(h, 10 + i * 15, y);
-  });
-
-  y += 6;
-  doc.setFont("helvetica", "normal");
-
-  document.querySelectorAll("#payrollBody tr").forEach(row => {
-    const cols = Array.from(row.querySelectorAll("td")).map(td => {
-      const input = td.querySelector("input");
-      return input ? input.value : td.textContent.trim();
-    });
-
-    cols.slice(0, 12).forEach((val, i) => {
-      doc.text(val, 10 + i * 15, y);
-    });
-
-    y += 6;
-    if (y > 270) {
-      doc.addPage();
-      y = 25;
+      row.querySelector(".total").textContent = total.toFixed(2);
+      row.querySelector(".net").textContent = net.toFixed(2);
+      row.querySelector(".nssfEmp").textContent = nssfEmp.toFixed(2);
+      row.querySelector(".ahlEmp").textContent = ahlEmp.toFixed(2);
+      row.querySelector(".nita").textContent = nita.toFixed(2);
     }
-  });
 
-  doc.save("Consolidated_Payroll_Report.pdf");
-}
+    function loadPayroll() {
+      const tbody = document.getElementById("payrollBody");
+      tbody.innerHTML = "";
 
-window.onload = loadPayroll;
-</script>
+      staffCollection.get().then(snapshot => {
+        snapshot.forEach(doc => {
+          const staff = { id: doc.id, ...doc.data() };
+          const row = document.createElement("tr");
+          const gross = staff.salary || 0;
+          const advance = staff.advance || 0;
+
+          const paye = gross * 0.1;
+          const nssf = gross * 0.06;
+          const shif = gross * 0.025;
+          const ahl = gross * 0.03;
+
+          row.innerHTML = `
+            <td>${staff.fullName}</td>
+            <td><input class="gross" type="number" value="${gross.toFixed(2)}" /></td>
+            <td><input class="paye" type="number" value="${paye.toFixed(2)}" /></td>
+            <td><input class="nssf" type="number" value="${nssf.toFixed(2)}" /></td>
+            <td><input class="shif" type="number" value="${shif.toFixed(2)}" /></td>
+            <td><input class="ahl" type="number" value="${ahl.toFixed(2)}" /></td>
+            <td><input class="advance" type="number" value="${advance.toFixed(2)}" /></td>
+            <td class="total"></td>
+            <td class="net"></td>
+            <td class="nssfEmp"></td>
+            <td class="ahlEmp"></td>
+            <td class="nita"></td>
+            <td><button class="payslipBtn">Print</button></td>
+          `;
+
+          tbody.appendChild(row);
+          recalculateRow(row);
+
+          row.querySelectorAll("input").forEach(input => {
+            input.addEventListener("input", () => recalculateRow(row));
+          });
+
+          row.querySelector(".payslipBtn").addEventListener("click", () => {
+            const name = staff.fullName;
+            const gross = parseFloat(row.querySelector(".gross").value) || 0;
+            const paye = parseFloat(row.querySelector(".paye").value) || 0;
+            const nssf = parseFloat(row.querySelector(".nssf").value) || 0;
+            const shif = parseFloat(row.querySelector(".shif").value) || 0;
+            const ahl = parseFloat(row.querySelector(".ahl").value) || 0;
+            const advance = parseFloat(row.querySelector(".advance").value) || 0;
+            const total = paye + nssf + shif + ahl + advance;
+            const net = gross - total;
+            const nssfEmp = gross * 0.06;
+            const ahlEmp = gross * 0.03;
+            const nita = gross * 0.01;
+
+            const win = window.open("", "Payslip", "width=800,height=600");
+            win.document.write(`
+              <h2>Payslip</h2>
+              <p><strong>Name:</strong> ${name}</p>
+              <p><strong>Gross Pay:</strong> ${gross.toFixed(2)}</p>
+              <p><strong>PAYE:</strong> ${paye.toFixed(2)}</p>
+              <p><strong>NSSF:</strong> ${nssf.toFixed(2)}</p>
+              <p><strong>SHIF:</strong> ${shif.toFixed(2)}</p>
+              <p><strong>AHL:</strong> ${ahl.toFixed(2)}</p>
+              <p><strong>Advance:</strong> ${advance.toFixed(2)}</p>
+              <p><strong>Total Deductions:</strong> ${total.toFixed(2)}</p>
+              <p><strong>Net Pay:</strong> ${net.toFixed(2)}</p>
+              <p><strong>NSSF - Employer:</strong> ${nssfEmp.toFixed(2)}</p>
+              <p><strong>AHL - Employer:</strong> ${ahlEmp.toFixed(2)}</p>
+              <p><strong>NITA:</strong> ${nita.toFixed(2)}</p>
+            `);
+            win.print();
+            win.document.close();
+          });
+
+          // Save changes to Firestore
+          const savePayroll = () => {
+            const payrollData = {
+              staffId: staff.id,
+              fullName: staff.fullName,
+              gross: parseFloat(row.querySelector(".gross").value) || 0,
+              paye: parseFloat(row.querySelector(".paye").value) || 0,
+              nssf: parseFloat(row.querySelector(".nssf").value) || 0,
+              shif: parseFloat(row.querySelector(".shif").value) || 0,
+              ahl: parseFloat(row.querySelector(".ahl").value) || 0,
+              advance: parseFloat(row.querySelector(".advance").value) || 0,
+              totalDeductions: parseFloat(row.querySelector(".total").textContent) || 0,
+              netPay: parseFloat(row.querySelector(".net").textContent) || 0,
+              nssfEmp: parseFloat(row.querySelector(".nssfEmp").textContent) || 0,
+              ahlEmp: parseFloat(row.querySelector(".ahlEmp").textContent) || 0,
+              nita: parseFloat(row.querySelector(".nita").textContent) || 0,
+              date: new Date().toISOString().split('T')[0]
+            };
+            payrollCollection.doc(staff.id).set(payrollData, { merge: true }).catch(error => {
+              console.error('Error saving payroll:', error);
+              showStatus(`Error saving payroll: ${error.message}.`, "error");
+            });
+          };
+
+          row.querySelectorAll("input").forEach(input => {
+            input.addEventListener("change", savePayroll);
+          });
+        });
+      }).catch(error => {
+        console.error('Error loading staff:', error);
+        showStatus(`Error loading staff: ${error.message}. Check Firebase rules or network.`, "error");
+      });
+    }
+
+    function downloadPayrollPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(12);
+      doc.text("Consolidated Payroll Report", 70, 15);
+
+      const headers = ["Name", "Gross", "PAYE", "NSSF", "SHIF", "AHL", "Advance", "Total", "Net", "NSSF-Empl", "AHL-Empl", "NITA"];
+      let y = 25;
+
+      doc.setFont("helvetica", "bold");
+      headers.forEach((h, i) => {
+        doc.text(h, 10 + i * 15, y);
+      });
+
+      y += 6;
+      doc.setFont("helvetica", "normal");
+
+      document.querySelectorAll("#payrollBody tr").forEach(row => {
+        const cols = Array.from(row.querySelectorAll("td")).map(td => {
+          const input = td.querySelector("input");
+          return input ? input.value : td.textContent.trim();
+        });
+
+        cols.slice(0, 12).forEach((val, i) => {
+          doc.text(val, 10 + i * 15, y);
+        });
+
+        y += 6;
+        if (y > 270) {
+          doc.addPage();
+          y = 25;
+        }
+      });
+
+      doc.save("Consolidated_Payroll_Report.pdf");
+    }
+
+    // Initialize page
+    window.onload = loadPayroll;
+  </script>
 </body>
 </html>
-
-
