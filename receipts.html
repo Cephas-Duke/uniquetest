@@ -84,8 +84,20 @@
       <h3>Add New Student</h3>
       <form id="studentForm">
         <label>Name:</label><input type="text" id="studentName" required>
-        <label>Class:</label><input type="text" id="studentClass" required>
-        <label>Phone:</label><input type="text" id="phone" required>
+        <label>Class:</label>
+        <select id="studentClass" required>
+          <option value="">Select Class</option>
+          <option value="Play Group">Play Group</option>
+          <option value="PP1">PP1</option>
+          <option value="PP2">PP2</option>
+          <option value="Grade 1">Grade 1</option>
+          <option value="Grade 2">Grade 2</option>
+          <option value="Grade 3">Grade 3</option>
+          <option value="Grade 4">Grade 4</option>
+          <option value="Grade 5">Grade 5</option>
+          <option value="Grade 6">Grade 6</option>
+        </select>
+        <label>Phone:</label><input type="tel" id="phone" placeholder="e.g., +254712345678" pattern="^\+?[1-9]\d{9,14}$" required>
         <label>Tuition:</label><input type="number" id="tuition" value="0">
         <label>Adm Fee:</label><input type="number" id="adm" value="0">
         <label>Book Fund:</label><input type="number" id="books" value="0">
@@ -105,6 +117,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <script>
+    // Initialize Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyBAA6zY40EwbTmWUx1op1cx52C3y0RK3m0",
       authDomain: "heriwadi-manager.firebaseapp.com",
@@ -115,8 +128,15 @@
       measurementId: "G-LLHS6GLB6E"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    let app, db;
+    try {
+      app = firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+    } catch (error) {
+      console.error('Firebase initialization error:', error);
+      showStatus("Failed to initialize Firebase. Check your configuration.", "error");
+      throw error;
+    }
     const studentsCollection = db.collection('students');
     const receiptsCollection = db.collection('receipts');
 
@@ -132,23 +152,43 @@
       }, 5000);
     }
 
+    async function sendSMS(phone, message) {
+      try {
+        const response = await fetch("/send-sms", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone, message })
+        });
+        const result = await response.json();
+        return result.success;
+      } catch (error) {
+        console.error('SMS Error:', error);
+        return false;
+      }
+    }
+
     async function populateStudents() {
       try {
         studentSelect.innerHTML = "<option value=''>Select a student...</option>";
         const snapshot = await studentsCollection.get();
-        const students = [];
+        if (snapshot.empty) {
+          console.log('No students found in Firestore');
+          showStatus("No students found. Add a student first.", "info");
+          return;
+        }
         snapshot.forEach(doc => {
-          students.push({ id: doc.id, ...doc.data() });
-        });
-
-        students.forEach(s => {
+          const s = { id: doc.id, ...doc.data() };
           const opt = document.createElement("option");
           opt.value = s.id;
-          opt.textContent = `${s.name} (${s.class}) - Balance: KES ${s.balance}`;
+          opt.textContent = `${s.name} (${s.class}) - Balance: KES ${s.balance || s.total || 0}`;
           studentSelect.appendChild(opt);
         });
       } catch (error) {
-        showStatus("Error loading students: " + error.message, "error");
+        console.error('Error populating students:', error);
+        showStatus(`Error loading students: ${error.message}. Check Firebase rules or network.`, "error");
+        if (error.code === 'permission-denied') {
+          showStatus("Permission denied. Update Firestore rules to allow read access.", "error");
+        }
       }
     }
 
@@ -156,6 +196,10 @@
       try {
         receiptsTable.innerHTML = "";
         const snapshot = await receiptsCollection.orderBy('date', 'desc').get();
+        if (snapshot.empty) {
+          console.log('No receipts found in Firestore');
+          return;
+        }
         snapshot.forEach(doc => {
           const r = { id: doc.id, ...doc.data() };
           const row = receiptsTable.insertRow();
@@ -182,7 +226,11 @@
           actionCell.appendChild(deleteBtn);
         });
       } catch (error) {
-        showStatus("Error loading receipts: " + error.message, "error");
+        console.error('Error updating receipt table:', error);
+        showStatus(`Error loading receipts: ${error.message}. Check Firebase rules or network.`, "error");
+        if (error.code === 'permission-denied') {
+          showStatus("Permission denied. Update Firestore rules to allow read access.", "error");
+        }
       }
     }
 
@@ -235,23 +283,19 @@
           transaction.set(receiptsCollection.doc(), receipt);
         });
 
-        const smsResponse = await fetch("/send-sms", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            phone: student.phone,
-            message: `Dear parent to ${student.name}, we have received KES ${amount}. Balance: KES ${updatedStudent.balance}. Thank you - Heriwadi Christian Schools`
-          })
-        });
-
-        const smsResult = await smsResponse.json();
-        showStatus(`Receipt saved${smsResult.success ? ' and SMS sent' : ''} successfully!`, "success");
+        const smsMessage = `Dear parent to ${student.name}, we have received KES ${amount}. Balance: KES ${updatedStudent.balance}. Thank you - Heriwadi Christian Schools`;
+        const smsSent = await sendSMS(student.phone, smsMessage);
+        showStatus(`Receipt saved${smsSent ? ' and SMS sent' : ''} successfully!`, "success");
 
         updateReceiptTable();
         populateStudents();
         this.reset();
       } catch (error) {
+        console.error('Error processing receipt:', error);
         showStatus(`Error: ${error.message}. Receipt may not have been saved.`, "error");
+        if (error.code === 'permission-denied') {
+          showStatus("Permission denied. Update Firestore rules to allow write access.", "error");
+        }
       } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = "Save Receipt & Send SMS";
@@ -273,16 +317,22 @@
       const name = document.getElementById("studentName").value.trim();
       const sclass = document.getElementById("studentClass").value.trim();
       const phone = document.getElementById("phone").value.trim();
-      const tuition = +document.getElementById("tuition").value;
-      const adm = +document.getElementById("adm").value;
-      const books = +document.getElementById("books").value;
-      const stationery = +document.getElementById("stationery").value;
-      const uniform = +document.getElementById("uniform").value;
-      const lunch = +document.getElementById("lunch").value;
-      const transport = +document.getElementById("transport").value;
+      const tuition = +document.getElementById("tuition").value || 0;
+      const adm = +document.getElementById("adm").value || 0;
+      const books = +document.getElementById("books").value || 0;
+      const stationery = +document.getElementById("stationery").value || 0;
+      const uniform = +document.getElementById("uniform").value || 0;
+      const lunch = +document.getElementById("lunch").value || 0;
+      const transport = +document.getElementById("transport").value || 0;
       
       if (!name || !sclass || !phone) {
         showStatus("Please fill in all required fields (Name, Class, Phone)", "error");
+        return;
+      }
+
+      const phoneRegex = /^\+?[1-9]\d{9,14}$/;
+      if (!phoneRegex.test(phone)) {
+        showStatus("Please enter a valid phone number (e.g., +254712345678)", "error");
         return;
       }
 
@@ -304,13 +354,19 @@
       };
 
       try {
-        await studentsCollection.add(newStudent);
+        const docRef = await studentsCollection.add(newStudent);
+        const welcomeMessage = `Welcome ${name} to Heriwadi Christian Schools! Total Fee: KES ${total}, Paid: KES 0, Balance: KES ${total}. Thank you - Heriwadi Christian Schools`;
+        const smsSent = await sendSMS(phone, welcomeMessage);
+        showStatus(`Student ${name} added${smsSent ? ' and welcome SMS sent' : ''} successfully!`, "success");
         this.reset();
         renderStudentList();
         populateStudents();
-        showStatus(`Student ${name} added successfully!`, "success");
       } catch (error) {
-        showStatus("Error adding student: " + error.message, "error");
+        console.error('Error adding student:', error);
+        showStatus(`Error adding student: ${error.message}. Check Firebase rules or network.`, "error");
+        if (error.code === 'permission-denied') {
+          showStatus("Permission denied. Update Firestore rules to allow write access.", "error");
+        }
       }
     });
 
@@ -319,6 +375,10 @@
         const list = document.getElementById("studentList");
         list.innerHTML = "";
         const snapshot = await studentsCollection.get();
+        if (snapshot.empty) {
+          list.innerHTML = "<li>No students found.</li>";
+          return;
+        }
         snapshot.forEach(doc => {
           const s = { id: doc.id, ...doc.data() };
           const li = document.createElement("li");
@@ -330,7 +390,11 @@
           list.appendChild(li);
         });
       } catch (error) {
+        console.error('Error rendering student list:', error);
         showStatus("Error loading student list: " + error.message, "error");
+        if (error.code === 'permission-denied') {
+          showStatus("Permission denied. Update Firestore rules to allow read access.", "error");
+        }
       }
     }
 
@@ -342,7 +406,11 @@
           populateStudents();
           showStatus("Student deleted successfully", "success");
         } catch (error) {
+          console.error('Error deleting student:', error);
           showStatus("Error deleting student: " + error.message, "error");
+          if (error.code === 'permission-denied') {
+            showStatus("Permission denied. Update Firestore rules to allow write access.", "error");
+          }
         }
       }
     }
@@ -354,7 +422,11 @@
           updateReceiptTable();
           showStatus("Receipt deleted successfully", "success");
         } catch (error) {
+          console.error('Error deleting receipt:', error);
           showStatus("Error deleting receipt: " + error.message, "error");
+          if (error.code === 'permission-denied') {
+            showStatus("Permission denied. Update Firestore rules to allow write access.", "error");
+          }
         }
       }
     }
@@ -373,7 +445,7 @@
           return;
         }
         const student = studentSnapshot.docs[0].data();
-        const receiptNumber = String(receiptsCollection.doc(id).id).slice(0, 4).padStart(4, '0');
+        const receiptNumber = String(receiptDoc.id).slice(0, 4).padStart(4, '0');
         const currentDate = new Date(receipt.date);
 
         const printWindow = window.open('', '', 'height=800,width=900');
@@ -643,7 +715,11 @@
         printWindow.document.close();
         printWindow.print();
       } catch (error) {
+        console.error('Error printing receipt:', error);
         showStatus("Error printing receipt: " + error.message, "error");
+        if (error.code === 'permission-denied') {
+          showStatus("Permission denied. Update Firestore rules to allow read access.", "error");
+        }
       }
     }
 
@@ -804,10 +880,15 @@
         doc.save("heriwadi_official_receipts.pdf");
         showStatus("Official receipts PDF exported successfully!", "success");
       } catch (error) {
+        console.error('Error exporting PDF:', error);
         showStatus("Error exporting PDF: " + error.message, "error");
+        if (error.code === 'permission-denied') {
+          showStatus("Permission denied. Update Firestore rules to allow read access.", "error");
+        }
       }
     }
 
+    // Initialize page
     populateStudents();
     updateReceiptTable();
   </script>
