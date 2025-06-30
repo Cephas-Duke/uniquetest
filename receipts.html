@@ -105,6 +105,7 @@
         <label>Uniform:</label><input type="number" id="uniform" value="0">
         <label>Lunch:</label><input type="number" id="lunch" value="0">
         <label>Transport:</label><input type="number" id="transport" value="0">
+        <label>Trip:</label><input type="number" id="trip" value="0">
         <button type="submit">Add Student</button>
       </form>
       <hr>
@@ -326,6 +327,7 @@
       const uniform = +document.getElementById("uniform").value || 0;
       const lunch = +document.getElementById("lunch").value || 0;
       const transport = +document.getElementById("transport").value || 0;
+      const trip = +document.getElementById("trip").value || 0;
       
       if (!name || !sclass || !phone) {
         showStatus("Please fill in all required fields (Name, Class, Phone)", "error");
@@ -338,7 +340,7 @@
         return;
       }
 
-      const total = tuition + adm + books + stationery + uniform + lunch + transport;
+      const total = tuition + adm + books + stationery + uniform + lunch + transport + trip;
       const newStudent = { 
         name, 
         class: sclass, 
@@ -350,6 +352,7 @@
         uniform, 
         lunch, 
         transport, 
+        trip,
         total, 
         paid: 0, 
         balance: total 
@@ -697,6 +700,12 @@
                     <td>${student.transport > 0 ? (student.transport > (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0) - (student.uniform > 0 ? student.uniform : 0) - (student.books > 0 ? student.books : 0) - (student.stationery > 0 ? student.stationery : 0)) ? (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0) - (student.uniform > 0 ? student.uniform : 0) - (student.books > 0 ? student.books : 0) - (student.stationery > 0 ? student.stationery : 0)).toLocaleString() : student.transport.toLocaleString()) : '0'}</td>
                     <td>${student.transport > 0 ? (student.transport - (student.transport > (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0) - (student.uniform > 0 ? student.uniform : 0) - (student.books > 0 ? student.books : 0) - (student.stationery > 0 ? student.stationery : 0)) ? (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0) - (student.uniform > 0 ? student.uniform : 0) - (student.books > 0 ? student.books : 0) - (student.stationery > 0 ? student.stationery : 0)) : student.transport)).toLocaleString() : '0'}</td>
                   </tr>
+                  <tr class="fees-row">
+                    <td>Trip</td>
+                    <td>${student.trip > 0 ? student.trip.toLocaleString() : '0'}</td>
+                    <td>${student.trip > 0 ? (student.trip > (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0) - (student.uniform > 0 ? student.uniform : 0) - (student.books > 0 ? student.books : 0) - (student.stationery > 0 ? student.stationery : 0) - (student.transport > 0 ? student.transport : 0)) ? (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0) - (student.uniform > 0 ? student.uniform : 0) - (student.books > 0 ? student.books : 0) - (student.stationery > 0 ? student.stationery : 0) - (student.transport > 0 ? student.transport : 0)).toLocaleString() : student.trip.toLocaleString()) : '0'}</td>
+                    <td>${student.trip > 0 ? (student.trip - (student.trip > (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0) - (student.uniform > 0 ? student.uniform : 0) - (student.books > 0 ? student.books : 0) - (student.stationery > 0 ? student.stationery : 0) - (student.transport > 0 ? student.transport : 0)) ? (receipt.paid - (student.tuition > 0 ? student.tuition : 0) - (student.adm > 0 ? student.adm : 0) - (student.lunch > 0 ? student.lunch : 0) - (student.uniform > 0 ? student.uniform : 0) - (student.books > 0 ? student.books : 0) - (student.stationery > 0 ? student.stationery : 0) - (student.transport > 0 ? student.transport : 0)) : student.trip)).toLocaleString() : '0'}</td>
+                  </tr>
                   <tr class="total-row">
                     <td colspan="3" style="text-align: right; padding-right: 10px;"><strong>Receipt Balance</strong></td>
                     <td><strong>${receipt.balance.toLocaleString()}</strong></td>
@@ -818,6 +827,7 @@
               '',
               student?.stationery > 0 ? student.stationery.toString() : '',
               student?.transport > 0 ? student.transport.toString() : '',
+              student?.trip > 0 ? student.trip.toString() : '',
               '',
               receipt.paid.toString()
             ]];
@@ -826,9 +836,9 @@
               startY: 135,
               head: [['School fees', 'Admission fees', 'Caution fees', 'Interview', 'Tuition', 
                      'Lunch', 'Swimming', 'Uniform', 'Book fund', 'Medical', 
-                     'Stationery', 'Transport', 'School Activities', 'AMOUNT (KSHS)']],
+                     'Stationery', 'Transport', 'Trip', 'School Activities', 'AMOUNT (KSHS)']],
               body: tableData,
-              foot: [['', '', '', '', '', '', '', '', '', '', '', '', 'TOTAL', receipt.paid.toString()]],
+              foot: [['', '', '', '', '', '', '', '', '', '', '', '', '', 'TOTAL', receipt.paid.toString()]],
               theme: 'grid',
               styles: { fontSize: 8, cellPadding: 2 },
               headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] },
@@ -867,6 +877,10 @@
             }
             if (student?.transport > 0) {
               doc.text(`Transport: KES ${student.transport.toLocaleString()}`, 20, yPos);
+              yPos += 6;
+            }
+            if (student?.trip > 0) {
+              doc.text(`Trip: KES ${student.trip.toLocaleString()}`, 20, yPos);
               yPos += 6;
             }
 
