@@ -191,9 +191,12 @@
         <option value="Grade 6">Grade 6</option>
       </select>
     </div>
-    <div style="max-width:800px; margin:auto;">
+    <div style="max-width:800px; margin:auto; display: flex; gap: 10px;">
       <button onclick="exportToExcel()" style="background:green;color:white;padding:10px;margin-top:10px;border:none;border-radius:5px;">
         Export All Students to Excel
+      </button>
+      <button onclick="exportClassToExcel()" style="background:#ff9800;color:white;padding:10px;margin-top:10px;border:none;border-radius:5px;">
+        Export Selected Class to Excel
       </button>
     </div>
 
@@ -540,7 +543,7 @@
         });
 
         if (students.length === 0) {
-          showStatus("No student data available to export.", "error");
+          showStatus("NoEquality student data available to export.", "error");
           return;
         }
 
@@ -551,6 +554,35 @@
         showStatus("Students data exported to Excel successfully!", "success");
       } catch (error) {
         showStatus("Error exporting to Excel: " + error.message, "error");
+      }
+    }
+
+    async function exportClassToExcel() {
+      const classFilter = document.getElementById('classFilter').value;
+      if (!classFilter) {
+        showStatus("Please select a class to export.", "error");
+        return;
+      }
+
+      try {
+        const snapshot = await studentsCollection.where('class', '==', classFilter).get();
+        const students = [];
+        snapshot.forEach(doc => {
+          students.push(doc.data());
+        });
+
+        if (students.length === 0) {
+          showStatus(`No students found in ${classFilter} to export.`, "error");
+          return;
+        }
+
+        const worksheet = XLSX.utils.json_to_sheet(students);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, classFilter);
+        XLSX.writeFile(workbook, `${classFilter}_students_${new Date().toISOString().split('T')[0]}.xlsx`);
+        showStatus(`Students from ${classFilter} exported to Excel successfully!`, "success");
+      } catch (error) {
+        showStatus("Error exporting class to Excel: " + error.message, "error");
       }
     }
 
