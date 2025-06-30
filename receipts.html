@@ -132,8 +132,9 @@
     try {
       app = firebase.initializeApp(firebaseConfig);
       db = firebase.firestore();
+      console.log("Firebase initialized successfully");
     } catch (error) {
-      console.error('Firebase initialization error:', error);
+      console.error("Firebase initialization error:", error.message, error.stack);
       showStatus("Failed to initialize Firebase. Check your configuration.", "error");
       throw error;
     }
@@ -144,9 +145,11 @@
       const studentSelect = document.getElementById("studentSelect");
       const statusMessage = document.getElementById("statusMessage");
       const submitBtn = document.getElementById("submitBtn");
+      console.log("DOM content loaded");
     });
 
     function showStatus(message, type = 'info') {
+      const statusMessage = document.getElementById("statusMessage");
       statusMessage.innerHTML = `<div class="${type}">${message}</div>`;
       setTimeout(() => {
         statusMessage.innerHTML = '';
@@ -155,21 +158,26 @@
 
     async function sendSMS(phone, message) {
       try {
+        console.log("Sending SMS to", phone, "with message:", message);
         const response = await fetch("/send-sms", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ phone, message })
         });
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const result = await response.json();
+        console.log("SMS response:", result);
         return result.success;
       } catch (error) {
-        console.error('SMS Error:', error);
+        console.error("SMS Error:", error.message, error.stack);
+        showStatus(`SMS failed: ${error.message}`, "error");
         return false;
       }
     }
 
     async function populateStudents() {
       try {
+        const studentSelect = document.getElementById("studentSelect");
         studentSelect.innerHTML = "<option value=''>Select a student...</option>";
         const snapshot = await studentsCollection.get();
         if (snapshot.empty) {
@@ -184,8 +192,9 @@
           opt.textContent = `${s.name} (${s.class}) - Balance: ${s.balance || s.total || 0}`;
           studentSelect.appendChild(opt);
         });
+        console.log("Students populated successfully");
       } catch (error) {
-        console.error('Error populating students:', error);
+        console.error('Error populating students:', error.message, error.stack);
         showStatus(`Error loading students: ${error.message}. Check Firebase rules or network.`, "error");
         if (error.code === 'permission-denied') {
           showStatus("Permission denied. Update Firestore rules to allow read access.", "error");
@@ -292,8 +301,9 @@
           groupedReceipts.appendChild(section);
           table.style.display = 'none'; // Initially collapsed
         });
+        console.log("Receipt table updated successfully");
       } catch (error) {
-        console.error('Error updating receipt table:', error);
+        console.error('Error updating receipt table:', error.message, error.stack);
         showStatus(`Error loading receipts: ${error.message}. Check Firebase rules or network.`, "error");
         if (error.code === 'permission-denied') {
           showStatus("Permission denied. Update Firestore rules to allow read access.", "error");
@@ -304,7 +314,7 @@
     document.getElementById("receiptForm").addEventListener("submit", async function(e) {
       e.preventDefault();
       
-      const studentId = studentSelect.value;
+      const studentId = document.getElementById("studentSelect").value;
       if (!studentId) {
         showStatus("Please select a student", "error");
         return;
@@ -318,6 +328,7 @@
         return;
       }
 
+      const submitBtn = document.getElementById("submitBtn");
       submitBtn.disabled = true;
       submitBtn.textContent = "Processing...";
       showStatus("Processing payment and sending SMS...", "loading");
@@ -358,7 +369,7 @@
 
         const currentDate = new Date(receipt.date);
         const smsMessage = `Dear parent to ${student.name}, grade ${student.class}, we have received payment of KES ${amount} and issued receipt No. ${receiptNumber}. Fee balance is ${updatedStudent.balance} as at ${currentDate.toLocaleDateString('en-GB')} ${currentDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()`;
-        console.log("SMS Message:", smsMessage); // Debug log
+        console.log("SMS Message:", smsMessage);
         const smsSent = await sendSMS(student.phone, smsMessage);
         showStatus(`Receipt saved${smsSent ? ' and SMS sent' : ''} successfully!`, "success");
 
@@ -366,7 +377,7 @@
         populateStudents();
         this.reset();
       } catch (error) {
-        console.error('Error processing receipt:', error);
+        console.error('Error processing receipt:', error.message, error.stack);
         showStatus(`Error: ${error.message}. Receipt may not have been saved.`, "error");
         if (error.code === 'permission-denied') {
           showStatus("Permission denied. Update Firestore rules to allow write access.", "error");
@@ -437,7 +448,7 @@
         renderStudentList();
         populateStudents();
       } catch (error) {
-        console.error('Error adding student:', error);
+        console.error('Error adding student:', error.message, error.stack);
         showStatus(`Error adding student: ${error.message}. Check Firebase rules or network.`, "error");
         if (error.code === 'permission-denied') {
           showStatus("Permission denied. Update Firestore rules to allow write access.", "error");
@@ -464,8 +475,9 @@
           `;
           list.appendChild(li);
         });
+        console.log("Student list rendered successfully");
       } catch (error) {
-        console.error('Error rendering student list:', error);
+        console.error('Error rendering student list:', error.message, error.stack);
         showStatus("Error loading student list: " + error.message, "error");
         if (error.code === 'permission-denied') {
           showStatus("Permission denied. Update Firestore rules to allow read access.", "error");
@@ -481,7 +493,7 @@
           populateStudents();
           showStatus("Student deleted successfully", "success");
         } catch (error) {
-          console.error('Error deleting student:', error);
+          console.error('Error deleting student:', error.message, error.stack);
           showStatus("Error deleting student: " + error.message, "error");
           if (error.code === 'permission-denied') {
             showStatus("Permission denied. Update Firestore rules to allow write access.", "error");
@@ -497,7 +509,7 @@
           updateReceiptTable();
           showStatus("Receipt deleted successfully", "success");
         } catch (error) {
-          console.error('Error deleting receipt:', error);
+          console.error('Error deleting receipt:', error.message, error.stack);
           showStatus("Error deleting receipt: " + error.message, "error");
           if (error.code === 'permission-denied') {
             showStatus("Permission denied. Update Firestore rules to allow write access.", "error");
@@ -801,7 +813,7 @@
         printWindow.document.close();
         printWindow.print();
       } catch (error) {
-        console.error('Error printing receipt:', error);
+        console.error('Error printing receipt:', error.message, error.stack);
         showStatus("Error printing receipt: " + error.message, "error");
         if (error.code === 'permission-denied') {
           showStatus("Permission denied. Update Firestore rules to allow read access.", "error");
@@ -896,7 +908,7 @@
         }
         showStatus("Export by class to PDF completed!", "success");
       } catch (error) {
-        console.error('Error exporting by class to PDF:', error);
+        console.error('Error exporting by class to PDF:', error.message, error.stack);
         showStatus("Error exporting by class to PDF: " + error.message, "error");
       }
     }
@@ -1067,7 +1079,7 @@
         doc.save("heriwadi_consolidated_receipts.pdf");
         showStatus("Consolidated receipts PDF exported successfully!", "success");
       } catch (error) {
-        console.error('Error exporting consolidated PDF:', error);
+        console.error('Error exporting consolidated PDF:', error.message, error.stack);
         showStatus("Error exporting consolidated PDF: " + error.message, "error");
         if (error.code === 'permission-denied') {
           showStatus("Permission denied. Update Firestore rules to allow read access.", "error");
@@ -1129,7 +1141,7 @@
         XLSX.writeFile(wb, "fee_income.xlsx");
         showStatus("Export to Excel completed!", "success");
       } catch (error) {
-        console.error('Error exporting to Excel:', error);
+        console.error('Error exporting to Excel:', error.message, error.stack);
         showStatus("Error exporting to Excel: " + error.message, "error");
       }
     }
