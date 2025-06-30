@@ -18,6 +18,9 @@
     th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
     th { background: #0077cc; color: white; }
     .tools { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .success { color: green; font-weight: bold; }
+    .error { color: red; font-weight: bold; }
+    .loading { color: blue; font-style: italic; }
     @media print {
       .tools, form, nav, header { display: none; }
       main { box-shadow: none; }
@@ -37,7 +40,7 @@
   <a href="expense.html">Expenses</a>
   <a href="assets.html" style="text-decoration: underline;">Assets</a>
   <a href="staff.html">Staff</a>
-  <a href="payroll.html" style="text-decoration: underline;">Payroll</a>
+  <a href="payroll.html">Payroll</a>
 </nav>
 
 <main>
@@ -81,125 +84,193 @@
   </table>
 </main>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+
 <script>
-let assets = JSON.parse(localStorage.getItem("assets")) || [];
+  // Initialize Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyBAA6zY40EwbTmWUx1op1cx52C3y0RK3m0",
+    authDomain: "heriwadi-manager.firebaseapp.com",
+    projectId: "heriwadi-manager",
+    storageBucket: "heriwadi-manager.firebasestorage.app",
+    messagingSenderId: "654632910809",
+    appId: "1:654632910809:web:7c65613d2510402a6663c8",
+    measurementId: "G-LLHS6GLB6E"
+  };
 
-function updateAmount() {
-  const quantity = parseFloat(document.getElementById("quantity").value) || 0;
-  const unitCost = parseFloat(document.getElementById("unitCost").value) || 0;
-  document.getElementById("amount").value = (quantity * unitCost).toFixed(2);
-}
-
-function renderAssets() {
-  const tbody = document.querySelector("#assetTable tbody");
-  tbody.innerHTML = "";
-
-  assets.forEach((a, index) => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${a.description}</td>
-      <td>${a.serialNo}</td>
-      <td>${a.supplier}</td>
-      <td>${a.category}</td>
-      <td>${a.quantity}</td>
-      <td>${a.unitCost.toFixed(2)}</td>
-      <td>${a.amount.toFixed(2)}</td>
-      <td>${a.acquisitionDate}</td>
-      <td>${a.usefulLife}</td>
-      <td>
-        <button onclick="editAsset(${index})">Edit</button>
-        <button onclick="deleteAsset(${index})">Delete</button>
-      </td>
-    `;
-    tbody.appendChild(row);
-  });
-}
-
-function editAsset(index) {
-  const a = assets[index];
-  document.getElementById("description").value = a.description;
-  document.getElementById("acquisitionDate").value = a.acquisitionDate;
-  document.getElementById("serialNo").value = a.serialNo;
-  document.getElementById("supplier").value = a.supplier;
-  document.getElementById("category").value = a.category;
-  document.getElementById("quantity").value = a.quantity;
-  document.getElementById("unitCost").value = a.unitCost;
-  document.getElementById("amount").value = a.amount;
-  document.getElementById("usefulLife").value = a.usefulLife;
-
-  assets.splice(index, 1);
-  localStorage.setItem("assets", JSON.stringify(assets));
-  renderAssets();
-}
-
-function deleteAsset(index) {
-  if (confirm("Are you sure you want to delete this asset?")) {
-    assets.splice(index, 1);
-    localStorage.setItem("assets", JSON.stringify(assets));
-    renderAssets();
+  let app, db;
+  try {
+    app = firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+  } catch (error) {
+    console.error('Firebase initialization error:', error);
+    showStatus("Failed to initialize Firebase. Check your configuration.", "error");
+    throw error;
   }
-}
+  const assetsCollection = db.collection('assets');
 
-document.getElementById("assetForm").addEventListener("submit", function (e) {
-  e.preventDefault();
-  const asset = {
-    description: document.getElementById("description").value,
-    acquisitionDate: document.getElementById("acquisitionDate").value,
-    serialNo: document.getElementById("serialNo").value,
-    supplier: document.getElementById("supplier").value,
-    category: document.getElementById("category").value,
-    quantity: parseInt(document.getElementById("quantity").value),
-    unitCost: parseFloat(document.getElementById("unitCost").value),
-    amount: parseFloat(document.getElementById("amount").value),
-    usefulLife: parseInt(document.getElementById("usefulLife").value),
-  };
-  assets.push(asset);
-  localStorage.setItem("assets", JSON.stringify(assets));
-  this.reset();
-  renderAssets();
-});
+  function showStatus(message, type = 'info') {
+    const statusDiv = document.createElement('div');
+    statusDiv.className = type;
+    statusDiv.textContent = message;
+    document.querySelector('main').insertBefore(statusDiv, document.querySelector('main').firstChild);
+    setTimeout(() => statusDiv.remove(), 5000);
+  }
 
-function exportAssetsToExcel() {
-  let csv = "Description,Serial No,Supplier,Category,Quantity,Unit Cost,Amount,Date Acquired,Useful Life\\n";
-  assets.forEach(a => {
-    csv += `${a.description},${a.serialNo},${a.supplier},${a.category},${a.quantity},${a.unitCost},${a.amount},${a.acquisitionDate},${a.usefulLife}\\n`;
-  });
-  const blob = new Blob([csv], { type: "text/csv" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "assets.csv";
-  a.click();
-}
+  function updateAmount() {
+    const quantity = parseFloat(document.getElementById("quantity").value) || 0;
+    const unitCost = parseFloat(document.getElementById("unitCost").value) || 0;
+    document.getElementById("amount").value = (quantity * unitCost).toFixed(2);
+  }
 
-function backupAssets() {
-  const blob = new Blob([JSON.stringify(assets)], { type: "application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "assets_backup.json";
-  a.click();
-}
+  function renderAssets(assetsData) {
+    const tbody = document.querySelector("#assetTable tbody");
+    tbody.innerHTML = "";
+    assetsData.forEach((a, index) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${a.description}</td>
+        <td>${a.serialNo || ''}</td>
+        <td>${a.supplier || ''}</td>
+        <td>${a.category}</td>
+        <td>${a.quantity}</td>
+        <td>${a.unitCost.toFixed(2)}</td>
+        <td>${a.amount.toFixed(2)}</td>
+        <td>${a.acquisitionDate}</td>
+        <td>${a.usefulLife || ''}</td>
+        <td>
+          <button onclick="editAsset('${a.id}')">Edit</button>
+          <button onclick="deleteAsset('${a.id}')">Delete</button>
+        </td>
+      `;
+      tbody.appendChild(row);
+    });
+  }
 
-function restoreAssets(event) {
-  const file = event.target.files[0];
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    try {
-      const data = JSON.parse(e.target.result);
-      if (Array.isArray(data)) {
-        assets = data;
-        localStorage.setItem("assets", JSON.stringify(assets));
-        renderAssets();
+  // Load assets from Firestore
+  function loadAssets() {
+    assetsCollection.onSnapshot(snapshot => {
+      const assetsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      renderAssets(assetsData);
+    }, error => {
+      console.error('Error loading assets:', error);
+      showStatus(`Error loading assets: ${error.message}. Check Firebase rules or network.`, "error");
+    });
+  }
+
+  function editAsset(id) {
+    assetsCollection.doc(id).get().then(doc => {
+      if (doc.exists) {
+        const a = doc.data();
+        document.getElementById("description").value = a.description;
+        document.getElementById("acquisitionDate").value = a.acquisitionDate;
+        document.getElementById("serialNo").value = a.serialNo || '';
+        document.getElementById("supplier").value = a.supplier || '';
+        document.getElementById("category").value = a.category;
+        document.getElementById("quantity").value = a.quantity;
+        document.getElementById("unitCost").value = a.unitCost;
+        document.getElementById("amount").value = a.amount;
+        document.getElementById("usefulLife").value = a.usefulLife || '';
       } else {
-        alert("Invalid file format.");
+        showStatus("Asset not found.", "error");
       }
-    } catch {
-      alert("Failed to restore backup.");
-    }
-  };
-  reader.readAsText(file);
-}
+    }).catch(error => {
+      console.error('Error fetching asset:', error);
+      showStatus(`Error: ${error.message}.`, "error");
+    });
+  }
 
-renderAssets();
+  function deleteAsset(id) {
+    if (confirm("Are you sure you want to delete this asset?")) {
+      assetsCollection.doc(id).delete().then(() => {
+        showStatus("Asset deleted successfully", "success");
+      }).catch(error => {
+        console.error('Error deleting asset:', error);
+        showStatus(`Error: ${error.message}.`, "error");
+      });
+    }
+  }
+
+  document.getElementById("assetForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const asset = {
+      description: document.getElementById("description").value,
+      acquisitionDate: document.getElementById("acquisitionDate").value,
+      serialNo: document.getElementById("serialNo").value,
+      supplier: document.getElementById("supplier").value,
+      category: document.getElementById("category").value,
+      quantity: parseInt(document.getElementById("quantity").value),
+      unitCost: parseFloat(document.getElementById("unitCost").value),
+      amount: parseFloat(document.getElementById("amount").value),
+      usefulLife: parseInt(document.getElementById("usefulLife").value) || null,
+    };
+    assetsCollection.add(asset).then(() => {
+      showStatus("Asset added successfully", "success");
+      this.reset();
+      updateAmount(); // Reset amount field
+    }).catch(error => {
+      console.error('Error adding asset:', error);
+      showStatus(`Error: ${error.message}. Check Firebase rules or network.`, "error");
+    });
+  });
+
+  function exportAssetsToExcel() {
+    assetsCollection.get().then(snapshot => {
+      let csv = "Description,Serial No,Supplier,Category,Quantity,Unit Cost,Amount,Date Acquired,Useful Life\n";
+      snapshot.forEach(doc => {
+        const a = doc.data();
+        csv += `${a.description},${a.serialNo || ''},${a.supplier || ''},${a.category},${a.quantity},${a.unitCost},${a.amount},${a.acquisitionDate},${a.usefulLife || ''}\n`;
+      });
+      const blob = new Blob([csv], { type: "text/csv" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "assets.csv";
+      a.click();
+    }).catch(error => {
+      console.error('Error exporting to Excel:', error);
+      showStatus(`Error exporting to Excel: ${error.message}.`, "error");
+    });
+  }
+
+  function backupAssets() {
+    assetsCollection.get().then(snapshot => {
+      const assetsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const blob = new Blob([JSON.stringify(assetsData)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "assets_backup.json";
+      a.click();
+    }).catch(error => {
+      console.error('Error creating backup:', error);
+      showStatus(`Error creating backup: ${error.message}.`, "error");
+    });
+  }
+
+  function restoreAssets(event) {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (Array.isArray(data)) {
+          data.forEach(asset => {
+            delete asset.id; // Remove id to avoid conflicts
+            assetsCollection.add(asset).catch(error => console.error('Error restoring asset:', error));
+          });
+          showStatus("Assets restored successfully", "success");
+        } else {
+          showStatus("Invalid file format.", "error");
+        }
+      } catch {
+        showStatus("Failed to restore backup.", "error");
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // Initialize page
+  loadAssets();
 </script>
 </body>
 </html>
