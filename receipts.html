@@ -445,8 +445,12 @@
           return;
         }
         const student = studentSnapshot.docs[0].data();
-        const receiptNumber = String(receiptDoc.id).slice(0, 4).padStart(4, '0');
         const currentDate = new Date(receipt.date);
+
+        // Get total number of receipts for auto-incrementing receipt number
+        const snapshot = await receiptsCollection.get();
+        const receiptCount = snapshot.size + 1; // Start from 1
+        const receiptNumber = String(receiptCount).padStart(3, '0');
 
         const printWindow = window.open('', '', 'height=800,width=900');
         printWindow.document.write(`
@@ -470,15 +474,20 @@
                   padding-bottom: 15px;
                 }
                 .school-logo {
-                  width: 50px;
-                  height: 50px;
+                  width: 70px;
+                  height: 70px;
                   margin: 0 auto 10px;
                   border: 2px solid #000;
                   display: flex;
                   align-items: center;
                   justify-content: center;
                   font-weight: bold;
-                  font-size: 8px;
+                  font-size: 10px;
+                }
+                .school-motto {
+                  font-size: 12px;
+                  font-weight: bold;
+                  margin: 5px 0;
                 }
                 .school-name { 
                   font-size: 18px; 
@@ -544,10 +553,9 @@
                 .fees-table th { 
                   background-color: #f8f8f8; 
                   font-weight: bold; 
-                  font-size: 8px;
-                  writing-mode: vertical-rl;
-                  text-orientation: mixed;
-                  height: 80px;
+                  font-size: 9px;
+                  writing-mode: horizontal-tb;
+                  text-orientation: initial;
                 }
                 .fees-table .amount-header {
                   writing-mode: horizontal-tb;
@@ -609,11 +617,13 @@
             <body>
               <div class="header">
                 <div class="school-logo">
-                  <img src="photos/school-logo.jpg" alt="School Logo" style="width: 40px; height: 40px;" onerror="this.style.display='none'; this.parentNode.innerHTML='LOGO';">
+                  <img src="photos/school-logo.jpg" alt="School Logo" style="width: 60px; height: 60px;" onerror="this.style.display='none'; this.parentNode.innerHTML='LOGO';">
                 </div>
+                <div class="school-motto">LEARN, LEAD, ACHIEVE</div>
                 <div class="school-name">HERIWADI CHRISTIAN SCHOOLS</div>
-                <div class="contact-info">P.O. Box 921 - 0511 Ongata Rongai</div>
-                <div class="contact-info">Contact: 0723 322449</div>
+                <div class="contact-info">Physical Address: Ongata Rongai</div>
+                <div class="contact-info">Postal Address: P.O. Box 921 - 0511, Ongata Rongai, Kenya</div>
+                <div class="contact-info">Mobile: 0723 322449</div>
                 <div class="contact-info">Email: heriwadis@gmail.com</div>
               </div>
 
@@ -638,10 +648,10 @@
               <table class="fees-table">
                 <thead>
                   <tr>
-                    <th>Fee Item</th>
-                    <th>Fee Charged</th>
-                    <th>Fee Paid</th>
-                    <th>Balance</th>
+                    <th><strong>Fee Item</strong></th>
+                    <th><strong>Fee Charged</strong></th>
+                    <th><strong>Fee Paid</strong></th>
+                    <th><strong>Balance</strong></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -746,8 +756,12 @@
           const studentSnapshot = await studentsCollection.where('name', '==', receipt.name).get();
           if (studentSnapshot.empty) continue;
           const student = studentSnapshot.docs[0].data();
-          const receiptNumber = String(docSnapshot.id).slice(0, 4).padStart(4, '0');
           const currentDate = new Date(receipt.date);
+
+          // Get total number of receipts for auto-incrementing receipt number
+          const receiptSnapshot = await receiptsCollection.get();
+          const receiptCount = receiptSnapshot.size + 1; // Start from 1
+          const receiptNumber = String(receiptCount).padStart(3, '0');
 
           if (!isFirstReceipt) {
             doc.addPage();
