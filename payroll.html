@@ -70,11 +70,17 @@
 
     let app, db;
     try {
-      app = firebase.initializeApp(firebaseConfig);
+      // Check if Firebase is already initialized to avoid duplicate initialization
+      if (!firebase.apps.length) {
+        app = firebase.initializeApp(firebaseConfig);
+      } else {
+        app = firebase.app();
+      }
       db = firebase.firestore();
+      console.log("Firebase initialized successfully");
     } catch (error) {
       console.error('Firebase initialization error:', error);
-      showStatus("Failed to initialize Firebase. Check your configuration.", "error");
+      showStatus("Failed to initialize Firebase. Check your configuration or network connection.", "error");
       throw error;
     }
     const staffCollection = db.collection('staff');
@@ -109,24 +115,38 @@
       row.querySelector(".nita").textContent = nita.toFixed(2);
     }
 
-    function loadPayroll() {
+    async function loadPayroll() {
       const tbody = document.getElementById("payrollBody");
       tbody.innerHTML = "";
+      showStatus("Loading payroll data...", "loading");
 
-      staffCollection.get().then(snapshot => {
+      try {
+        const snapshot = await staffCollection.get();
+        console.log(`Retrieved ${snapshot.size} staff records`);
+
+        if (snapshot.empty) {
+          console.warn("No staff records found in Firestore");
+          showStatus("No staff records found. Please add staff members in the Staff module.", "error");
+          return;
+        }
+
         snapshot.forEach(doc => {
           const staff = { id: doc.id, ...doc.data() };
-          const row = document.createElement("tr");
-          const gross = staff.salary || 0;
-          const advance = staff.advance || 0;
+          console.log(`Processing staff: ${staff.fullName || 'Unknown'}`, staff);
+
+          // Ensure required fields have default values if missing
+          const gross = parseFloat(staff.salary) || 0;
+          const advance = parseFloat(staff.advance) || 0;
+          const fullName = staff.fullName || `Staff_${doc.id}`; // FFallback name if fullName is missing
 
           const paye = gross * 0.1;
           const nssf = gross * 0.06;
           const shif = gross * 0.025;
           const ahl = gross * 0.03;
 
+          const row = document.createElement("tr");
           row.innerHTML = `
-            <td>${staff.fullName}</td>
+            <td>${fullName}</td>
             <td><input class="gross" type="number" value="${gross.toFixed(2)}" /></td>
             <td><input class="paye" type="number" value="${paye.toFixed(2)}" /></td>
             <td><input class="nssf" type="number" value="${nssf.toFixed(2)}" /></td>
@@ -149,7 +169,7 @@
           });
 
           row.querySelector(".payslipBtn").addEventListener("click", () => {
-            const name = staff.fullName;
+            const name = fullName;
             const gross = parseFloat(row.querySelector(".gross").value) || 0;
             const paye = parseFloat(row.querySelector(".paye").value) || 0;
             const nssf = parseFloat(row.querySelector(".nssf").value) || 0;
@@ -186,7 +206,7 @@
           const savePayroll = () => {
             const payrollData = {
               staffId: staff.id,
-              fullName: staff.fullName,
+              fullName: fullName,
               gross: parseFloat(row.querySelector(".gross").value) || 0,
               paye: parseFloat(row.querySelector(".paye").value) || 0,
               nssf: parseFloat(row.querySelector(".nssf").value) || 0,
@@ -202,7 +222,7 @@
             };
             payrollCollection.doc(staff.id).set(payrollData, { merge: true }).catch(error => {
               console.error('Error saving payroll:', error);
-              showStatus(`Error saving payroll: ${error.message}.`, "error");
+              showStatus(`Error saving payroll for ${fullName}: ${error.message}.`, "error");
             });
           };
 
@@ -210,10 +230,12 @@
             input.addEventListener("change", savePayroll);
           });
         });
-      }).catch(error => {
+
+        showStatus("Payroll data loaded successfully", "success");
+      } catch (error) {
         console.error('Error loading staff:', error);
-        showStatus(`Error loading staff: ${error.message}. Check Firebase rules or network.`, "error");
-      });
+        showStatus(`Error loading staff: ${error.message}. Check Firebase rules, network, or data structure.`, "error");
+      }
     }
 
     function downloadPayrollPDF() {
@@ -355,7 +377,6 @@
       let totalNetPay = 0;
 
       document.querySelectorAll("#payrollBody tr").forEach(row => {
-        const name Marta 2
         const name = row.cells[0].textContent.trim();
         const netPay = parseFloat(row.querySelector(".net").textContent) || 0;
         data.push([name, netPay.toFixed(2)]);
