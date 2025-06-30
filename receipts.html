@@ -11,15 +11,18 @@
     nav a { color:white; text-decoration:none; padding:6px 10px; border-radius:4px; transition: background 0.3s; }
     nav a:hover { background:#0059b3; }
     h2 { color: #333; padding: 0 20px; }
-    form, table { background: white; padding: 20px; border-radius: 8px; margin: 20px; }
+    form, .class-section { background: white; padding: 20px; border-radius: 8px; margin: 20px; }
     input, select, button { margin: 5px 0; padding: 8px; width: 100%; border: 1px solid #ccc; border-radius: 4px; }
     label { margin-top: 10px; display: block; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    .class-section h3 { background-color: #005fa3; color: white; padding: 10px; margin: -20px -20px 10px -20px; cursor: pointer; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
     th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+    th { background-color: #0077cc; color: white; }
     #studentManagerModal { overflow-y: auto; max-height: 90vh; }
     .success { color: green; font-weight: bold; }
     .error { color: red; font-weight: bold; }
     .loading { color: blue; font-style: italic; }
+    #searchInput { width: 100%; max-width: 300px; margin: 10px 0; }
   </style>
 </head>
 <body>
@@ -41,7 +44,7 @@
   <h2>Issue Fee Receipt</h2>
   <div style="padding: 0 20px;">
     <button onclick="openStudentManager()">Manage Students</button>
-    <button onclick="exportPDF()">Export PDF</button>
+    <button onclick="exportConsolidatedPDF()">Export All Receipts to PDF</button>
     <button onclick="window.print()">Print</button>
   </div>
 
@@ -64,19 +67,11 @@
     <button type="submit" id="submitBtn">Save Receipt & Send SMS</button>
   </form>
 
-  <table id="receiptsTable">
-    <thead>
-      <tr>
-        <th>Student</th>
-        <th>Class</th>
-        <th>Amount Paid</th>
-        <th>Balance</th>
-        <th>Payment Mode</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <div style="padding: 0 20px;">
+    <input type="text" id="searchInput" placeholder="Search by student name..." oninput="updateReceiptTable()">
+  </div>
+
+  <div id="groupedReceipts"></div>
 
   <div id="studentManagerModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:9999;">
     <div style="background:#fff; padding:20px; border-radius:10px; width:90%; max-width:600px; position:relative; max-height:90vh; overflow-y:auto;">
@@ -143,7 +138,6 @@
 
     document.addEventListener('DOMContentLoaded', function() {
       const studentSelect = document.getElementById("studentSelect");
-      const receiptsTable = document.querySelector("#receiptsTable tbody");
       const statusMessage = document.getElementById("statusMessage");
       const submitBtn = document.getElementById("submitBtn");
     });
@@ -197,36 +191,141 @@
 
     async function updateReceiptTable() {
       try {
-        receiptsTable.innerHTML = "";
+        const groupedReceipts = document.getElementById('groupedReceipts');
+        groupedReceipts.innerHTML = '';
+        const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+
         const snapshot = await receiptsCollection.orderBy('date', 'desc').get();
         if (snapshot.empty) {
           console.log('No receipts found in Firestore');
+          groupedReceipts.innerHTML = '<p>No receipts found.</p>';
           return;
         }
+
+        const receipts = [];
         snapshot.forEach(doc => {
-          const r = { id: doc.id, ...doc.data() };
-          const row = receiptsTable.insertRow();
+          receipts.push({ id: doc.id, ...doc.data() });
+        });
 
-          row.insertCell().textContent = r.name;
-          row.insertCell().textContent = r.class;
-          row.insertCell().textContent = `KES ${r.paid}`;
-          row.insertCell().textContent = `KES ${r.balance}`;
-          row.insertCell().textContent = r.mode;
+        const filteredReceipts = searchQuery
+          ? receipts.filter(r => r.name.toLowerCase().includes(searchQuery))
+          : receipts;
 
-          const actionCell = row.insertCell();
-          const printBtn = document.createElement("button");
-          printBtn.textContent = "Print";
-          printBtn.style.marginRight = "8px";
-          printBtn.onclick = () => printReceipt(r.id);
+        const classes = [
+          "Play Group", "PP1", "PP2",
+          "Grade 1", "Grade 2", "Grade 3",
+          "Grade 4", "Grade 5", "Grade 6"
+        ];
 
-          const deleteBtn = document.createElement("button");
-          deleteBtn.textContent = "Delete";
-          deleteBtn.style.backgroundColor = "#dc3545";
-          deleteBtn.style.color = "white";
-          deleteBtn.onclick = () => deleteReceipt(r.id);
+        classes.forEach(cls => {
+          const classReceipts = filteredReceipts.filter(r => r.class === cls);
+          if (classReceipts.length === 0) return;
 
-          actionCell.appendChild(printBtn);
-          actionCell.appendChild(deleteBtn);
+          const section = document.createElement('div');
+          section.className = 'class-section';
+
+          const header = document.createElement('h3');
+          header.textContent = `${cls} (${classReceipts.length} receipts)`;
+          header.onclick = () => {
+            const table = section.querySelector('table');
+            table.style.display = table.style.display === 'none' ? 'table' : 'none';
+          };
+          section.appendChild(header);
+
+          const table = document.createElement('table');
+          table.innerHTML = `
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Tuition Paid</th>
+                <th>Tuition Balance</th>
+                <th>Adm Fee Paid</th>
+                <th>Adm Fee Balance</th>
+                <th>Lunch Paid</th>
+                <th>Lunch Balance</th>
+                <th>Uniform Paid</th>
+                <th>Uniform Balance</th>
+                <th>Book Fund Paid</th>
+                <th>Book Fund Balance</th>
+                <th>Stationery Paid</th>
+                <th>Stationery Balance</th>
+                <th>Transport Paid</th>
+                <th>Transport Balance</th>
+                <th>Trip Paid</th>
+                <th>Trip Balance</th>
+                <th>Total Paid</th>
+                <th>Total Balance</th>
+                <th>Payment Mode</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          `;
+          const tbody = table.querySelector('tbody');
+
+          classReceipts.forEach(r => {
+            const studentSnapshot = studentsCollection.where('name', '==', r.name).get();
+            studentSnapshot.then(snap => {
+              if (!snap.empty) {
+                const student = snap.docs[0].data();
+                let remainingPaid = r.paid;
+                const fees = [
+                  { name: 'tuition', amount: student.tuition || 0 },
+                  { name: 'adm', amount: student.adm || 0 },
+                  { name: 'lunch', amount: student.lunch || 0 },
+                  { name: 'uniform', amount: student.uniform || 0 },
+                  { name: 'books', amount: student.books || 0 },
+                  { name: 'stationery', amount: student.stationery || 0 },
+                  { name: 'transport', amount: student.transport || 0 },
+                  { name: 'trip', amount: student.trip || 0 }
+                ];
+                const feePayments = {};
+                const feeBalances = {};
+
+                fees.forEach(fee => {
+                  const feePaid = Math.min(remainingPaid, fee.amount);
+                  feePayments[fee.name] = feePaid;
+                  feeBalances[fee.name] = fee.amount - feePaid;
+                  remainingPaid -= feePaid;
+                });
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                  <td>${r.name}</td>
+                  <td>KES ${feePayments.tuition.toFixed(2)}</td>
+                  <td>KES ${feeBalances.tuition.toFixed(2)}</td>
+                  <td>KES ${feePayments.adm.toFixed(2)}</td>
+                  <td>KES ${feeBalances.adm.toFixed(2)}</td>
+                  <td>KES ${feePayments.lunch.toFixed(2)}</td>
+                  <td>KES ${feeBalances.lunch.toFixed(2)}</td>
+                  <td>KES ${feePayments.uniform.toFixed(2)}</td>
+                  <td>KES ${feeBalances.uniform.toFixed(2)}</td>
+                  <td>KES ${feePayments.books.toFixed(2)}</td>
+                  <td>KES ${feeBalances.books.toFixed(2)}</td>
+                  <td>KES ${feePayments.stationery.toFixed(2)}</td>
+                  <td>KES ${feeBalances.stationery.toFixed(2)}</td>
+                  <td>KES ${feePayments.transport.toFixed(2)}</td>
+                  <td>KES ${feeBalances.transport.toFixed(2)}</td>
+                  <td>KES ${feePayments.trip.toFixed(2)}</td>
+                  <td>KES ${feeBalances.trip.toFixed(2)}</td>
+                  <td>KES ${r.paid.toFixed(2)}</td>
+                  <td>KES ${r.balance.toFixed(2)}</td>
+                  <td>${r.mode}</td>
+                  <td>${new Date(r.date).toLocaleDateString('en-GB')}</td>
+                  <td>
+                    <button onclick="printReceipt('${r.id}')" style="margin-right: 8px;">Print</button>
+                    <button onclick="deleteReceipt('${r.id}')" style="background:#dc3545; color:white;">Delete</button>
+                  </td>
+                `;
+                tbody.appendChild(row);
+              }
+            });
+          });
+
+          section.appendChild(table);
+          groupedReceipts.appendChild(section);
+          table.style.display = 'none'; // Initially collapsed
         });
       } catch (error) {
         console.error('Error updating receipt table:', error);
@@ -737,7 +836,7 @@
       }
     }
 
-    async function exportPDF() {
+    async function exportConsolidatedPDF() {
       try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
@@ -900,11 +999,11 @@
           doc.text("School Fees Once Paid is not Refundable", 105, detailsY + 60, { align: 'center' });
         }
 
-        doc.save("heriwadi_official_receipts.pdf");
-        showStatus("Official receipts PDF exported successfully!", "success");
+        doc.save("heriwadi_consolidated_receipts.pdf");
+        showStatus("Consolidated receipts PDF exported successfully!", "success");
       } catch (error) {
-        console.error('Error exporting PDF:', error);
-        showStatus("Error exporting PDF: " + error.message, "error");
+        console.error('Error exporting consolidated PDF:', error);
+        showStatus("Error exporting consolidated PDF: " + error.message, "error");
         if (error.code === 'permission-denied') {
           showStatus("Permission denied. Update Firestore rules to allow read access.", "error");
         }
