@@ -261,6 +261,7 @@
                 <th>Total Balance</th>
                 <th>Payment Mode</th>
                 <th>Date</th>
+                <th>Receipt No.</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -286,6 +287,7 @@
                 <td>${r.balance.toFixed(2)}</td>
                 <td>${r.mode}</td>
                 <td>${new Date(r.date).toLocaleDateString('en-GB')}</td>
+                <td>${r.receiptNumber || 'N/A'}</td>
                 <td>
                   <button onclick="printReceipt('${r.id}')" style="margin-right: 8px;">Print</button>
                   <button onclick="deleteReceipt('${r.id}')" style="background:#dc3545; color:white;">Delete</button>
@@ -330,6 +332,10 @@
       showStatus("Processing payment and sending SMS...", "loading");
 
       try {
+        // Use current time in EAT (Africa/Nairobi)
+        const currentDate = new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
+        const receiptDate = new Date(currentDate);
+
         // Extract name and class from input (format: "Name (Class)")
         const match = studentInput.match(/^(.+?)\s*\((.+?)\)$/);
         let studentName, studentClass, studentId = null;
@@ -338,7 +344,7 @@
           studentClass = match[2].trim();
         } else {
           studentName = studentInput.trim();
-          studentClass = "Unknown"; // Default class if not specified
+          studentClass = "Unknown";
         }
 
         // Check if student exists in Firestore
@@ -352,7 +358,7 @@
           const newStudent = {
             name: studentName,
             class: studentClass,
-            phone: "+254000000000", // Default phone, update as needed
+            phone: "+254000000000",
             tuition: 0,
             adm: 0,
             books: 0,
@@ -376,35 +382,37 @@
           balance: (student.total || 0) - ((student.paid || 0) + amount)
         };
 
-        const receipt = { 
-          name: studentName, 
-          class: studentClass, 
-          paid: amount, 
-          balance: updatedStudent.balance, 
-          mode: mode,
-          date: new Date().toISOString()
-        };
-
+        // Generate receipt number atomically
+        let receiptNumber;
         await db.runTransaction(async transaction => {
+          const snapshot = await receiptsCollection.get();
+          const receiptCount = snapshot.size + 1; // Increment for new receipt
+          receiptNumber = String(receiptCount).padStart(3, '0');
+
+          const receipt = { 
+            name: studentName, 
+            class: studentClass, 
+            paid: amount, 
+            balance: updatedStudent.balance, 
+            mode: mode,
+            date: receiptDate.toISOString(),
+            receiptNumber: receiptNumber
+          };
+
           transaction.set(studentsCollection.doc(studentId), updatedStudent);
           const receiptRef = receiptsCollection.doc();
           transaction.set(receiptRef, receipt);
-          receipt.id = receiptRef.id; // Assign the auto-generated ID to the receipt
+          receipt.id = receiptRef.id;
         });
 
-        // Get total number of receipts for receipt number
-        const snapshot = await receiptsCollection.get();
-        const receiptCount = snapshot.size;
-        const receiptNumber = String(receiptCount).padStart(3, '0');
-
-        const currentDate = new Date(receipt.date);
-        // Fix AM/PM by using 'en-US' locale for correct 12-hour format
-        const timeString = currentDate.toLocaleTimeString('en-US', { 
+        // Format time in EAT for SMS
+        const timeString = receiptDate.toLocaleTimeString('en-US', { 
+          timeZone: 'Africa/Nairobi',
           hour: '2-digit', 
           minute: '2-digit', 
           hour12: true 
         }).toUpperCase();
-        const smsMessage = `Dear parent to ${studentName}, ${studentClass}, Amount of KES ${amount} Receipt No. ${receiptNumber} was received on ${currentDate.toLocaleDateString('en-GB')} at ${timeString}. Balance: ${updatedStudent.balance}.`;
+        const smsMessage = `Dear parent to ${studentName}, ${studentClass}, Amount of KES ${amount} Receipt No. ${receiptNumber} was received on ${receiptDate.toLocaleDateString('en-GB')} at ${timeString}. Balance: ${updatedStudent.balance}.`;
         const smsSent = await sendSMS(student.phone, smsMessage);
         showStatus(`Receipt saved${smsSent ? ' and SMS sent' : ''} successfully!`, "success");
 
@@ -566,12 +574,11 @@
           return;
         }
         const student = studentSnapshot.docs[0].data();
-        const currentDate = new Date(receipt.date);
+        const currentDate = new Date(receipt.date).toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
+        const receiptDate = new Date(currentDate);
 
-        // Get total number of receipts for auto-incrementing receipt number
-        const snapshot = await receiptsCollection.get();
-        const receiptCount = snapshot.size + 1; // Start from 1
-        const receiptNumber = String(receiptCount).padStart(3, '0');
+        // Use stored receipt number
+        const receiptNumber = receipt.receiptNumber || 'N/A';
 
         const printWindow = window.open('', '', 'height=800,width=900');
         printWindow.document.write(`
@@ -754,7 +761,7 @@
                 </div>
                 <div class="paybill-info">
                   <strong>No. ${receiptNumber}</strong><br>
-                  <strong>Date:</strong> ${currentDate.toLocaleDateString('en-GB')} ${currentDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}
+                  <strong>Date:</strong> ${receiptDate.toLocaleDateString('en-GB')} ${receiptDate.toLocaleTimeString('en-US', { timeZone: 'Africa/Nairobi', hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}
                 </div>
               </div>
 
@@ -764,7 +771,7 @@
               </div>
 
               <div class="payment-section">Mode of Payment: ${receipt.mode}</div>
-              <div class="payment-section">Date: ${currentDate.toLocaleDateString('en-GB')} ${currentDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}</div>
+              <div class="payment-section">Date: ${receiptDate.toLocaleDateString('en-GB')} ${receiptDate.toLocaleTimeString('en-US', { timeZone: 'Africa/Nairobi', hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}</div>
 
               <table class="fees-table">
                 <thead>
@@ -805,7 +812,6 @@
                       `;
                     });
 
-                    // Add receipt balance row
                     rows += `
                       <tr class="total-row">
                         <td colspan="3" style="text-align: right; padding-right: 10px;"><strong>Receipt Balance</strong></td>
@@ -901,7 +907,7 @@
           doc.line(20, 73, 190, 73);
 
           doc.setFontSize(16);
-          doc.text("RECEIPT SUMMARY", 20, 85);
+          doc.text("RECEIPT SUMMARY", 105, 85, { align: 'center' });
 
           if (typeof doc.autoTable === 'function') {
             const tableData = await Promise.all(classReceipts.map(async r => {
@@ -919,7 +925,8 @@
                   student.transport || 0,
                   student.trip || 0,
                   r.paid,
-                  r.balance
+                  r.balance,
+                  r.receiptNumber || 'N/A'
                 ];
               }
               return [];
@@ -927,7 +934,7 @@
 
             doc.autoTable({
               startY: 95,
-              head: [['Student', 'Tuition', 'Adm Fee', 'Lunch', 'Uniform', 'Book Fund', 'Stationery', 'Transport', 'Trip', 'Paid', 'Balance']],
+              head: [['Student', 'Tuition', 'Adm Fee', 'Lunch', 'Uniform', 'Book Fund', 'Stationery', 'Transport', 'Trip', 'Paid', 'Balance', 'Receipt No.']],
               body: tableData.flat(),
               theme: 'grid',
               styles: { fontSize: 8, cellPadding: 2 },
@@ -958,12 +965,10 @@
           const studentSnapshot = await studentsCollection.where('name', '==', receipt.name).get();
           if (studentSnapshot.empty) continue;
           const student = studentSnapshot.docs[0].data();
-          const currentDate = new Date(receipt.date);
+          const currentDate = new Date(receipt.date).toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
+          const receiptDate = new Date(currentDate);
 
-          // Get total number of receipts for auto-incrementing receipt number
-          const receiptSnapshot = await receiptsCollection.get();
-          const receiptCount = receiptSnapshot.size + 1; // Start from 1
-          const receiptNumber = String(receiptCount).padStart(3, '0');
+          const receiptNumber = receipt.receiptNumber || 'N/A';
 
           if (!isFirstReceipt) {
             doc.addPage();
@@ -998,7 +1003,7 @@
 
           doc.text("A/c: Name of learner & Grade", 130, 65);
           doc.text(`No. ${receiptNumber}`, 130, 72);
-          doc.text(`Date: ${currentDate.toLocaleDateString()} ${currentDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}`, 130, 79);
+          doc.text(`Date: ${receiptDate.toLocaleDateString('en-GB')} ${receiptDate.toLocaleTimeString('en-US', { timeZone: 'Africa/Nairobi', hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}`, 130, 79);
 
           doc.text(`Received from (Student Name): ${receipt.name}`, 20, 95);
           doc.text(`Grade: ${receipt.class}`, 20, 103);
@@ -1152,17 +1157,17 @@
                   Class: receipt.class,
                   FeeItem: fee.name,
                   AmountPaid: feePaid,
-                  Date: new Date(receipt.date).toLocaleDateString('en-GB')
+                  Date: new Date(receipt.date).toLocaleDateString('en-GB'),
+                  ReceiptNo: receipt.receiptNumber || 'N/A'
                 });
               }
             });
           }
         }));
 
-        // Add total row
-        data.push({ Student: 'Total', Class: '', FeeItem: '', AmountPaid: '', Date: '' });
+        data.push({ Student: 'Total', Class: '', FeeItem: '', AmountPaid: '', Date: '', ReceiptNo: '' });
         feeItems.forEach(item => {
-          data.push({ Student: '', Class: '', FeeItem: item.charAt(0).toUpperCase() + item.slice(1), AmountPaid: totals[item], Date: '' });
+          data.push({ Student: '', Class: '', FeeItem: item.charAt(0).toUpperCase() + item.slice(1), AmountPaid: totals[item], Date: '', ReceiptNo: '' });
         });
 
         const wb = XLSX.utils.book_new();
