@@ -54,8 +54,9 @@
   <div id="statusMessage" style="padding: 0 20px; margin: 10px 0;"></div>
 
   <form id="receiptForm">
-    <label for="studentSelect">Select Student</label>
-    <select id="studentSelect" required></select>
+    <label for="studentInput">Student Name</label>
+    <input type="text" id="studentInput" list="studentList" required placeholder="Type or select a student...">
+    <datalist id="studentList"></datalist>
 
     <label for="amountPaid">Amount Paid</label>
     <input type="number" id="amountPaid" required />
@@ -130,8 +131,13 @@
 
     let app, db;
     try {
-      app = firebase.initializeApp(firebaseConfig);
+      if (!firebase.apps.length) {
+        app = firebase.initializeApp(firebaseConfig);
+      } else {
+        app = firebase.app();
+      }
       db = firebase.firestore();
+      console.log("Firebase initialized successfully");
     } catch (error) {
       console.error('Firebase initialization error:', error);
       showStatus("Failed to initialize Firebase. Check your configuration.", "error");
@@ -141,9 +147,11 @@
     const receiptsCollection = db.collection('receipts');
 
     document.addEventListener('DOMContentLoaded', function() {
-      const studentSelect = document.getElementById("studentSelect");
+      const studentInput = document.getElementById("studentInput");
       const statusMessage = document.getElementById("statusMessage");
       const submitBtn = document.getElementById("submitBtn");
+      populateStudents();
+      updateReceiptTable();
     });
 
     function showStatus(message, type = 'info') {
@@ -170,7 +178,8 @@
 
     async function populateStudents() {
       try {
-        studentSelect.innerHTML = "<option value=''>Select a student...</option>";
+        const studentList = document.getElementById("studentList");
+        studentList.innerHTML = "";
         const snapshot = await studentsCollection.get();
         if (snapshot.empty) {
           console.log('No students found in Firestore');
@@ -180,9 +189,9 @@
         snapshot.forEach(doc => {
           const s = { id: doc.id, ...doc.data() };
           const opt = document.createElement("option");
-          opt.value = s.id;
-          opt.textContent = `${s.name} (${s.class}) - Balance: ${s.balance || s.total || 0}`;
-          studentSelect.appendChild(opt);
+          opt.value = `${s.name} (${s.class})`;
+          opt.dataset.id = s.id;
+          studentList.appendChild(opt);
         });
       } catch (error) {
         console.error('Error populating students:', error);
@@ -259,33 +268,31 @@
           `;
           const tbody = table.querySelector('tbody');
 
-          classReceipts.forEach(r => {
-            const studentSnapshot = studentsCollection.where('name', '==', r.name).get();
-            studentSnapshot.then(snap => {
-              if (!snap.empty) {
-                const student = snap.docs[0].data();
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                  <td>${r.name}</td>
-                  <td>${student.tuition || 0}</td>
-                  <td>${student.adm || 0}</td>
-                  <td>${student.lunch || 0}</td>
-                  <td>${student.uniform || 0}</td>
-                  <td>${student.books || 0}</td>
-                  <td>${student.stationery || 0}</td>
-                  <td>${student.transport || 0}</td>
-                  <td>${student.trip || 0}</td>
-                  <td>${r.balance.toFixed(2)}</td>
-                  <td>${r.mode}</td>
-                  <td>${new Date(r.date).toLocaleDateString('en-GB')}</td>
-                  <td>
-                    <button onclick="printReceipt('${r.id}')" style="margin-right: 8px;">Print</button>
-                    <button onclick="deleteReceipt('${r.id}')" style="background:#dc3545; color:white;">Delete</button>
-                  </td>
-                `;
-                tbody.appendChild(row);
-              }
-            });
+          classReceipts.forEach(async r => {
+            const studentSnapshot = await studentsCollection.where('name', '==', r.name).get();
+            if (!studentSnapshot.empty) {
+              const student = studentSnapshot.docs[0].data();
+              const row = document.createElement('tr');
+              row.innerHTML = `
+                <td>${r.name}</td>
+                <td>${student.tuition || 0}</td>
+                <td>${student.adm || 0}</td>
+                <td>${student.lunch || 0}</td>
+                <td>${student.uniform || 0}</td>
+                <td>${student.books || 0}</td>
+                <td>${student.stationery || 0}</td>
+                <td>${student.transport || 0}</td>
+                <td>${student.trip || 0}</td>
+                <td>${r.balance.toFixed(2)}</td>
+                <td>${r.mode}</td>
+                <td>${new Date(r.date).toLocaleDateString('en-GB')}</td>
+                <td>
+                  <button onclick="printReceipt('${r.id}')" style="margin-right: 8px;">Print</button>
+                  <button onclick="deleteReceipt('${r.id}')" style="background:#dc3545; color:white;">Delete</button>
+                </td>
+              `;
+              tbody.appendChild(row);
+            }
           });
 
           section.appendChild(table);
@@ -304,14 +311,14 @@
     document.getElementById("receiptForm").addEventListener("submit", async function(e) {
       e.preventDefault();
       
-      const studentId = studentSelect.value;
-      if (!studentId) {
-        showStatus("Please select a student", "error");
-        return;
-      }
-
+      const studentInput = document.getElementById("studentInput").value;
       const amount = parseFloat(document.getElementById("amountPaid").value);
       const mode = document.getElementById("paymentMode").value;
+
+      if (!studentInput) {
+        showStatus("Please enter or select a student name", "error");
+        return;
+      }
 
       if (amount <= 0) {
         showStatus("Amount must be greater than 0", "error");
@@ -323,12 +330,45 @@
       showStatus("Processing payment and sending SMS...", "loading");
 
       try {
-        const studentDoc = await studentsCollection.doc(studentId).get();
-        if (!studentDoc.exists) {
-          showStatus("Student not found", "error");
-          return;
+        // Extract name and class from input (format: "Name (Class)")
+        const match = studentInput.match(/^(.+?)\s*\((.+?)\)$/);
+        let studentName, studentClass, studentId = null;
+        if (match) {
+          studentName = match[1].trim();
+          studentClass = match[2].trim();
+        } else {
+          studentName = studentInput.trim();
+          studentClass = "Unknown"; // Default class if not specified
         }
-        const student = studentDoc.data();
+
+        // Check if student exists in Firestore
+        const studentSnapshot = await studentsCollection.where('name', '==', studentName).get();
+        let student;
+        if (!studentSnapshot.empty) {
+          student = studentSnapshot.docs[0].data();
+          studentId = studentSnapshot.docs[0].id;
+        } else {
+          // Create new student if not found
+          const newStudent = {
+            name: studentName,
+            class: studentClass,
+            phone: "+254000000000", // Default phone, update as needed
+            tuition: 0,
+            adm: 0,
+            books: 0,
+            stationery: 0,
+            uniform: 0,
+            lunch: 0,
+            transport: 0,
+            trip: 0,
+            total: 0,
+            paid: 0,
+            balance: 0
+          };
+          const docRef = await studentsCollection.add(newStudent);
+          studentId = docRef.id;
+          student = newStudent;
+        }
 
         const updatedStudent = {
           ...student,
@@ -337,8 +377,8 @@
         };
 
         const receipt = { 
-          name: student.name, 
-          class: student.class, 
+          name: studentName, 
+          class: studentClass, 
           paid: amount, 
           balance: updatedStudent.balance, 
           mode: mode,
@@ -347,7 +387,8 @@
 
         await db.runTransaction(async transaction => {
           transaction.set(studentsCollection.doc(studentId), updatedStudent);
-          const receiptRef = transaction.set(receiptsCollection.doc(), receipt);
+          const receiptRef = receiptsCollection.doc();
+          transaction.set(receiptRef, receipt);
           receipt.id = receiptRef.id; // Assign the auto-generated ID to the receipt
         });
 
@@ -357,7 +398,13 @@
         const receiptNumber = String(receiptCount).padStart(3, '0');
 
         const currentDate = new Date(receipt.date);
-        const smsMessage = `Dear parent to ${student.name}, ${student.class},Amount of KES ${amount} Receipt No. ${receiptNumber} was received on ${currentDate.toLocaleDateString('en-GB')} at ${currentDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}. Balance: ${updatedStudent.balance}.`;
+        // Fix AM/PM by using 'en-US' locale for correct 12-hour format
+        const timeString = currentDate.toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit', 
+          hour12: true 
+        }).toUpperCase();
+        const smsMessage = `Dear parent to ${studentName}, ${studentClass}, Amount of KES ${amount} Receipt No. ${receiptNumber} was received on ${currentDate.toLocaleDateString('en-GB')} at ${timeString}. Balance: ${updatedStudent.balance}.`;
         const smsSent = await sendSMS(student.phone, smsMessage);
         showStatus(`Receipt saved${smsSent ? ' and SMS sent' : ''} successfully!`, "success");
 
@@ -707,7 +754,7 @@
                 </div>
                 <div class="paybill-info">
                   <strong>No. ${receiptNumber}</strong><br>
-                  <strong>Date:</strong> ${currentDate.toLocaleDateString('en-GB')} ${currentDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}
+                  <strong>Date:</strong> ${currentDate.toLocaleDateString('en-GB')} ${currentDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}
                 </div>
               </div>
 
@@ -717,7 +764,7 @@
               </div>
 
               <div class="payment-section">Mode of Payment: ${receipt.mode}</div>
-              <div class="payment-section">Date: ${currentDate.toLocaleDateString('en-GB')} ${currentDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}</div>
+              <div class="payment-section">Date: ${currentDate.toLocaleDateString('en-GB')} ${currentDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}</div>
 
               <table class="fees-table">
                 <thead>
@@ -857,40 +904,36 @@
           doc.text("RECEIPT SUMMARY", 20, 85);
 
           if (typeof doc.autoTable === 'function') {
-            const tableData = classReceipts.map(r => {
-              const studentSnapshot = studentsCollection.where('name', '==', r.name).get();
-              return studentSnapshot.then(snap => {
-                if (!snap.empty) {
-                  const student = snap.docs[0].data();
-                  return [
-                    r.name,
-                    student.tuition || 0,
-                    student.adm || 0,
-                    student.lunch || 0,
-                    student.uniform || 0,
-                    student.books || 0,
-                    student.stationery || 0,
-                    student.transport || 0,
-                    student.trip || 0,
-                    r.paid,
-                    r.balance
-                  ];
-                }
-                return [];
-              });
-            });
+            const tableData = await Promise.all(classReceipts.map(async r => {
+              const studentSnapshot = await studentsCollection.where('name', '==', r.name).get();
+              if (!studentSnapshot.empty) {
+                const student = studentSnapshot.docs[0].data();
+                return [
+                  r.name,
+                  student.tuition || 0,
+                  student.adm || 0,
+                  student.lunch || 0,
+                  student.uniform || 0,
+                  student.books || 0,
+                  student.stationery || 0,
+                  student.transport || 0,
+                  student.trip || 0,
+                  r.paid,
+                  r.balance
+                ];
+              }
+              return [];
+            }));
 
-            Promise.all(tableData).then(data => {
-              doc.autoTable({
-                startY: 95,
-                head: [['Student', 'Tuition', 'Adm Fee', 'Lunch', 'Uniform', 'Book Fund', 'Stationery', 'Transport', 'Trip', 'Paid', 'Balance']],
-                body: data.flat(),
-                theme: 'grid',
-                styles: { fontSize: 8, cellPadding: 2 },
-                headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] }
-              });
-              doc.save(`heriwadi_receipts_${cls}.pdf`);
+            doc.autoTable({
+              startY: 95,
+              head: [['Student', 'Tuition', 'Adm Fee', 'Lunch', 'Uniform', 'Book Fund', 'Stationery', 'Transport', 'Trip', 'Paid', 'Balance']],
+              body: tableData.flat(),
+              theme: 'grid',
+              styles: { fontSize: 8, cellPadding: 2 },
+              headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] }
             });
+            doc.save(`heriwadi_receipts_${cls}.pdf`);
           }
         }
         showStatus("Export by class to PDF completed!", "success");
@@ -955,7 +998,7 @@
 
           doc.text("A/c: Name of learner & Grade", 130, 65);
           doc.text(`No. ${receiptNumber}`, 130, 72);
-          doc.text(`Date: ${currentDate.toLocaleDateString()}`, 130, 79);
+          doc.text(`Date: ${currentDate.toLocaleDateString()} ${currentDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}`, 130, 79);
 
           doc.text(`Received from (Student Name): ${receipt.name}`, 20, 95);
           doc.text(`Grade: ${receipt.class}`, 20, 103);
@@ -1132,10 +1175,6 @@
         showStatus("Error exporting to Excel: " + error.message, "error");
       }
     }
-
-    // Initialize page
-    populateStudents();
-    updateReceiptTable();
   </script>
 </body>
 </html>
