@@ -70,7 +70,6 @@
 
     let app, db;
     try {
-      // Check if Firebase is already initialized to avoid duplicate initialization
       if (!firebase.apps.length) {
         app = firebase.initializeApp(firebaseConfig);
       } else {
@@ -134,10 +133,10 @@
           const staff = { id: doc.id, ...doc.data() };
           console.log(`Processing staff: ${staff.fullName || 'Unknown'}`, staff);
 
-          // Ensure required fields have default values if missing
           const gross = parseFloat(staff.salary) || 0;
           const advance = parseFloat(staff.advance) || 0;
-          const fullName = staff.fullName || `Staff_${doc.id}`; // FFallback name if fullName is missing
+          const fullName = staff.fullName || `Staff_${doc.id}`;
+          const staffId = staff.staffId || doc.id; // Use staffId if available, else doc.id
 
           const paye = gross * 0.1;
           const nssf = gross * 0.06;
@@ -170,6 +169,7 @@
 
           row.querySelector(".payslipBtn").addEventListener("click", () => {
             const name = fullName;
+            const staffId = staff.staffId || doc.id;
             const gross = parseFloat(row.querySelector(".gross").value) || 0;
             const paye = parseFloat(row.querySelector(".paye").value) || 0;
             const nssf = parseFloat(row.querySelector(".nssf").value) || 0;
@@ -182,27 +182,11 @@
             const ahlEmp = gross * 0.03;
             const nita = gross * 0.01;
 
-            const win = window.open("", "Payslip", "width=800,height=600");
-            win.document.write(`
-              <h2>Payslip</h2>
-              <p><strong>Name:</strong> ${name}</p>
-              <p><strong>Gross Pay:</strong> ${gross.toFixed(2)}</p>
-              <p><strong>PAYE:</strong> ${paye.toFixed(2)}</p>
-              <p><strong>NSSF:</strong> ${nssf.toFixed(2)}</p>
-              <p><strong>SHIF:</strong> ${shif.toFixed(2)}</p>
-              <p><strong>AHL:</strong> ${ahl.toFixed(2)}</p>
-              <p><strong>Advance:</strong> ${advance.toFixed(2)}</p>
-              <p><strong>Total Deductions:</strong> ${total.toFixed(2)}</p>
-              <p><strong>Net Pay:</strong> ${net.toFixed(2)}</p>
-              <p><strong>NSSF - Employer:</strong> ${nssfEmp.toFixed(2)}</p>
-              <p><strong>AHL - Employer:</strong> ${ahlEmp.toFixed(2)}</p>
-              <p><strong>NITA:</strong> ${nita.toFixed(2)}</p>
-            `);
-            win.print();
-            win.document.close();
+            printPayslip({
+              name, staffId, gross, paye, nssf, shif, ahl, advance, total, net, nssfEmp, ahlEmp, nita
+            });
           });
 
-          // Save changes to Firestore
           const savePayroll = () => {
             const payrollData = {
               staffId: staff.id,
@@ -218,7 +202,7 @@
               nssfEmp: parseFloat(row.querySelector(".nssfEmp").textContent) || 0,
               ahlEmp: parseFloat(row.querySelector(".ahlEmp").textContent) || 0,
               nita: parseFloat(row.querySelector(".nita").textContent) || 0,
-              date: new Date().toISOString().split('T')[0]
+              date: new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' }).split(',')[0]
             };
             payrollCollection.doc(staff.id).set(payrollData, { merge: true }).catch(error => {
               console.error('Error saving payroll:', error);
@@ -238,6 +222,137 @@
       }
     }
 
+    function printPayslip(data) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const logoImg = new Image();
+      logoImg.src = 'photos/school-logo.jpg';
+
+      // Get current month and year for pay period
+      const currentDate = new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
+      const payslipDate = new Date(currentDate);
+      const monthNames = ["January", "February", "March", "April", "May", "June", 
+                          "July", "August", "September", "October", "November", "December"];
+      const payPeriod = `${monthNames[payslipDate.getMonth()]} ${payslipDate.getFullYear()}`;
+
+      // Generate payslip number (based on staffId and current date)
+      const payslipNumber = `PS${data.staffId}-${payslipDate.toISOString().split('T')[0].replace(/-/g, '')}`;
+
+      // Header
+      try {
+        doc.addImage(logoImg, 'PNG', 95, 8, 20, 20);
+      } catch (e) {
+        console.log('Logo not loaded, using fallback text');
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text("LOGO", 95, 20, { align: "center" });
+      }
+
+      doc.setFontSize(18);
+      doc.setFont("helvetica", "bold");
+      doc.text("HERIWADI CHRISTIAN SCHOOLS", 105, 35, { align: "center" });
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      doc.text("LEARN, LEAD, ACHIEVE", 105, 42, { align: "center" });
+      doc.setFontSize(10);
+      doc.text("P.O. Box 921 - 0511, Ongata Rongai, Kenya", 105, 49, { align: "center" });
+      doc.text("Mobile: 0723 322449 | Email: heriwadis@gmail.com", 105, 54, { align: "center" });
+      doc.line(20, 60, 190, 60);
+
+      // Payslip Title and Details
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text("PAYSLIP", 20, 70);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Payslip No.: ${payslipNumber}`, 130, 70);
+      doc.text(`Pay Period: ${payPeriod}`, 20, 78);
+      doc.text(`Date: ${payslipDate.toLocaleDateString('en-GB')} ${payslipDate.toLocaleTimeString('en-US', { timeZone: 'Africa/Nairobi', hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}`, 130, 78);
+
+      // Staff Information
+      doc.text(`Staff Name: ${data.name}`, 20, 90);
+      doc.text(`Staff ID: ${data.staffId}`, 20, 98);
+
+      // Earnings and Deductions Tables
+      doc.autoTable({
+        startY: 110,
+        head: [['Description', 'Amount (KSH)']],
+        body: [
+          ['Gross Pay', data.gross.toFixed(2)]
+        ],
+        styles: { fontSize: 9, cellPadding: 3 },
+        headStyles: { fillColor: [0, 116, 217], textColor: [255, 255, 255] },
+        columnStyles: { 0: { cellWidth: 80 }, 1: { cellWidth: 80, halign: 'right' } }
+      });
+
+      doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 10,
+        head: [['Deductions', 'Amount (KSH)']],
+        body: [
+          ['PAYE', data.paye.toFixed(2)],
+          ['NSSF', data.nssf.toFixed(2)],
+          ['SHIF', data.shif.toFixed(2)],
+          ['AHL', data.ahl.toFixed(2)],
+          ['Advance', data.advance.toFixed(2)],
+          ['Total Deductions', data.total.toFixed(2)]
+        ],
+        styles: { fontSize: 9, cellPadding: 3 },
+        headStyles: { fillColor: [0, 116, 217], textColor: [255, 255, 255] },
+        columnStyles: { 0: { cellWidth: 80 }, 1: { cellWidth: 80, halign: 'right' } },
+        didParseCell: function(data) {
+          if (data.row.index === 5) {
+            data.cell.styles.fontStyle = 'bold';
+            data.cell.styles.fillColor = [220, 220, 220];
+          }
+        }
+      });
+
+      // Net Pay
+      doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 10,
+        head: [['', 'Amount (KSH)']],
+        body: [
+          ['Net Pay', data.net.toFixed(2)]
+        ],
+        styles: { fontSize: 9, cellPadding: 3 },
+        headStyles: { fillColor: [0, 116, 217], textColor: [255, 255, 255] },
+        columnStyles: { 0: { cellWidth: 80 }, 1: { cellWidth: 80, halign: 'right' } },
+        bodyStyles: { fontStyle: 'bold', fillColor: [240, 240, 240] }
+      });
+
+      // Employer Contributions
+      doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 10,
+        head: [['Employer Contributions', 'Amount (KSH)']],
+        body: [
+          ['NSSF - Employer', data.nssfEmp.toFixed(2)],
+          ['AHL - Employer', data.ahlEmp.toFixed(2)],
+          ['NITA', data.nita.toFixed(2)]
+        ],
+        styles: { fontSize: 9, cellPadding: 3 },
+        headStyles: { fillColor: [0, 116, 217], textColor: [255, 255, 255] },
+        columnStyles: { 0: { cellWidth: 80 }, 1: { cellWidth: 80, halign: 'right' } }
+      });
+
+      // Signatures
+      const finalY = doc.lastAutoTable.finalY + 20;
+      doc.setFontSize(10);
+      doc.text("Prepared by:", 20, finalY);
+      doc.line(20, finalY + 5, 80, finalY + 5);
+      doc.text("Accountant", 20, finalY + 10);
+      doc.text("Approved by:", 130, finalY);
+      doc.line(130, finalY + 5, 190, finalY + 5);
+      doc.text("For: Heriwadi Christian Schools", 130, finalY + 10);
+
+      // Footer
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "italic");
+      doc.text("Generated by HCS Payroll Module", 20, finalY + 25);
+      doc.text(`Page ${doc.getCurrentPageInfo().pageNumber}`, 190, finalY + 25, { align: "right" });
+
+      doc.save(`Payslip_${data.name}_${payPeriod.replace(' ', '_')}.pdf`);
+    }
+
     function downloadPayrollPDF() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
@@ -248,7 +363,7 @@
       doc.text("Consolidated Payroll Report", 105, 15, { align: "center" });
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
-      doc.text(`Date: ${new Date().toLocaleDateString()}`, 105, 22, { align: "center" });
+      doc.text(`Date: ${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' }).split(',')[0]}`, 105, 22, { align: "center" });
 
       // Table data
       const headers = [
@@ -270,7 +385,6 @@
 
         data.push(cols);
         
-        // Calculate totals
         totals.gross += parseFloat(cols[1]) || 0;
         totals.paye += parseFloat(cols[2]) || 0;
         totals.nssf += parseFloat(cols[3]) || 0;
@@ -284,7 +398,6 @@
         totals.nita += parseFloat(cols[11]) || 0;
       });
 
-      // Add totals row
       data.push([
         "TOTALS",
         totals.gross.toFixed(2),
@@ -300,7 +413,6 @@
         totals.nita.toFixed(2)
       ]);
 
-      // Create table
       doc.autoTable({
         head: [headers],
         body: data,
@@ -310,18 +422,18 @@
         alternateRowStyles: { fillColor: [245, 245, 245] },
         margin: { left: 10, right: 10 },
         columnStyles: {
-          0: { cellWidth: 30 }, // Name
-          1: { cellWidth: 15 }, // Gross Pay
-          2: { cellWidth: 15 }, // PAYE
-          3: { cellWidth: 15 }, // NSSF
-          4: { cellWidth: 15 }, // SHIF
-          5: { cellWidth: 15 }, // AHL
-          6: { cellWidth: 15 }, // Advance
-          7: { cellWidth: 15 }, // Total Ded.
-          8: { cellWidth: 15 }, // Net Pay
-          9: { cellWidth: 15 }, // NSSF-Empl
-          10: { cellWidth: 15 }, // AHL-Empl
-          11: { cellWidth: 15 }  // NITA
+          0: { cellWidth: 30 },
+          1: { cellWidth: 15 },
+          2: { cellWidth: 15 },
+          3: { cellWidth: 15 },
+          4: { cellWidth: 15 },
+          5: { cellWidth: 15 },
+          6: { cellWidth: 15 },
+          7: { cellWidth: 15 },
+          8: { cellWidth: 15 },
+          9: { cellWidth: 15 },
+          10: { cellWidth: 15 },
+          11: { cellWidth: 15 }
         },
         didParseCell: function(data) {
           if (data.row.index === data.table.body.length - 1) {
@@ -331,7 +443,6 @@
         }
       });
 
-      // Footer
       const finalY = doc.lastAutoTable.finalY + 10;
       doc.setFontSize(8);
       doc.text(`Page ${doc.getCurrentPageInfo().pageNumber}`, 190, finalY, { align: "right" });
@@ -343,34 +454,29 @@
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
       
-      // Get current month and year
-      const currentDate = new Date();
+      const currentDate = new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
+      const payslipDate = new Date(currentDate);
       const monthNames = ["January", "February", "March", "April", "May", "June", 
                          "July", "August", "September", "October", "November", "December"];
-      const month = monthNames[currentDate.getMonth()];
-      const year = currentDate.getFullYear();
+      const month = monthNames[payslipDate.getMonth()];
+      const year = payslipDate.getFullYear();
 
-      // Letter header
       doc.setFontSize(12);
       doc.setFont("helvetica", "normal");
-      doc.text(`Date: ${currentDate.toLocaleDateString()}`, 20, 20);
+      doc.text(`Date: ${payslipDate.toLocaleDateString('en-GB')}`, 20, 20);
       doc.text("The Manager", 20, 30);
-      doc.text("Smep Microfinance Bank", 20, 35); // Replace with actual bank name if available
-      doc.text("Ongata Rongai", 20, 40); // Replace with actual branch name if available
+      doc.text("SMEP Microfinance Bank", 20, 35);
+      doc.text("Ongata Rongai", 20, 40);
       
-      // Salutation
       doc.text("Dear Sir/Madam,", 20, 50);
       
-      // Reference
       doc.setFont("helvetica", "bold");
       doc.text(`REF: ${month} ${year} Salaries`, 20, 60);
       doc.setFont("helvetica", "normal");
       
-      // Introduction
       doc.text("Please process the following salary payments for our staff for the month of", 20, 70);
       doc.text(`${month} ${year}:`, 20, 75);
 
-      // Table data
       const headers = ["Staff Name", "Net Pay"];
       const data = [];
       let totalNetPay = 0;
@@ -382,10 +488,8 @@
         totalNetPay += netPay;
       });
 
-      // Add totals row
       data.push(["TOTAL", totalNetPay.toFixed(2)]);
 
-      // Create table
       doc.autoTable({
         head: [headers],
         body: data,
@@ -395,8 +499,8 @@
         alternateRowStyles: { fillColor: [245, 245, 245] },
         margin: { left: 20, right: 20 },
         columnStyles: {
-          0: { cellWidth: 100 }, // Staff Name
-          1: { cellWidth: 60 }   // Net Pay
+          0: { cellWidth: 100 },
+          1: { cellWidth: 60 }
         },
         didParseCell: function(data) {
           if (data.row.index === data.table.body.length - 1) {
@@ -406,14 +510,12 @@
         }
       });
 
-      // Closing
       const finalY = doc.lastAutoTable.finalY + 10;
       doc.text("Please ensure these payments are processed promptly.", 20, finalY);
       doc.text("Thank you for your assistance.", 20, finalY + 5);
       doc.text("Yours faithfully,", 20, finalY + 15);
-      doc.text("Jean Mburu", 20, finalY + 25); // Replace with actual sender name
+      doc.text("Jean Mburu", 20, finalY + 25);
 
-      // Footer
       doc.setFontSize(8);
       doc.text(`Generated by HCS Payroll Module`, 20, finalY + 40);
       doc.text(`Page ${doc.getCurrentPageInfo().pageNumber}`, 190, finalY + 40, { align: "right" });
@@ -421,7 +523,6 @@
       doc.save(`Bank_Salary_Letter_${month}_${year}.pdf`);
     }
 
-    // Initialize page
     window.onload = loadPayroll;
   </script>
 </body>
