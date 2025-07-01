@@ -261,7 +261,6 @@
                 <th>Total Balance</th>
                 <th>Payment Mode</th>
                 <th>Date</th>
-                <th>Receipt No.</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -287,7 +286,6 @@
                 <td>${r.balance.toFixed(2)}</td>
                 <td>${r.mode}</td>
                 <td>${new Date(r.date).toLocaleDateString('en-GB')}</td>
-                <td>${r.receiptNumber || 'N/A'}</td>
                 <td>
                   <button onclick="printReceipt('${r.id}')" style="margin-right: 8px;">Print</button>
                   <button onclick="deleteReceipt('${r.id}')" style="background:#dc3545; color:white;">Delete</button>
@@ -344,7 +342,7 @@
           studentClass = match[2].trim();
         } else {
           studentName = studentInput.trim();
-          studentClass = "Unknown";
+          studentClass = "Unknown"; // Default class if not specified
         }
 
         // Check if student exists in Firestore
@@ -358,7 +356,7 @@
           const newStudent = {
             name: studentName,
             class: studentClass,
-            phone: "+254000000000",
+            phone: "+254000000000", // Default phone, update as needed
             tuition: 0,
             adm: 0,
             books: 0,
@@ -382,28 +380,26 @@
           balance: (student.total || 0) - ((student.paid || 0) + amount)
         };
 
-        // Generate receipt number atomically
-        let receiptNumber;
+        const receipt = { 
+          name: studentName, 
+          class: studentClass, 
+          paid: amount, 
+          balance: updatedStudent.balance, 
+          mode: mode,
+          date: receiptDate.toISOString()
+        };
+
         await db.runTransaction(async transaction => {
-          const snapshot = await receiptsCollection.get();
-          const receiptCount = snapshot.size + 1; // Increment for new receipt
-          receiptNumber = String(receiptCount).padStart(3, '0');
-
-          const receipt = { 
-            name: studentName, 
-            class: studentClass, 
-            paid: amount, 
-            balance: updatedStudent.balance, 
-            mode: mode,
-            date: receiptDate.toISOString(),
-            receiptNumber: receiptNumber
-          };
-
           transaction.set(studentsCollection.doc(studentId), updatedStudent);
           const receiptRef = receiptsCollection.doc();
           transaction.set(receiptRef, receipt);
-          receipt.id = receiptRef.id;
+          receipt.id = receiptRef.id; // Assign the auto-generated ID to the receipt
         });
+
+        // Get total number of receipts for receipt number
+        const snapshot = await receiptsCollection.get();
+        const receiptCount = snapshot.size;
+        const receiptNumber = String(receiptCount).padStart(3, '0');
 
         // Format time in EAT for SMS
         const timeString = receiptDate.toLocaleTimeString('en-US', { 
@@ -577,8 +573,22 @@
         const currentDate = new Date(receipt.date).toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
         const receiptDate = new Date(currentDate);
 
-        // Use stored receipt number
-        const receiptNumber = receipt.receiptNumber || 'N/A';
+        // Get total number of receipts for auto-incrementing receipt number
+        const snapshot = await receiptsCollection.get();
+        const receiptCount = snapshot.size + 1; // Start from 1
+        const receiptNumber = String(receiptCount).padStart(3, '0');
+
+        // Fetch all receipts for the student to calculate cumulative balance
+        const allReceiptsSnapshot = await receiptsCollection.where('name', '==', receipt.name).get();
+        let totalBalance = 0;
+        allReceiptsSnapshot.forEach(doc => {
+          const r = doc.data();
+          totalBalance += r.balance || 0; // Sum all balances
+        });
+        // Adjust total balance by subtracting the current payment if this is the latest receipt
+        if (receipt.id === id) {
+          totalBalance -= receipt.paid; // Reflect the current payment in the balance
+        }
 
         const printWindow = window.open('', '', 'height=800,width=900');
         printWindow.document.write(`
@@ -812,10 +822,11 @@
                       `;
                     });
 
+                    // Add receipt balance row with cumulative total
                     rows += `
                       <tr class="total-row">
                         <td colspan="3" style="text-align: right; padding-right: 10px;"><strong>Receipt Balance</strong></td>
-                        <td><strong>${remainingPaid > 0 ? remainingPaid.toLocaleString() : '0'}</strong></td>
+                        <td><strong>${totalBalance.toLocaleString()}</strong></td>
                       </tr>
                     `;
 
@@ -907,7 +918,7 @@
           doc.line(20, 73, 190, 73);
 
           doc.setFontSize(16);
-          doc.text("RECEIPT SUMMARY", 105, 85, { align: 'center' });
+          doc.text("RECEIPT SUMMARY", 20, 85);
 
           if (typeof doc.autoTable === 'function') {
             const tableData = await Promise.all(classReceipts.map(async r => {
@@ -925,8 +936,7 @@
                   student.transport || 0,
                   student.trip || 0,
                   r.paid,
-                  r.balance,
-                  r.receiptNumber || 'N/A'
+                  r.balance
                 ];
               }
               return [];
@@ -934,7 +944,7 @@
 
             doc.autoTable({
               startY: 95,
-              head: [['Student', 'Tuition', 'Adm Fee', 'Lunch', 'Uniform', 'Book Fund', 'Stationery', 'Transport', 'Trip', 'Paid', 'Balance', 'Receipt No.']],
+              head: [['Student', 'Tuition', 'Adm Fee', 'Lunch', 'Uniform', 'Book Fund', 'Stationery', 'Transport', 'Trip', 'Paid', 'Balance']],
               body: tableData.flat(),
               theme: 'grid',
               styles: { fontSize: 8, cellPadding: 2 },
@@ -968,7 +978,10 @@
           const currentDate = new Date(receipt.date).toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
           const receiptDate = new Date(currentDate);
 
-          const receiptNumber = receipt.receiptNumber || 'N/A';
+          // Get total number of receipts for auto-incrementing receipt number
+          const receiptSnapshot = await receiptsCollection.get();
+          const receiptCount = receiptSnapshot.size + 1; // Start from 1
+          const receiptNumber = String(receiptCount).padStart(3, '0');
 
           if (!isFirstReceipt) {
             doc.addPage();
@@ -1157,17 +1170,17 @@
                   Class: receipt.class,
                   FeeItem: fee.name,
                   AmountPaid: feePaid,
-                  Date: new Date(receipt.date).toLocaleDateString('en-GB'),
-                  ReceiptNo: receipt.receiptNumber || 'N/A'
+                  Date: new Date(receipt.date).toLocaleDateString('en-GB')
                 });
               }
             });
           }
         }));
 
-        data.push({ Student: 'Total', Class: '', FeeItem: '', AmountPaid: '', Date: '', ReceiptNo: '' });
+        // Add total row
+        data.push({ Student: 'Total', Class: '', FeeItem: '', AmountPaid: '', Date: '' });
         feeItems.forEach(item => {
-          data.push({ Student: '', Class: '', FeeItem: item.charAt(0).toUpperCase() + item.slice(1), AmountPaid: totals[item], Date: '', ReceiptNo: '' });
+          data.push({ Student: '', Class: '', FeeItem: item.charAt(0).toUpperCase() + item.slice(1), AmountPaid: totals[item], Date: '' });
         });
 
         const wb = XLSX.utils.book_new();
