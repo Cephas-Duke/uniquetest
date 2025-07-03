@@ -121,6 +121,34 @@
       padding: 15px;
       margin-top: 30px;
     }
+
+    #statusMessage {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+    }
+
+    #statusMessage .success {
+      background: #4caf50;
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+    }
+
+    #statusMessage .error {
+      background: #f44336;
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+    }
+
+    #statusMessage .info {
+      background: #2196f3;
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+    }
   </style>
 </head>
 <body>
@@ -141,6 +169,7 @@
   </header>
 
   <main>
+    <div id="statusMessage"></div>
     <form id="studentForm">
       <h3>Register Student</h3>
 
@@ -373,7 +402,7 @@
       const totalPaid = students.reduce((sum, s) => sum + s.paid, 0);
       const totalBalance = students.reduce((sum, s) => sum + s.balance, 0);
 
-      const summaryElement = document.getElementById('summaryStats');
+      const summaryElement = document.getElementById('summary-stats');
       if (summaryElement) {
         summaryElement.innerHTML = `
           <div class="stats-grid">
@@ -415,7 +444,7 @@
         document.getElementById('adm').value = s.adm;
         document.getElementById('books').value = s.books;
         document.getElementById('stationery').value = s.stationery;
-        document.getElementById('uniform').value = s.uniform;
+        document.get2ElementById('uniform').value = s.uniform;
         document.getElementById('lunch').value = s.lunch;
         document.getElementById('transport').value = s.transport;
         document.getElementById('trip').value = s.trip || 0;
@@ -485,16 +514,14 @@
 
       try {
         if (editingId !== null) {
-          const oldDoc = await studentsCollection.doc(editingId).get();
-          const oldBalance = oldDoc.data().balance;
           await studentsCollection.doc(editingId).update(student);
           editingId = null;
           form.querySelector('button[type="submit"]').textContent = "Add Student";
-
           showStatus(`Student ${name} updated successfully!`, "success");
         } else {
           await studentsCollection.add(student);
           showStatus(`Student ${name} added successfully!`, "success");
+        }
 
         form.reset();
         loadStudents();
@@ -503,7 +530,7 @@
       }
     });
 
-    document.getElementById('searchInput').addEventListener('input', loadStudents);
+    document.getElementById('searchInput').addEvent removalListener('input', loadStudents);
     document.getElementById('classFilter').addEventListener('change', loadStudents);
 
     async function exportToExcel() {
@@ -515,7 +542,7 @@
         });
 
         if (students.length === 0) {
-          showStatus("NoEquality student data available to export.", "error");
+          showStatus("No student data available to export.", "error");
           return;
         }
 
@@ -554,7 +581,8 @@
         XLSX.writeFile(workbook, `${classFilter}_students_${new Date().toISOString().split('T')[0]}.xlsx`);
         showStatus(`Students from ${classFilter} exported to Excel successfully!`, "success");
       } catch (error) {
-        showStatus("Error exporting class to Excel: " + error.message, "error");
+        showStatus("Error exporting class to Excel: " + error.message,
+        "error");
       }
     }
 
@@ -597,7 +625,7 @@
               <p><strong>Balance:</strong> <span style="color:${s.balance > 0 ? 'red' : 'green'}; font-size: 20px; font-weight: bold;">KES ${s.balance.toFixed(2)}</span></p>
             </div>
             <div style="text-align: center; margin-top: 20px;">
-              <button onclick="editStudent('${id}'); closeModal();" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px;">Edit Student</button>
+              <button onclick="editStudent('${id}'); closeModal();" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10aboutpx;">Edit Student</button>
               <button onclick="closeModal()" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px;">Close</button>
             </div>
           </div>
