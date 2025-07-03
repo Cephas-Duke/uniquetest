@@ -2,128 +2,736 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>H.C.S | School Office Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
-    body { font-family: Arial; background: #f0f0f0; margin: 0; padding: 0; }
-    header { background: #0077cc; color: white; padding: 20px; text-align: center; }
-    nav { background:#004080; padding:10px 20px; display:flex; gap:15px; flex-wrap:wrap; }
-    nav a { color:white; text-decoration:none; padding:6px 10px; border-radius:4px; transition: background 0.3s; }
-    nav a:hover { background:#0059b3; }
-    h2 { color: #333; padding: 0 20px; }
-    form, .class-section { background: white; padding: 20px; border-radius: 8px; margin: 20px; }
-    input, select, button { margin: 5px 0; padding: 8px; width: 100%; border: 1px solid #ccc; border-radius: 4px; }
-    label { margin-top: 10px; display: block; }
-    .class-section h3 { background-color: #005fa3; color: white; padding: 10px; margin: -20px -20px 10px -20px; cursor: pointer; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
-    th { background-color: #0077cc; color: white; }
-    #studentManagerModal { overflow-y: auto; max-height: 90vh; }
-    .success { color: green; font-weight: bold; }
-    .error { color: red; font-weight: bold; }
-    .loading { color: blue; font-style: italic; }
-    #searchInput { width: 100%; max-width: 300px; margin: 10px 0; }
+    :root {
+      --primary-color: #005fa3;
+      --secondary-color: #004080;
+      --accent-color: #00a8e8;
+      --light-color: #f8f9fa;
+      --dark-color: #343a40;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --warning-color: #ffc107;
+      --info-color: #17a2b8;
+      --border-radius: 8px;
+      --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f5f7fa;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 1.5rem;
+      text-align: center;
+      box-shadow: var(--box-shadow);
+      position: relative;
+      z-index: 10;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      font-size: 1rem;
+      opacity: 0.9;
+    }
+
+    nav {
+      background: var(--secondary-color);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      box-shadow: var(--box-shadow);
+      position: sticky;
+      top: 0;
+      z-index: 9;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: var(--border-radius);
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    nav a:hover {
+      background: var(--accent-color);
+      transform: translateY(-2px);
+    }
+
+    nav a.active {
+      background: var(--accent-color);
+      font-weight: bold;
+    }
+
+    nav a i {
+      font-size: 1rem;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .card {
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      transition: var(--transition);
+    }
+
+    .card:hover {
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+      transform: translateY(-3px);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid #eee;
+    }
+
+    .card-title {
+      font-size: 1.5rem;
+      color: var(--primary-color);
+      margin: 0;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: var(--border-radius);
+      background: var(--primary-color);
+      color: white;
+      cursor: pointer;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .btn:hover {
+      background: var(--secondary-color);
+      transform: translateY(-2px);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--primary-color);
+      color: var(--primary-color);
+    }
+
+    .btn-outline:hover {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .btn-success {
+      background: var(--success-color);
+    }
+
+    .btn-success:hover {
+      background: #218838;
+    }
+
+    .btn-danger {
+      background: var(--danger-color);
+    }
+
+    .btn-danger:hover {
+      background: #c82333;
+    }
+
+    .btn-warning {
+      background: var(--warning-color);
+      color: var(--dark-color);
+    }
+
+    .btn-warning:hover {
+      background: #e0a800;
+    }
+
+    .btn-info {
+      background: var(--info-color);
+    }
+
+    .btn-info:hover {
+      background: #138496;
+    }
+
+    .btn-sm {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--dark-color);
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      font-size: 1rem;
+      transition: var(--transition);
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px rgba(0, 168, 232, 0.2);
+    }
+
+    .search-box {
+      position: relative;
+      margin-bottom: 1.5rem;
+      max-width: 400px;
+    }
+
+    .search-box input {
+      padding-left: 2.5rem;
+    }
+
+    .search-box i {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #777;
+    }
+
+    .status-message {
+      padding: 0.75rem 1rem;
+      border-radius: var(--border-radius);
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+
+    .status-message.success {
+      background-color: rgba(40, 167, 69, 0.1);
+      color: var(--success-color);
+      border-left: 4px solid var(--success-color);
+    }
+
+    .status-message.error {
+      background-color: rgba(220, 53, 69, 0.1);
+      color: var(--danger-color);
+      border-left: 4px solid var(--danger-color);
+    }
+
+    .status-message.loading {
+      background-color: rgba(23, 162, 184, 0.1);
+      color: var(--info-color);
+      border-left: 4px solid var(--info-color);
+    }
+
+    .status-message.info {
+      background-color: rgba(0, 123, 255, 0.1);
+      color: #0069d9;
+      border-left: 4px solid #0069d9;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      font-size: 0.95rem;
+    }
+
+    th, td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+
+    th {
+      background-color: var(--primary-color);
+      color: white;
+      font-weight: 500;
+    }
+
+    tr:hover {
+      background-color: #f8f9fa;
+    }
+
+    .class-section {
+      margin-bottom: 2rem;
+    }
+
+    .class-header {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 0.75rem 1rem;
+      border-radius: var(--border-radius) var(--border-radius) 0 0;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: var(--transition);
+    }
+
+    .class-header:hover {
+      background-color: var(--secondary-color);
+    }
+
+    .class-header h3 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+
+    .class-header .badge {
+      background: white;
+      color: var(--primary-color);
+      padding: 0.25rem 0.5rem;
+      border-radius: 1rem;
+      font-size: 0.85rem;
+      font-weight: bold;
+    }
+
+    .class-content {
+      border: 1px solid #ddd;
+      border-top: none;
+      border-radius: 0 0 var(--border-radius) var(--border-radius);
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal.show {
+      display: flex;
+      opacity: 1;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: var(--border-radius);
+      width: 90%;
+      max-width: 700px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      transform: translateY(-20px);
+      transition: transform 0.3s ease;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal.show .modal-content {
+      transform: translateY(0);
+    }
+
+    .modal-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      margin: 0;
+      color: var(--primary-color);
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #777;
+      transition: var(--transition);
+    }
+
+    .modal-close:hover {
+      color: var(--danger-color);
+      transform: rotate(90deg);
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+    }
+
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid #eee;
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .fee-inputs {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .receipt-preview {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      margin-top: 1.5rem;
+      font-family: 'Courier New', monospace;
+      white-space: pre-wrap;
+    }
+
+    .print-only {
+      display: none;
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      .print-only, .print-only * {
+        visibility: visible;
+      }
+      .print-only {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 768px) {
+      nav {
+        padding: 0.75rem;
+      }
+      nav a {
+        padding: 0.5rem;
+        font-size: 0.85rem;
+      }
+      .container {
+        padding: 0 1rem;
+      }
+      .card {
+        padding: 1rem;
+      }
+      .btn-group {
+        flex-direction: column;
+        width: 100%;
+      }
+      .btn {
+        width: 100%;
+        justify-content: center;
+      }
+      table {
+        font-size: 0.85rem;
+      }
+      th, td {
+        padding: 0.5rem;
+      }
+    }
+
+    /* Animation classes */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.5s ease forwards;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .slide-in {
+      animation: slideIn 0.5s ease forwards;
+    }
+
+    /* Loading spinner */
+    .spinner {
+      display: inline-block;
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
   <header>
     <h1>Heriwadi Christian Schools Ltd</h1>
-    <p>Fee Receipt Management</p>
+    <p>Fee Receipt Management System</p>
   </header>
 
   <nav>
-    <a href="index.html">Dashboard</a>
-    <a href="receipts.html" style="font-weight:bold;">Receipts</a>
-    <a href="students.html">Students</a>
-    <a href="expense.html">Expenses</a>
-    <a href="assets.html">Assets</a>
-    <a href="staff.html">Staff</a>
-    <a href="payroll.html">Payroll</a>
+    <a href="index.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+    <a href="receipts.html" class="active"><i class="fas fa-receipt"></i> Receipts</a>
+    <a href="students.html"><i class="fas fa-users"></i> Students</a>
+    <a href="expense.html"><i class="fas fa-money-bill-wave"></i> Expenses</a>
+    <a href="assets.html"><i class="fas fa-laptop-house"></i> Assets</a>
+    <a href="staff.html"><i class="fas fa-user-tie"></i> Staff</a>
+    <a href="payroll.html"><i class="fas fa-money-check-alt"></i> Payroll</a>
   </nav>
 
-  <h2>Issue Fee Receipt</h2>
-  <div style="padding: 0 20px;">
-    <button onclick="openStudentManager()">Manage Students</button>
-    <button onclick="exportByClassPDF()">Export by Class to PDF</button>
-    <button onclick="exportConsolidatedPDF()">Export All Receipts to PDF</button>
-    <button onclick="exportToExcel()">Export to Excel</button>
-    <button onclick="window.print()">Print</button>
-  </div>
+  <div class="container">
+    <div class="card slide-in">
+      <div class="card-header">
+        <h2 class="card-title">Issue Fee Receipt</h2>
+        <div class="btn-group">
+          <button class="btn btn-info" onclick="openStudentManager()">
+            <i class="fas fa-user-plus"></i> Manage Students
+          </button>
+          <button class="btn btn-warning" onclick="exportByClassPDF()">
+            <i class="fas fa-file-pdf"></i> Export by Class
+          </button>
+          <button class="btn btn-warning" onclick="exportConsolidatedPDF()">
+            <i class="fas fa-file-archive"></i> Export All
+          </button>
+          <button class="btn btn-info" onclick="exportToExcel()">
+            <i class="fas fa-file-excel"></i> Export to Excel
+          </button>
+          <button class="btn btn-success" onclick="window.print()">
+            <i class="fas fa-print"></i> Print
+          </button>
+        </div>
+      </div>
 
-  <div id="statusMessage" style="padding: 0 20px; margin: 10px 0;"></div>
+      <div id="statusMessage" class="status-message"></div>
 
-  <form id="receiptForm">
-    <label for="studentInput">Student Name</label>
-    <input type="text" id="studentInput" list="studentList" required placeholder="Type or select a student...">
-    <datalist id="studentList"></datalist>
+      <form id="receiptForm">
+        <div class="grid">
+          <div class="form-group">
+            <label for="studentInput"><i class="fas fa-user-graduate"></i> Student Name</label>
+            <input type="text" id="studentInput" list="studentList" required placeholder="Type or select a student..." />
+            <datalist id="studentList"></datalist>
+          </div>
 
-    <label for="amountPaid">Amount Paid</label>
-    <input type="number" id="amountPaid" required />
+          <div class="form-group">
+            <label for="amountPaid"><i class="fas fa-money-bill-wave"></i> Amount Paid (KES)</label>
+            <input type="number" id="amountPaid" required min="1" step="1" />
+          </div>
 
-    <label for="paymentMode">Payment Mode</label>
-    <select id="paymentMode" required>
-      <option value="Cash">Cash</option>
-      <option value="M-Pesa">M-Pesa</option>
-      <option value="Bank">Bank</option>
-    </select>
+          <div class="form-group">
+            <label for="paymentMode"><i class="fas fa-credit-card"></i> Payment Mode</label>
+            <select id="paymentMode" required>
+              <option value="">Select Payment Mode</option>
+              <option value="Cash">Cash</option>
+              <option value="M-Pesa">M-Pesa</option>
+              <option value="Bank">Bank</option>
+              <option value="Cheque">Cheque</option>
+            </select>
+          </div>
+        </div>
 
-    <button type="submit" id="submitBtn">Save Receipt & Send SMS</button>
-  </form>
+        <div class="form-group">
+          <label for="receiptNotes"><i class="fas fa-sticky-note"></i> Notes (Optional)</label>
+          <textarea id="receiptNotes" rows="2" placeholder="Any additional notes about this payment..."></textarea>
+        </div>
 
-  <div style="padding: 0 20px;">
-    <input type="text" id="searchInput" placeholder="Search by student name..." oninput="updateReceiptTable()">
-  </div>
-
-  <div id="groupedReceipts"></div>
-
-  <div id="studentManagerModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:9999;">
-    <div style="background:#fff; padding:20px; border-radius:10px; width:90%; max-width:600px; position:relative; max-height:90vh; overflow-y:auto;">
-      <span onclick="closeStudentManager()" style="position:absolute; top:10px; right:20px; font-size:18px; cursor:pointer;">×</span>
-      <h3>Add New Student</h3>
-      <form id="studentForm">
-        <label>Name:</label><input type="text" id="studentName" required>
-        <label>Class:</label>
-        <select id="studentClass" required>
-          <option value="">Select Class</option>
-          <option value="Play Group">Play Group</option>
-          <option value="PP1">PP1</option>
-          <option value="PP2">PP2</option>
-          <option value="Grade 1">Grade 1</option>
-          <option value="Grade 2">Grade 2</option>
-          <option value="Grade 3">Grade 3</option>
-          <option value="Grade 4">Grade 4</option>
-          <option value="Grade 5">Grade 5</option>
-          <option value="Grade 6">Grade 6</option>
-        </select>
-        <label>Phone:</label><input type="tel" id="phone" placeholder="e.g., +254712345678" pattern="^\+?[1-9]\d{9,14}$" required>
-        <label>Tuition:</label><input type="number" id="tuition" value="0">
-        <label>Adm Fee:</label><input type="number" id="adm" value="0">
-        <label>Book Fund:</label><input type="number" id="books" value="0">
-        <label>Stationery:</label><input type="number" id="stationery" value="0">
-        <label>Uniform:</label><input type="number" id="uniform" value="0">
-        <label>Lunch:</label><input type="number" id="lunch" value="0">
-        <label>Transport:</label><input type="number" id="transport" value="0">
-        <label>Trip:</label><input type="number" id="trip" value="0">
-        <button type="submit">Add Student</button>
+        <button type="submit" class="btn btn-success" id="submitBtn">
+          <i class="fas fa-save"></i> Save Receipt & Send SMS
+        </button>
       </form>
-      <hr>
-      <ul id="studentList"></ul>
+
+      <div id="receiptPreview" class="receipt-preview" style="display: none;">
+        <h3>Receipt Preview</h3>
+        <div id="previewContent"></div>
+      </div>
+    </div>
+
+    <div class="card slide-in">
+      <div class="card-header">
+        <h2 class="card-title">Receipt Records</h2>
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Search by student name..." oninput="updateReceiptTable()" />
+        </div>
+      </div>
+
+      <div id="groupedReceipts"></div>
+    </div>
+  </div>
+
+  <!-- Student Manager Modal -->
+  <div id="studentManagerModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Student Management</h3>
+        <button class="modal-close" onclick="closeStudentManager()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <h4>Add New Student</h4>
+        <form id="studentForm">
+          <div class="grid">
+            <div class="form-group">
+              <label for="studentName">Full Name</label>
+              <input type="text" id="studentName" required />
+            </div>
+            
+            <div class="form-group">
+              <label for="studentClass">Class</label>
+              <select id="studentClass" required>
+                <option value="">Select Class</option>
+                <option value="Play Group">Play Group</option>
+                <option value="PP1">PP1</option>
+                <option value="PP2">PP2</option>
+                <option value="Grade 1">Grade 1</option>
+                <option value="Grade 2">Grade 2</option>
+                <option value="Grade 3">Grade 3</option>
+                <option value="Grade 4">Grade 4</option>
+                <option value="Grade 5">Grade 5</option>
+                <option value="Grade 6">Grade 6</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="phone">Phone Number</label>
+              <input type="tel" id="phone" placeholder="e.g., +254712345678" pattern="^\+?[1-9]\d{9,14}$" required />
+            </div>
+          </div>
+
+          <h4 style="margin-top: 1.5rem;">Fee Structure</h4>
+          <div class="fee-inputs">
+            <div class="form-group">
+              <label for="tuition">Tuition (KES)</label>
+              <input type="number" id="tuition" value="0" min="0" />
+            </div>
+            
+            <div class="form-group">
+              <label for="adm">Admission Fee (KES)</label>
+              <input type="number" id="adm" value="0" min="0" />
+            </div>
+            
+            <div class="form-group">
+              <label for="books">Book Fund (KES)</label>
+              <input type="number" id="books" value="0" min="0" />
+            </div>
+            
+            <div class="form-group">
+              <label for="stationery">Stationery (KES)</label>
+              <input type="number" id="stationery" value="0" min="0" />
+            </div>
+            
+            <div class="form-group">
+              <label for="uniform">Uniform (KES)</label>
+              <input type="number" id="uniform" value="0" min="0" />
+            </div>
+            
+            <div class="form-group">
+              <label for="lunch">Lunch (KES)</label>
+              <input type="number" id="lunch" value="0" min="0" />
+            </div>
+            
+            <div class="form-group">
+              <label for="transport">Transport (KES)</label>
+              <input type="number" id="transport" value="0" min="0" />
+            </div>
+            
+            <div class="form-group">
+              <label for="trip">Trip (KES)</label>
+              <input type="number" id="trip" value="0" min="0" />
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline" onclick="closeStudentManager()">
+              <i class="fas fa-times"></i> Cancel
+            </button>
+            <button type="submit" class="btn btn-success">
+              <i class="fas fa-save"></i> Save Student
+            </button>
+          </div>
+        </form>
+
+        <hr style="margin: 1.5rem 0;" />
+
+        <h4>Existing Students</h4>
+        <div id="studentListContainer" style="max-height: 300px; overflow-y: auto;">
+          <ul id="studentList" class="student-list"></ul>
+        </div>
+      </div>
     </div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
   <script>
     // Initialize Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyBAA6zY40EwbTmWUx1op1cx52C3y0RK3m0",
       authDomain: "heriwadi-manager.firebaseapp.com",
       projectId: "heriwadi-manager",
-      storageBucket: "heriwadi-manager.firebasestorage.app",
+      storageBucket: "heriwadi-manager.appspot.com",
       messagingSenderId: "654632910809",
       appId: "1:654632910809:web:7c65613d2510402a6663c8",
       measurementId: "G-LLHS6GLB6E"
@@ -143,21 +751,46 @@
       showStatus("Failed to initialize Firebase. Check your configuration.", "error");
       throw error;
     }
+    
     const studentsCollection = db.collection('students');
     const receiptsCollection = db.collection('receipts');
 
     document.addEventListener('DOMContentLoaded', function() {
-      const studentInput = document.getElementById("studentInput");
-      const statusMessage = document.getElementById("statusMessage");
-      const submitBtn = document.getElementById("submitBtn");
       populateStudents();
       updateReceiptTable();
+      
+      // Add event listeners for form validation
+      document.getElementById('amountPaid').addEventListener('input', validateAmount);
+      document.getElementById('receiptForm').addEventListener('submit', handleReceiptSubmit);
+      document.getElementById('studentForm').addEventListener('submit', handleStudentSubmit);
+      
+      // Initialize modals
+      const modal = document.getElementById('studentManagerModal');
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) closeStudentManager();
+      });
     });
 
+    function validateAmount() {
+      const amountInput = document.getElementById('amountPaid');
+      if (amountInput.value <= 0) {
+        amountInput.setCustomValidity('Amount must be greater than 0');
+      } else {
+        amountInput.setCustomValidity('');
+      }
+    }
+
     function showStatus(message, type = 'info') {
-      statusMessage.innerHTML = `<div class="${type}">${message}</div>`;
+      const statusMessage = document.getElementById('statusMessage');
+      statusMessage.textContent = message;
+      statusMessage.className = `status-message ${type} fade-in`;
+      
       setTimeout(() => {
-        statusMessage.innerHTML = '';
+        statusMessage.classList.remove('fade-in');
+        setTimeout(() => {
+          statusMessage.textContent = '';
+          statusMessage.className = 'status-message';
+        }, 300);
       }, 5000);
     }
 
@@ -180,12 +813,14 @@
       try {
         const studentList = document.getElementById("studentList");
         studentList.innerHTML = "";
-        const snapshot = await studentsCollection.get();
+        
+        const snapshot = await studentsCollection.orderBy('name').get();
         if (snapshot.empty) {
           console.log('No students found in Firestore');
           showStatus("No students found. Add a student first.", "info");
           return;
         }
+        
         snapshot.forEach(doc => {
           const s = { id: doc.id, ...doc.data() };
           const opt = document.createElement("option");
@@ -196,22 +831,19 @@
       } catch (error) {
         console.error('Error populating students:', error);
         showStatus(`Error loading students: ${error.message}. Check Firebase rules or network.`, "error");
-        if (error.code === 'permission-denied') {
-          showStatus("Permission denied. Update Firestore rules to allow read access.", "error");
-        }
       }
     }
 
     async function updateReceiptTable() {
       try {
         const groupedReceipts = document.getElementById('groupedReceipts');
-        groupedReceipts.innerHTML = '';
+        groupedReceipts.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading receipts...</div>';
+        
         const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-
         const snapshot = await receiptsCollection.orderBy('date', 'desc').get();
+        
         if (snapshot.empty) {
-          console.log('No receipts found in Firestore');
-          groupedReceipts.innerHTML = '<p>No receipts found.</p>';
+          groupedReceipts.innerHTML = '<div class="status-message info">No receipts found.</div>';
           return;
         }
 
@@ -224,41 +856,49 @@
           ? receipts.filter(r => r.name.toLowerCase().includes(searchQuery))
           : receipts;
 
+        if (filteredReceipts.length === 0) {
+          groupedReceipts.innerHTML = '<div class="status-message info">No receipts match your search.</div>';
+          return;
+        }
+
+        groupedReceipts.innerHTML = '';
+        
         const classes = [
           "Play Group", "PP1", "PP2",
           "Grade 1", "Grade 2", "Grade 3",
           "Grade 4", "Grade 5", "Grade 6"
         ];
 
-        classes.forEach(cls => {
+        for (const cls of classes) {
           const classReceipts = filteredReceipts.filter(r => r.class === cls);
-          if (classReceipts.length === 0) return;
+          if (classReceipts.length === 0) continue;
 
           const section = document.createElement('div');
           section.className = 'class-section';
 
-          const header = document.createElement('h3');
-          header.textContent = `${cls} (${classReceipts.length} receipts)`;
+          const header = document.createElement('div');
+          header.className = 'class-header';
+          header.innerHTML = `
+            <h3>${cls}</h3>
+            <span class="badge">${classReceipts.length} receipt${classReceipts.length !== 1 ? 's' : ''}</span>
+          `;
           header.onclick = () => {
-            const table = section.querySelector('table');
-            table.style.display = table.style.display === 'none' ? 'table' : 'none';
+            const content = section.querySelector('.class-content');
+            content.style.display = content.style.display === 'none' ? 'block' : 'none';
           };
           section.appendChild(header);
 
+          const content = document.createElement('div');
+          content.className = 'class-content';
+          content.style.display = 'none';
+          
           const table = document.createElement('table');
           table.innerHTML = `
             <thead>
               <tr>
                 <th>Student</th>
-                <th>Tuition</th>
-                <th>Adm Fee</th>
-                <th>Lunch</th>
-                <th>Uniform</th>
-                <th>Book Fund</th>
-                <th>Stationery</th>
-                <th>Transport</th>
-                <th>Trip</th>
-                <th>Total Balance</th>
+                <th>Amount Paid</th>
+                <th>Balance</th>
                 <th>Payment Mode</th>
                 <th>Date</th>
                 <th>Actions</th>
@@ -268,52 +908,51 @@
           `;
           const tbody = table.querySelector('tbody');
 
-          classReceipts.forEach(async r => {
+          await Promise.all(classReceipts.map(async r => {
             const studentSnapshot = await studentsCollection.where('name', '==', r.name).get();
             if (!studentSnapshot.empty) {
               const student = studentSnapshot.docs[0].data();
               const row = document.createElement('tr');
               row.innerHTML = `
-                <td>${r.name}</td>
-                <td>${student.tuition || 0}</td>
-                <td>${student.adm || 0}</td>
-                <td>${student.lunch || 0}</td>
-                <td>${student.uniform || 0}</td>
-                <td>${student.books || 0}</td>
-                <td>${student.stationery || 0}</td>
-                <td>${student.transport || 0}</td>
-                <td>${student.trip || 0}</td>
-                <td>${r.balance.toFixed(2)}</td>
+                <td>
+                  <strong>${r.name}</strong><br>
+                  <small>${r.class}</small>
+                </td>
+                <td>${r.paid.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
+                <td>${r.balance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
                 <td>${r.mode}</td>
                 <td>${new Date(r.date).toLocaleDateString('en-GB')}</td>
                 <td>
-                  <button onclick="printReceipt('${r.id}')" style="margin-right: 8px;">Print</button>
-                  <button onclick="deleteReceipt('${r.id}')" style="background:#dc3545; color:white;">Delete</button>
+                  <button class="btn btn-sm btn-info" onclick="printReceipt('${r.id}')">
+                    <i class="fas fa-print"></i> Print
+                  </button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteReceipt('${r.id}')">
+                    <i class="fas fa-trash"></i> Delete
+                  </button>
                 </td>
               `;
               tbody.appendChild(row);
             }
-          });
+          }));
 
-          section.appendChild(table);
+          content.appendChild(table);
+          section.appendChild(content);
           groupedReceipts.appendChild(section);
-          table.style.display = 'none'; // Initially collapsed
-        });
+        }
       } catch (error) {
         console.error('Error updating receipt table:', error);
         showStatus(`Error loading receipts: ${error.message}. Check Firebase rules or network.`, "error");
-        if (error.code === 'permission-denied') {
-          showStatus("Permission denied. Update Firestore rules to allow read access.", "error");
-        }
       }
     }
 
-    document.getElementById("receiptForm").addEventListener("submit", async function(e) {
+    async function handleReceiptSubmit(e) {
       e.preventDefault();
       
       const studentInput = document.getElementById("studentInput").value;
       const amount = parseFloat(document.getElementById("amountPaid").value);
       const mode = document.getElementById("paymentMode").value;
+      const notes = document.getElementById("receiptNotes").value;
+      const submitBtn = document.getElementById("submitBtn");
 
       if (!studentInput) {
         showStatus("Please enter or select a student name", "error");
@@ -326,7 +965,7 @@
       }
 
       submitBtn.disabled = true;
-      submitBtn.textContent = "Processing...";
+      submitBtn.innerHTML = '<span class="spinner"></span> Processing...';
       showStatus("Processing payment and sending SMS...", "loading");
 
       try {
@@ -337,17 +976,19 @@
         // Extract name and class from input (format: "Name (Class)")
         const match = studentInput.match(/^(.+?)\s*\((.+?)\)$/);
         let studentName, studentClass, studentId = null;
+        
         if (match) {
           studentName = match[1].trim();
           studentClass = match[2].trim();
         } else {
           studentName = studentInput.trim();
-          studentClass = "Unknown"; // Default class if not specified
+          studentClass = "Unknown";
         }
 
         // Check if student exists in Firestore
         const studentSnapshot = await studentsCollection.where('name', '==', studentName).get();
         let student;
+        
         if (!studentSnapshot.empty) {
           student = studentSnapshot.docs[0].data();
           studentId = studentSnapshot.docs[0].id;
@@ -356,7 +997,7 @@
           const newStudent = {
             name: studentName,
             class: studentClass,
-            phone: "+254000000000", // Default phone, update as needed
+            phone: "+254000000000",
             tuition: 0,
             adm: 0,
             books: 0,
@@ -386,6 +1027,7 @@
           paid: amount, 
           balance: updatedStudent.balance, 
           mode: mode,
+          notes: notes || null,
           date: receiptDate.toISOString()
         };
 
@@ -393,7 +1035,7 @@
           transaction.set(studentsCollection.doc(studentId), updatedStudent);
           const receiptRef = receiptsCollection.doc();
           transaction.set(receiptRef, receipt);
-          receipt.id = receiptRef.id; // Assign the auto-generated ID to the receipt
+          receipt.id = receiptRef.id;
         });
 
         // Get total number of receipts for receipt number
@@ -408,35 +1050,54 @@
           minute: '2-digit', 
           hour12: true 
         }).toUpperCase();
+        
         const smsMessage = `Dear parent to ${studentName}, ${studentClass}, Amount of KES ${amount} Receipt No. ${receiptNumber} was received on ${receiptDate.toLocaleDateString('en-GB')} at ${timeString}. Balance: ${updatedStudent.balance}.`;
         const smsSent = await sendSMS(student.phone, smsMessage);
+        
         showStatus(`Receipt saved${smsSent ? ' and SMS sent' : ''} successfully!`, "success");
-
         updateReceiptTable();
         populateStudents();
-        this.reset();
+        
+        // Show receipt preview
+        const preview = document.getElementById('receiptPreview');
+        const previewContent = document.getElementById('previewContent');
+        previewContent.innerHTML = `
+          <p><strong>Student:</strong> ${studentName} (${studentClass})</p>
+          <p><strong>Amount Paid:</strong> ${amount.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</p>
+          <p><strong>Payment Mode:</strong> ${mode}</p>
+          <p><strong>Date:</strong> ${receiptDate.toLocaleDateString('en-GB')} ${timeString}</p>
+          <p><strong>Balance:</strong> ${updatedStudent.balance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</p>
+          ${notes ? `<p><strong>Notes:</strong> ${notes}</p>` : ''}
+          <p><strong>Receipt No:</strong> ${receiptNumber}</p>
+        `;
+        preview.style.display = 'block';
+        
+        // Reset form
+        document.getElementById("receiptForm").reset();
       } catch (error) {
         console.error('Error processing receipt:', error);
         showStatus(`Error: ${error.message}. Receipt may not have been saved.`, "error");
-        if (error.code === 'permission-denied') {
-          showStatus("Permission denied. Update Firestore rules to allow write access.", "error");
-        }
       } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = "Save Receipt & Send SMS";
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> Save Receipt & Send SMS';
       }
-    });
+    }
 
     function openStudentManager() {
-      document.getElementById("studentManagerModal").style.display = "flex";
+      const modal = document.getElementById('studentManagerModal');
+      modal.classList.add('show');
+      document.body.style.overflow = 'hidden';
       renderStudentList();
     }
 
     function closeStudentManager() {
-      document.getElementById("studentManagerModal").style.display = "none";
+      const modal = document.getElementById('studentManagerModal');
+      modal.classList.remove('show');
+      document.body.style.overflow = '';
+      document.getElementById('studentForm').reset();
     }
 
-    document.getElementById("studentForm").addEventListener("submit", async function(e) {
+    async function handleStudentSubmit(e) {
       e.preventDefault();
       
       const name = document.getElementById("studentName").value.trim();
@@ -483,59 +1144,85 @@
       try {
         const docRef = await studentsCollection.add(newStudent);
         showStatus(`Student ${name} added successfully!`, "success");
-        this.reset();
+        document.getElementById("studentForm").reset();
         renderStudentList();
         populateStudents();
       } catch (error) {
         console.error('Error adding student:', error);
         showStatus(`Error adding student: ${error.message}. Check Firebase rules or network.`, "error");
-        if (error.code === 'permission-denied') {
-          showStatus("Permission denied. Update Firestore rules to allow write access.", "error");
-        }
       }
-    });
+    }
 
     async function renderStudentList() {
       try {
         const list = document.getElementById("studentList");
-        list.innerHTML = "";
-        const snapshot = await studentsCollection.get();
+        list.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading students...</div>';
+        
+        const snapshot = await studentsCollection.orderBy('name').get();
+        
         if (snapshot.empty) {
-          list.innerHTML = "<li>No students found.</li>";
+          list.innerHTML = '<div class="status-message info">No students found.</div>';
           return;
         }
+        
+        list.innerHTML = '';
+        
         snapshot.forEach(doc => {
           const s = { id: doc.id, ...doc.data() };
           const li = document.createElement("li");
+          li.className = 'student-item';
+          li.style.padding = '0.75rem';
+          li.style.borderBottom = '1px solid #eee';
+          li.style.display = 'flex';
+          li.style.justifyContent = 'space-between';
+          li.style.alignItems = 'center';
+          
           li.innerHTML = `
-            <strong>${s.name}</strong> (${s.class}) - ${s.phone}<br>
-            <small>Total: ${s.total}, Paid: ${s.paid}, Balance: ${s.balance}</small>
-            <button onclick="deleteStudent('${s.id}')" style="margin-left:10px; background:#dc3545; color:white; border:none; padding:2px 6px; border-radius:3px;">Delete</button>
+            <div>
+              <strong>${s.name}</strong> (${s.class})<br>
+              <small>${s.phone}</small><br>
+              <small>Total: ${s.total.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}, 
+              Paid: ${s.paid.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}, 
+              Balance: ${s.balance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</small>
+            </div>
+            <button class="btn btn-sm btn-danger" onclick="deleteStudent('${s.id}')">
+              <i class="fas fa-trash"></i>
+            </button>
           `;
           list.appendChild(li);
         });
       } catch (error) {
         console.error('Error rendering student list:', error);
         showStatus("Error loading student list: " + error.message, "error");
-        if (error.code === 'permission-denied') {
-          showStatus("Permission denied. Update Firestore rules to allow read access.", "error");
-        }
       }
     }
 
     async function deleteStudent(id) {
-      if (confirm("Are you sure you want to delete this student?")) {
+      if (confirm("Are you sure you want to delete this student? All associated receipts will also be deleted.")) {
         try {
-          await studentsCollection.doc(id).delete();
-          renderStudentList();
-          populateStudents();
-          showStatus("Student deleted successfully", "success");
+          // Delete all receipts for this student first
+          const studentRef = studentsCollection.doc(id);
+          const studentDoc = await studentRef.get();
+          
+          if (studentDoc.exists) {
+            const studentName = studentDoc.data().name;
+            const receiptsQuery = await receiptsCollection.where('name', '==', studentName).get();
+            
+            const batch = db.batch();
+            receiptsQuery.forEach(doc => {
+              batch.delete(doc.ref);
+            });
+            batch.delete(studentRef);
+            
+            await batch.commit();
+            showStatus("Student and all associated receipts deleted successfully", "success");
+            renderStudentList();
+            populateStudents();
+            updateReceiptTable();
+          }
         } catch (error) {
           console.error('Error deleting student:', error);
           showStatus("Error deleting student: " + error.message, "error");
-          if (error.code === 'permission-denied') {
-            showStatus("Permission denied. Update Firestore rules to allow write access.", "error");
-          }
         }
       }
     }
@@ -543,15 +1230,38 @@
     async function deleteReceipt(id) {
       if (confirm("Are you sure you want to delete this receipt?")) {
         try {
-          await receiptsCollection.doc(id).delete();
-          updateReceiptTable();
-          showStatus("Receipt deleted successfully", "success");
+          // Get the receipt first to update the student's balance
+          const receiptRef = receiptsCollection.doc(id);
+          const receiptDoc = await receiptRef.get();
+          
+          if (receiptDoc.exists) {
+            const receipt = receiptDoc.data();
+            const studentQuery = await studentsCollection.where('name', '==', receipt.name).get();
+            
+            if (!studentQuery.empty) {
+              const studentDoc = studentQuery.docs[0];
+              const studentData = studentDoc.data();
+              
+              // Update the student's paid amount and balance
+              const updatedStudent = {
+                ...studentData,
+                paid: studentData.paid - receipt.paid,
+                balance: studentData.balance + receipt.paid
+              };
+              
+              // Run transaction to ensure data consistency
+              await db.runTransaction(async transaction => {
+                transaction.update(studentDoc.ref, updatedStudent);
+                transaction.delete(receiptRef);
+              });
+              
+              showStatus("Receipt deleted and student balance updated successfully", "success");
+              updateReceiptTable();
+            }
+          }
         } catch (error) {
           console.error('Error deleting receipt:', error);
           showStatus("Error deleting receipt: " + error.message, "error");
-          if (error.code === 'permission-denied') {
-            showStatus("Permission denied. Update Firestore rules to allow write access.", "error");
-          }
         }
       }
     }
@@ -563,19 +1273,22 @@
           showStatus("Receipt not found", "error");
           return;
         }
+        
         const receipt = receiptDoc.data();
         const studentSnapshot = await studentsCollection.where('name', '==', receipt.name).get();
+        
         if (studentSnapshot.empty) {
           showStatus("Associated student not found", "error");
           return;
         }
+        
         const student = studentSnapshot.docs[0].data();
         const currentDate = new Date(receipt.date).toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
         const receiptDate = new Date(currentDate);
 
         // Get total number of receipts for auto-incrementing receipt number
         const snapshot = await receiptsCollection.get();
-        const receiptCount = snapshot.size + 1; // Start from 1
+        const receiptCount = snapshot.size + 1;
         const receiptNumber = String(receiptCount).padStart(3, '0');
 
         // Use the balance from the student document for accuracy
@@ -769,6 +1482,7 @@
               <div class="student-info">
                 <div><strong>Student:</strong> <span>${receipt.name}</span></div>
                 <div><strong>Class:</strong> <span>${receipt.class}</span></div>
+                ${receipt.notes ? `<div><strong>Notes:</strong> <span>${receipt.notes}</span></div>` : ''}
               </div>
 
               <div class="payment-section">Mode of Payment: ${receipt.mode}</div>
@@ -857,9 +1571,6 @@
       } catch (error) {
         console.error('Error printing receipt:', error);
         showStatus("Error printing receipt: " + error.message, "error");
-        if (error.code === 'permission-denied') {
-          showStatus("Permission denied. Update Firestore rules to allow read access.", "error");
-        }
       }
     }
 
@@ -941,9 +1652,10 @@
               styles: { fontSize: 8, cellPadding: 2 },
               headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] }
             });
-            doc.save(`heriwadi_receipts_${cls}.pdf`);
           }
         }
+
+        doc.save("heriwadi_receipts_by_class.pdf");
         showStatus("Export by class to PDF completed!", "success");
       } catch (error) {
         console.error('Error exporting by class to PDF:', error);
@@ -971,7 +1683,7 @@
 
           // Get total number of receipts for auto-incrementing receipt number
           const receiptSnapshot = await receiptsCollection.get();
-          const receiptCount = receiptSnapshot.size + 1; // Start from 1
+          const receiptCount = receiptSnapshot.size + 1;
           const receiptNumber = String(receiptCount).padStart(3, '0');
 
           if (!isFirstReceipt) {
@@ -1120,9 +1832,6 @@
       } catch (error) {
         console.error('Error exporting consolidated PDF:', error);
         showStatus("Error exporting consolidated PDF: " + error.message, "error");
-        if (error.code === 'permission-denied') {
-          showStatus("Permission denied. Update Firestore rules to allow read access.", "error");
-        }
       }
     }
 
