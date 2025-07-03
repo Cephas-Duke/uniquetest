@@ -2,247 +2,718 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Students | School Office Management System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f0f2f5;
+    :root {
+      --primary-color: #005fa3;
+      --secondary-color: #004080;
+      --accent-color: #00a8e8;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --warning-color: #ff9800;
+      --info-color: #17a2b8;
+      --light-color: #f8f9fa;
+      --dark-color: #343a40;
+      --border-radius: 8px;
+      --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
+
+    * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
 
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f5f7fa;
+      color: #333;
+      line-height: 1.6;
+    }
+
     header {
-      background-color: #0077cc;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
       color: white;
+      padding: 1.5rem;
       text-align: center;
-      padding: 20px;
+      box-shadow: var(--box-shadow);
+    }
+
+    nav {
+      background: var(--secondary-color);
+      padding: 0.75rem 1.5rem;
     }
 
     nav ul {
       list-style: none;
       display: flex;
       justify-content: center;
-      padding: 10px;
-      background-color: #005fa3;
-    }
-
-    nav ul li {
-      margin: 0 15px;
+      flex-wrap: wrap;
+      gap: 1rem;
     }
 
     nav ul li a {
       color: white;
       text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: var(--border-radius);
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    nav ul li a:hover {
+      background: var(--accent-color);
+    }
+
+    nav ul li a.active {
+      background: var(--accent-color);
       font-weight: bold;
     }
 
-    main {
-      padding: 20px;
-      max-width: 100%;
-      margin: auto;
-      overflow-x: auto;
+    nav ul li a i {
+      font-size: 1rem;
     }
 
-    form {
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      max-width: 800px;
-      margin: auto;
+    .container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
     }
 
-    form h3 {
-      margin-bottom: 15px;
+    .card {
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      transition: var(--transition);
+    }
+
+    .card:hover {
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid #eee;
+    }
+
+    .card-title {
+      font-size: 1.5rem;
+      color: var(--primary-color);
+      margin: 0;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: var(--border-radius);
+      background: var(--primary-color);
+      color: white;
+      cursor: pointer;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .btn:hover {
+      background: var(--secondary-color);
+      transform: translateY(-2px);
+    }
+
+    .btn-success {
+      background: var(--success-color);
+    }
+
+    .btn-success:hover {
+      background: #218838;
+    }
+
+    .btn-danger {
+      background: var(--danger-color);
+    }
+
+    .btn-danger:hover {
+      background: #c82333;
+    }
+
+    .btn-warning {
+      background: var(--warning-color);
+      color: var(--dark-color);
+    }
+
+    .btn-warning:hover {
+      background: #e0a800;
+    }
+
+    .btn-info {
+      background: var(--info-color);
+    }
+
+    .btn-info:hover {
+      background: #138496;
+    }
+
+    .btn-sm {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
     }
 
     label {
-      margin-top: 10px;
       display: block;
-      font-weight: bold;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--dark-color);
     }
 
-    input, select {
+    input, select, textarea {
       width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      margin-bottom: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      font-size: 1rem;
+      transition: var(--transition);
     }
 
-    button {
-      background: #0077cc;
-      color: white;
-      padding: 10px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      margin-top: 10px;
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px rgba(0, 168, 232, 0.2);
     }
 
-    button:hover {
-      background: #005fa3;
+    .search-container {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
     }
 
-    .class-section {
-      margin-top: 40px;
+    .search-box {
+      position: relative;
+      flex: 1;
+      min-width: 250px;
     }
 
-    .class-section h3 {
-      background-color: #005fa3;
-      color: white;
-      padding: 10px;
-      margin-bottom: 0;
+    .search-box input {
+      padding-left: 2.5rem;
+    }
+
+    .search-box i {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #777;
+    }
+
+    .filter-select {
+      min-width: 200px;
+    }
+
+    .status-message {
+      padding: 0.75rem 1rem;
+      border-radius: var(--border-radius);
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+
+    .status-message.success {
+      background-color: rgba(40, 167, 69, 0.1);
+      color: var(--success-color);
+      border-left: 4px solid var(--success-color);
+    }
+
+    .status-message.error {
+      background-color: rgba(220, 53, 69, 0.1);
+      color: var(--danger-color);
+      border-left: 4px solid var(--danger-color);
+    }
+
+    .status-message.info {
+      background-color: rgba(23, 162, 184, 0.1);
+      color: var(--info-color);
+      border-left: 4px solid var(--info-color);
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 30px;
-      background: white;
+      margin-top: 1rem;
+      font-size: 0.95rem;
     }
 
     th, td {
-      border: 1px solid #ddd;
-      padding: 6px;
-      text-align: center;
-      font-size: 14px;
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid #eee;
     }
 
     th {
-      background-color: #0077cc;
+      background-color: var(--primary-color);
       color: white;
+      font-weight: 500;
+      position: sticky;
+      top: 0;
     }
 
-    footer {
-      background-color: #ddd;
-      text-align: center;
-      padding: 15px;
-      margin-top: 30px;
+    tr:hover {
+      background-color: #f8f9fa;
     }
 
-    #statusMessage {
+    .class-section {
+      margin-bottom: 2rem;
+    }
+
+    .class-header {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 0.75rem 1rem;
+      border-radius: var(--border-radius) var(--border-radius) 0 0;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: var(--transition);
+    }
+
+    .class-header:hover {
+      background-color: var(--secondary-color);
+    }
+
+    .class-header h3 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+
+    .class-header .badge {
+      background: white;
+      color: var(--primary-color);
+      padding: 0.25rem 0.5rem;
+      border-radius: 1rem;
+      font-size: 0.85rem;
+      font-weight: bold;
+    }
+
+    .class-content {
+      border: 1px solid #ddd;
+      border-top: none;
+      border-radius: 0 0 var(--border-radius) var(--border-radius);
+      overflow: hidden;
+      transition: all 0.3s ease;
+      overflow-x: auto;
+    }
+
+    .modal {
+      display: none;
       position: fixed;
-      top: 20px;
-      right: 20px;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
       z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
     }
 
-    #statusMessage .success {
-      background: #4caf50;
-      color: white;
-      padding: 10px;
-      border-radius: 5px;
+    .modal.show {
+      display: flex;
+      opacity: 1;
     }
 
-    #statusMessage .error {
-      background: #f44336;
-      color: white;
-      padding: 10px;
-      border-radius: 5px;
+    .modal-content {
+      background: white;
+      border-radius: var(--border-radius);
+      width: 90%;
+      max-width: 700px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      transform: translateY(-20px);
+      transition: transform 0.3s ease;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     }
 
-    #statusMessage .info {
-      background: #2196f3;
-      color: white;
-      padding: 10px;
-      border-radius: 5px;
+    .modal.show .modal-content {
+      transform: translateY(0);
+    }
+
+    .modal-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      margin: 0;
+      color: var(--primary-color);
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #777;
+      transition: var(--transition);
+    }
+
+    .modal-close:hover {
+      color: var(--danger-color);
+      transform: rotate(90deg);
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+    }
+
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid #eee;
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .fee-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .stat-item {
+      background: white;
+      padding: 1rem;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      text-align: center;
+    }
+
+    .stat-item h4 {
+      margin-bottom: 0.5rem;
+      color: var(--primary-color);
+    }
+
+    .stat-item p {
+      font-size: 1.25rem;
+      font-weight: bold;
+    }
+
+    .student-link {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: 500;
+      transition: var(--transition);
+    }
+
+    .student-link:hover {
+      color: var(--secondary-color);
+      text-decoration: underline;
+    }
+
+    .positive {
+      color: var(--success-color);
+    }
+
+    .negative {
+      color: var(--danger-color);
+    }
+
+    .loading-spinner {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+    }
+
+    .loading-spinner i {
+      animation: spin 1s linear infinite;
+      margin-right: 0.5rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+      nav ul {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .container {
+        padding: 0 1rem;
+      }
+      
+      .card {
+        padding: 1rem;
+      }
+      
+      .btn-group {
+        flex-direction: column;
+      }
+      
+      .btn {
+        width: 100%;
+        justify-content: center;
+      }
+      
+      table {
+        font-size: 0.85rem;
+      }
+      
+      th, td {
+        padding: 0.5rem;
+      }
+      
+      .fee-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      .print-section, .print-section * {
+        visibility: visible;
+      }
+      .print-section {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
     }
   </style>
 </head>
 <body>
-
   <header>
     <h1>Heriwadi Christian Schools Ltd</h1>
     <nav>
       <ul>
-        <li><a href="index.html">Dashboard</a></li>
-        <li><a href="receipts.html">Receipts</a></li>
-        <li><a href="expense.html">Expenses</a></li>
-        <li><a href="assets.html">Assets</a></li>
-        <li><a href="staff.html">Staff</a></li>
-        <li><a href="students.html">Students</a></li>
-        <li><a href="payroll.html" style="text-decoration: underline;">Payroll</a></li>
+        <li><a href="index.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+        <li><a href="receipts.html"><i class="fas fa-receipt"></i> Receipts</a></li>
+        <li><a href="expense.html"><i class="fas fa-money-bill-wave"></i> Expenses</a></li>
+        <li><a href="assets.html"><i class="fas fa-laptop-house"></i> Assets</a></li>
+        <li><a href="staff.html"><i class="fas fa-user-tie"></i> Staff</a></li>
+        <li><a href="students.html" class="active"><i class="fas fa-users"></i> Students</a></li>
+        <li><a href="payroll.html"><i class="fas fa-money-check-alt"></i> Payroll</a></li>
       </ul>
     </nav>
   </header>
 
-  <main>
-    <div id="statusMessage"></div>
-    <form id="studentForm">
-      <h3>Register Student</h3>
+  <div class="container">
+    <div id="statusMessage" class="status-message"></div>
 
-      <label for="studentName">Student Name:</label>
-      <input type="text" id="studentName" required>
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Student Registration</h2>
+      </div>
+      <form id="studentForm">
+        <div class="grid">
+          <div class="form-group">
+            <label for="studentName"><i class="fas fa-user-graduate"></i> Student Name</label>
+            <input type="text" id="studentName" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="studentClass"><i class="fas fa-chalkboard"></i> Class</label>
+            <select id="studentClass" required>
+              <option value="">Select Class</option>
+              <option value="Play Group">Play Group</option>
+              <option value="PP1">PP1</option>
+              <option value="PP2">PP2</option>
+              <option value="Grade 1">Grade 1</option>
+              <option value="Grade 2">Grade 2</option>
+              <option value="Grade 3">Grade 3</option>
+              <option value="Grade 4">Grade 4</option>
+              <option value="Grade 5">Grade 5</option>
+              <option value="Grade 6">Grade 6</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="phone"><i class="fas fa-phone"></i> Phone Number</label>
+            <input type="tel" id="phone" placeholder="e.g., +254712345678" pattern="^\+?[1-9]\d{9,14}$" required>
+          </div>
+        </div>
 
-      <label for="studentClass">Class:</label>
-      <select id="studentClass" required>
-        <option value="">Select Class</option>
-        <option value="Play Group">Play Group</option>
-        <option value="PP1">PP1</option>
-        <option value="PP2">PP2</option>
-        <option value="Grade 1">Grade 1</option>
-        <option value="Grade 2">Grade 2</option>
-        <option value="Grade 3">Grade 3</option>
-        <option value="Grade 4">Grade 4</option>
-        <option value="Grade 5">Grade 5</option>
-        <option value="Grade 6">Grade 6</option>
-      </select>
+        <h3 style="margin: 1.5rem 0 0.5rem;">Fee Structure</h3>
+        <div class="fee-grid">
+          <div class="form-group">
+            <label for="tuition">Tuition (KES)</label>
+            <input type="number" id="tuition" value="0" min="0">
+          </div>
+          
+          <div class="form-group">
+            <label for="adm">Admission Fee (KES)</label>
+            <input type="number" id="adm" value="0" min="0">
+          </div>
+          
+          <div class="form-group">
+            <label for="books">Book Fund (KES)</label>
+            <input type="number" id="books" value="0" min="0">
+          </div>
+          
+          <div class="form-group">
+            <label for="stationery">Stationery (KES)</label>
+            <input type="number" id="stationery" value="0" min="0">
+          </div>
+          
+          <div class="form-group">
+            <label for="uniform">Uniform (KES)</label>
+            <input type="number" id="uniform" value="0" min="0">
+          </div>
+          
+          <div class="form-group">
+            <label for="lunch">Lunch (KES)</label>
+            <input type="number" id="lunch" value="0" min="0">
+          </div>
+          
+          <div class="form-group">
+            <label for="transport">Transport (KES)</label>
+            <input type="number" id="transport" value="0" min="0">
+          </div>
+          
+          <div class="form-group">
+            <label for="trip">Trip (KES)</label>
+            <input type="number" id="trip" value="0" min="0">
+          </div>
+          
+          <div class="form-group">
+            <label for="paid">Amount Paid (KES)</label>
+            <input type="number" id="paid" value="0" min="0">
+          </div>
+        </div>
 
-      <label for="phone">Phone Number:</label>
-      <input type="tel" id="phone" placeholder="e.g., +254712345678" pattern="^\+?[1-9]\d{9,14}$" required>
-
-      <label>Tuition Fee:</label><input type="number" id="tuition">
-      <label>Adm Fee:</label><input type="number" id="adm">
-      <label>Book Fund:</label><input type="number" id="books">
-      <label>Stationery:</label><input type="number" id="stationery">
-      <label>Uniform:</label><input type="number" id="uniform">
-      <label>Lunch:</label><input type="number" id="lunch">
-      <label>Transport:</label><input type="number" id="transport">
-      <label>Trip:</label><input type="number" id="trip">
-      <label>Amount Paid:</label><input type="number" id="paid">
-
-      <button type="submit">Add Student</button>
-    </form>
-
-    <div style="margin: 20px auto; max-width: 800px; display: flex; flex-wrap: wrap; gap: 10px;">
-      <input type="text" id="searchInput" placeholder="Search by name..." style="flex:1; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
-      <select id="classFilter" style="padding: 10px; border-radius: 5px;">
-        <option value="">Filter by Class</option>
-        <option value="Play Group">Play Group</option>
-        <option value="PP1">PP1</option>
-        <option value="PP2">PP2</option>
-        <option value="Grade 1">Grade 1</option>
-        <option value="Grade 2">Grade 2</option>
-        <option value="Grade 3">Grade 3</option>
-        <option value="Grade 4">Grade 4</option>
-        <option value="Grade 5">Grade 5</option>
-        <option value="Grade 6">Grade 6</option>
-      </select>
+        <div style="margin-top: 1.5rem;">
+          <button type="submit" class="btn btn-success" id="submitBtn">
+            <i class="fas fa-save"></i> Add Student
+          </button>
+          <button type="reset" class="btn btn-outline" style="margin-left: 0.5rem;">
+            <i class="fas fa-undo"></i> Reset
+          </button>
+        </div>
+      </form>
     </div>
-    <div style="max-width:800px; margin:auto; display: flex; gap: 10px;">
-      <button onclick="exportToExcel()" style="background:green;color:white;padding:10px;margin-top:10px;border:none;border-radius:5px;">
-        Export All Students to Excel
-      </button>
-      <button onclick="exportClassToExcel()" style="background:#ff9800;color:white;padding:10px;margin-top:10px;border:none;border-radius:5px;">
-        Export Selected Class to Excel
-      </button>
-    </div>
 
-    <!-- Student Detail Modal -->
-    <div id="studentModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;">
-      <div style="background:#fff;padding:20px;border-radius:10px;max-width:500px;position:relative;">
-        <span onclick="closeModal()" style="position:absolute;top:10px;right:15px;font-weight:bold;cursor:pointer;">×</span>
-        <h3>Student Details</h3>
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Student Records</h2>
+        <div class="btn-group">
+          <button class="btn btn-info" onclick="exportToExcel()">
+            <i class="fas fa-file-excel"></i> Export All
+          </button>
+          <button class="btn btn-warning" onclick="exportClassToExcel()">
+            <i class="fas fa-file-export"></i> Export Class
+          </button>
+          <button class="btn btn-danger" onclick="showImportModal()">
+            <i class="fas fa-file-import"></i> Import
+          </button>
+        </div>
+      </div>
+
+      <div class="search-container">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Search by name..." oninput="loadStudents()">
+        </div>
+        <select id="classFilter" class="filter-select" onchange="loadStudents()">
+          <option value="">Filter by Class</option>
+          <option value="Play Group">Play Group</option>
+          <option value="PP1">PP1</option>
+          <option value="PP2">PP2</option>
+          <option value="Grade 1">Grade 1</option>
+          <option value="Grade 2">Grade 2</option>
+          <option value="Grade 3">Grade 3</option>
+          <option value="Grade 4">Grade 4</option>
+          <option value="Grade 5">Grade 5</option>
+          <option value="Grade 6">Grade 6</option>
+        </select>
+      </div>
+
+      <div id="statsContainer"></div>
+      <div id="groupedTables"></div>
+    </div>
+  </div>
+
+  <!-- Student Detail Modal -->
+  <div id="studentModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Student Details</h3>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
         <div id="modalContent"></div>
       </div>
     </div>
+  </div>
 
-    <div id="groupedTables"></div>
-  </main>
+  <!-- Import Modal -->
+  <div id="importModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Import Students</h3>
+        <button class="modal-close" onclick="closeImportModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Select a JSON file containing student data to import:</p>
+        <input type="file" id="importFile" accept=".json" style="margin: 1rem 0;">
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="closeImportModal()">
+            <i class="fas fa-times"></i> Cancel
+          </button>
+          <button class="btn btn-success" onclick="importStudents()">
+            <i class="fas fa-file-import"></i> Import
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <footer>
+  <footer style="background: var(--secondary-color); color: white; text-align: center; padding: 1rem; margin-top: 2rem;">
     <p>© 2025 Heriwadi Christian Schools Ltd</p>
   </footer>
 
@@ -256,7 +727,7 @@
       apiKey: "AIzaSyBAA6zY40EwbTmWUx1op1cx52C3y0RK3m0",
       authDomain: "heriwadi-manager.firebaseapp.com",
       projectId: "heriwadi-manager",
-      storageBucket: "heriwadi-manager.firebasestorage.app",
+      storageBucket: "heriwadi-manager.appspot.com",
       messagingSenderId: "654632910809",
       appId: "1:654632910809:web:7c65613d2510402a6663c8",
       measurementId: "G-LLHS6GLB6E"
@@ -269,6 +740,7 @@
 
     const form = document.getElementById('studentForm');
     const groupedTables = document.getElementById('groupedTables');
+    const statsContainer = document.getElementById('statsContainer');
     let editingId = null;
 
     const classes = [
@@ -280,18 +752,21 @@
     // Status message function
     function showStatus(message, type = 'info') {
       const statusMessage = document.getElementById("statusMessage");
-      if (statusMessage) {
-        statusMessage.innerHTML = `<div class="${type}">${message}</div>`;
+      statusMessage.textContent = message;
+      statusMessage.className = `status-message ${type} fade-in`;
+      
+      setTimeout(() => {
+        statusMessage.classList.remove('fade-in');
         setTimeout(() => {
-          statusMessage.innerHTML = '';
-        }, 5000);
-      } else {
-        alert(message);
-      }
+          statusMessage.textContent = '';
+          statusMessage.className = 'status-message';
+        }, 300);
+      }, 5000);
     }
 
+    // Load students from Firestore
     async function loadStudents() {
-      groupedTables.innerHTML = '';
+      groupedTables.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading students...</div>';
       const searchQuery = document.getElementById('searchInput').value.toLowerCase();
       const classFilter = document.getElementById('classFilter').value;
 
@@ -311,122 +786,137 @@
           ? students.filter(s => s.name.toLowerCase().includes(searchQuery))
           : students;
 
-        classes.forEach(cls => {
-          let classStudents = filteredStudents.filter(s => s.class === cls);
-          if (classStudents.length === 0) return;
+        if (filteredStudents.length === 0) {
+          groupedTables.innerHTML = '<div class="status-message info">No students found matching your criteria.</div>';
+          statsContainer.innerHTML = '';
+          return;
+        }
 
-          const section = document.createElement('div');
-          section.className = 'class-section';
-          section.innerHTML = `<h3>${cls}</h3>`;
-
-          const table = document.createElement('table');
-          table.innerHTML = `
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Phone</th>
-                <th>Tuition</th>
-                <th>Adm</th>
-                <th>Books</th>
-                <th>Stationery</th>
-                <th>Uniform</th>
-                <th>Lunch</th>
-                <th>Transport</th>
-                <th>Trip</th>
-                <th>Total</th>
-                <th>Paid</th>
-                <th>Balance</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          `;
-
-          const tbody = table.querySelector('tbody');
-
-          classStudents.forEach(s => {
-            const student = {
-              id: s.id,
-              name: s.name || 'Unknown',
-              class: s.class || 'N/A',
-              phone: s.phone || 'N/A',
-              tuition: s.tuition || 0,
-              adm: s.adm || 0,
-              books: s.books || 0,
-              stationery: s.stationery || 0,
-              uniform: s.uniform || 0,
-              lunch: s.lunch || 0,
-              transport: s.transport || 0,
-              trip: s.trip || 0,
-              total: s.total || (s.tuition + s.adm + s.books + s.stationery + s.uniform + s.lunch + s.transport + s.trip),
-              paid: s.paid || 0,
-              balance: s.balance || (s.total - s.paid)
-            };
-
-            const row = document.createElement('tr');
-            row.innerHTML = `
-              <td><a href="#" onclick="viewStudent('${student.id}')">${student.name}</a></td>
-              <td>${student.phone}</td>
-              <td>KES ${student.tuition.toFixed(2)}</td>
-              <td>KES ${student.adm.toFixed(2)}</td>
-              <td>KES ${student.books.toFixed(2)}</td>
-              <td>KES ${student.stationery.toFixed(2)}</td>
-              <td>KES ${student.uniform.toFixed(2)}</td>
-              <td>KES ${student.lunch.toFixed(2)}</td>
-              <td>KES ${student.transport.toFixed(2)}</td>
-              <td>KES ${student.trip.toFixed(2)}</td>
-              <td><strong>KES ${student.total.toFixed(2)}</strong></td>
-              <td style="color: green;"><strong>KES ${student.paid.toFixed(2)}</strong></td>
-              <td style="color: ${student.balance > 0 ? 'red' : 'green'};"><strong>KES ${student.balance.toFixed(2)}</strong></td>
-              <td>
-                <button onclick="editStudent('${student.id}')" style="margin-right: 5px;">Edit</button>
-                <button onclick="deleteStudent('${student.id}')" style="background:red;color:white;">Delete</button>
-              </td>
-            `;
-            tbody.appendChild(row);
-          });
-
-          section.appendChild(table);
-          groupedTables.appendChild(section);
-        });
-
-        updateSummaryStats(students);
+        renderStudents(filteredStudents);
+        updateSummaryStats(filteredStudents);
       } catch (error) {
+        console.error("Error loading students:", error);
         showStatus("Error loading students: " + error.message, "error");
       }
     }
 
-    function updateSummaryStats(students) {
-      const totalStudents = students.length;
-      const totalFees = students.reduce((sum, s) => sum + s.total, 0);
-      const totalPaid = students.reduce((sum, s) => sum + s.paid, 0);
-      const totalBalance = students.reduce((sum, s) => sum + s.balance, 0);
+    // Render students in grouped tables
+    function renderStudents(students) {
+      groupedTables.innerHTML = '';
+      
+      classes.forEach(cls => {
+        const classStudents = students.filter(s => s.class === cls);
+        if (classStudents.length === 0) return;
 
-      const summaryElement = document.getElementById('summary-stats');
-      if (summaryElement) {
-        summaryElement.innerHTML = `
-          <div class="stats-grid">
-            <div class="stat-item">
-              <h4>Total Students</h4>
-              <p>${totalStudents}</p>
-            </div>
-            <div class="stat-item">
-              <h4>Total Fees</h4>
-              <p>KES ${totalFees.toFixed(2)}</p>
-            </div>
-            <div class="stat-item">
-              <h4>Total Paid</h4>
-              <p style="color: green;">KES ${totalPaid.toFixed(2)}</p>
-            </div>
-            <div class="stat-item">
-              <h4>Total Balance</h4>
-              <p style="color: red;">KES ${totalBalance.toFixed(2)}</p>
-            </div>
-          </div>
+        const section = document.createElement('div');
+        section.className = 'class-section';
+
+        const header = document.createElement('div');
+        header.className = 'class-header';
+        header.innerHTML = `
+          <h3>${cls}</h3>
+          <span class="badge">${classStudents.length} student${classStudents.length !== 1 ? 's' : ''}</span>
         `;
-      }
+        header.onclick = () => {
+          const content = section.querySelector('.class-content');
+          content.style.display = content.style.display === 'none' ? 'block' : 'none';
+        };
+        section.appendChild(header);
+
+        const content = document.createElement('div');
+        content.className = 'class-content';
+        
+        const table = document.createElement('table');
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Total Fees</th>
+              <th>Paid</th>
+              <th>Balance</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        `;
+
+        const tbody = table.querySelector('tbody');
+
+        classStudents.forEach(s => {
+          const total = (s.tuition || 0) + (s.adm || 0) + (s.books || 0) + 
+                       (s.stationery || 0) + (s.uniform || 0) + 
+                       (s.lunch || 0) + (s.transport || 0) + (s.trip || 0);
+          const paid = s.paid || 0;
+          const balance = total - paid;
+
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>
+              <a href="#" class="student-link" onclick="viewStudent('${s.id}'); return false;">
+                ${s.name}
+              </a>
+            </td>
+            <td>${s.phone || 'N/A'}</td>
+            <td>KES ${total.toLocaleString('en-KE')}</td>
+            <td class="positive">KES ${paid.toLocaleString('en-KE')}</td>
+            <td class="${balance > 0 ? 'negative' : 'positive'}">
+              KES ${Math.abs(balance).toLocaleString('en-KE')}
+            </td>
+            <td>
+              <button class="btn btn-sm btn-info" onclick="editStudent('${s.id}')">
+                <i class="fas fa-edit"></i> Edit
+              </button>
+              <button class="btn btn-sm btn-danger" onclick="deleteStudent('${s.id}')">
+                <i class="fas fa-trash"></i> Delete
+              </button>
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+
+        content.appendChild(table);
+        section.appendChild(content);
+        groupedTables.appendChild(section);
+      });
     }
 
+    // Update summary statistics
+    function updateSummaryStats(students) {
+      const totalStudents = students.length;
+      const totalFees = students.reduce((sum, s) => {
+        return sum + (s.tuition || 0) + (s.adm || 0) + (s.books || 0) + 
+               (s.stationery || 0) + (s.uniform || 0) + 
+               (s.lunch || 0) + (s.transport || 0) + (s.trip || 0);
+      }, 0);
+      const totalPaid = students.reduce((sum, s) => sum + (s.paid || 0), 0);
+      const totalBalance = totalFees - totalPaid;
+
+      statsContainer.innerHTML = `
+        <div class="stats-grid">
+          <div class="stat-item">
+            <h4>Total Students</h4>
+            <p>${totalStudents}</p>
+          </div>
+          <div class="stat-item">
+            <h4>Total Fees</h4>
+            <p>KES ${totalFees.toLocaleString('en-KE')}</p>
+          </div>
+          <div class="stat-item">
+            <h4>Total Paid</h4>
+            <p class="positive">KES ${totalPaid.toLocaleString('en-KE')}</p>
+          </div>
+          <div class="stat-item">
+            <h4>Total Balance</h4>
+            <p class="${totalBalance > 0 ? 'negative' : 'positive'}">
+              KES ${Math.abs(totalBalance).toLocaleString('en-KE')}
+            </p>
+          </div>
+        </div>
+      `;
+    }
+
+    // Edit student function
     async function editStudent(id) {
       try {
         const doc = await studentsCollection.doc(id).get();
@@ -434,48 +924,59 @@
           showStatus("Student not found", "error");
           return;
         }
+        
         const s = doc.data();
         editingId = id;
 
         document.getElementById('studentName').value = s.name;
         document.getElementById('studentClass').value = s.class;
         document.getElementById('phone').value = s.phone || '';
-        document.getElementById('tuition').value = s.tuition;
-        document.getElementById('adm').value = s.adm;
-        document.getElementById('books').value = s.books;
-        document.getElementById('stationery').value = s.stationery;
-        document.getElementById('uniform').value = s.uniform;
-        document.getElementById('lunch').value = s.lunch;
-        document.getElementById('transport').value = s.transport;
+        document.getElementById('tuition').value = s.tuition || 0;
+        document.getElementById('adm').value = s.adm || 0;
+        document.getElementById('books').value = s.books || 0;
+        document.getElementById('stationery').value = s.stationery || 0;
+        document.getElementById('uniform').value = s.uniform || 0;
+        document.getElementById('lunch').value = s.lunch || 0;
+        document.getElementById('transport').value = s.transport || 0;
         document.getElementById('trip').value = s.trip || 0;
-        document.getElementById('paid').value = s.paid;
+        document.getElementById('paid').value = s.paid || 0;
 
-        form.querySelector('button[type="submit"]').textContent = "Save Changes";
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+        submitBtn.classList.add('btn-warning');
+        submitBtn.classList.remove('btn-success');
+        
         showStatus(`Editing student: ${s.name}`, "info");
+        
+        // Scroll to form
+        document.getElementById('studentForm').scrollIntoView({ behavior: 'smooth' });
       } catch (error) {
         showStatus("Error loading student: " + error.message, "error");
       }
     }
 
+    // Delete student function
     async function deleteStudent(id) {
       try {
         const doc = await studentsCollection.doc(id).get();
         const studentName = doc.data().name;
+        
         if (confirm(`Are you sure you want to delete ${studentName}? This action cannot be undone.`)) {
           await studentsCollection.doc(id).delete();
-          loadStudents();
           showStatus(`Student ${studentName} deleted successfully`, "success");
+          loadStudents();
         }
       } catch (error) {
         showStatus("Error deleting student: " + error.message, "error");
       }
     }
 
+    // Form submission handler
     form.addEventListener('submit', async function(e) {
       e.preventDefault();
 
       const name = document.getElementById('studentName').value.trim();
-      const studentClass = document.getElementById('studentClass').value.trim();
+      const studentClass = document.getElementById('studentClass').value;
       const phone = document.getElementById('phone').value.trim();
       const tuition = parseFloat(document.getElementById('tuition').value) || 0;
       const adm = parseFloat(document.getElementById('adm').value) || 0;
@@ -487,8 +988,15 @@
       const trip = parseFloat(document.getElementById('trip').value) || 0;
       const paid = parseFloat(document.getElementById('paid').value) || 0;
 
+      // Validation
       if (!name || !studentClass || !phone) {
         showStatus("Please fill in all required fields (Name, Class, Phone)", "error");
+        return;
+      }
+
+      const phoneRegex = /^\+?[1-9]\d{9,14}$/;
+      if (!phoneRegex.test(phone)) {
+        showStatus("Please enter a valid phone number (e.g., +254712345678)", "error");
         return;
       }
 
@@ -512,12 +1020,18 @@
         balance 
       };
 
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
       try {
         if (editingId !== null) {
           await studentsCollection.doc(editingId).update(student);
-          editingId = null;
-          form.querySelector('button[type="submit"]').textContent = "Add Student";
           showStatus(`Student ${name} updated successfully!`, "success");
+          editingId = null;
+          submitBtn.innerHTML = '<i class="fas fa-save"></i> Add Student';
+          submitBtn.classList.remove('btn-warning');
+          submitBtn.classList.add('btn-success');
         } else {
           await studentsCollection.add(student);
           showStatus(`Student ${name} added successfully!`, "success");
@@ -527,18 +1041,141 @@
         loadStudents();
       } catch (error) {
         showStatus("Error saving student: " + error.message, "error");
+      } finally {
+        submitBtn.disabled = false;
       }
     });
 
-    document.getElementById('searchInput').addEventListener('input', loadStudents);
-    document.getElementById('classFilter').addEventListener('change', loadStudents);
+    // View student details
+    async function viewStudent(id) {
+      try {
+        const doc = await studentsCollection.doc(id).get();
+        if (!doc.exists) {
+          showStatus("Student not found", "error");
+          return;
+        }
+        
+        const s = doc.data();
+        const modal = document.getElementById('studentModal');
+        const content = document.getElementById('modalContent');
 
+        const total = (s.tuition || 0) + (s.adm || 0) + (s.books || 0) + 
+                     (s.stationery || 0) + (s.uniform || 0) + 
+                     (s.lunch || 0) + (s.transport || 0) + (s.trip || 0);
+        const paid = s.paid || 0;
+        const balance = total - paid;
+
+        content.innerHTML = `
+          <div style="padding: 1rem;">
+            <h3 style="text-align: center; margin-bottom: 1.5rem; color: var(--primary-color);">
+              ${s.name} - ${s.class}
+            </h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+              <div>
+                <p><strong><i class="fas fa-user"></i> Name:</strong> ${s.name}</p>
+                <p><strong><i class="fas fa-chalkboard"></i> Class:</strong> ${s.class}</p>
+                <p><strong><i class="fas fa-phone"></i> Phone:</strong> ${s.phone || 'N/A'}</p>
+              </div>
+              <div>
+                <p><strong><i class="fas fa-calendar"></i> Last Updated:</strong> 
+                  ${new Date(doc.updateTime?.toDate() || new Date()).toLocaleString()}
+                </p>
+              </div>
+            </div>
+            
+            <h4 style="margin: 1.5rem 0 1rem; color: var(--primary-color);">
+              <i class="fas fa-money-bill-wave"></i> Fee Details
+            </h4>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <div>
+                <p><strong>Tuition:</strong> KES ${(s.tuition || 0).toLocaleString('en-KE')}</p>
+                <p><strong>Admission Fee:</strong> KES ${(s.adm || 0).toLocaleString('en-KE')}</p>
+                <p><strong>Book Fund:</strong> KES ${(s.books || 0).toLocaleString('en-KE')}</p>
+                <p><strong>Stationery:</strong> KES ${(s.stationery || 0).toLocaleString('en-KE')}</p>
+              </div>
+              <div>
+                <p><strong>Uniform:</strong> KES ${(s.uniform || 0).toLocaleString('en-KE')}</p>
+                <p><strong>Lunch:</strong> KES ${(s.lunch || 0).toLocaleString('en-KE')}</p>
+                <p><strong>Transport:</strong> KES ${(s.transport || 0).toLocaleString('en-KE')}</p>
+                <p><strong>Trip:</strong> KES ${(s.trip || 0).toLocaleString('en-KE')}</p>
+              </div>
+            </div>
+            
+            <hr style="margin: 1.5rem 0; border-color: #eee;">
+            
+            <div style="text-align: center;">
+              <div style="display: inline-block; background: #f8f9fa; padding: 1rem; border-radius: var(--border-radius);">
+                <p style="margin-bottom: 0.5rem;"><strong>Total Fee:</strong></p>
+                <p style="font-size: 1.5rem; font-weight: bold; color: var(--primary-color);">
+                  KES ${total.toLocaleString('en-KE')}
+                </p>
+                
+                <p style="margin: 1rem 0 0.5rem;"><strong>Amount Paid:</strong></p>
+                <p style="font-size: 1.5rem; font-weight: bold; color: var(--success-color);">
+                  KES ${paid.toLocaleString('en-KE')}
+                </p>
+                
+                <p style="margin: 1rem 0 0.5rem;"><strong>Balance:</strong></p>
+                <p style="font-size: 1.5rem; font-weight: bold; color: ${balance > 0 ? 'var(--danger-color)' : 'var(--success-color)'};">
+                  KES ${Math.abs(balance).toLocaleString('en-KE')}
+                </p>
+              </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 2rem;">
+              <button onclick="editStudent('${id}'); closeModal();" class="btn btn-info" style="margin-right: 0.5rem;">
+                <i class="fas fa-edit"></i> Edit Student
+              </button>
+              <button onclick="closeModal()" class="btn btn-outline">
+                <i class="fas fa-times"></i> Close
+              </button>
+            </div>
+          </div>
+        `;
+
+        modal.classList.add('show');
+      } catch (error) {
+        showStatus("Error viewing student: " + error.message, "error");
+      }
+    }
+
+    // Close modal
+    function closeModal() {
+      document.getElementById('studentModal').classList.remove('show');
+    }
+
+    // Export all students to Excel
     async function exportToExcel() {
       try {
         const snapshot = await studentsCollection.get();
         const students = [];
+        
         snapshot.forEach(doc => {
-          students.push(doc.data());
+          const s = doc.data();
+          const total = (s.tuition || 0) + (s.adm || 0) + (s.books || 0) + 
+                       (s.stationery || 0) + (s.uniform || 0) + 
+                       (s.lunch || 0) + (s.transport || 0) + (s.trip || 0);
+          const paid = s.paid || 0;
+          const balance = total - paid;
+          
+          students.push({
+            Name: s.name,
+            Class: s.class,
+            Phone: s.phone || '',
+            Tuition: s.tuition || 0,
+            'Admission Fee': s.adm || 0,
+            'Book Fund': s.books || 0,
+            Stationery: s.stationery || 0,
+            Uniform: s.uniform || 0,
+            Lunch: s.lunch || 0,
+            Transport: s.transport || 0,
+            Trip: s.trip || 0,
+            'Total Fees': total,
+            'Amount Paid': paid,
+            Balance: balance
+          });
         });
 
         if (students.length === 0) {
@@ -549,13 +1186,14 @@
         const worksheet = XLSX.utils.json_to_sheet(students);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Students");
-        XLSX.writeFile(workbook, `students_report_${new Date().toISOString().split('T')[0]}.xlsx`);
+        XLSX.writeFile(workbook, `students_export_${new Date().toISOString().split('T')[0]}.xlsx`);
         showStatus("Students data exported to Excel successfully!", "success");
       } catch (error) {
         showStatus("Error exporting to Excel: " + error.message, "error");
       }
     }
 
+    // Export selected class to Excel
     async function exportClassToExcel() {
       const classFilter = document.getElementById('classFilter').value;
       if (!classFilter) {
@@ -566,8 +1204,31 @@
       try {
         const snapshot = await studentsCollection.where('class', '==', classFilter).get();
         const students = [];
+        
         snapshot.forEach(doc => {
-          students.push(doc.data());
+          const s = doc.data();
+          const total = (s.tuition || 0) + (s.adm || 0) + (s.books || 0) + 
+                       (s.stationery || 0) + (s.uniform || 0) + 
+                       (s.lunch || 0) + (s.transport || 0) + (s.trip || 0);
+          const paid = s.paid || 0;
+          const balance = total - paid;
+          
+          students.push({
+            Name: s.name,
+            Class: s.class,
+            Phone: s.phone || '',
+            Tuition: s.tuition || 0,
+            'Admission Fee': s.adm || 0,
+            'Book Fund': s.books || 0,
+            Stationery: s.stationery || 0,
+            Uniform: s.uniform || 0,
+            Lunch: s.lunch || 0,
+            Transport: s.transport || 0,
+            Trip: s.trip || 0,
+            'Total Fees': total,
+            'Amount Paid': paid,
+            Balance: balance
+          });
         });
 
         if (students.length === 0) {
@@ -585,191 +1246,78 @@
       }
     }
 
-    async function viewStudent(id) {
-      try {
-        const doc = await studentsCollection.doc(id).get();
-        if (!doc.exists) {
-          showStatus("Student not found", "error");
-          return;
-        }
-        const s = doc.data();
-
-        const modal = document.getElementById('studentModal');
-        const content = document.getElementById('modalContent');
-
-        content.innerHTML = `
-          <div style="padding: 20px;">
-            <h3 style="color: #333; margin-bottom: 20px; text-align: center;">${s.name} - ${s.class}</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-              <div>
-                <p><strong>Name:</strong> ${s.name}</p>
-                <p><strong>Class:</strong> ${s.class}</p>
-                <p><strong>Phone:</strong> ${s.phone || 'N/A'}</p>
-                <p><strong>Tuition:</strong> KES ${s.tuition.toFixed(2)}</p>
-                <p><strong>Admission Fee:</strong> KES ${s.adm.toFixed(2)}</p>
-                <p><strong>Book Fund:</strong> KES ${s.books.toFixed(2)}</p>
-              </div>
-              <div>
-                <p><strong>Stationery:</strong> KES ${s.stationery.toFixed(2)}</p>
-                <p><strong>Uniform:</strong> KES ${s.uniform.toFixed(2)}</p>
-                <p><strong>Lunch:</strong> KES ${s.lunch.toFixed(2)}</p>
-                <p><strong>Transport:</strong> KES ${s.transport.toFixed(2)}</p>
-                <p><strong>Trip:</strong> KES ${s.trip.toFixed(2)}</p>
-              </div>
-            </div>
-            <hr style="margin: 20px 0;">
-            <div style="text-align: center; font-size: 16px;">
-              <p><strong>Total Fee:</strong> <span style="color:blue; font-size: 18px;">KES ${s.total.toFixed(2)}</span></p>
-              <p><strong>Amount Paid:</strong> <span style="color:green; font-size: 18px;">KES ${s.paid.toFixed(2)}</span></p>
-              <p><strong>Balance:</strong> <span style="color:${s.balance > 0 ? 'red' : 'green'}; font-size: 20px; font-weight: bold;">KES ${s.balance.toFixed(2)}</span></p>
-            </div>
-            <div style="text-align: center; margin-top: 20px;">
-              <button onclick="editStudent('${id}'); closeModal();" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px;">Edit Student</button>
-              <button onclick="closeModal()" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px;">Close</button>
-            </div>
-          </div>
-        `;
-
-        modal.style.display = "flex";
-      } catch (error) {
-        showStatus("Error viewing student: " + error.message, "error");
-      }
+    // Show import modal
+    function showImportModal() {
+      document.getElementById('importModal').classList.add('show');
     }
 
-    function closeModal() {
-      document.getElementById('studentModal').style.display = "none";
+    // Close import modal
+    function closeImportModal() {
+      document.getElementById('importModal').classList.remove('show');
     }
 
-    async function clearAllStudents() {
-      if (confirm("Are you sure you want to delete ALL students? This action cannot be undone!")) {
-        if (confirm("This will permanently delete all student records. Are you absolutely sure?")) {
-          try {
-            const snapshot = await studentsCollection.get();
-            const batch = db.batch();
-            snapshot.forEach(doc => {
-              batch.delete(doc.ref);
-            });
-            await batch.commit();
-            loadStudents();
-            showStatus("All student records have been cleared", "success");
-          } catch (error) {
-            showStatus("Error clearing students: " + error.message, "error");
-          }
-        }
-      }
-    }
-
+    // Import students from JSON
     async function importStudents() {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = '.json';
-      input.onchange = async function(e) {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = async function(e) {
-            try {
-              const importedStudents = JSON.parse(e.target.result);
-              if (Array.isArray(importedStudents)) {
-                const batch = db.batch();
-                importedStudents.forEach(student => {
-                  const docRef = studentsCollection.doc();
-                  batch.set(docRef, student);
-                });
-                await batch.commit();
-                loadStudents();
-                showStatus(`Successfully imported ${importedStudents.length} students`, "success");
-              } else {
-                showStatus("Invalid file format. Please select a valid JSON file.", "error");
-              }
-            } catch (error) {
-              showStatus("Error reading file: " + error.message, "error");
-            }
-          };
-          reader.readAsText(file);
-        }
-      };
-      input.click();
-    }
+      const fileInput = document.getElementById('importFile');
+      const file = fileInput.files[0];
+      
+      if (!file) {
+        showStatus("Please select a file to import", "error");
+        return;
+      }
 
-    async function exportStudentsJSON() {
+      const submitBtn = document.querySelector('#importModal .btn-success');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importing...';
+
       try {
-        const snapshot = await studentsCollection.get();
-        const students = [];
-        snapshot.forEach(doc => {
-          students.push(doc.data());
+        const fileContent = await readFileAsText(file);
+        const importedStudents = JSON.parse(fileContent);
+        
+        if (!Array.isArray(importedStudents)) {
+          throw new Error("Invalid file format. Expected an array of student objects.");
+        }
+
+        const batch = db.batch();
+        importedStudents.forEach(student => {
+          const docRef = studentsCollection.doc();
+          batch.set(docRef, student);
         });
 
-        if (students.length === 0) {
-          showStatus("No student data to export", "error");
-          return;
-        }
-
-        const dataStr = JSON.stringify(students, null, 2);
-        const dataBlob = new Blob([dataStr], {type: 'application/json'});
-        const url = URL.createObjectURL(dataBlob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `students_backup_${new Date().toISOString().split('T')[0]}.json`;
-        link.click();
-        URL.revokeObjectURL(url);
-        showStatus("Students data exported to JSON successfully!", "success");
+        await batch.commit();
+        showStatus(`Successfully imported ${importedStudents.length} students`, "success");
+        loadStudents();
+        closeImportModal();
       } catch (error) {
-        showStatus("Error exporting to JSON: " + error.message, "error");
+        showStatus("Error importing students: " + error.message, "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-file-import"></i> Import';
+        fileInput.value = '';
       }
     }
 
-    loadStudents();
+    // Helper function to read file as text
+    function readFileAsText(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = event => resolve(event.target.result);
+        reader.onerror = error => reject(error);
+        reader.readAsText(file);
+      });
+    }
 
-    document.addEventListener('keydown', function(e) {
-      if (e.ctrlKey && e.key === 's') {
-        e.preventDefault();
-        form.dispatchEvent(new Event('submit'));
-      }
-      if (e.key === 'Escape') {
-        closeModal();
-      }
-    });
-
-    let autoSaveTimeout;
-    form.addEventListener('input', function() {
-      clearTimeout(autoSaveTimeout);
-      autoSaveTimeout = setTimeout(async function() {
-        const formData = new FormData(form);
-        const draft = Object.fromEntries(formData);
-        try {
-          await db.collection('drafts').doc('studentForm').set(draft);
-        } catch (error) {
-          console.error("Error saving draft:", error);
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', () => {
+      loadStudents();
+      
+      // Keyboard shortcuts
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          closeModal();
+          closeImportModal();
         }
-      }, 2000);
-    });
-
-    window.addEventListener('load', async function() {
-      if (editingId === null) {
-        try {
-          const doc = await db.collection('drafts').doc('studentForm').get();
-          if (doc.exists) {
-            const draftData = doc.data();
-            Object.keys(draftData).forEach(key => {
-              const element = document.getElementById(key);
-              if (element && draftData[key]) {
-                element.value = draftData[key];
-              }
-            });
-          }
-        } catch (error) {
-          console.error("Error loading draft:", error);
-        }
-      }
-    });
-
-    form.addEventListener('submit', async function() {
-      try {
-        await db.collection('drafts').doc('studentForm').delete();
-      } catch (error) {
-        console.error("Error clearing draft:", error);
-      }
+      });
     });
   </script>
 </body>
