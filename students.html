@@ -261,32 +261,6 @@
       }
     }
 
-    // SMS function
-    async function sendSMS(phone, message) {
-      try {
-        const response = await fetch("/send-sms", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            phone: phone,
-            message: message
-          })
-        });
-
-        const result = await response.json();
-        if (result.success) {
-          console.log('SMS sent successfully to', phone);
-          return true;
-        } else {
-          console.error('SMS failed:', result.error);
-          return false;
-        }
-      } catch (error) {
-        console.error('SMS Error:', error);
-        return false;
-      }
-    }
-
     async function loadStudents() {
       groupedTables.innerHTML = '';
       const searchQuery = document.getElementById('searchInput').value.toLowerCase();
@@ -360,7 +334,7 @@
               balance: s.balance || (s.total - s.paid)
             };
 
-            const row = document.createElement('tr');
+            const row = document.create createElement('tr');
             row.innerHTML = `
               <td><a href="#" onclick="viewStudent('${student.id}')">${student.name}</a></td>
               <td>${student.phone}</td>
@@ -511,24 +485,13 @@
 
       try {
         if (editingId !== null) {
-          const oldDoc = await studentsCollection.doc(editingId).get();
-          const oldBalance = oldDoc.data().balance;
           await studentsCollection.doc(editingId).update(student);
           editingId = null;
           form.querySelector('button[type="submit"]').textContent = "Add Student";
-
-          if (Math.abs(balance - oldBalance) > 0) {
-            const smsMessage = `Dear parent to ${name}, your account has been updated. Total Fee: KES ${total}, Paid: KES ${paid}, Balance: KES ${balance}. - Heriwadi Christian Schools`;
-            const smsSent = await sendSMS(phone, smsMessage);
-            showStatus(`Student ${name} updated${smsSent ? ' and SMS sent' : ''} successfully!`, "success");
-          } else {
-            showStatus(`Student ${name} updated successfully!`, "success");
-          }
+          showStatus(`Student ${name} updated successfully!`, "success");
         } else {
           await studentsCollection.add(student);
-          const welcomeMessage = `Welcome ${name} to Heriwadi Christian Schools! Total Fee: KES ${total}, Paid: KES ${paid}, Balance: KES ${balance}. Thank you - Heriwadi Christian Schools`;
-          const smsSent = await sendSMS(phone, welcomeMessage);
-          showStatus(`Student ${name} added${smsSent ? ' and welcome SMS sent' : ''} successfully!`, "success");
+          showStatus(`Student ${name} added successfully!`, "success");
         }
 
         form.reset();
@@ -550,7 +513,7 @@
         });
 
         if (students.length === 0) {
-          showStatus("NoEquality student data available to export.", "error");
+          showStatus("No student data available to export.", "error");
           return;
         }
 
