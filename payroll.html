@@ -1,57 +1,446 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Payroll Module</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payroll | Heriwadi Christian Schools Ltd</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
-    header { background-color: #0074D9; color: white; padding: 1em 0; text-align: center; }
-    nav { background: #005fa3; display: flex; justify-content: center; padding: 0.5em 0; flex-wrap: wrap; }
-    nav a { color: white; text-decoration: none; margin: 5px 15px; font-weight: bold; }
-    .container { padding: 20px; }
-    table { width: 100%; border-collapse: collapse; background: white; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
-    th { background-color: #0074D9; color: white; }
+    :root {
+      --primary-color: #0077cc;
+      --secondary-color: #005fa3;
+      --accent-color: #ff6b00;
+      --light-gray: #f4f4f4;
+      --medium-gray: #e0e0e0;
+      --dark-gray: #333;
+      --white: #ffffff;
+      --success-color: #28a745;
+      --error-color: #dc3545;
+      --warning-color: #ffc107;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--light-gray);
+      color: var(--dark-gray);
+      line-height: 1.6;
+      padding-top: 70px;
+    }
+
+    /* Top Navigation Bar */
+    .top-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: var(--primary-color);
+      color: var(--white);
+      padding: 0 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 70px;
+    }
+
+    .school-name {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .nav-menu {
+      display: flex;
+      list-style: none;
+      height: 100%;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+    }
+
+    .nav-link {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 15px;
+      color: var(--white);
+      text-decoration: none;
+      height: 100%;
+      min-width: 80px;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .nav-link:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-link.active {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .nav-link.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background-color: var(--white);
+    }
+
+    .nav-icon {
+      font-size: 20px;
+      margin-bottom: 5px;
+    }
+
+    .nav-text {
+      font-size: 12px;
+    }
+
+    /* Main content area */
+    .main-content {
+      padding: 30px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--medium-gray);
+    }
+
+    .page-title {
+      font-size: 24px;
+      color: var(--primary-color);
+      display: flex;
+      align-items: center;
+    }
+
+    /* Tools section */
+    .tools-section {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: var(--white);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--secondary-color);
+    }
+
+    .btn-secondary {
+      background-color: var(--medium-gray);
+      color: var(--dark-gray);
+    }
+
+    .btn-secondary:hover {
+      background-color: #d0d0d0;
+    }
+
+    .btn-success {
+      background-color: var(--success-color);
+      color: var(--white);
+    }
+
+    .btn-success:hover {
+      background-color: #218838;
+    }
+
+    .btn-danger {
+      background-color: var(--error-color);
+      color: var(--white);
+    }
+
+    .btn-danger:hover {
+      background-color: #c82333;
+    }
+
+    .btn-icon {
+      margin-right: 8px;
+    }
+
+    /* Table styling */
+    .table-responsive {
+      overflow-x: auto;
+      margin-top: 20px;
+      background: var(--white);
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 15px;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .table th {
+      background-color: var(--primary-color);
+      color: var(--white);
+      padding: 12px 15px;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    .table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid var(--medium-gray);
+      vertical-align: middle;
+    }
+
+    .table tr:hover {
+      background-color: rgba(0, 119, 204, 0.05);
+    }
+
+    .table .actions {
+      display: flex;
+      gap: 5px;
+    }
+
+    .table .btn-sm {
+      padding: 5px 10px;
+      font-size: 12px;
+    }
+
+    /* Form controls */
+    .form-control {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--medium-gray);
+      border-radius: 4px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(0, 119, 204, 0.2);
+    }
+
     input[type="number"] {
       width: 80px;
-      padding: 5px;
-      border: 1px solid #ccc;
+      padding: 6px;
       text-align: right;
     }
-    button { padding: 5px 10px; cursor: pointer; margin: 5px 0; }
-    .success { color: green; font-weight: bold; }
-    .error { color: red; font-weight: bold; }
-    .loading { color: blue; font-style: italic; }
+
+    /* Status messages */
+    .alert {
+      padding: 12px 15px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .alert-success {
+      background-color: rgba(40, 167, 69, 0.2);
+      color: var(--success-color);
+      border-left: 4px solid var(--success-color);
+    }
+
+    .alert-error {
+      background-color: rgba(220, 53, 69, 0.2);
+      color: var(--error-color);
+      border-left: 4px solid var(--error-color);
+    }
+
+    .alert-warning {
+      background-color: rgba(255, 193, 7, 0.2);
+      color: var(--warning-color);
+      border-left: 4px solid var(--warning-color);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 992px) {
+      .nav-text {
+        display: none;
+      }
+      .nav-link {
+        min-width: 60px;
+      }
+      .nav-icon {
+        font-size: 24px;
+        margin-bottom: 0;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding-top: 60px;
+      }
+      .top-nav {
+        height: 60px;
+        padding: 0 10px;
+      }
+      .school-name {
+        font-size: 16px;
+      }
+      .nav-link {
+        padding: 0 10px;
+        min-width: 50px;
+      }
+      .nav-icon {
+        font-size: 20px;
+      }
+      .main-content {
+        padding: 15px;
+      }
+      .tools-section {
+        flex-direction: column;
+      }
+      .table-responsive {
+        padding: 5px;
+      }
+    }
+
+    @media print {
+      .top-nav, .tools-section {
+        display: none;
+      }
+      body {
+        padding-top: 0;
+      }
+      .main-content {
+        padding: 10px;
+      }
+      .table-responsive {
+        box-shadow: none;
+        padding: 0;
+      }
+    }
   </style>
 </head>
 <body>
-  <header><h1>HCS Payroll Module</h1></header>
-  <nav>
-    <a href="index.html">Dashboard</a>
-    <a href="students.html">Students</a>
-    <a href="receipts.html">Receipts</a>
-    <a href="expense.html">Expenses</a>
-    <a href="assets.html">Assets</a>
-    <a href="staff.html">Staff</a>
-    <a href="payroll.html" style="text-decoration: underline;">Payroll</a>
+  <!-- Top Navigation Bar -->
+  <nav class="top-nav">
+    <div class="school-name">Heriwadi Christian Schools Ltd</div>
+    <ul class="nav-menu">
+      <li class="nav-item">
+        <a href="index.html" class="nav-link">
+          <i class="fas fa-tachometer-alt nav-icon"></i>
+          <span class="nav-text">Dashboard</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="receipts.html" class="nav-link">
+          <i class="fas fa-receipt nav-icon"></i>
+          <span class="nav-text">Receipts</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="expense.html" class="nav-link">
+          <i class="fas fa-money-bill-wave nav-icon"></i>
+          <span class="nav-text">Expenses</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="assets.html" class="nav-link">
+          <i class="fas fa-laptop-house nav-icon"></i>
+          <span class="nav-text">Assets</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="staff.html" class="nav-link">
+          <i class="fas fa-chalkboard-teacher nav-icon"></i>
+          <span class="nav-text">Staff</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="students.html" class="nav-link">
+          <i class="fas fa-user-graduate nav-icon"></i>
+          <span class="nav-text">Students</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="payroll.html" class="nav-link active">
+          <i class="fas fa-money-check-alt nav-icon"></i>
+          <span class="nav-text">Payroll</span>
+        </a>
+      </li>
+    </ul>
   </nav>
 
-  <div class="container">
-    <button onclick="downloadPayrollPDF()">Download Consolidated PDF</button>
-    <button onclick="generateBankLetterPDF()">Generate Bank Letter PDF</button>
-    <table id="payrollTable">
-      <thead>
-        <tr>
-          <th>Name</th><th>Gross Pay</th><th>PAYE</th><th>NSSF</th><th>SHIF</th><th>AHL</th><th>Advance</th>
-          <th>Total Deductions</th><th>Net Pay</th><th>NSSF - Employers</th><th>AHL - Employers</th><th>NITA</th><th>Payslip</th>
-        </tr>
-      </thead>
-      <tbody id="payrollBody"></tbody>
-    </table>
-  </div>
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">
+        <i class="fas fa-money-check-alt btn-icon"></i> Payroll Management
+      </h1>
+      <div class="tools-section">
+        <button class="btn btn-success" onclick="downloadPayrollPDF()">
+          <i class="fas fa-file-pdf btn-icon"></i> Consolidated PDF
+        </button>
+        <button class="btn btn-primary" onclick="generateBankLetterPDF()">
+          <i class="fas fa-envelope btn-icon"></i> Bank Letter
+        </button>
+        <button class="btn btn-secondary" onclick="window.print()">
+          <i class="fas fa-print btn-icon"></i> Print
+        </button>
+      </div>
+    </div>
+
+    <!-- Status messages will appear here -->
+    <div id="statusMessages"></div>
+
+    <!-- Payroll Table -->
+    <div class="table-responsive">
+      <table class="table" id="payrollTable">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Gross Pay</th>
+            <th>PAYE</th>
+            <th>NSSF</th>
+            <th>SHIF</th>
+            <th>AHL</th>
+            <th>Advance</th>
+            <th>Total Deductions</th>
+            <th>Net Pay</th>
+            <th>NSSF - Employers</th>
+            <th>AHL - Employers</th>
+            <th>NITA</th>
+            <th>Payslip</th>
+          </tr>
+        </thead>
+        <tbody id="payrollBody"></tbody>
+      </table>
+    </div>
+  </main>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -87,9 +476,13 @@
 
     function showStatus(message, type = 'info') {
       const statusDiv = document.createElement('div');
-      statusDiv.className = type;
-      statusDiv.textContent = message;
-      document.querySelector('.container').insertBefore(statusDiv, document.querySelector('.container').firstChild);
+      statusDiv.className = `alert alert-${type}`;
+      statusDiv.innerHTML = `
+        <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+        ${message}
+      `;
+      const statusContainer = document.getElementById('statusMessages');
+      statusContainer.insertBefore(statusDiv, statusContainer.firstChild);
       setTimeout(() => statusDiv.remove(), 5000);
     }
 
@@ -117,7 +510,7 @@
     async function loadPayroll() {
       const tbody = document.getElementById("payrollBody");
       tbody.innerHTML = "";
-      showStatus("Loading payroll data...", "loading");
+      showStatus("Loading payroll data...", "info");
 
       try {
         const snapshot = await staffCollection.get();
@@ -136,7 +529,7 @@
           const gross = parseFloat(staff.salary) || 0;
           const advance = parseFloat(staff.advance) || 0;
           const fullName = staff.fullName || `Staff_${doc.id}`;
-          const staffId = staff.staffId || doc.id; // Use staffId if available, else doc.id
+          const staffId = staff.staffId || doc.id;
 
           const paye = gross * 0.1;
           const nssf = gross * 0.06;
@@ -146,18 +539,18 @@
           const row = document.createElement("tr");
           row.innerHTML = `
             <td>${fullName}</td>
-            <td><input class="gross" type="number" value="${gross.toFixed(2)}" /></td>
-            <td><input class="paye" type="number" value="${paye.toFixed(2)}" /></td>
-            <td><input class="nssf" type="number" value="${nssf.toFixed(2)}" /></td>
-            <td><input class="shif" type="number" value="${shif.toFixed(2)}" /></td>
-            <td><input class="ahl" type="number" value="${ahl.toFixed(2)}" /></td>
-            <td><input class="advance" type="number" value="${advance.toFixed(2)}" /></td>
+            <td><input class="gross form-control" type="number" value="${gross.toFixed(2)}" /></td>
+            <td><input class="paye form-control" type="number" value="${paye.toFixed(2)}" /></td>
+            <td><input class="nssf form-control" type="number" value="${nssf.toFixed(2)}" /></td>
+            <td><input class="shif form-control" type="number" value="${shif.toFixed(2)}" /></td>
+            <td><input class="ahl form-control" type="number" value="${ahl.toFixed(2)}" /></td>
+            <td><input class="advance form-control" type="number" value="${advance.toFixed(2)}" /></td>
             <td class="total"></td>
             <td class="net"></td>
             <td class="nssfEmp"></td>
             <td class="ahlEmp"></td>
             <td class="nita"></td>
-            <td><button class="payslipBtn">Print</button></td>
+            <td><button class="btn btn-secondary btn-sm payslipBtn"><i class="fas fa-file-pdf"></i></button></td>
           `;
 
           tbody.appendChild(row);
@@ -523,7 +916,10 @@
       doc.save(`Bank_Salary_Letter_${month}_${year}.pdf`);
     }
 
-    window.onload = loadPayroll;
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+      loadPayroll();
+    });
   </script>
 </body>
 </html>
