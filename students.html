@@ -444,7 +444,7 @@
         document.getElementById('adm').value = s.adm;
         document.getElementById('books').value = s.books;
         document.getElementById('stationery').value = s.stationery;
-        document.get2ElementById('uniform').value = s.uniform;
+        document.getElementById('uniform').value = s.uniform;
         document.getElementById('lunch').value = s.lunch;
         document.getElementById('transport').value = s.transport;
         document.getElementById('trip').value = s.trip || 0;
@@ -530,7 +530,7 @@
       }
     });
 
-    document.getElementById('searchInput').addEvent removalListener('input', loadStudents);
+    document.getElementById('searchInput').addEventListener('input', loadStudents);
     document.getElementById('classFilter').addEventListener('change', loadStudents);
 
     async function exportToExcel() {
@@ -581,8 +581,7 @@
         XLSX.writeFile(workbook, `${classFilter}_students_${new Date().toISOString().split('T')[0]}.xlsx`);
         showStatus(`Students from ${classFilter} exported to Excel successfully!`, "success");
       } catch (error) {
-        showStatus("Error exporting class to Excel: " + error.message,
-        "error");
+        showStatus("Error exporting class to Excel: " + error.message, "error");
       }
     }
 
@@ -625,7 +624,7 @@
               <p><strong>Balance:</strong> <span style="color:${s.balance > 0 ? 'red' : 'green'}; font-size: 20px; font-weight: bold;">KES ${s.balance.toFixed(2)}</span></p>
             </div>
             <div style="text-align: center; margin-top: 20px;">
-              <button onclick="editStudent('${id}'); closeModal();" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10aboutpx;">Edit Student</button>
+              <button onclick="editStudent('${id}'); closeModal();" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px;">Edit Student</button>
               <button onclick="closeModal()" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px;">Close</button>
             </div>
           </div>
