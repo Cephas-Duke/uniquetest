@@ -2,348 +2,993 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Staff Management</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff Management | Heriwadi Christian Schools Ltd</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body { font-family: Arial; background: #f4f4f4; margin: 0; padding: 0; }
-    header { background: #0077cc; color: white; padding: 20px; text-align: center; }
-    nav { background: #f0f0f0; padding: 10px; text-align: center; }
-    nav a { margin: 0 10px; text-decoration: none; color: #0077cc; font-weight: bold; }
-    nav a:hover { text-decoration: underline; }
-    main { max-width: 1100px; margin: 30px auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 0 10px #ccc; }
-    label { display: block; margin-top: 10px; font-weight: bold; }
-    input, select { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; }
-    button { margin-top: 10px; padding: 10px 15px; background: #0077cc; color: white; border: none; border-radius: 5px; cursor: pointer; }
-    button:hover { background: #005fa3; }
-    table { width: 100%; margin-top: 20px; border-collapse: collapse; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    th { background: #0077cc; color: white; }
-    .tools { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-    #searchInput { width: 200px; padding: 5px; }
-    .success { color: green; font-weight: bold; }
-    .error { color: red; font-weight: bold; }
-    .loading { color: blue; font-style: italic; }
+    :root {
+      --primary-color: #0077cc;
+      --secondary-color: #005fa3;
+      --accent-color: #ff6b00;
+      --light-gray: #f4f4f4;
+      --medium-gray: #e0e0e0;
+      --dark-gray: #333;
+      --white: #ffffff;
+      --success-color: #28a745;
+      --error-color: #dc3545;
+      --warning-color: #ffc107;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--light-gray);
+      color: var(--dark-gray);
+      line-height: 1.6;
+      padding-top: 70px;
+    }
+
+    /* Top Navigation Bar */
+    .top-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: var(--primary-color);
+      color: var(--white);
+      padding: 0 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 70px;
+    }
+
+    .school-name {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .nav-menu {
+      display: flex;
+      list-style: none;
+      height: 100%;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+    }
+
+    .nav-link {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 15px;
+      color: var(--white);
+      text-decoration: none;
+      height: 100%;
+      min-width: 80px;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .nav-link:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-link.active {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .nav-link.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background-color: var(--white);
+    }
+
+    .nav-icon {
+      font-size: 20px;
+      margin-bottom: 5px;
+    }
+
+    .nav-text {
+      font-size: 12px;
+    }
+
+    /* Main content area */
+    .main-content {
+      padding: 30px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--medium-gray);
+    }
+
+    .page-title {
+      font-size: 24px;
+      color: var(--primary-color);
+      display: flex;
+      align-items: center;
+    }
+
+    /* Form styling */
+    .card {
+      background: var(--white);
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 25px;
+      margin-bottom: 30px;
+    }
+
+    .card-title {
+      font-size: 18px;
+      margin-bottom: 20px;
+      color: var(--primary-color);
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--medium-gray);
+      display: flex;
+      align-items: center;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--dark-gray);
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--medium-gray);
+      border-radius: 4px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(0, 119, 204, 0.2);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: var(--white);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--secondary-color);
+    }
+
+    .btn-secondary {
+      background-color: var(--medium-gray);
+      color: var(--dark-gray);
+    }
+
+    .btn-secondary:hover {
+      background-color: #d0d0d0;
+    }
+
+    .btn-success {
+      background-color: var(--success-color);
+      color: var(--white);
+    }
+
+    .btn-success:hover {
+      background-color: #218838;
+    }
+
+    .btn-danger {
+      background-color: var(--error-color);
+      color: var(--white);
+    }
+
+    .btn-danger:hover {
+      background-color: #c82333;
+    }
+
+    .btn-icon {
+      margin-right: 8px;
+    }
+
+    /* Tools section */
+    .tools-section {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .search-box {
+      position: relative;
+      flex-grow: 1;
+    }
+
+    .search-box i {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--medium-gray);
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 10px 10px 10px 35px;
+      border: 1px solid var(--medium-gray);
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .file-input-wrapper {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+    }
+
+    .file-input-wrapper input[type="file"] {
+      position: absolute;
+      font-size: 100px;
+      opacity: 0;
+      right: 0;
+      top: 0;
+      cursor: pointer;
+    }
+
+    /* Table styling */
+    .table-responsive {
+      overflow-x: auto;
+      margin-top: 20px;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .table th {
+      background-color: var(--primary-color);
+      color: var(--white);
+      padding: 12px 15px;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    .table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid var(--medium-gray);
+      vertical-align: middle;
+    }
+
+    .table tr:hover {
+      background-color: rgba(0, 119, 204, 0.05);
+    }
+
+    .table .actions {
+      display: flex;
+      gap: 5px;
+    }
+
+    .table .btn-sm {
+      padding: 5px 10px;
+      font-size: 12px;
+    }
+
+    .performance-excellent {
+      color: var(--success-color);
+      font-weight: 600;
+    }
+
+    .performance-good {
+      color: #28a745;
+    }
+
+    .performance-fair {
+      color: var(--warning-color);
+    }
+
+    .performance-poor {
+      color: var(--error-color);
+    }
+
+    /* Status messages */
+    .alert {
+      padding: 12px 15px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .alert-success {
+      background-color: rgba(40, 167, 69, 0.2);
+      color: var(--success-color);
+      border-left: 4px solid var(--success-color);
+    }
+
+    .alert-error {
+      background-color: rgba(220, 53, 69, 0.2);
+      color: var(--error-color);
+      border-left: 4px solid var(--error-color);
+    }
+
+    .alert-warning {
+      background-color: rgba(255, 193, 7, 0.2);
+      color: var(--warning-color);
+      border-left: 4px solid var(--warning-color);
+    }
+
+    /* Report section */
+    .report-card {
+      background: var(--white);
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 25px;
+      margin-top: 30px;
+    }
+
+    .report-title {
+      font-size: 18px;
+      margin-bottom: 20px;
+      color: var(--primary-color);
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--medium-gray);
+      display: flex;
+      align-items: center;
+    }
+
+    .report-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .stat-item {
+      padding: 15px;
+      background: rgba(0, 119, 204, 0.05);
+      border-radius: 4px;
+      border-left: 4px solid var(--primary-color);
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: var(--dark-gray);
+      margin-bottom: 5px;
+    }
+
+    .stat-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--primary-color);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 992px) {
+      .nav-text {
+        display: none;
+      }
+      .nav-link {
+        min-width: 60px;
+      }
+      .nav-icon {
+        font-size: 24px;
+        margin-bottom: 0;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding-top: 60px;
+      }
+      .top-nav {
+        height: 60px;
+        padding: 0 10px;
+      }
+      .school-name {
+        font-size: 16px;
+      }
+      .nav-link {
+        padding: 0 10px;
+        min-width: 50px;
+      }
+      .nav-icon {
+        font-size: 20px;
+      }
+      .main-content {
+        padding: 15px;
+      }
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      .tools-section {
+        flex-direction: column;
+      }
+      .report-stats {
+        grid-template-columns: 1fr;
+      }
+    }
+
     @media print {
-      .tools, form, nav, header { display: none; }
-      main { box-shadow: none; }
+      .top-nav, .tools-section, .staff-form {
+        display: none;
+      }
+      body {
+        padding-top: 0;
+      }
+      .main-content {
+        padding: 10px;
+      }
     }
   </style>
 </head>
 <body>
+  <!-- Top Navigation Bar -->
+  <nav class="top-nav">
+    <div class="school-name">Heriwadi Christian Schools Ltd</div>
+    <ul class="nav-menu">
+      <li class="nav-item">
+        <a href="index.html" class="nav-link">
+          <i class="fas fa-tachometer-alt nav-icon"></i>
+          <span class="nav-text">Dashboard</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="receipts.html" class="nav-link">
+          <i class="fas fa-receipt nav-icon"></i>
+          <span class="nav-text">Receipts</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="expense.html" class="nav-link">
+          <i class="fas fa-money-bill-wave nav-icon"></i>
+          <span class="nav-text">Expenses</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="assets.html" class="nav-link">
+          <i class="fas fa-laptop-house nav-icon"></i>
+          <span class="nav-text">Assets</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="staff.html" class="nav-link active">
+          <i class="fas fa-chalkboard-teacher nav-icon"></i>
+          <span class="nav-text">Staff</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="students.html" class="nav-link">
+          <i class="fas fa-user-graduate nav-icon"></i>
+          <span class="nav-text">Students</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="payroll.html" class="nav-link">
+          <i class="fas fa-money-check-alt nav-icon"></i>
+          <span class="nav-text">Payroll</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
 
-<header>
-  <h1>HCS Staff Management</h1>
-</header>
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">
+        <i class="fas fa-chalkboard-teacher btn-icon"></i> Staff Management
+      </h1>
+      <div class="tools-section">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search by name or role..." oninput="filterStaff()">
+        </div>
+        <button class="btn btn-success" onclick="exportToExcel()">
+          <i class="fas fa-file-excel btn-icon"></i> Export
+        </button>
+        <button class="btn btn-secondary" onclick="window.print()">
+          <i class="fas fa-print btn-icon"></i> Print
+        </button>
+        <button class="btn btn-primary" onclick="backupStaff()">
+          <i class="fas fa-download btn-icon"></i> Backup
+        </button>
+        <div class="file-input-wrapper">
+          <button class="btn btn-primary">
+            <i class="fas fa-upload btn-icon"></i> Restore
+          </button>
+          <input type="file" id="restoreFile" onchange="restoreStaff(event)">
+        </div>
+        <button class="btn btn-success" onclick="generateMonthlyReport()">
+          <i class="fas fa-file-invoice-dollar btn-icon"></i> Salary Report
+        </button>
+      </div>
+    </div>
 
-<nav>
-  <a href="index.html">Dashboard</a>
-  <a href="students.html">Students</a>
-  <a href="receipts.html">Receipts</a>
-  <a href="expense.html">Expenses</a>
-  <a href="assets.html">Assets</a>
-  <a href="staff.html" style="text-decoration: underline;">Staff</a>
-  <a href="payroll.html">Payroll</a>
-</nav>
+    <!-- Status messages will appear here -->
+    <div id="statusMessages"></div>
 
-<main>
-  <form id="staffForm">
-    <label>Full Name</label>
-    <input type="text" id="fullName" required>
-    
-    <label>Staff ID</label>
-    <input type="text" id="staffId" required>
+    <!-- Staff Form -->
+    <div class="card staff-form">
+      <h2 class="card-title">
+        <i class="fas fa-user-plus btn-icon"></i> Add New Staff Member
+      </h2>
+      <form id="staffForm" class="form-grid">
+        <div class="form-group">
+          <label for="fullName">Full Name</label>
+          <input type="text" id="fullName" class="form-control" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="staffId">Staff ID</label>
+          <input type="text" id="staffId" class="form-control" required>
+        </div>
 
-    <label>Gender</label>
-    <select id="gender" required>
-      <option value="">-- Select --</option>
-      <option>Male</option>
-      <option>Female</option>
-    </select>
+        <div class="form-group">
+          <label for="gender">Gender</label>
+          <select id="gender" class="form-control" required>
+            <option value="">-- Select --</option>
+            <option>Male</option>
+            <option>Female</option>
+          </select>
+        </div>
 
-    <label>Role / Department</label>
-    <input type="text" id="role" required>
+        <div class="form-group">
+          <label for="role">Role / Department</label>
+          <input type="text" id="role" class="form-control" required>
+        </div>
 
-    <label>Date of Employment</label>
-    <input type="date" id="employmentDate" required>
+        <div class="form-group">
+          <label for="employmentDate">Date of Employment</label>
+          <input type="date" id="employmentDate" class="form-control" required>
+        </div>
 
-    <label>Phone Number</label>
-    <input type="text" id="phone">
+        <div class="form-group">
+          <label for="phone">Phone Number</label>
+          <input type="text" id="phone" class="form-control">
+        </div>
 
-    <label>Email</label>
-    <input type="email" id="email">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" class="form-control">
+        </div>
 
-    <label>Monthly Salary (KES)</label>
-    <input type="number" id="salary" required>
+        <div class="form-group">
+          <label for="salary">Monthly Salary (KES)</label>
+          <input type="number" id="salary" class="form-control" required>
+        </div>
 
-    <label>Performance Score (1–10)</label>
-    <input type="number" id="performance" min="1" max="10" required>
+        <div class="form-group">
+          <label for="performance">Performance Score (1–10)</label>
+          <input type="number" id="performance" class="form-control" min="1" max="10" required>
+        </div>
 
-    <label>Leave Days Taken</label>
-    <input type="number" id="leaveDays" min="0" required>
+        <div class="form-group">
+          <label for="leaveDays">Leave Days Taken</label>
+          <input type="number" id="leaveDays" class="form-control" min="0" required>
+        </div>
 
-    <label>Attendance (Days Present)</label>
-    <input type="number" id="attendance" min="0" required>
+        <div class="form-group">
+          <label for="attendance">Attendance (Days Present)</label>
+          <input type="number" id="attendance" class="form-control" min="0" required>
+        </div>
 
-    <label>Bonuses (KES)</label>
-    <input type="number" id="bonus" min="0" value="0">
+        <div class="form-group">
+          <label for="bonus">Bonuses (KES)</label>
+          <input type="number" id="bonus" class="form-control" min="0" value="0">
+        </div>
 
-    <label>Salary Advance Given (KES)</label>
-    <input type="number" id="advance" min="0" value="0">
+        <div class="form-group">
+          <label for="advance">Salary Advance Given (KES)</label>
+          <input type="number" id="advance" class="form-control" min="0" value="0">
+        </div>
 
-    <button type="submit">Add Staff</button>
-  </form>
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save btn-icon"></i> Save Staff Member
+          </button>
+        </div>
+      </form>
+    </div>
 
-  <div class="tools">
-    <input type="text" id="searchInput" placeholder="Search by name or role" oninput="filterStaff()" />
-    <button onclick="exportToExcel()">Export to Excel</button>
-    <button onclick="window.print()">Print</button>
-    <button onclick="backupStaff()">Backup</button>
-    <input type="file" id="restoreFile" onchange="restoreStaff(event)" />
-    <button onclick="generateMonthlyReport()">Salary Report</button>
-  </div>
+    <!-- Staff Table -->
+    <div class="card">
+      <h2 class="card-title">
+        <i class="fas fa-users btn-icon"></i> Staff Records
+      </h2>
+      <div class="table-responsive">
+        <table class="table" id="staffTable">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Role</th>
+              <th>Salary</th>
+              <th>Leave</th>
+              <th>Attendance</th>
+              <th>Bonus</th>
+              <th>Advance</th>
+              <th>Performance</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
 
-  <table id="staffTable">
-    <thead>
-      <tr>
-        <th>Name</th><th>Role</th><th>Salary</th><th>Leave</th><th>Attendance</th>
-        <th>Bonus</th><th>Advance</th><th>Performance</th><th>Actions</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+    <!-- Monthly Report Section -->
+    <div class="report-card" id="monthlyReport" style="display: none;">
+      <h2 class="report-title">
+        <i class="fas fa-file-invoice-dollar btn-icon"></i> Monthly Salary Report
+      </h2>
+      <div class="report-stats" id="reportStats"></div>
+    </div>
+  </main>
 
-  <div id="monthlyReport"></div>
-</main>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script>
+    // Initialize Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyBAA6zY40EwbTmWUx1op1cx52C3y0RK3m0",
+      authDomain: "heriwadi-manager.firebaseapp.com",
+      projectId: "heriwadi-manager",
+      storageBucket: "heriwadi-manager.firebasestorage.app",
+      messagingSenderId: "654632910809",
+      appId: "1:654632910809:web:7c65613d2510402a6663c8",
+      measurementId: "G-LLHS6GLB6E"
+    };
 
-<script>
-  // Initialize Firebase
-  const firebaseConfig = {
-    apiKey: "AIzaSyBAA6zY40EwbTmWUx1op1cx52C3y0RK3m0",
-    authDomain: "heriwadi-manager.firebaseapp.com",
-    projectId: "heriwadi-manager",
-    storageBucket: "heriwadi-manager.firebasestorage.app",
-    messagingSenderId: "654632910809",
-    appId: "1:654632910809:web:7c65613d2510402a6663c8",
-    measurementId: "G-LLHS6GLB6E"
-  };
+    let app, db;
+    try {
+      app = firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+    } catch (error) {
+      console.error('Firebase initialization error:', error);
+      showStatus("Failed to initialize Firebase. Check your configuration.", "error");
+      throw error;
+    }
+    const staffCollection = db.collection('staff');
 
-  let app, db;
-  try {
-    app = firebase.initializeApp(firebaseConfig);
-    db = firebase.firestore();
-  } catch (error) {
-    console.error('Firebase initialization error:', error);
-    showStatus("Failed to initialize Firebase. Check your configuration.", "error");
-    throw error;
-  }
-  const staffCollection = db.collection('staff');
-
-  function showStatus(message, type = 'info') {
-    const statusDiv = document.createElement('div');
-    statusDiv.className = type;
-    statusDiv.textContent = message;
-    document.querySelector('main').insertBefore(statusDiv, document.querySelector('main').firstChild);
-    setTimeout(() => statusDiv.remove(), 5000);
-  }
-
-  function getPerformanceGrade(score) {
-    if (score >= 9) return "Excellent";
-    if (score >= 7) return "Good";
-    if (score >= 5) return "Fair";
-    return "Needs Improvement";
-  }
-
-  function renderStaff(filtered = []) {
-    const tbody = document.querySelector("#staffTable tbody");
-    tbody.innerHTML = "";
-    filtered.forEach((s, i) => {
-      const grade = getPerformanceGrade(s.performance);
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${s.fullName}</td>
-        <td>${s.role}</td>
-        <td>${s.salary}</td>
-        <td>${s.leaveDays}</td>
-        <td>${s.attendance}</td>
-        <td>${s.bonus}</td>
-        <td>${s.advance}</td>
-        <td>${s.performance}/10 (${grade})</td>
-        <td>
-          <button onclick="editStaff('${s.id}')">Edit</button>
-          <button onclick="deleteStaff('${s.id}')">Delete</button>
-        </td>
+    // Enhanced status message function
+    function showStatus(message, type = 'info') {
+      const statusDiv = document.createElement('div');
+      statusDiv.className = `alert alert-${type}`;
+      statusDiv.innerHTML = `
+        <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+        ${message}
       `;
-      tbody.appendChild(row);
-    });
-  }
+      const statusContainer = document.getElementById('statusMessages');
+      statusContainer.insertBefore(statusDiv, statusContainer.firstChild);
+      setTimeout(() => statusDiv.remove(), 5000);
+    }
 
-  // Load staff from Firestore
-  function loadStaff() {
-    staffCollection.onSnapshot(snapshot => {
-      const staffData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      renderStaff(staffData);
-    }, error => {
-      console.error('Error loading staff:', error);
-      showStatus(`Error loading staff: ${error.message}. Check Firebase rules or network.`, "error");
-    });
-  }
+    function getPerformanceGrade(score) {
+      if (score >= 9) return {text: "Excellent", class: "performance-excellent"};
+      if (score >= 7) return {text: "Good", class: "performance-good"};
+      if (score >= 5) return {text: "Fair", class: "performance-fair"};
+      return {text: "Needs Improvement", class: "performance-poor"};
+    }
 
-  function editStaff(id) {
-    staffCollection.doc(id).get().then(doc => {
-      if (doc.exists) {
-        const s = doc.data();
-        document.getElementById("fullName").value = s.fullName;
-        document.getElementById("staffId").value = s.staffId;
-        document.getElementById("gender").value = s.gender;
-        document.getElementById("role").value = s.role;
-        document.getElementById("employmentDate").value = s.employmentDate;
-        document.getElementById("phone").value = s.phone || '';
-        document.getElementById("email").value = s.email || '';
-        document.getElementById("salary").value = s.salary;
-        document.getElementById("performance").value = s.performance;
-        document.getElementById("leaveDays").value = s.leaveDays;
-        document.getElementById("attendance").value = s.attendance;
-        document.getElementById("bonus").value = s.bonus || 0;
-        document.getElementById("advance").value = s.advance || 0;
-      } else {
-        showStatus("Staff member not found.", "error");
+    function renderStaff(filtered = []) {
+      const tbody = document.querySelector("#staffTable tbody");
+      tbody.innerHTML = "";
+      
+      if (filtered.length === 0) {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td colspan="9" style="text-align: center; padding: 20px;">
+            <i class="fas fa-user-slash" style="font-size: 24px; color: var(--medium-gray); margin-bottom: 10px; display: block;"></i>
+            No staff members found. Add your first staff member above.
+          </td>
+        `;
+        tbody.appendChild(row);
+        return;
       }
-    }).catch(error => {
-      console.error('Error fetching staff:', error);
-      showStatus(`Error: ${error.message}.`, "error");
-    });
-  }
-
-  function deleteStaff(id) {
-    if (confirm("Delete this staff member?")) {
-      staffCollection.doc(id).delete().then(() => {
-        showStatus("Staff member deleted successfully", "success");
-      }).catch(error => {
-        console.error('Error deleting staff:', error);
-        showStatus(`Error: ${error.message}.`, "error");
+      
+      filtered.forEach((s, i) => {
+        const grade = getPerformanceGrade(s.performance);
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${s.fullName}</td>
+          <td>${s.role}</td>
+          <td>KES ${s.salary.toLocaleString()}</td>
+          <td>${s.leaveDays}</td>
+          <td>${s.attendance}</td>
+          <td>KES ${(s.bonus || 0).toLocaleString()}</td>
+          <td>KES ${(s.advance || 0).toLocaleString()}</td>
+          <td class="${grade.class}">${s.performance}/10 (${grade.text})</td>
+          <td class="actions">
+            <button class="btn btn-secondary btn-sm" onclick="editStaff('${s.id}')">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn btn-danger btn-sm" onclick="deleteStaff('${s.id}')">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(row);
       });
     }
-  }
 
-  document.getElementById("staffForm").addEventListener("submit", function(e) {
-    e.preventDefault();
-    const staff = {
-      fullName: document.getElementById("fullName").value,
-      staffId: document.getElementById("staffId").value,
-      gender: document.getElementById("gender").value,
-      role: document.getElementById("role").value,
-      employmentDate: document.getElementById("employmentDate").value,
-      phone: document.getElementById("phone").value,
-      email: document.getElementById("email").value,
-      salary: parseFloat(document.getElementById("salary").value),
-      performance: parseInt(document.getElementById("performance").value),
-      leaveDays: parseInt(document.getElementById("leaveDays").value),
-      attendance: parseInt(document.getElementById("attendance").value),
-      bonus: parseFloat(document.getElementById("bonus").value),
-      advance: parseFloat(document.getElementById("advance").value)
-    };
-    staffCollection.add(staff).then(() => {
-      showStatus("Staff member added successfully", "success");
-      this.reset();
-    }).catch(error => {
-      console.error('Error adding staff:', error);
-      showStatus(`Error: ${error.message}. Check Firebase rules or network.`, "error");
-    });
-  });
-
-  function filterStaff() {
-    const query = document.getElementById("searchInput").value.toLowerCase();
-    staffCollection.get().then(snapshot => {
-      const staffData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      const filtered = staffData.filter(s =>
-        s.fullName.toLowerCase().includes(query) ||
-        s.role.toLowerCase().includes(query)
-      );
-      renderStaff(filtered);
-    }).catch(error => {
-      console.error('Error filtering staff:', error);
-      showStatus(`Error filtering staff: ${error.message}.`, "error");
-    });
-  }
-
-  function exportToExcel() {
-    staffCollection.get().then(snapshot => {
-      let csv = "Name,Role,Salary,Leave,Attendance,Bonus,Advance,Performance\n";
-      snapshot.forEach(doc => {
-        const s = doc.data();
-        csv += `${s.fullName},${s.role},${s.salary},${s.leaveDays},${s.attendance},${s.bonus},${s.advance},${s.performance}\n`;
+    // Load staff from Firestore
+    function loadStaff() {
+      showStatus("Loading staff data...", "info");
+      staffCollection.orderBy("employmentDate", "desc").onSnapshot(snapshot => {
+        const staffData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderStaff(staffData);
+      }, error => {
+        console.error('Error loading staff:', error);
+        showStatus(`Error loading staff: ${error.message}`, "error");
       });
-      const blob = new Blob([csv], { type: "text/csv" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "staff_records.csv";
-      a.click();
-    }).catch(error => {
-      console.error('Error exporting to Excel:', error);
-      showStatus(`Error exporting to Excel: ${error.message}.`, "error");
-    });
-  }
+    }
 
-  function backupStaff() {
-    staffCollection.get().then(snapshot => {
-      const staffData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      const blob = new Blob([JSON.stringify(staffData)], { type: "application/json" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "staff_backup.json";
-      a.click();
-    }).catch(error => {
-      console.error('Error creating backup:', error);
-      showStatus(`Error creating backup: ${error.message}.`, "error");
-    });
-  }
-
-  function restoreStaff(event) {
-    const file = event.target.files[0];
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      try {
-        const data = JSON.parse(e.target.result);
-        if (Array.isArray(data)) {
-          data.forEach(staff => {
-            delete staff.id; // Remove id to avoid conflicts
-            staffCollection.add(staff).catch(error => console.error('Error restoring staff:', error));
-          });
-          showStatus("Staff restored successfully", "success");
+    function editStaff(id) {
+      showStatus("Loading staff details...", "info");
+      staffCollection.doc(id).get().then(doc => {
+        if (doc.exists) {
+          const s = doc.data();
+          document.getElementById("fullName").value = s.fullName;
+          document.getElementById("staffId").value = s.staffId;
+          document.getElementById("gender").value = s.gender;
+          document.getElementById("role").value = s.role;
+          document.getElementById("employmentDate").value = s.employmentDate;
+          document.getElementById("phone").value = s.phone || '';
+          document.getElementById("email").value = s.email || '';
+          document.getElementById("salary").value = s.salary;
+          document.getElementById("performance").value = s.performance;
+          document.getElementById("leaveDays").value = s.leaveDays;
+          document.getElementById("attendance").value = s.attendance;
+          document.getElementById("bonus").value = s.bonus || 0;
+          document.getElementById("advance").value = s.advance || 0;
+          
+          // Scroll to form
+          document.querySelector('.staff-form').scrollIntoView({ behavior: 'smooth' });
+          showStatus("Staff member loaded for editing", "success");
         } else {
-          showStatus("Invalid file format.", "error");
+          showStatus("Staff member not found", "error");
         }
-      } catch {
-        showStatus("Failed to restore backup.", "error");
-      }
-    };
-    reader.readAsText(file);
-  }
-
-  function generateMonthlyReport() {
-    staffCollection.get().then(snapshot => {
-      let totalSalary = 0;
-      let totalBonus = 0;
-      snapshot.forEach(doc => {
-        const s = doc.data();
-        totalSalary += s.salary;
-        totalBonus += s.bonus || 0;
+      }).catch(error => {
+        console.error('Error fetching staff:', error);
+        showStatus(`Error: ${error.message}`, "error");
       });
-      document.getElementById("monthlyReport").innerHTML = `
-        <h3>Monthly Summary</h3>
-        <p><strong>Total Salary Payout:</strong> KES ${totalSalary.toLocaleString()}</p>
-        <p><strong>Total Bonuses Paid:</strong> KES ${totalBonus.toLocaleString()}</p>
-      `;
-    }).catch(error => {
-      console.error('Error generating report:', error);
-      showStatus(`Error generating report: ${error.message}.`, "error");
-    });
-  }
+    }
 
-  // Initialize page
-  loadStaff();
-</script>
+    function deleteStaff(id) {
+      if (confirm("Are you sure you want to delete this staff member?")) {
+        showStatus("Deleting staff member...", "info");
+        staffCollection.doc(id).delete().then(() => {
+          showStatus("Staff member deleted successfully", "success");
+        }).catch(error => {
+          console.error('Error deleting staff:', error);
+          showStatus(`Error: ${error.message}`, "error");
+        });
+      }
+    }
+
+    document.getElementById("staffForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const staff = {
+        fullName: document.getElementById("fullName").value,
+        staffId: document.getElementById("staffId").value,
+        gender: document.getElementById("gender").value,
+        role: document.getElementById("role").value,
+        employmentDate: document.getElementById("employmentDate").value,
+        phone: document.getElementById("phone").value,
+        email: document.getElementById("email").value,
+        salary: parseFloat(document.getElementById("salary").value),
+        performance: parseInt(document.getElementById("performance").value),
+        leaveDays: parseInt(document.getElementById("leaveDays").value),
+        attendance: parseInt(document.getElementById("attendance").value),
+        bonus: parseFloat(document.getElementById("bonus").value) || 0,
+        advance: parseFloat(document.getElementById("advance").value) || 0,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      
+      showStatus("Saving staff member...", "info");
+      staffCollection.add(staff).then(() => {
+        showStatus("Staff member added successfully", "success");
+        this.reset();
+      }).catch(error => {
+        console.error('Error adding staff:', error);
+        showStatus(`Error: ${error.message}`, "error");
+      });
+    });
+
+    function filterStaff() {
+      const query = document.getElementById("searchInput").value.toLowerCase();
+      staffCollection.get().then(snapshot => {
+        const staffData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const filtered = staffData.filter(s =>
+          s.fullName.toLowerCase().includes(query) ||
+          s.role.toLowerCase().includes(query) ||
+          (s.staffId && s.staffId.toLowerCase().includes(query))
+        );
+        renderStaff(filtered);
+      }).catch(error => {
+        console.error('Error filtering staff:', error);
+        showStatus(`Error filtering staff: ${error.message}`, "error");
+      });
+    }
+
+    function exportToExcel() {
+      showStatus("Preparing export...", "info");
+      staffCollection.orderBy("employmentDate", "desc").get().then(snapshot => {
+        let csv = "Name,Staff ID,Role,Salary,Leave,Attendance,Bonus,Advance,Performance,Phone,Email,Employment Date\n";
+        snapshot.forEach(doc => {
+          const s = doc.data();
+          const grade = getPerformanceGrade(s.performance);
+          csv += `"${s.fullName}","${s.staffId}","${s.role}",${s.salary},${s.leaveDays},${s.attendance},${s.bonus||0},${s.advance||0},${s.performance} (${grade.text}),"${s.phone||''}","${s.email||''}","${s.employmentDate}"\n`;
+        });
+        const blob = new Blob([csv], { type: "text/csv" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `staff_records_${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+        showStatus("Export completed successfully", "success");
+      }).catch(error => {
+        console.error('Error exporting to Excel:', error);
+        showStatus(`Error exporting: ${error.message}`, "error");
+      });
+    }
+
+    function backupStaff() {
+      showStatus("Creating backup...", "info");
+      staffCollection.orderBy("createdAt", "desc").get().then(snapshot => {
+        const staffData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const blob = new Blob([JSON.stringify(staffData, null, 2)], { type: "application/json" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `staff_backup_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        showStatus("Backup created successfully", "success");
+      }).catch(error => {
+        console.error('Error creating backup:', error);
+        showStatus(`Error: ${error.message}`, "error");
+      });
+    }
+
+    function restoreStaff(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      showStatus("Restoring backup...", "info");
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (Array.isArray(data)) {
+            const batch = db.batch();
+            const staffRef = staffCollection;
+            
+            data.forEach(staff => {
+              delete staff.id; // Remove id to avoid conflicts
+              const newDocRef = staffRef.doc();
+              batch.set(newDocRef, staff);
+            });
+            
+            batch.commit().then(() => {
+              showStatus(`Successfully restored ${data.length} staff records`, "success");
+              event.target.value = ''; // Reset file input
+            }).catch(error => {
+              console.error('Error restoring staff:', error);
+              showStatus(`Error restoring: ${error.message}`, "error");
+            });
+          } else {
+            showStatus("Invalid backup file format", "error");
+          }
+        } catch (error) {
+          console.error('Error parsing backup file:', error);
+          showStatus("Failed to restore backup. File may be corrupted.", "error");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function generateMonthlyReport() {
+      showStatus("Generating monthly report...", "info");
+      staffCollection.get().then(snapshot => {
+        let totalSalary = 0;
+        let totalBonus = 0;
+        let totalAdvance = 0;
+        let staffCount = 0;
+        let performanceTotal = 0;
+        
+        snapshot.forEach(doc => {
+          const s = doc.data();
+          totalSalary += s.salary;
+          totalBonus += s.bonus || 0;
+          totalAdvance += s.advance || 0;
+          performanceTotal += s.performance;
+          staffCount++;
+        });
+        
+        const avgPerformance = (performanceTotal / staffCount).toFixed(1);
+        const performanceGrade = getPerformanceGrade(avgPerformance);
+        
+        document.getElementById("monthlyReport").style.display = "block";
+        document.getElementById("reportStats").innerHTML = `
+          <div class="stat-item">
+            <div class="stat-label">Total Staff</div>
+            <div class="stat-value">${staffCount}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Total Salary Payout</div>
+            <div class="stat-value">KES ${totalSalary.toLocaleString()}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Total Bonuses</div>
+            <div class="stat-value">KES ${totalBonus.toLocaleString()}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Total Advances</div>
+            <div class="stat-value">KES ${totalAdvance.toLocaleString()}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Avg Performance</div>
+            <div class="stat-value ${performanceGrade.class}">${avgPerformance}/10 (${performanceGrade.text})</div>
+          </div>
+        `;
+        
+        showStatus("Monthly report generated successfully", "success");
+        document.getElementById("monthlyReport").scrollIntoView({ behavior: 'smooth' });
+      }).catch(error => {
+        console.error('Error generating report:', error);
+        showStatus(`Error generating report: ${error.message}`, "error");
+      });
+    }
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+      loadStaff();
+      
+      // Set default employment date to today
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('employmentDate').value = today;
+    });
+  </script>
 </body>
 </html>
