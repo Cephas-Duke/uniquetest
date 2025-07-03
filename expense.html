@@ -1,101 +1,617 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Expenses | School Office Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: Arial; background: #f4f4f4; margin: 0; padding: 0; }
-    header { background: #0077cc; color: white; padding: 20px; text-align: center; }
-    nav { background: #f0f0f0; padding: 10px; text-align: center; }
-    nav a { margin: 0 10px; text-decoration: none; color: #0077cc; font-weight: bold; }
-    nav a:hover { text-decoration: underline; }
+    :root {
+      --primary-color: #005fa3;
+      --secondary-color: #004080;
+      --accent-color: #00a8e8;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --warning-color: #ff9800;
+      --info-color: #17a2b8;
+      --light-color: #f8f9fa;
+      --dark-color: #343a40;
+      --border-radius: 8px;
+      --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
 
-    main { max-width: 1100px; margin: 30px auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 0 10px #ccc; }
-    label { display: block; margin-top: 10px; font-weight: bold; }
-    input, select { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; }
-    button { margin-top: 10px; padding: 10px 15px; background: #0077cc; color: white; border: none; border-radius: 5px; cursor: pointer; }
-    button:hover { background: #005fa3; }
-    h3 { margin-top: 40px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
-    table { width: 100%; margin-top: 10px; border-collapse: collapse; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    th { background: #0077cc; color: white; }
-    .total { font-weight: bold; text-align: right; margin-top: 5px; }
-    .tools { margin-top: 20px; border-top: 2px solid #ccc; padding-top: 10px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-    canvas { margin-top: 30px; }
-    .success { color: green; font-weight: bold; }
-    .error { color: red; font-weight: bold; }
-    .loading { color: blue; font-style: italic; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f5f7fa;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 1.5rem;
+      text-align: center;
+      box-shadow: var(--box-shadow);
+    }
+
+    nav {
+      background: var(--secondary-color);
+      padding: 0.75rem 1.5rem;
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    nav ul li a {
+      color: white;
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: var(--border-radius);
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    nav ul li a:hover {
+      background: var(--accent-color);
+    }
+
+    nav ul li a.active {
+      background: var(--accent-color);
+      font-weight: bold;
+    }
+
+    nav ul li a i {
+      font-size: 1rem;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .card {
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      transition: var(--transition);
+    }
+
+    .card:hover {
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid #eee;
+    }
+
+    .card-title {
+      font-size: 1.5rem;
+      color: var(--primary-color);
+      margin: 0;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: var(--border-radius);
+      background: var(--primary-color);
+      color: white;
+      cursor: pointer;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .btn:hover {
+      background: var(--secondary-color);
+      transform: translateY(-2px);
+    }
+
+    .btn-success {
+      background: var(--success-color);
+    }
+
+    .btn-success:hover {
+      background: #218838;
+    }
+
+    .btn-danger {
+      background: var(--danger-color);
+    }
+
+    .btn-danger:hover {
+      background: #c82333;
+    }
+
+    .btn-warning {
+      background: var(--warning-color);
+      color: var(--dark-color);
+    }
+
+    .btn-warning:hover {
+      background: #e0a800;
+    }
+
+    .btn-info {
+      background: var(--info-color);
+    }
+
+    .btn-info:hover {
+      background: #138496;
+    }
+
+    .btn-sm {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--dark-color);
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      font-size: 1rem;
+      transition: var(--transition);
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px rgba(0, 168, 232, 0.2);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .search-container {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .search-box {
+      position: relative;
+      flex: 1;
+      min-width: 250px;
+    }
+
+    .search-box input {
+      padding-left: 2.5rem;
+    }
+
+    .search-box i {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #777;
+    }
+
+    .filter-select {
+      min-width: 200px;
+    }
+
+    .status-message {
+      padding: 0.75rem 1rem;
+      border-radius: var(--border-radius);
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+
+    .status-message.success {
+      background-color: rgba(40, 167, 69, 0.1);
+      color: var(--success-color);
+      border-left: 4px solid var(--success-color);
+    }
+
+    .status-message.error {
+      background-color: rgba(220, 53, 69, 0.1);
+      color: var(--danger-color);
+      border-left: 4px solid var(--danger-color);
+    }
+
+    .status-message.info {
+      background-color: rgba(23, 162, 184, 0.1);
+      color: var(--info-color);
+      border-left: 4px solid var(--info-color);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      font-size: 0.95rem;
+    }
+
+    th, td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+
+    th {
+      background-color: var(--primary-color);
+      color: white;
+      font-weight: 500;
+      position: sticky;
+      top: 0;
+    }
+
+    tr:hover {
+      background-color: #f8f9fa;
+    }
+
+    .class-section {
+      margin-bottom: 2rem;
+    }
+
+    .class-header {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 0.75rem 1rem;
+      border-radius: var(--border-radius) var(--border-radius) 0 0;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: var(--transition);
+    }
+
+    .class-header:hover {
+      background-color: var(--secondary-color);
+    }
+
+    .class-header h3 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+
+    .class-header .badge {
+      background: white;
+      color: var(--primary-color);
+      padding: 0.25rem 0.5rem;
+      border-radius: 1rem;
+      font-size: 0.85rem;
+      font-weight: bold;
+    }
+
+    .class-content {
+      border: 1px solid #ddd;
+      border-top: none;
+      border-radius: 0 0 var(--border-radius) var(--border-radius);
+      overflow: hidden;
+      transition: all 0.3s ease;
+      overflow-x: auto;
+    }
+
+    .total-row {
+      font-weight: bold;
+      background-color: #f0f0f0;
+    }
+
+    .total-row td {
+      font-size: 1.1rem;
+    }
+
+    .chart-container {
+      margin: 2rem 0;
+      position: relative;
+      height: 400px;
+    }
+
+    .chart-card {
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .chart-title {
+      font-size: 1.2rem;
+      color: var(--primary-color);
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin: 1.5rem 0;
+    }
+
+    .summary-card {
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .summary-card h3 {
+      color: var(--primary-color);
+      margin-bottom: 1rem;
+    }
+
+    .summary-card .amount {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    .positive {
+      color: var(--success-color);
+    }
+
+    .negative {
+      color: var(--danger-color);
+    }
+
+    .loading-spinner {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+    }
+
+    .loading-spinner i {
+      animation: spin 1s linear infinite;
+      margin-right: 0.5rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+      nav ul {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .container {
+        padding: 0 1rem;
+      }
+      
+      .card {
+        padding: 1rem;
+      }
+      
+      .btn-group {
+        flex-direction: column;
+      }
+      
+      .btn {
+        width: 100%;
+        justify-content: center;
+      }
+      
+      table {
+        font-size: 0.85rem;
+      }
+      
+      th, td {
+        padding: 0.5rem;
+      }
+      
+      .chart-container {
+        height: 300px;
+      }
+    }
+
     @media print {
-      .tools, form, header, nav, canvas { display: none; }
-      main { box-shadow: none; }
+      body * {
+        visibility: hidden;
+      }
+      .print-section, .print-section * {
+        visibility: visible;
+      }
+      .print-section {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+      .no-print {
+        display: none;
+      }
     }
   </style>
 </head>
 <body>
-
   <header>
     <h1>Heriwadi Christian Schools Ltd</h1>
   </header>
 
   <nav>
-    <a href="index.html">Dashboard</a>
-    <a href="students.html">Students</a>
-    <a href="receipts.html">Receipts</a>
-    <a href="expenses.html" style="text-decoration: underline;">Expenses</a>
-    <a href="assets.html">Assets</a>
-    <a href="staff.html">Staff</a>
-    <a href="payroll.html">Payroll</a>
+    <ul>
+      <li><a href="index.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+      <li><a href="students.html"><i class="fas fa-users"></i> Students</a></li>
+      <li><a href="receipts.html"><i class="fas fa-receipt"></i> Receipts</a></li>
+      <li><a href="expenses.html" class="active"><i class="fas fa-money-bill-wave"></i> Expenses</a></li>
+      <li><a href="assets.html"><i class="fas fa-laptop-house"></i> Assets</a></li>
+      <li><a href="staff.html"><i class="fas fa-user-tie"></i> Staff</a></li>
+      <li><a href="payroll.html"><i class="fas fa-money-check-alt"></i> Payroll</a></li>
+    </ul>
   </nav>
 
-  <main>
-    <form id="expenseForm">
-      <label>Description:</label>
-      <input type="text" id="description" required />
-      <label>Amount:</label>
-      <input type="number" id="amount" required />
-      <label>Category:</label>
-      <select id="category" required>
-        <option value="">-- Select Category --</option>
-        <option>Food</option><option>Stationary</option><option>Uniform Purchase</option>
-        <option>Salaries</option><option>Fuel & Gas</option><option>Security</option><option>Rent</option>
-        <option>NSSF</option><option>NHIF/CHA</option><option>Airtime</option><option>Electricity</option>
-        <option>Water</option><option>Internet</option><option>Insurance</option><option>Permit</option>
-        <option>Loan</option><option>Exhaust Services</option><option>Repairs and Maintenance</option>
-        <option>Purchase of Assets</option>
-      </select>
-      <label>Date:</label>
-      <input type="date" id="date" required />
-      <button type="submit">Add Expense</button>
-    </form>
+  <div class="container">
+    <div id="statusMessage" class="status-message"></div>
 
-    <div class="tools">
-      <button onclick="renderCharts()">Show Charts</button>
-      <button onclick="window.print()">Print Report</button>
-      <button onclick="exportAllToExcel()">Export All</button>
-      <select id="categoryExport">
-        <option value="">-- Select Category to Export --</option>
-        <option>Food</option><option>Stationary</option><option>Uniform Purchase</option><option>Salaries</option>
-        <option>Fuel & Gas</option><option>Security</option><option>Rent</option><option>NSSF</option>
-        <option>NHIF/CHA</option><option>Airtime</option><option>Electricity</option><option>Water</option>
-        <option>Internet</option><option>Insurance</option><option>Permit</option><option>Loan</option>
-        <option>Exhaust Services</option><option>Repairs and Maintenance</option><option>Purchase of Assets</option>
-      </select>
-      <button onclick="exportCategoryToExcel()">Export Selected</button>
-      <button onclick="backupData()">Backup</button>
-      <input type="file" id="restoreFile" onchange="restoreData(event)" />
+    <div class="card no-print">
+      <div class="card-header">
+        <h2 class="card-title">Add New Expense</h2>
+      </div>
+      <form id="expenseForm">
+        <div class="grid">
+          <div class="form-group">
+            <label for="description"><i class="fas fa-align-left"></i> Description</label>
+            <input type="text" id="description" required placeholder="What was this expense for?">
+          </div>
+          
+          <div class="form-group">
+            <label for="amount"><i class="fas fa-money-bill"></i> Amount (KES)</label>
+            <input type="number" id="amount" required min="0" step="0.01">
+          </div>
+          
+          <div class="form-group">
+            <label for="category"><i class="fas fa-tags"></i> Category</label>
+            <select id="category" required>
+              <option value="">-- Select Category --</option>
+              <option>Food</option>
+              <option>Stationary</option>
+              <option>Uniform Purchase</option>
+              <option>Salaries</option>
+              <option>Fuel & Gas</option>
+              <option>Security</option>
+              <option>Rent</option>
+              <option>NSSF</option>
+              <option>NHIF/CHA</option>
+              <option>Airtime</option>
+              <option>Electricity</option>
+              <option>Water</option>
+              <option>Internet</option>
+              <option>Insurance</option>
+              <option>Permit</option>
+              <option>Loan</option>
+              <option>Exhaust Services</option>
+              <option>Repairs and Maintenance</option>
+              <option>Purchase of Assets</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="date"><i class="fas fa-calendar"></i> Date</label>
+            <input type="date" id="date" required>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.5rem;">
+          <button type="submit" class="btn btn-success" id="submitBtn">
+            <i class="fas fa-plus-circle"></i> Add Expense
+          </button>
+          <button type="reset" class="btn btn-outline" style="margin-left: 0.5rem;">
+            <i class="fas fa-undo"></i> Reset
+          </button>
+        </div>
+      </form>
     </div>
 
-    <div id="groupedExpenses"></div>
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Expense Records</h2>
+        <div class="btn-group">
+          <button class="btn btn-info" onclick="renderCharts()">
+            <i class="fas fa-chart-pie"></i> View Charts
+          </button>
+          <button class="btn btn-warning" onclick="window.print()">
+            <i class="fas fa-print"></i> Print Report
+          </button>
+          <button class="btn btn-info" onclick="exportAllToExcel()">
+            <i class="fas fa-file-excel"></i> Export All
+          </button>
+        </div>
+      </div>
 
-    <h3>Charts and Monthly Summary</h3>
-    <canvas id="categoryChart" height="100"></canvas>
-    <canvas id="monthlyChart" height="100"></canvas>
-    <div id="monthlySummary"></div>
-  </main>
+      <div class="search-container">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Search by description..." oninput="loadExpenses()">
+        </div>
+        <select id="categoryFilter" class="filter-select" onchange="loadExpenses()">
+          <option value="">Filter by Category</option>
+          <option>Food</option>
+          <option>Stationary</option>
+          <option>Uniform Purchase</option>
+          <option>Salaries</option>
+          <option>Fuel & Gas</option>
+          <option>Security</option>
+          <option>Rent</option>
+          <option>NSSF</option>
+          <option>NHIF/CHA</option>
+          <option>Airtime</option>
+          <option>Electricity</option>
+          <option>Water</option>
+          <option>Internet</option>
+          <option>Insurance</option>
+          <option>Permit</option>
+          <option>Loan</option>
+          <option>Exhaust Services</option>
+          <option>Repairs and Maintenance</option>
+          <option>Purchase of Assets</option>
+        </select>
+        <select id="monthFilter" class="filter-select" onchange="loadExpenses()">
+          <option value="">Filter by Month</option>
+          <!-- Months will be populated dynamically -->
+        </select>
+      </div>
+
+      <div id="expensesSummary" class="summary-grid"></div>
+      <div id="groupedExpenses"></div>
+    </div>
+
+    <div class="chart-card no-print">
+      <h3 class="chart-title">Expense Analysis</h3>
+      <div class="chart-container">
+        <canvas id="categoryChart"></canvas>
+      </div>
+      <div class="chart-container">
+        <canvas id="monthlyChart"></canvas>
+      </div>
+    </div>
+  </div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
- <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <script>
     // Initialize Firebase
@@ -103,265 +619,484 @@
       apiKey: "AIzaSyBAA6zY40EwbTmWUx1op1cx52C3y0RK3m0",
       authDomain: "heriwadi-manager.firebaseapp.com",
       projectId: "heriwadi-manager",
-      storageBucket: "heriwadi-manager.firebasestorage.app",
+      storageBucket: "heriwadi-manager.appspot.com",
       messagingSenderId: "654632910809",
       appId: "1:654632910809:web:7c65613d2510402a6663c8",
       measurementId: "G-LLHS6GLB6E"
     };
 
-    let app, db;
-    try {
-      app = firebase.initializeApp(firebaseConfig);
-      db = firebase.firestore();
-    } catch (error) {
-      console.error('Firebase initialization error:', error);
-      showStatus("Failed to initialize Firebase. Check your configuration.", "error");
-      throw error;
-    }
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
     const expensesCollection = db.collection('expenses');
 
+    // Status message function
     function showStatus(message, type = 'info') {
-      const statusDiv = document.createElement('div');
-      statusDiv.className = type;
-      statusDiv.textContent = message;
-      document.querySelector('main').insertBefore(statusDiv, document.querySelector('main').firstChild);
-      setTimeout(() => statusDiv.remove(), 5000);
-    }
-
-    function renderGroupedExpenses(expensesData) {
-      const container = document.getElementById("groupedExpenses");
-      container.innerHTML = "";
-      const grouped = {};
-      let grandTotal = 0;
-
-      expensesData.forEach(e => {
-        if (!grouped[e.category]) grouped[e.category] = [];
-        grouped[e.category].push(e);
-      });
-
-      for (let cat in grouped) {
-        let section = document.createElement("section");
-        section.innerHTML = `<h3>${cat}</h3>`;
-        let total = 0;
-        let table = document.createElement("table");
-        table.innerHTML = "<tr><th>Date</th><th>Description</th><th>Amount</th><th>Actions</th></tr>";
-
-        grouped[cat].forEach((e, i) => {
-          total += e.amount;
-          grandTotal += e.amount;
-          let row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${e.date}</td><td>${e.description}</td><td>${e.amount.toFixed(2)}</td>
-            <td>
-              <button onclick="editExpense('${e.id}')">Edit</button>
-              <button onclick="deleteExpense('${e.id}')">Delete</button>
-            </td>`;
-          table.appendChild(row);
-        });
-
-        section.appendChild(table);
-        section.innerHTML += `<div class="total">Total: KES ${total.toFixed(2)}</div>`;
-        container.appendChild(section);
-      }
-
-      container.innerHTML += `<div class="total">Grand Total: KES ${grandTotal.toFixed(2)}</div>`;
+      const statusMessage = document.getElementById("statusMessage");
+      statusMessage.textContent = message;
+      statusMessage.className = `status-message ${type} fade-in`;
+      
+      setTimeout(() => {
+        statusMessage.classList.remove('fade-in');
+        setTimeout(() => {
+          statusMessage.textContent = '';
+          statusMessage.className = 'status-message';
+        }, 300);
+      }, 5000);
     }
 
     // Load expenses from Firestore
     function loadExpenses() {
-      expensesCollection.onSnapshot(snapshot => {
-        const expensesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderGroupedExpenses(expensesData);
-      }, error => {
-        console.error('Error loading expenses:', error);
-        showStatus(`Error loading expenses: ${error.message}. Check Firebase rules or network.`, "error");
-      });
-    }
+      const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+      const categoryFilter = document.getElementById('categoryFilter').value;
+      const monthFilter = document.getElementById('monthFilter').value;
 
-    function editExpense(id) {
-      expensesCollection.doc(id).get().then(doc => {
-        if (doc.exists) {
-          const e = doc.data();
-          document.getElementById("description").value = e.description;
-          document.getElementById("amount").value = e.amount;
-          document.getElementById("category").value = e.category;
-          document.getElementById("date").value = e.date;
-        } else {
-          showStatus("Expense not found.", "error");
-        }
-      }).catch(error => {
-        console.error('Error fetching expense:', error);
-        showStatus(`Error: ${error.message}.`, "error");
-      });
-    }
-
-    function deleteExpense(id) {
-      if (confirm("Delete this expense?")) {
-        expensesCollection.doc(id).delete().then(() => {
-          showStatus("Expense deleted successfully", "success");
-        }).catch(error => {
-          console.error('Error deleting expense:', error);
-          showStatus(`Error: ${error.message}.`, "error");
-        });
+      let query = expensesCollection;
+      
+      if (categoryFilter) {
+        query = query.where('category', '==', categoryFilter);
       }
-    }
+      
+      if (monthFilter) {
+        query = query.where('date', '>=', `${monthFilter}-01`)
+                     .where('date', '<=', `${monthFilter}-31`);
+      }
 
-    document.getElementById("expenseForm").addEventListener("submit", function (e) {
-      e.preventDefault();
-      const newExp = {
-        description: document.getElementById("description").value,
-        amount: parseFloat(document.getElementById("amount").value),
-        category: document.getElementById("category").value,
-        date: document.getElementById("date").value
-      };
-      expensesCollection.add(newExp).then(() => {
-        showStatus("Expense added successfully", "success");
-        this.reset();
-      }).catch(error => {
-        console.error('Error adding expense:', error);
-        showStatus(`Error: ${error.message}. Check Firebase rules or network.`, "error");
-      });
-    });
+      query.orderBy('date', 'desc').get().then(snapshot => {
+        const expensesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Filter by search query if provided
+        const filteredExpenses = searchQuery
+          ? expensesData.filter(e => e.description.toLowerCase().includes(searchQuery))
+          : expensesData;
 
-    function exportAllToExcel() {
-      expensesCollection.get().then(snapshot => {
-        let csv = "Date,Description,Category,Amount\n";
-        snapshot.forEach(doc => {
-          const e = doc.data();
-          csv += `${e.date},${e.description},${e.category},${e.amount}\n`;
-        });
-        const blob = new Blob([csv], { type: "text/csv" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "all_expenses.csv";
-        a.click();
+        renderGroupedExpenses(filteredExpenses);
+        updateSummaryStats(filteredExpenses);
       }).catch(error => {
-        console.error('Error exporting to Excel:', error);
-        showStatus(`Error exporting to Excel: ${error.message}.`, "error");
+        console.error('Error loading expenses:', error);
+        showStatus(`Error loading expenses: ${error.message}`, "error");
       });
     }
 
-    function exportCategoryToExcel() {
-      const selectedCat = document.getElementById("categoryExport").value;
-      if (!selectedCat) {
-        showStatus("Select a category to export.", "error");
+    // Render grouped expenses by category
+    function renderGroupedExpenses(expensesData) {
+      const container = document.getElementById("groupedExpenses");
+      container.innerHTML = "";
+      
+      if (expensesData.length === 0) {
+        container.innerHTML = '<div class="status-message info">No expenses found matching your criteria.</div>';
         return;
       }
-      expensesCollection.where('category', '==', selectedCat).get().then(snapshot => {
-        let csv = "Date,Description,Category,Amount\n";
+
+      const grouped = {};
+      let grandTotal = 0;
+
+      // Group expenses by category
+      expensesData.forEach(e => {
+        if (!grouped[e.category]) grouped[e.category] = [];
+        grouped[e.category].push(e);
+        grandTotal += e.amount;
+      });
+
+      // Create sections for each category
+      for (let category in grouped) {
+        const section = document.createElement('div');
+        section.className = 'class-section';
+
+        const header = document.createElement('div');
+        header.className = 'class-header';
+        header.innerHTML = `
+          <h3>${category}</h3>
+          <span class="badge">${grouped[category].length} expense${grouped[category].length !== 1 ? 's' : ''}</span>
+        `;
+        section.appendChild(header);
+
+        const content = document.createElement('div');
+        content.className = 'class-content';
+        
+        const table = document.createElement('table');
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Amount (KES)</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        `;
+
+        const tbody = table.querySelector('tbody');
+        let categoryTotal = 0;
+
+        grouped[category].forEach(expense => {
+          categoryTotal += expense.amount;
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${expense.date}</td>
+            <td>${expense.description}</td>
+            <td>${expense.amount.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+            <td>
+              <button class="btn btn-sm btn-info" onclick="editExpense('${expense.id}')">
+                <i class="fas fa-edit"></i> Edit
+              </button>
+              <button class="btn btn-sm btn-danger" onclick="deleteExpense('${expense.id}')">
+                <i class="fas fa-trash"></i> Delete
+              </button>
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+
+        // Add category total row
+        const totalRow = document.createElement('tr');
+        totalRow.className = 'total-row';
+        totalRow.innerHTML = `
+          <td colspan="2">Total</td>
+          <td>${categoryTotal.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td></td>
+        `;
+        tbody.appendChild(totalRow);
+
+        content.appendChild(table);
+        section.appendChild(content);
+        container.appendChild(section);
+      }
+
+      // Add grand total
+      const grandTotalDiv = document.createElement('div');
+      grandTotalDiv.className = 'total-row';
+      grandTotalDiv.style.padding = '1rem';
+      grandTotalDiv.style.marginTop = '1rem';
+      grandTotalDiv.style.textAlign = 'right';
+      grandTotalDiv.innerHTML = `
+        <strong>Grand Total: KES ${grandTotal.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+      `;
+      container.appendChild(grandTotalDiv);
+    }
+
+    // Update summary statistics
+    function updateSummaryStats(expensesData) {
+      const summaryContainer = document.getElementById('expensesSummary');
+      
+      // Calculate totals by category
+      const categoryTotals = {};
+      const monthlyTotals = {};
+      let overallTotal = 0;
+
+      expensesData.forEach(expense => {
+        // Category totals
+        categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + expense.amount;
+        
+        // Monthly totals (YYYY-MM format)
+        const month = expense.date.substring(0, 7);
+        monthlyTotals[month] = (monthlyTotals[month] || 0) + expense.amount;
+        
+        overallTotal += expense.amount;
+      });
+
+      // Populate month filter dropdown
+      const monthFilter = document.getElementById('monthFilter');
+      const months = Object.keys(monthlyTotals).sort();
+      monthFilter.innerHTML = '<option value="">Filter by Month</option>' + 
+        months.map(m => `<option value="${m}">${m}</option>`).join('');
+
+      // Create summary cards
+      summaryContainer.innerHTML = `
+        <div class="summary-card">
+          <h3><i class="fas fa-list"></i> Total Expenses</h3>
+          <p class="amount">KES ${overallTotal.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+        </div>
+        
+        <div class="summary-card">
+          <h3><i class="fas fa-tags"></i> Categories</h3>
+          <p class="amount">${Object.keys(categoryTotals).length}</p>
+        </div>
+        
+        <div class="summary-card">
+          <h3><i class="fas fa-calendar"></i> Months</h3>
+          <p class="amount">${months.length}</p>
+        </div>
+        
+        <div class="summary-card">
+          <h3><i class="fas fa-receipt"></i> Transactions</h3>
+          <p class="amount">${expensesData.length}</p>
+        </div>
+      `;
+    }
+
+    // Edit expense function
+    async function editExpense(id) {
+      try {
+        const doc = await expensesCollection.doc(id).get();
+        if (!doc.exists) {
+          showStatus("Expense not found", "error");
+          return;
+        }
+        
+        const expense = doc.data();
+        document.getElementById('description').value = expense.description;
+        document.getElementById('amount').value = expense.amount;
+        document.getElementById('category').value = expense.category;
+        document.getElementById('date').value = expense.date;
+
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> Update Expense';
+        submitBtn.classList.add('btn-warning');
+        submitBtn.classList.remove('btn-success');
+        
+        // Store the expense ID for updating
+        submitBtn.dataset.expenseId = id;
+        
+        showStatus(`Editing expense: ${expense.description}`, "info");
+        
+        // Scroll to form
+        document.getElementById('expenseForm').scrollIntoView({ behavior: 'smooth' });
+      } catch (error) {
+        showStatus("Error loading expense: " + error.message, "error");
+      }
+    }
+
+    // Delete expense function
+    async function deleteExpense(id) {
+      try {
+        const doc = await expensesCollection.doc(id).get();
+        const expenseDesc = doc.data().description;
+        
+        if (confirm(`Are you sure you want to delete "${expenseDesc}"? This action cannot be undone.`)) {
+          await expensesCollection.doc(id).delete();
+          showStatus(`Expense "${expenseDesc}" deleted successfully`, "success");
+          loadExpenses();
+        }
+      } catch (error) {
+        showStatus("Error deleting expense: " + error.message, "error");
+      }
+    }
+
+    // Form submission handler
+    document.getElementById('expenseForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const description = document.getElementById('description').value.trim();
+      const amount = parseFloat(document.getElementById('amount').value);
+      const category = document.getElementById('category').value;
+      const date = document.getElementById('date').value;
+      const submitBtn = document.getElementById('submitBtn');
+
+      // Validation
+      if (!description || !category || !date) {
+        showStatus("Please fill in all required fields", "error");
+        return;
+      }
+
+      if (isNaN(amount) || amount <= 0) {
+        showStatus("Please enter a valid amount greater than 0", "error");
+        return;
+      }
+
+      const expenseData = { 
+        description, 
+        amount, 
+        category, 
+        date 
+      };
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+      try {
+        if (submitBtn.dataset.expenseId) {
+          // Update existing expense
+          await expensesCollection.doc(submitBtn.dataset.expenseId).update(expenseData);
+          showStatus("Expense updated successfully", "success");
+          
+          // Reset form to "add" mode
+          submitBtn.innerHTML = '<i class="fas fa-plus-circle"></i> Add Expense';
+          submitBtn.classList.remove('btn-warning');
+          submitBtn.classList.add('btn-success');
+          delete submitBtn.dataset.expenseId;
+        } else {
+          // Add new expense
+          await expensesCollection.add(expenseData);
+          showStatus("Expense added successfully", "success");
+        }
+
+        this.reset();
+        loadExpenses();
+      } catch (error) {
+        console.error('Error saving expense:', error);
+        showStatus("Error saving expense: " + error.message, "error");
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    // Export all expenses to Excel
+    async function exportAllToExcel() {
+      try {
+        const snapshot = await expensesCollection.orderBy('date', 'desc').get();
+        const expenses = [];
+        
         snapshot.forEach(doc => {
           const e = doc.data();
-          csv += `${e.date},${e.description},${e.category},${e.amount}\n`;
+          expenses.push({
+            Date: e.date,
+            Description: e.description,
+            Category: e.category,
+            Amount: e.amount,
+            'Amount (KES)': `KES ${e.amount.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          });
         });
-        const blob = new Blob([csv], { type: "text/csv" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `expenses_${selectedCat.replace(/\s+/g, '_')}.csv`;
-        a.click();
-      }).catch(error => {
-        console.error('Error exporting category to Excel:', error);
-        showStatus(`Error exporting category: ${error.message}.`, "error");
-      });
-    }
 
-    function backupData() {
-      expensesCollection.get().then(snapshot => {
-        const expensesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const blob = new Blob([JSON.stringify(expensesData)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "expenses_backup.json";
-        a.click();
-      }).catch(error => {
-        console.error('Error creating backup:', error);
-        showStatus(`Error creating backup: ${error.message}.`, "error");
-      });
-    }
-
-    function restoreData(event) {
-      const file = event.target.files[0];
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        try {
-          const data = JSON.parse(e.target.result);
-          if (Array.isArray(data)) {
-            data.forEach(expense => {
-              delete expense.id; // Remove id to avoid conflicts
-              expensesCollection.add(expense).catch(error => console.error('Error restoring expense:', error));
-            });
-            showStatus("Expenses restored successfully", "success");
-          } else {
-            showStatus("Invalid file format.", "error");
-          }
-        } catch {
-          showStatus("Failed to restore backup.", "error");
+        if (expenses.length === 0) {
+          showStatus("No expenses to export", "error");
+          return;
         }
-      };
-      reader.readAsText(file);
+
+        const worksheet = XLSX.utils.json_to_sheet(expenses);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Expenses");
+        XLSX.writeFile(workbook, `expenses_export_${new Date().toISOString().split('T')[0]}.xlsx`);
+        showStatus("Expenses exported to Excel successfully", "success");
+      } catch (error) {
+        console.error('Error exporting to Excel:', error);
+        showStatus("Error exporting to Excel: " + error.message, "error");
+      }
     }
 
-    function renderCharts() {
-      const ctx1 = document.getElementById('categoryChart').getContext('2d');
-      const ctx2 = document.getElementById('monthlyChart').getContext('2d');
-      const summaryDiv = document.getElementById("monthlySummary");
-
-      expensesCollection.get().then(snapshot => {
+    // Render charts for expense analysis
+    async function renderCharts() {
+      try {
+        const snapshot = await expensesCollection.get();
         const expensesData = snapshot.docs.map(doc => doc.data());
+        
         const categoryTotals = {};
         const monthlyTotals = {};
+        const categoryColors = {};
 
+        // Generate colors for categories
+        const categories = [...new Set(expensesData.map(e => e.category))];
+        categories.forEach((cat, i) => {
+          categoryColors[cat] = `hsl(${(i * 360 / categories.length)}, 70%, 60%)`;
+        });
+
+        // Calculate totals
         expensesData.forEach(e => {
+          // Category totals
           categoryTotals[e.category] = (categoryTotals[e.category] || 0) + e.amount;
-          const month = e.date.slice(0, 7);
+          
+          // Monthly totals (YYYY-MM format)
+          const month = e.date.substring(0, 7);
           monthlyTotals[month] = (monthlyTotals[month] || 0) + e.amount;
         });
 
-        const catLabels = Object.keys(categoryTotals);
-        const catValues = Object.values(categoryTotals);
-        const monthLabels = Object.keys(monthlyTotals).sort();
-        const monthValues = monthLabels.map(m => monthlyTotals[m]);
+        // Sort months chronologically
+        const sortedMonths = Object.keys(monthlyTotals).sort();
 
-        new Chart(ctx1, {
-          type: 'pie',
-          data: {
-            labels: catLabels,
-            datasets: [{
-              label: 'Expenses by Category',
-              data: catValues,
-              backgroundColor: catLabels.map((_, i) => `hsl(${i * 30}, 70%, 60%)`)
-            }]
+        // Category Chart (Pie)
+        const categoryChart = new Chart(
+          document.getElementById('categoryChart'), {
+            type: 'pie',
+            data: {
+              labels: Object.keys(categoryTotals),
+              datasets: [{
+                data: Object.values(categoryTotals),
+                backgroundColor: Object.keys(categoryTotals).map(cat => categoryColors[cat]),
+                borderWidth: 1
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                title: {
+                  display: true,
+                  text: 'Expenses by Category',
+                  font: { size: 16 }
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      const value = context.raw;
+                      const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                      const percentage = Math.round((value / total) * 100);
+                      return `${context.label}: KES ${value.toLocaleString('en-KE')} (${percentage}%)`;
+                    }
+                  }
+                }
+              }
+            }
           }
-        });
+        );
 
-        new Chart(ctx2, {
-          type: 'bar',
-          data: {
-            labels: monthLabels,
-            datasets: [{
-              label: 'Monthly Expenses',
-              data: monthValues,
-              backgroundColor: 'rgba(0, 119, 204, 0.6)'
-            }]
+        // Monthly Chart (Bar)
+        const monthlyChart = new Chart(
+          document.getElementById('monthlyChart'), {
+            type: 'bar',
+            data: {
+              labels: sortedMonths,
+              datasets: [{
+                label: 'Monthly Expenses (KES)',
+                data: sortedMonths.map(m => monthlyTotals[m]),
+                backgroundColor: 'rgba(0, 119, 204, 0.7)',
+                borderColor: 'rgba(0, 119, 204, 1)',
+                borderWidth: 1
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                title: {
+                  display: true,
+                  text: 'Monthly Expenses',
+                  font: { size: 16 }
+                }
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  ticks: {
+                    callback: function(value) {
+                      return 'KES ' + value.toLocaleString('en-KE');
+                    }
+                  }
+                }
+              }
+            }
           }
-        });
+        );
 
-        let summaryHTML = "<h3>Monthly Summary</h3><table><tr><th>Month</th><th>Total (KES)</th></tr>";
-        monthLabels.forEach(m => {
-          summaryHTML += `<tr><td>${m}</td><td>${monthlyTotals[m].toFixed(2)}</td></tr>`;
-        });
-        summaryHTML += "</table>";
-        summaryDiv.innerHTML = summaryHTML;
-      }).catch(error => {
+        // Scroll to charts
+        document.querySelector('.chart-card').scrollIntoView({ behavior: 'smooth' });
+      } catch (error) {
         console.error('Error rendering charts:', error);
-        showStatus(`Error rendering charts: ${error.message}.`, "error");
-      });
+        showStatus("Error rendering charts: " + error.message, "error");
+      }
     }
 
-    // Initialize page
-    loadExpenses();
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', () => {
+      loadExpenses();
+      
+      // Set default date to today
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('date').value = today;
+      
+      // Keyboard shortcuts
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          const submitBtn = document.getElementById('submitBtn');
+          if (submitBtn.dataset.expenseId) {
+            submitBtn.innerHTML = '<i class="fas fa-plus-circle"></i> Add Expense';
+            submitBtn.classList.remove('btn-warning');
+            submitBtn.classList.add('btn-success');
+            delete submitBtn.dataset.expenseId;
+            document.getElementById('expenseForm').reset();
+          }
+        }
+      });
+    });
   </script>
 </body>
 </html>
