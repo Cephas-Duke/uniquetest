@@ -627,7 +627,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h3 class="modal-title">Student Management</h3>
-        <button class="modal-close" onclick="closeStudentManager()">&times;</button>
+        <button class="modal-close" onclick="closeStudentManager()">×</button>
       </div>
       <div class="modal-body">
         <h4>Add New Student</h4>
@@ -1021,14 +1021,20 @@
           balance: (student.total || 0) - ((student.paid || 0) + amount)
         };
 
-        const receipt = { 
-          name: studentName, 
-          class: studentClass, 
-          paid: amount, 
-          balance: updatedStudent.balance, 
+        // Get total number of receipts for receipt number
+        const snapshot = await receiptsCollection.get();
+        const receiptCount = snapshot.size + 1; // Increment for the new receipt
+        const receiptNumber = String(receiptCount).padStart(3, '0');
+
+        const receipt = {
+          name: studentName,
+          class: studentClass,
+          paid: amount,
+          balance: updatedStudent.balance,
           mode: mode,
           notes: notes || null,
-          date: receiptDate.toISOString()
+          date: receiptDate.toISOString(),
+          receiptNumber: receiptNumber // Store receipt number in Firestore
         };
 
         await db.runTransaction(async transaction => {
@@ -1038,17 +1044,12 @@
           receipt.id = receiptRef.id;
         });
 
-        // Get total number of receipts for receipt number
-        const snapshot = await receiptsCollection.get();
-        const receiptCount = snapshot.size;
-        const receiptNumber = String(receiptCount).padStart(3, '0');
-
         // Format time in EAT for SMS
-        const timeString = receiptDate.toLocaleTimeString('en-US', { 
+        const timeString = receiptDate.toLocaleTimeString('en-US', {
           timeZone: 'Africa/Nairobi',
-          hour: '2-digit', 
-          minute: '2-digit', 
-          hour12: true 
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
         }).toUpperCase();
         
         const smsMessage = `Dear parent to ${studentName}, ${studentClass}, Amount of KES ${amount} Receipt No. ${receiptNumber} was received on ${receiptDate.toLocaleDateString('en-GB')} at ${timeString}. Balance: ${updatedStudent.balance}.`;
@@ -1286,13 +1287,8 @@
         const currentDate = new Date(receipt.date).toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
         const receiptDate = new Date(currentDate);
 
-        // Get total number of receipts for auto-incrementing receipt number
-        const snapshot = await receiptsCollection.get();
-        const receiptCount = snapshot.size + 1;
-        const receiptNumber = String(receiptCount).padStart(3, '0');
-
-        // Use the balance from the student document for accuracy
-        const studentBalance = student.balance || 0;
+        // Use the stored receipt number
+        const receiptNumber = receipt.receiptNumber || String((await receiptsCollection.get()).size).padStart(3, '0'); // Fallback
 
         const printWindow = window.open('', '', 'height=800,width=900');
         printWindow.document.write(`
@@ -1531,7 +1527,7 @@
                     rows += `
                       <tr class="total-row">
                         <td colspan="3" style="text-align: right; padding-right: 10px;"><strong>Receipt Balance</strong></td>
-                        <td><strong>${studentBalance.toLocaleString()}</strong></td>
+                        <td><strong>${student.balance.toLocaleString()}</strong></td>
                       </tr>
                     `;
 
@@ -1681,10 +1677,8 @@
           const currentDate = new Date(receipt.date).toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
           const receiptDate = new Date(currentDate);
 
-          // Get total number of receipts for auto-incrementing receipt number
-          const receiptSnapshot = await receiptsCollection.get();
-          const receiptCount = receiptSnapshot.size + 1;
-          const receiptNumber = String(receiptCount).padStart(3, '0');
+          // Use the stored receipt number
+          const receiptNumber = receipt.receiptNumber || String((await receiptsCollection.get()).size).padStart(3, '0'); // Fallback
 
           if (!isFirstReceipt) {
             doc.addPage();
@@ -1748,8 +1742,8 @@
 
             doc.autoTable({
               startY: 135,
-              head: [['School fees', 'Admission fees', 'Caution fees', 'Interview', 'Tuition', 
-                     'Lunch', 'Swimming', 'Uniform', 'Book fund', 'Medical', 
+              head: [['School fees', 'Admission fees', 'Caution fees', 'Interview', 'Tuition',
+                     'Lunch', 'Swimming', 'Uniform', 'Book fund', 'Medical',
                      'Stationery', 'Transport', 'Trip', 'School Activities', 'AMOUNT (KSHS)']],
               body: tableData,
               foot: [['', '', '', '', '', '', '', '', '', '', '', '', '', 'TOTAL', receipt.paid.toString()]],
