@@ -1018,7 +1018,7 @@
         const updatedStudent = {
           ...student,
           paid: (student.paid || 0) + amount,
-          balance: (student.total || 0) - ((student.paid || 0) + amount)
+          balance: (student.balance || student.total || 0) - amount
         };
 
         // Get total number of receipts for receipt number
@@ -1495,7 +1495,7 @@
                 </thead>
                 <tbody>
                   ${(() => {
-                    let remainingPaid = receipt.paid;
+                    let remainingBalance = student.balance + receipt.paid; // Initial balance before this payment
                     const fees = [
                       { name: 'Tuition', amount: student.tuition || 0 },
                       { name: 'Adm Fee', amount: student.adm || 0 },
@@ -1509,21 +1509,22 @@
                     let rows = '';
 
                     fees.forEach(fee => {
-                      const feePaid = Math.min(remainingPaid, fee.amount);
-                      const feeBalance = fee.amount - feePaid;
-                      remainingPaid -= feePaid;
+                      const feeCharged = Math.min(remainingBalance, fee.amount); // Adjust charged to remaining balance
+                      remainingBalance -= feeCharged;
+                      const feePaid = feeCharged > 0 && remainingBalance >= 0 ? Math.min(receipt.paid, feeCharged) : 0;
+                      const feeBalance = feeCharged - feePaid;
 
                       rows += `
                         <tr class="fees-row">
                           <td>${fee.name}</td>
-                          <td>${fee.amount > 0 ? fee.amount.toLocaleString() : '0'}</td>
+                          <td>${feeCharged > 0 ? feeCharged.toLocaleString() : '0'}</td>
                           <td>${feePaid > 0 ? feePaid.toLocaleString() : '0'}</td>
                           <td>${feeBalance > 0 ? feeBalance.toLocaleString() : '0'}</td>
                         </tr>
                       `;
                     });
 
-                    // Add receipt balance row with student balance
+                    // Add receipt balance row with updated student balance
                     rows += `
                       <tr class="total-row">
                         <td colspan="3" style="text-align: right; padding-right: 10px;"><strong>Receipt Balance</strong></td>
