@@ -1015,7 +1015,7 @@
         const updatedStudent = {
           ...student,
           paid: (student.paid || 0) + amount,
-          balance: (student.balance || student.total || 0) - amount
+          balance: (student.total || 0) - ((student.paid || 0) + amount)
         };
 
         // Get total number of receipts for receipt number
@@ -1027,7 +1027,7 @@
           name: studentName,
           class: studentClass,
           paid: amount,
-          balance: updatedStudent.balance, // Updated balance after this payment
+          balance: updatedStudent.balance,
           mode: mode,
           notes: notes || null,
           date: receiptDate.toISOString(),
@@ -1487,12 +1487,14 @@
                     <th><strong>Fee Item</strong></th>
                     <th><strong>Fee Charged</strong></th>
                     <th><strong>Fee Paid</strong></th>
-                    <th><strong>Balance</strong></th>
+                    <th><strong>Receipt Balance</strong></th>
                   </tr>
                 </thead>
                 <tbody>
                   ${(() => {
-                    let remainingBalance = student.balance + receipt.paid; // Initial balance before this payment
+                    // Pre-payment balance (Fee Charged) is the original balance before this payment
+                    let initialBalance = student.balance + receipt.paid; // Revert to pre-payment state
+                    let remainingPaid = receipt.paid;
                     const fees = [
                       { name: 'Tuition', amount: student.tuition || 0 },
                       { name: 'Adm Fee', amount: student.adm || 0 },
@@ -1506,9 +1508,10 @@
                     let rows = '';
 
                     fees.forEach(fee => {
-                      const feeCharged = Math.min(remainingBalance, fee.amount); // Adjust charged to remaining balance
-                      remainingBalance -= feeCharged;
-                      const feePaid = feeCharged > 0 && remainingBalance >= 0 ? Math.min(receipt.paid, feeCharged) : 0;
+                      const feeCharged = Math.min(initialBalance, fee.amount); // Use pre-payment balance as base
+                      initialBalance -= feeCharged;
+                      const feePaid = Math.min(remainingPaid, feeCharged);
+                      remainingPaid -= feePaid;
                       const feeBalance = feeCharged - feePaid;
 
                       rows += `
@@ -1521,23 +1524,13 @@
                       `;
                     });
 
-                    // Fetch the latest balance from receipts collection for this student using async IIFE
-                    (async () => {
-                      const receiptSnapshot = await receiptsCollection.where('name', '==', receipt.name).get();
-                      let totalBalance = student.total || 0;
-                      let totalPaid = 0;
-                      receiptSnapshot.forEach(doc => {
-                        totalPaid += doc.data().paid;
-                      });
-                      const currentBalance = totalBalance - totalPaid;
-
-                      rows += `
-                        <tr class="total-row">
-                          <td colspan="3" style="text-align: right; padding-right: 10px;"><strong>Receipt Balance</strong></td>
-                          <td><strong>${currentBalance.toLocaleString()}</strong></td>
-                        </tr>
-                      `;
-                    })();
+                    // Post-payment balance (Receipt Balance) from the updated student data
+                    rows += `
+                      <tr class="total-row">
+                        <td colspan="3" style="text-align: right; padding-right: 10px;"><strong>Total Receipt Balance</strong></td>
+                        <td><strong>${student.balance.toLocaleString()}</strong></td>
+                      </tr>
+                    `;
 
                     return rows;
                   })()}
