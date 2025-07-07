@@ -456,9 +456,6 @@
       }
       .print-only {
         position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
       }
     }
 
@@ -1030,7 +1027,7 @@
           name: studentName,
           class: studentClass,
           paid: amount,
-          balance: updatedStudent.balance,
+          balance: updatedStudent.balance, // Updated balance after this payment
           mode: mode,
           notes: notes || null,
           date: receiptDate.toISOString(),
@@ -1524,11 +1521,19 @@
                       `;
                     });
 
-                    // Add receipt balance row with updated student balance
+                    // Fetch the latest balance from receipts collection for this student
+                    const receiptSnapshot = await receiptsCollection.where('name', '==', receipt.name).get();
+                    let totalBalance = student.total || 0;
+                    let totalPaid = 0;
+                    receiptSnapshot.forEach(doc => {
+                      totalPaid += doc.data().paid;
+                    });
+                    const currentBalance = totalBalance - totalPaid;
+
                     rows += `
                       <tr class="total-row">
                         <td colspan="3" style="text-align: right; padding-right: 10px;"><strong>Receipt Balance</strong></td>
-                        <td><strong>${student.balance.toLocaleString()}</strong></td>
+                        <td><strong>${currentBalance.toLocaleString()}</strong></td>
                       </tr>
                     `;
 
