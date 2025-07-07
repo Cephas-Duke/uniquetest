@@ -1521,21 +1521,23 @@
                       `;
                     });
 
-                    // Fetch the latest balance from receipts collection for this student
-                    const receiptSnapshot = await receiptsCollection.where('name', '==', receipt.name).get();
-                    let totalBalance = student.total || 0;
-                    let totalPaid = 0;
-                    receiptSnapshot.forEach(doc => {
-                      totalPaid += doc.data().paid;
-                    });
-                    const currentBalance = totalBalance - totalPaid;
+                    // Fetch the latest balance from receipts collection for this student using async IIFE
+                    (async () => {
+                      const receiptSnapshot = await receiptsCollection.where('name', '==', receipt.name).get();
+                      let totalBalance = student.total || 0;
+                      let totalPaid = 0;
+                      receiptSnapshot.forEach(doc => {
+                        totalPaid += doc.data().paid;
+                      });
+                      const currentBalance = totalBalance - totalPaid;
 
-                    rows += `
-                      <tr class="total-row">
-                        <td colspan="3" style="text-align: right; padding-right: 10px;"><strong>Receipt Balance</strong></td>
-                        <td><strong>${currentBalance.toLocaleString()}</strong></td>
-                      </tr>
-                    `;
+                      rows += `
+                        <tr class="total-row">
+                          <td colspan="3" style="text-align: right; padding-right: 10px;"><strong>Receipt Balance</strong></td>
+                          <td><strong>${currentBalance.toLocaleString()}</strong></td>
+                        </tr>
+                      `;
+                    })();
 
                     return rows;
                   })()}
