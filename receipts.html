@@ -456,6 +456,9 @@
       }
       .print-only {
         position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
       }
     }
 
@@ -1012,10 +1015,14 @@
           student = newStudent;
         }
 
+        // Calculate new values
+        const newPaid = (student.paid || 0) + amount;
+        const newBalance = (student.total || 0) - newPaid;
+
         const updatedStudent = {
           ...student,
-          paid: (student.paid || 0) + amount,
-          balance: (student.total || 0) - ((student.paid || 0) + amount)
+          paid: newPaid,
+          balance: newBalance
         };
 
         // Get total number of receipts for receipt number
@@ -1027,7 +1034,7 @@
           name: studentName,
           class: studentClass,
           paid: amount,
-          balance: updatedStudent.balance,
+          balance: newBalance, // Use updated balance
           mode: mode,
           notes: notes || null,
           date: receiptDate.toISOString(),
@@ -1035,8 +1042,9 @@
         };
 
         await db.runTransaction(async transaction => {
-          transaction.set(studentsCollection.doc(studentId), updatedStudent);
+          const studentDocRef = studentsCollection.doc(studentId);
           const receiptRef = receiptsCollection.doc();
+          transaction.update(studentDocRef, updatedStudent); // Ensure update happens
           transaction.set(receiptRef, receipt);
           receipt.id = receiptRef.id;
         });
@@ -1049,7 +1057,7 @@
           hour12: true
         }).toUpperCase();
         
-        const smsMessage = `Dear parent to ${studentName}, ${studentClass}, Amount of KES ${amount} Receipt No. ${receiptNumber} was received on ${receiptDate.toLocaleDateString('en-GB')} at ${timeString}. Balance: ${updatedStudent.balance}.`;
+        const smsMessage = `Dear parent to ${studentName}, ${studentClass}, Amount of KES ${amount} Receipt No. ${receiptNumber} was received on ${receiptDate.toLocaleDateString('en-GB')} at ${timeString}. Balance: ${newBalance}.`;
         const smsSent = await sendSMS(student.phone, smsMessage);
         
         showStatus(`Receipt saved${smsSent ? ' and SMS sent' : ''} successfully!`, "success");
@@ -1064,7 +1072,7 @@
           <p><strong>Amount Paid:</strong> ${amount.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</p>
           <p><strong>Payment Mode:</strong> ${mode}</p>
           <p><strong>Date:</strong> ${receiptDate.toLocaleDateString('en-GB')} ${timeString}</p>
-          <p><strong>Balance:</strong> ${updatedStudent.balance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</p>
+          <p><strong>Balance:</strong> ${newBalance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</p>
           ${notes ? `<p><strong>Notes:</strong> ${notes}</p>` : ''}
           <p><strong>Receipt No:</strong> ${receiptNumber}</p>
         `;
