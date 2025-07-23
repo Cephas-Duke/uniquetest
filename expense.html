@@ -289,11 +289,45 @@
       background-color: #f8f9fa;
     }
 
-    .class-section {
+    .term-section {
       margin-bottom: 2rem;
     }
 
-    .class-header {
+    .term-header {
+      background-color: var(--secondary-color);
+      color: white;
+      padding: 0.75rem 1rem;
+      border-radius: var(--border-radius) var(--border-radius) 0 0;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: var(--transition);
+    }
+
+    .term-header:hover {
+      background-color: var(--accent-color);
+    }
+
+    .term-header h2 {
+      margin: 0;
+      font-size: 1.3rem;
+    }
+
+    .term-header .badge {
+      background: white;
+      color: var(--primary-color);
+      padding: 0.25rem 0.5rem;
+      border-radius: 1rem;
+      font-size: 0.85rem;
+      font-weight: bold;
+    }
+
+    .category-section {
+      margin-bottom: 1rem;
+    }
+
+    .category-header {
       background-color: var(--primary-color);
       color: white;
       padding: 0.75rem 1rem;
@@ -305,16 +339,16 @@
       transition: var(--transition);
     }
 
-    .class-header:hover {
+    .category-header:hover {
       background-color: var(--secondary-color);
     }
 
-    .class-header h3 {
+    .category-header h3 {
       margin: 0;
       font-size: 1.1rem;
     }
 
-    .class-header .badge {
+    .category-header .badge {
       background: white;
       color: var(--primary-color);
       padding: 0.25rem 0.5rem;
@@ -493,6 +527,15 @@
       <form id="expenseForm">
         <div class="grid">
           <div class="form-group">
+            <label for="term"><i class="fas fa-calendar-alt"></i> Term</label>
+            <select id="term" required>
+              <option value="">-- Select Term --</option>
+              <option>First Term</option>
+              <option>Second Term</option>
+              <option>Third Term</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label for="description"><i class="fas fa-align-left"></i> Description</label>
             <input type="text" id="description" required placeholder="What was this expense for?">
           </div>
@@ -566,6 +609,12 @@
           <i class="fas fa-search"></i>
           <input type="text" id="searchInput" placeholder="Search by description..." oninput="loadExpenses()">
         </div>
+        <select id="termFilter" class="filter-select" onchange="loadExpenses()">
+          <option value="">Filter by Term</option>
+          <option>First Term</option>
+          <option>Second Term</option>
+          <option>Third Term</option>
+        </select>
         <select id="categoryFilter" class="filter-select" onchange="loadExpenses()">
           <option value="">Filter by Category</option>
           <option>Food</option>
@@ -647,10 +696,15 @@
     // Load expenses from Firestore
     function loadExpenses() {
       const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+      const termFilter = document.getElementById('termFilter').value;
       const categoryFilter = document.getElementById('categoryFilter').value;
       const monthFilter = document.getElementById('monthFilter').value;
 
       let query = expensesCollection;
+      
+      if (termFilter) {
+        query = query.where('term', '==', termFilter);
+      }
       
       if (categoryFilter) {
         query = query.where('category', '==', categoryFilter);
@@ -677,7 +731,7 @@
       });
     }
 
-    // Render grouped expenses by category
+    // Render grouped expenses by term and category
     function renderGroupedExpenses(expensesData) {
       const container = document.getElementById("groupedExpenses");
       container.innerHTML = "";
@@ -687,80 +741,115 @@
         return;
       }
 
-      const grouped = {};
+      const groupedByTerm = {};
       let grandTotal = 0;
 
-      // Group expenses by category
+      // Group expenses by term, then category
       expensesData.forEach(e => {
-        if (!grouped[e.category]) grouped[e.category] = [];
-        grouped[e.category].push(e);
+        if (!groupedByTerm[e.term]) groupedByTerm[e.term] = {};
+        if (!groupedByTerm[e.term][e.category]) groupedByTerm[e.term][e.category] = [];
+        groupedByTerm[e.term][e.category].push(e);
         grandTotal += e.amount;
       });
 
-      // Create sections for each category
-      for (let category in grouped) {
-        const section = document.createElement('div');
-        section.className = 'class-section';
+      // Create sections for each term
+      for (let term in groupedByTerm) {
+        const termSection = document.createElement('div');
+        termSection.className = 'term-section';
 
-        const header = document.createElement('div');
-        header.className = 'class-header';
-        header.innerHTML = `
-          <h3>${category}</h3>
-          <span class="badge">${grouped[category].length} expense${grouped[category].length !== 1 ? 's' : ''}</span>
+        const termHeader = document.createElement('div');
+        termHeader.className = 'term-header';
+        const termExpenseCount = Object.values(groupedByTerm[term]).reduce((sum, cat) => sum + cat.length, 0);
+        termHeader.innerHTML = `
+          <h2>${term}</h2>
+          <span class="badge">${termExpenseCount} expense${termExpenseCount !== 1 ? 's' : ''}</span>
         `;
-        section.appendChild(header);
+        termSection.appendChild(termHeader);
 
-        const content = document.createElement('div');
-        content.className = 'class-content';
-        
-        const table = document.createElement('table');
-        table.innerHTML = `
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Description</th>
-              <th>Amount (KES)</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        `;
+        const termContent = document.createElement('div');
+        termContent.className = 'class-content';
 
-        const tbody = table.querySelector('tbody');
-        let categoryTotal = 0;
+        let termTotal = 0;
 
-        grouped[category].forEach(expense => {
-          categoryTotal += expense.amount;
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${expense.date}</td>
-            <td>${expense.description}</td>
-            <td>${expense.amount.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-            <td>
-              <button class="btn btn-sm btn-info" onclick="editExpense('${expense.id}')">
-                <i class="fas fa-edit"></i> Edit
-              </button>
-              <button class="btn btn-sm btn-danger" onclick="deleteExpense('${expense.id}')">
-                <i class="fas fa-trash"></i> Delete
-              </button>
-            </td>
+        // Create sections for each category within the term
+        for (let category in groupedByTerm[term]) {
+          const categorySection = document.createElement('div');
+          categorySection.className = 'category-section';
+
+          const categoryHeader = document.createElement('div');
+          categoryHeader.className = 'category-header';
+          categoryHeader.innerHTML = `
+            <h3>${category}</h3>
+            <span class="badge">${groupedByTerm[term][category].length} expense${groupedByTerm[term][category].length !== 1 ? 's' : ''}</span>
           `;
-          tbody.appendChild(row);
-        });
+          categorySection.appendChild(categoryHeader);
 
-        // Add category total row
-        const totalRow = document.createElement('tr');
-        totalRow.className = 'total-row';
-        totalRow.innerHTML = `
-          <td colspan="2">Total</td>
-          <td>${categoryTotal.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-          <td></td>
+          const categoryContent = document.createElement('div');
+          categoryContent.className = 'class-content';
+
+          const table = document.createElement('table');
+          table.innerHTML = `
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Amount (KES)</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          `;
+
+          const tbody = table.querySelector('tbody');
+          let categoryTotal = 0;
+
+          groupedByTerm[term][category].forEach(expense => {
+            categoryTotal += expense.amount;
+            termTotal += expense.amount;
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${expense.date}</td>
+              <td>${expense.description}</td>
+              <td>${expense.amount.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+              <td>
+                <button class="btn btn-sm btn-info" onclick="editExpense('${expense.id}')">
+                  <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="deleteExpense('${expense.id}')">
+                  <i class="fas fa-trash"></i> Delete
+                </button>
+              </td>
+            `;
+            tbody.appendChild(row);
+          });
+
+          // Add category total row
+          const totalRow = document.createElement('tr');
+          totalRow.className = 'total-row';
+          totalRow.innerHTML = `
+            <td colspan="2">Category Total</td>
+            <td>${categoryTotal.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+            <td></td>
+          `;
+          tbody.appendChild(totalRow);
+
+          categoryContent.appendChild(table);
+          categorySection.appendChild(categoryContent);
+          termContent.appendChild(categorySection);
+        }
+
+        // Add term total row
+        const termTotalDiv = document.createElement('div');
+        termTotalDiv.className = 'total-row';
+        termTotalDiv.style.padding = '1rem';
+        termTotalDiv.style.textAlign = 'right';
+        termTotalDiv.innerHTML = `
+          <strong>Term Total: KES ${termTotal.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
         `;
-        tbody.appendChild(totalRow);
+        termContent.appendChild(termTotalDiv);
 
-        content.appendChild(table);
-        section.appendChild(content);
-        container.appendChild(section);
+        termSection.appendChild(termContent);
+        container.appendChild(termSection);
       }
 
       // Add grand total
@@ -779,12 +868,16 @@
     function updateSummaryStats(expensesData) {
       const summaryContainer = document.getElementById('expensesSummary');
       
-      // Calculate totals by category
+      // Calculate totals by term and category
+      const termTotals = {};
       const categoryTotals = {};
       const monthlyTotals = {};
       let overallTotal = 0;
 
       expensesData.forEach(expense => {
+        // Term totals
+        termTotals[expense.term] = (termTotals[expense.term] || 0) + expense.amount;
+        
         // Category totals
         categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + expense.amount;
         
@@ -809,13 +902,13 @@
         </div>
         
         <div class="summary-card">
-          <h3><i class="fas fa-tags"></i> Categories</h3>
-          <p class="amount">${Object.keys(categoryTotals).length}</p>
+          <h3><i class="fas fa-calendar-alt"></i> Terms</h3>
+          <p class="amount">${Object.keys(termTotals).length}</p>
         </div>
         
         <div class="summary-card">
-          <h3><i class="fas fa-calendar"></i> Months</h3>
-          <p class="amount">${months.length}</p>
+          <h3><i class="fas fa-tags"></i> Categories</h3>
+          <p class="amount">${Object.keys(categoryTotals).length}</p>
         </div>
         
         <div class="summary-card">
@@ -835,6 +928,7 @@
         }
         
         const expense = doc.data();
+        document.getElementById('term').value = expense.term;
         document.getElementById('description').value = expense.description;
         document.getElementById('amount').value = expense.amount;
         document.getElementById('category').value = expense.category;
@@ -877,6 +971,7 @@
     document.getElementById('expenseForm').addEventListener('submit', async function(e) {
       e.preventDefault();
 
+      const term = document.getElementById('term').value;
       const description = document.getElementById('description').value.trim();
       const amount = parseFloat(document.getElementById('amount').value);
       const category = document.getElementById('category').value;
@@ -884,7 +979,7 @@
       const submitBtn = document.getElementById('submitBtn');
 
       // Validation
-      if (!description || !category || !date) {
+      if (!term || !description || !category || !date) {
         showStatus("Please fill in all required fields", "error");
         return;
       }
@@ -895,6 +990,7 @@
       }
 
       const expenseData = { 
+        term,
         description, 
         amount, 
         category, 
@@ -940,6 +1036,7 @@
         snapshot.forEach(doc => {
           const e = doc.data();
           expenses.push({
+            Term: e.term,
             Date: e.date,
             Description: e.description,
             Category: e.category,
@@ -993,8 +1090,12 @@
         // Sort months chronologically
         const sortedMonths = Object.keys(monthlyTotals).sort();
 
+        // Destroy existing charts if they exist to prevent canvas issues
+        if (window.categoryChart) window.categoryChart.destroy();
+        if (window.monthlyChart) window.monthlyChart.destroy();
+
         // Category Chart (Pie)
-        const categoryChart = new Chart(
+        window.categoryChart = new Chart(
           document.getElementById('categoryChart'), {
             type: 'pie',
             data: {
@@ -1030,7 +1131,7 @@
         );
 
         // Monthly Chart (Bar)
-        const monthlyChart = new Chart(
+        window.monthlyChart = new Chart(
           document.getElementById('monthlyChart'), {
             type: 'bar',
             data: {
@@ -1093,6 +1194,7 @@
             submitBtn.classList.add('btn-success');
             delete submitBtn.dataset.expenseId;
             document.getElementById('expenseForm').reset();
+            document.getElementById('date').value = today; // Reset date to today
           }
         }
       });
