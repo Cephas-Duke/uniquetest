@@ -1,11 +1,11 @@
 [
     {
-        "title": "New student registered: John Doe",
+        "title": "New student registered:",
         "icon": "user-plus",
         "time": "5 minutes ago"
     },
     {
-        "title": "Invoice #00124 paid by Jane Smith",
+        "title": "Invoice ",
         "icon": "file-invoice-dollar",
         "time": "2 hours ago"
     },
@@ -13,11 +13,6 @@
         "title": "Salary payroll for staff processed",
         "icon": "money-check-alt",
         "time": "Yesterday"
-    },
-    {
-        "title": "New teacher hired: Mr. Alex Johnson",
-        "icon": "user-tie",
-        "time": "2 days ago"
     },
     {
         "title": "Website maintenance completed",
