@@ -751,6 +751,7 @@
             display: none;
             animation: fadeIn 0.5s ease-out;
             border-left: 4px solid transparent;
+            font-weight: 500;
         }
 
         .status-message.success {
@@ -764,6 +765,13 @@
             background-color: rgba(247, 37, 133, 0.1);
             color: var(--error-color);
             border-left-color: var(--error-color);
+            display: block;
+        }
+
+        .status-message.info {
+            background-color: rgba(72, 149, 239, 0.1);
+            color: var(--info-color);
+            border-left-color: var(--info-color);
             display: block;
         }
 
@@ -918,6 +926,9 @@
                 <h2 class="auth-title" id="authTitle">Welcome Back</h2>
                 <p class="auth-subtitle" id="authSubtitle">Sign in to access your dashboard</p>
             </div>
+            
+            <!-- Status Message Area -->
+            <div id="authStatusMessage" class="status-message"></div>
 
             <!-- Login Form -->
             <form class="auth-form" id="loginForm">
@@ -1200,7 +1211,9 @@
             getAuth, 
             onAuthStateChanged, 
             signInWithEmailAndPassword, 
-            signOut 
+            signOut,
+            createUserWithEmailAndPassword,
+            sendPasswordResetEmail
         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { 
             getFirestore, 
@@ -1238,24 +1251,38 @@
         const userEmailElement = document.getElementById('userEmail');
         const userAvatarElement = document.getElementById('userAvatar');
         const welcomeTitle = document.getElementById('welcomeTitle');
+        const authStatusMessage = document.getElementById('authStatusMessage');
 
+        // Form toggle links
+        const showSignupLink = document.getElementById('showSignupForm');
+        const showLoginLink = document.getElementById('showLoginForm');
+        const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+        const backToLoginLink = document.getElementById('backToLoginForm');
+        
         // Functions to show/hide sections
-        function showLoadingScreen() {
-            loadingScreen.classList.add('show');
-        }
+        const showLoadingScreen = () => loadingScreen.classList.add('show');
+        const hideLoadingScreen = () => loadingScreen.classList.remove('show');
+        const showAuthContainer = () => { authContainer.style.display = 'flex'; dashboardContent.style.display = 'none'; };
+        const showDashboardContent = () => { authContainer.style.display = 'none'; dashboardContent.style.display = 'block'; };
 
-        function hideLoadingScreen() {
-            loadingScreen.classList.remove('show');
+        function showMessage(message, type, targetElement) {
+            targetElement.textContent = message;
+            targetElement.className = `status-message ${type}`;
+            setTimeout(() => {
+                targetElement.textContent = '';
+                targetElement.className = 'status-message';
+            }, 5000);
         }
-
-        function showAuthContainer() {
-            authContainer.style.display = 'flex';
-            dashboardContent.style.display = 'none';
-        }
-
-        function showDashboardContent() {
-            authContainer.style.display = 'none';
-            dashboardContent.style.display = 'block';
+        
+        function setFormLoading(form, isLoading) {
+            const button = form.querySelector('button');
+            if (isLoading) {
+                button.classList.add('loading');
+                button.disabled = true;
+            } else {
+                button.classList.remove('loading');
+                button.disabled = false;
+            }
         }
 
         // Set initial state
@@ -1266,7 +1293,7 @@
             if (user) {
                 // User is signed in
                 const userEmail = user.email;
-                userNameElement.textContent = "Admin"; // You can fetch a real name from Firestore
+                userNameElement.textContent = userEmail.split('@')[0]; // Simple way to get a username
                 userEmailElement.textContent = userEmail;
                 userAvatarElement.textContent = userEmail.charAt(0).toUpperCase();
 
@@ -1283,21 +1310,127 @@
             hideLoadingScreen();
         });
 
+        // Event Listeners for form toggles
+        showSignupLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginForm.classList.add('hidden');
+            signupForm.classList.remove('hidden');
+            document.getElementById('authTitle').textContent = 'Create an Account';
+            document.getElementById('authSubtitle').textContent = 'Manage your school with ease';
+            authStatusMessage.textContent = '';
+        });
+
+        showLoginLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            signupForm.classList.add('hidden');
+            loginForm.classList.remove('hidden');
+            document.getElementById('authTitle').textContent = 'Welcome Back';
+            document.getElementById('authSubtitle').textContent = 'Sign in to access your dashboard';
+            authStatusMessage.textContent = '';
+        });
+
+        forgotPasswordLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginForm.classList.add('hidden');
+            resetForm.classList.remove('hidden');
+            document.getElementById('authTitle').textContent = 'Reset Password';
+            document.getElementById('authSubtitle').textContent = 'Enter your email to receive a password reset link';
+            authStatusMessage.textContent = '';
+        });
+        
+        backToLoginLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            resetForm.classList.add('hidden');
+            loginForm.classList.remove('hidden');
+            document.getElementById('authTitle').textContent = 'Welcome Back';
+            document.getElementById('authSubtitle').textContent = 'Sign in to access your dashboard';
+            authStatusMessage.textContent = '';
+        });
+
         // Handle Login
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = loginForm['loginEmail'].value;
             const password = loginForm['loginPassword'].value;
+            setFormLoading(loginForm, true);
 
             try {
                 await signInWithEmailAndPassword(auth, email, password);
-                console.log('User logged in successfully!');
+                showMessage('Signed in successfully!', 'success', authStatusMessage);
             } catch (error) {
                 console.error("Login failed:", error.message);
-                // Display error to user
+                let errorMessage = 'An unknown error occurred.';
+                if (error.code === 'auth/invalid-email' || error.code === 'auth/user-not-found') {
+                    errorMessage = 'Invalid email or user not found.';
+                } else if (error.code === 'auth/wrong-password') {
+                    errorMessage = 'Incorrect password.';
+                } else if (error.code === 'auth/missing-password') {
+                    errorMessage = 'Please enter your password.';
+                } else if (error.code === 'auth/network-request-failed') {
+                    errorMessage = 'Network error. Please check your internet connection.';
+                }
+                showMessage(errorMessage, 'error', authStatusMessage);
+            } finally {
+                setFormLoading(loginForm, false);
+            }
+        });
+        
+        // Handle Signup
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = signupForm['signupName'].value;
+            const email = signupForm['signupEmail'].value;
+            const password = signupForm['signupPassword'].value;
+            const confirmPassword = signupForm['confirmPassword'].value;
+            
+            if (password !== confirmPassword) {
+                showMessage('Passwords do not match.', 'error', authStatusMessage);
+                return;
+            }
+            setFormLoading(signupForm, true);
+
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                showMessage('Account created successfully! You are now logged in.', 'success', authStatusMessage);
+            } catch (error) {
+                console.error("Signup failed:", error.message);
+                let errorMessage = 'An unknown error occurred.';
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessage = 'This email is already in use.';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage = 'Invalid email format.';
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage = 'Password should be at least 6 characters.';
+                }
+                showMessage(errorMessage, 'error', authStatusMessage);
+            } finally {
+                setFormLoading(signupForm, false);
             }
         });
 
+        // Handle Password Reset
+        resetForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = resetForm['resetEmail'].value;
+            setFormLoading(resetForm, true);
+            
+            try {
+                await sendPasswordResetEmail(auth, email);
+                showMessage('Password reset email sent successfully. Check your inbox.', 'success', authStatusMessage);
+            } catch (error) {
+                console.error("Password reset failed:", error.message);
+                let errorMessage = 'An unknown error occurred.';
+                if (error.code === 'auth/invalid-email') {
+                    errorMessage = 'Invalid email address.';
+                } else if (error.code === 'auth/user-not-found') {
+                    errorMessage = 'No user found with that email.';
+                }
+                showMessage(errorMessage, 'error', authStatusMessage);
+            } finally {
+                setFormLoading(resetForm, false);
+            }
+        });
+        
         // Handle Logout
         if (logoutButton) {
             logoutButton.addEventListener('click', async () => {
@@ -1320,6 +1453,7 @@
                 // You would need to add similar logic for your finances and other data
             } catch (error) {
                 console.error("Error fetching data:", error);
+                // The error will be 'Missing or insufficient permissions' if a user is not logged in.
             }
         }
     </script>
