@@ -908,7 +908,6 @@
     </style>
 </head>
 <body>
-    <!-- Loading Screen -->
     <div class="loading-screen" id="loadingScreen">
         <div class="loading-logo">
             <i class="fas fa-school"></i>
@@ -917,7 +916,6 @@
         <div class="loading-spinner-large"></div>
     </div>
 
-    <!-- Authentication Container -->
     <div class="auth-container" id="authContainer">
         <div class="auth-card">
             <div class="auth-header">
@@ -928,10 +926,8 @@
                 <p class="auth-subtitle" id="authSubtitle">Sign in to access your dashboard</p>
             </div>
             
-            <!-- Status Message Area -->
             <div id="authStatusMessage" class="status-message"></div>
 
-            <!-- Login Form -->
             <form class="auth-form" id="loginForm">
                 <div class="form-group">
                     <label class="form-label" for="loginEmail">Email Address</label>
@@ -954,7 +950,6 @@
                 </div>
             </form>
 
-            <!-- Signup Form -->
             <form class="auth-form hidden" id="signupForm">
                 <div class="form-group">
                     <label class="form-label" for="signupName">Full Name</label>
@@ -982,7 +977,6 @@
                 </div>
             </form>
 
-            <!-- Reset Password Form -->
             <form class="auth-form hidden" id="resetForm">
                 <div class="form-group">
                     <label class="form-label" for="resetEmail">Email Address</label>
@@ -1000,9 +994,7 @@
         </div>
     </div>
 
-    <!-- Dashboard Content -->
     <div class="dashboard-content" id="dashboardContent">
-        <!-- Top Navigation Bar -->
         <nav class="top-nav" id="topNav">
             <div class="school-name">
                 <div class="school-logo">
@@ -1069,400 +1061,566 @@
                     </a>
                     <div class="dropdown-divider"></div>
                     <button class="dropdown-item" id="logoutButton">
-                        <i class="fas fa-sign-out-alt"></i> Logout
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
                     </button>
                 </div>
             </div>
         </nav>
 
-        <!-- Main Content -->
         <main class="main-content">
-            <!-- Status Message -->
-            <div id="statusMessage" class="status-message"></div>
-
-            <!-- Welcome Banner -->
             <div class="welcome-banner">
-                <h1 id="welcomeTitle">Welcome to School Management Dashboard</h1>
-                <p>Monitor and manage all school operations from one central location. View key metrics, recent activities, and quick access to all modules.</p>
+                <h1 id="welcomeMessage">Hello, Admin!</h1>
+                <p>Welcome to your school management dashboard. Here's a quick overview of your school's key metrics. </p>
                 <div class="current-date" id="currentDate"></div>
+                <button class="auth-button" style="width: auto; margin-top: 1.5rem;" id="refreshDataButton">
+                    <span class="button-text"><i class="fas fa-sync-alt"></i> Refresh Data</span>
+                    <span class="loading-spinner"></span>
+                </button>
             </div>
 
-            <!-- Key Metrics -->
-            <div class="dashboard-grid">
-                <!-- Students Card -->
+            <section class="dashboard-grid">
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-user-graduate"></i> Students</h3>
-                        <span class="card-meta">Total</span>
+                        <div class="card-title">
+                            <i class="fas fa-user-graduate"></i>
+                            Students
+                        </div>
                     </div>
-                    <div class="card-value" id="student-count">0</div>
+                    <div class="card-value">
+                        <span id="totalStudents">0</span>
+                    </div>
                     <div class="card-footer">
-                        <span>This Month: <span id="monthly-students" class="trend-up">+0</span></span>
-                        <a href="students.html">View All <i class="fas fa-arrow-right"></i></a>
+                        <span>Total students enrolled</span>
+                        <span class="trend-up"><i class="fas fa-arrow-up"></i> <span id="studentTrend">0%</span></span>
                     </div>
                 </div>
 
-                <!-- Staff Card -->
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-chalkboard-teacher"></i> Staff</h3>
-                        <span class="card-meta">Total</span>
+                        <div class="card-title">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                            Staff
+                        </div>
                     </div>
-                    <div class="card-value" id="staff-count">0</div>
+                    <div class="card-value">
+                        <span id="totalStaff">0</span>
+                    </div>
                     <div class="card-footer">
-                        <span>Active: <span id="active-staff">0</span></span>
-                        <a href="staff.html">View All <i class="fas fa-arrow-right"></i></a>
+                        <span>Total active staff members</span>
+                        <span class="trend-down"><i class="fas fa-arrow-down"></i> <span id="staffTrend">0%</span></span>
                     </div>
                 </div>
 
-                <!-- Finances Card -->
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-money-bill-wave"></i> Finances</h3>
-                        <span class="card-meta">This Month</span>
+                        <div class="card-title">
+                            <i class="fas fa-wallet"></i>
+                            Revenue
+                        </div>
                     </div>
-                    <div class="card-value">KES <span id="monthly-revenue">0</span></div>
+                    <div class="card-value">
+                        <span id="totalRevenue">$0</span>
+                    </div>
                     <div class="card-footer">
-                        <span>Balance: <span id="current-balance">KES 0</span></span>
-                        <a href="receipts.html">Details <i class="fas fa-arrow-right"></i></a>
+                        <span>This Month's Revenue</span>
+                        <span class="trend-up"><i class="fas fa-arrow-up"></i> <span id="revenueTrend">0%</span></span>
                     </div>
                 </div>
-            </div>
 
-            <!-- Charts and Activity Section -->
-            <div class="dashboard-grid">
-                <!-- Revenue Chart -->
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-chart-line"></i> Revenue Trend</h3>
-                        <select id="revenue-period" class="form-control">
-                            <option value="month">This Month</option>
-                            <option value="year">This Year</option>
-                            <option value="custom">Custom Range</option>
+                        <div class="card-title">
+                            <i class="fas fa-money-bill-wave"></i>
+                            Expenses
+                        </div>
+                    </div>
+                    <div class="card-value">
+                        <span id="totalExpenses">$0</span>
+                    </div>
+                    <div class="card-footer">
+                        <span>This Month's Expenses</span>
+                        <span class="trend-up"><i class="fas fa-arrow-up"></i> <span id="expenseTrend">0%</span></span>
+                    </div>
+                </div>
+            </section>
+            
+            <div class="dashboard-grid" style="grid-template-columns: 2fr 1fr;">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-chart-line"></i>
+                            Monthly Financials Overview
+                        </div>
+                        <select class="form-control" id="financialsTimeframe">
+                            <option value="last6months">Last 6 Months</option>
+                            <option value="last12months">Last 12 Months</option>
+                            <option value="thisYear">This Year</option>
                         </select>
                     </div>
                     <div class="chart-container">
-                        <canvas id="revenueChart"></canvas>
+                        <canvas id="financialsChart"></canvas>
                     </div>
                 </div>
 
-                <!-- Recent Activity -->
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-bell"></i> Recent Activity</h3>
-                        <span class="card-meta">Today</span>
-                    </div>
-                    <div id="recent-activity">
-                        <div class="activity-item">
-                            <div class="activity-icon"><i class="fas fa-spinner fa-spin"></i></div>
-                            <div class="activity-content">
-                                <div class="activity-title">Loading activities...</div>
-                            </div>
+                        <div class="card-title">
+                            <i class="fas fa-history"></i>
+                            Recent Activities
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-bolt"></i> Quick Actions</h3>
-                </div>
-                <div class="quick-actions">
-                    <a href="students.html" class="action-btn">
-                        <i class="fas fa-user-plus"></i>
-                        <span>Add Student</span>
-                    </a>
-                    <a href="receipts.html" class="action-btn">
-                        <i class="fas fa-money-bill"></i>
-                        <span>Record Payment</span>
-                    </a>
-                    <a href="expense.html" class="action-btn">
-                        <i class="fas fa-receipt"></i>
-                        <span>Add Expense</span>
-                    </a>
-                    <a href="staff.html" class="action-btn">
-                        <i class="fas fa-user-tie"></i>
-                        <span>Add Staff</span>
-                    </a>
-                    <a href="payroll.html" class="action-btn">
-                        <i class="fas fa-money-check"></i>
-                        <span>Process Payroll</span>
-                    </a>
-                    <a href="assets.html" class="action-btn">
-                        <i class="fas fa-box"></i>
-                        <span>Add Asset</span>
-                    </a>
+                    <div class="activity-list" id="recentActivitiesList">
+                        </div>
+                    <div class="quick-actions">
+                        <a href="#" class="action-btn">
+                            <i class="fas fa-plus"></i>
+                            <span>Add Student</span>
+                        </a>
+                        <a href="#" class="action-btn">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            <span>New Receipt</span>
+                        </a>
+                        <a href="#" class="action-btn">
+                            <i class="fas fa-user-plus"></i>
+                            <span>Hire Staff</span>
+                        </a>
+                        <a href="#" class="action-btn">
+                            <i class="fas fa-clipboard-check"></i>
+                            <span>View Reports</span>
+                        </a>
+                    </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Firebase Scripts (Modular V9+) -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js" type="module"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js" type="module"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js" type="module"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js" type="module"></script>
-    
-    <script type="module">
-        // Import Firebase modules
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
-        import { 
-            getAuth, 
-            onAuthStateChanged, 
-            signInWithEmailAndPassword, 
-            signOut,
-            createUserWithEmailAndPassword,
-            sendPasswordResetEmail
-        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { 
-            getFirestore, 
-            collection, 
-            query, 
-            getDocs 
-        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-        // Your Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBAA6zY40EwbTmWUx1op1cx52C3y0RK3m0",
-            authDomain: "heriwadi-manager.firebaseapp.com",
-            projectId: "heriwadi-manager",
-            storageBucket: "heriwadi-manager.firebasestorage.app",
-            messagingSenderId: "654632910809",
-            appId: "1:654632910809:web:7c65613d2510402a6663c8",
-            measurementId: "G-LLHS6GLB6E"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        // DOM elements
+    <script>
+        // DOM Elements
+        const loadingScreen = document.getElementById('loadingScreen');
         const authContainer = document.getElementById('authContainer');
         const dashboardContent = document.getElementById('dashboardContent');
         const loginForm = document.getElementById('loginForm');
         const signupForm = document.getElementById('signupForm');
         const resetForm = document.getElementById('resetForm');
-        const loadingScreen = document.getElementById('loadingScreen');
-        const logoutButton = document.getElementById('logoutButton');
-        const userNameElement = document.getElementById('userName');
-        const userEmailElement = document.getElementById('userEmail');
-        const userAvatarElement = document.getElementById('userAvatar');
-        const welcomeTitle = document.getElementById('welcomeTitle');
-        const authStatusMessage = document.getElementById('authStatusMessage');
-
-        // Form toggle links
         const showSignupLink = document.getElementById('showSignupForm');
         const showLoginLink = document.getElementById('showLoginForm');
         const forgotPasswordLink = document.getElementById('forgotPasswordLink');
         const backToLoginLink = document.getElementById('backToLoginForm');
-        
-        // Functions to show/hide sections
-        const showLoadingScreen = () => loadingScreen.classList.add('show');
-        const hideLoadingScreen = () => loadingScreen.classList.remove('show');
-        const showAuthContainer = () => { authContainer.style.display = 'flex'; dashboardContent.style.display = 'none'; };
-        const showDashboardContent = () => { authContainer.style.display = 'none'; dashboardContent.style.display = 'block'; };
+        const authTitle = document.getElementById('authTitle');
+        const authSubtitle = document.getElementById('authSubtitle');
+        const authStatusMessage = document.getElementById('authStatusMessage');
+        const loginButton = document.getElementById('loginButton');
 
-        function showMessage(message, type, targetElement) {
-            targetElement.textContent = message;
-            targetElement.className = `status-message ${type}`;
+        // Dashboard Elements
+        const userNameEl = document.getElementById('userName');
+        const userEmailEl = document.getElementById('userEmail');
+        const userAvatarEl = document.getElementById('userAvatar');
+        const welcomeMessageEl = document.getElementById('welcomeMessage');
+        const totalStudentsEl = document.getElementById('totalStudents');
+        const totalStaffEl = document.getElementById('totalStaff');
+        const totalRevenueEl = document.getElementById('totalRevenue');
+        const totalExpensesEl = document.getElementById('totalExpenses');
+        const studentTrendEl = document.getElementById('studentTrend');
+        const staffTrendEl = document.getElementById('staffTrend');
+        const revenueTrendEl = document.getElementById('revenueTrend');
+        const expenseTrendEl = document.getElementById('expenseTrend');
+        const recentActivitiesListEl = document.getElementById('recentActivitiesList');
+        const currentDateEl = document.getElementById('currentDate');
+        const refreshDataButton = document.getElementById('refreshDataButton');
+        const logoutButton = document.getElementById('logoutButton');
+
+        // Chart.js instance
+        let financialsChart;
+
+        // --- Data Fetching Functions (Simulated API Calls) ---
+        // In a real application, these would be `fetch('/api/students')`, etc.
+        const fetchStudentsData = async () => {
+            console.log("Fetching student data...");
+            // Simulate API delay
+            await new Promise(resolve => setTimeout(resolve, 500));
+            // Simulate fetching data from a JSON file
+            const response = await fetch('students.json');
+            const data = await response.json();
+            return data;
+        };
+
+        const fetchStaffData = async () => {
+            console.log("Fetching staff data...");
+            await new Promise(resolve => setTimeout(resolve, 500));
+            const response = await fetch('staff.json');
+            const data = await response.json();
+            return data;
+        };
+
+        const fetchFinancialsData = async () => {
+            console.log("Fetching financial data...");
+            await new Promise(resolve => setTimeout(resolve, 500));
+            const response = await fetch('financials.json');
+            const data = await response.json();
+            return data;
+        };
+
+        const fetchActivitiesData = async () => {
+            console.log("Fetching recent activities...");
+            await new Promise(resolve => setTimeout(resolve, 500));
+            const response = await fetch('activities.json');
+            const data = await response.json();
+            return data;
+        };
+
+        // --- Dashboard Update Functions ---
+        const updateDashboardCards = (studentsData, staffData, financialsData) => {
+            // Students Card
+            const totalStudents = studentsData.total;
+            const studentTrend = studentsData.growthPercentage;
+            totalStudentsEl.textContent = totalStudents;
+            studentTrendEl.textContent = `${studentTrend}%`;
+            totalStudentsEl.classList.add('pulse'); // Add pulse animation
+            
+            // Staff Card
+            const totalStaff = staffData.total;
+            const staffTrend = staffData.changePercentage;
+            totalStaffEl.textContent = totalStaff;
+            staffTrendEl.textContent = `${staffTrend}%`;
+            totalStaffEl.classList.add('pulse');
+
+            // Financials Card
+            const totalRevenue = financialsData.revenue.thisMonth;
+            const revenueTrend = financialsData.revenue.changePercentage;
+            totalRevenueEl.textContent = `$${totalRevenue.toLocaleString()}`;
+            revenueTrendEl.textContent = `${revenueTrend}%`;
+            totalRevenueEl.classList.add('pulse');
+
+            // Expenses Card
+            const totalExpenses = financialsData.expenses.thisMonth;
+            const expenseTrend = financialsData.expenses.changePercentage;
+            totalExpensesEl.textContent = `$${totalExpenses.toLocaleString()}`;
+            expenseTrendEl.textContent = `${expenseTrend}%`;
+            totalExpensesEl.classList.add('pulse');
+
+            // Remove pulse after animation
             setTimeout(() => {
-                targetElement.textContent = '';
-                targetElement.className = 'status-message';
-            }, 5000);
-        }
+                totalStudentsEl.classList.remove('pulse');
+                totalStaffEl.classList.remove('pulse');
+                totalRevenueEl.classList.remove('pulse');
+                totalExpensesEl.classList.remove('pulse');
+            }, 500);
+
+            // Update trend colors
+            if (studentTrend >= 0) studentTrendEl.parentElement.className = 'trend-up'; else studentTrendEl.parentElement.className = 'trend-down';
+            if (staffTrend >= 0) staffTrendEl.parentElement.className = 'trend-up'; else staffTrendEl.parentElement.className = 'trend-down';
+            if (revenueTrend >= 0) revenueTrendEl.parentElement.className = 'trend-up'; else revenueTrendEl.parentElement.className = 'trend-down';
+            if (expenseTrend >= 0) expenseTrendEl.parentElement.className = 'trend-down'; else expenseTrendEl.parentElement.className = 'trend-up';
+        };
+
+        const updateRecentActivities = (activitiesData) => {
+            recentActivitiesListEl.innerHTML = ''; // Clear existing activities
+            activitiesData.forEach(activity => {
+                const activityItem = document.createElement('div');
+                activityItem.className = 'activity-item';
+                activityItem.innerHTML = `
+                    <div class="activity-icon">
+                        <i class="fas fa-${activity.icon}"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">${activity.title}</div>
+                        <div class="activity-time">
+                            <i class="far fa-clock"></i>
+                            <span>${activity.time}</span>
+                        </div>
+                    </div>
+                `;
+                recentActivitiesListEl.appendChild(activityItem);
+                anime({
+                    targets: activityItem,
+                    opacity: [0, 1],
+                    translateX: [20, 0],
+                    duration: 800,
+                    easing: 'easeOutQuad',
+                    delay: (el, i) => i * 100
+                });
+            });
+        };
         
-        function setFormLoading(form, isLoading) {
-            const button = form.querySelector('button');
-            if (isLoading) {
-                button.classList.add('loading');
-                button.disabled = true;
-            } else {
-                button.classList.remove('loading');
-                button.disabled = false;
+        const renderFinancialsChart = (data) => {
+            const ctx = document.getElementById('financialsChart').getContext('2d');
+            const months = data.labels;
+            const revenues = data.revenues;
+            const expenses = data.expenses;
+
+            if (financialsChart) {
+                financialsChart.destroy();
             }
-        }
 
-        // Set initial state
-        showLoadingScreen();
+            financialsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: 'Revenue',
+                            data: revenues,
+                            backgroundColor: 'rgba(76, 201, 240, 0.2)',
+                            borderColor: 'var(--success-color)',
+                            borderWidth: 2,
+                            pointBackgroundColor: 'var(--success-color)',
+                            tension: 0.4,
+                            fill: true,
+                        },
+                        {
+                            label: 'Expenses',
+                            data: expenses,
+                            backgroundColor: 'rgba(247, 37, 133, 0.2)',
+                            borderColor: 'var(--error-color)',
+                            borderWidth: 2,
+                            pointBackgroundColor: 'var(--error-color)',
+                            tension: 0.4,
+                            fill: true,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                color: 'var(--dark-gray)',
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    label += `$${context.parsed.y.toLocaleString()}`;
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'var(--medium-gray)',
+                            },
+                            ticks: {
+                                color: 'var(--dark-gray)',
+                                callback: function(value, index, values) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: 'var(--dark-gray)'
+                            }
+                        }
+                    }
+                }
+            });
+        };
 
-        // Auth state listener
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                // User is signed in. Now we are certain.
-                const userEmail = user.email;
-                userNameElement.textContent = userEmail.split('@')[0]; // Simple way to get a username
-                userEmailElement.textContent = userEmail;
-                userAvatarElement.textContent = userEmail.charAt(0).toUpperCase();
+        const initializeDashboard = async () => {
+            try {
+                // Show a brief loading screen
+                loadingScreen.classList.add('show');
+                
+                // Fetch all data concurrently to improve performance
+                const [students, staff, financials, activities] = await Promise.all([
+                    fetchStudentsData(),
+                    fetchStaffData(),
+                    fetchFinancialsData(),
+                    fetchActivitiesData()
+                ]);
 
-                // Show dashboard and hide auth container
-                showDashboardContent();
+                // Update UI elements with fetched data
+                updateDashboardCards(students, staff, financials);
+                updateRecentActivities(activities);
+                renderFinancialsChart(financials.chartData.last6months);
+                
+                // Hide loading screen and show dashboard
+                setTimeout(() => {
+                    loadingScreen.classList.remove('show');
+                    authContainer.style.display = 'none';
+                    dashboardContent.style.display = 'block';
+                    // Animate dashboard elements
+                    anime({
+                        targets: '.main-content > *',
+                        translateY: [50, 0],
+                        opacity: [0, 1],
+                        duration: 800,
+                        delay: anime.stagger(100),
+                        easing: 'easeOutQuad'
+                    });
+                }, 1000); // Wait for a moment to show the loading screen
 
-                // ONLY FETCH DATA WHEN A USER IS CONFIRMED TO BE LOGGED IN
-                await fetchDashboardData(user);
-
-            } else {
-                // User is signed out
-                showAuthContainer();
+            } catch (error) {
+                console.error("Failed to load dashboard data:", error);
+                // Handle error gracefully, maybe show a retry button
+                loadingScreen.innerHTML = `<div class="auth-card">
+                    <p style="color: black; text-align: center;">Failed to load data. Please try again later.</p>
+                    <button class="auth-button" style="margin-top: 1rem;" onclick="location.reload()">Retry</button>
+                </div>`;
             }
-            hideLoadingScreen();
-        });
+        };
 
-        // Event Listeners for form toggles
+        // --- Event Listeners and Initial Setup ---
+
+        // Authentication form switching
         showSignupLink.addEventListener('click', (e) => {
             e.preventDefault();
             loginForm.classList.add('hidden');
             signupForm.classList.remove('hidden');
-            document.getElementById('authTitle').textContent = 'Create an Account';
-            document.getElementById('authSubtitle').textContent = 'Manage your school with ease';
-            authStatusMessage.textContent = '';
+            resetForm.classList.add('hidden');
+            authTitle.textContent = "Create an Account";
+            authSubtitle.textContent = "Join our platform to get started";
         });
 
         showLoginLink.addEventListener('click', (e) => {
             e.preventDefault();
             signupForm.classList.add('hidden');
             loginForm.classList.remove('hidden');
-            document.getElementById('authTitle').textContent = 'Welcome Back';
-            document.getElementById('authSubtitle').textContent = 'Sign in to access your dashboard';
-            authStatusMessage.textContent = '';
+            resetForm.classList.add('hidden');
+            authTitle.textContent = "Welcome Back";
+            authSubtitle.textContent = "Sign in to access your dashboard";
         });
 
         forgotPasswordLink.addEventListener('click', (e) => {
             e.preventDefault();
             loginForm.classList.add('hidden');
             resetForm.classList.remove('hidden');
-            document.getElementById('authTitle').textContent = 'Reset Password';
-            document.getElementById('authSubtitle').textContent = 'Enter your email to receive a password reset link';
-            authStatusMessage.textContent = '';
+            authTitle.textContent = "Reset Password";
+            authSubtitle.textContent = "Enter your email to receive a reset link";
         });
         
         backToLoginLink.addEventListener('click', (e) => {
             e.preventDefault();
             resetForm.classList.add('hidden');
             loginForm.classList.remove('hidden');
-            document.getElementById('authTitle').textContent = 'Welcome Back';
-            document.getElementById('authSubtitle').textContent = 'Sign in to access your dashboard';
-            authStatusMessage.textContent = '';
+            authTitle.textContent = "Welcome Back";
+            authSubtitle.textContent = "Sign in to access your dashboard";
         });
-
-        // Handle Login
+        
+        // Simulating user login
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = loginForm['loginEmail'].value;
-            const password = loginForm['loginPassword'].value;
-            setFormLoading(loginForm, true);
+            loginButton.classList.add('loading');
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
 
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-                showMessage('Signed in successfully!', 'success', authStatusMessage);
-            } catch (error) {
-                console.error("Login failed:", error.message);
-                let errorMessage = 'An unknown error occurred.';
-                if (error.code === 'auth/invalid-email' || error.code === 'auth/user-not-found') {
-                    errorMessage = 'Invalid email or user not found.';
-                } else if (error.code === 'auth/wrong-password') {
-                    errorMessage = 'Incorrect password.';
-                } else if (error.code === 'auth/missing-password') {
-                    errorMessage = 'Please enter your password.';
-                } else if (error.code === 'auth/network-request-failed') {
-                    errorMessage = 'Network error. Please check your internet connection.';
-                }
-                showMessage(errorMessage, 'error', authStatusMessage);
-            } finally {
-                setFormLoading(loginForm, false);
+            // Simulate a server request
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // For this example, any email and password will "succeed"
+            if (email && password) {
+                // Store user info in a mock session
+                const user = { name: 'Admin', email: email, avatar: 'AD' };
+                localStorage.setItem('user', JSON.stringify(user));
+                
+                // Update user details in the nav bar
+                userNameEl.textContent = user.name;
+                userEmailEl.textContent = user.email;
+                userAvatarEl.textContent = user.avatar;
+                welcomeMessageEl.textContent = `Hello, ${user.name}!`;
+
+                // Show success message and redirect
+                authStatusMessage.textContent = "Login successful! Redirecting...";
+                authStatusMessage.classList.remove('error');
+                authStatusMessage.classList.add('success');
+                loginButton.classList.remove('loading');
+                
+                // Initialize the dashboard after a short delay
+                setTimeout(initializeDashboard, 1500);
+
+            } else {
+                authStatusMessage.textContent = "Invalid email or password.";
+                authStatusMessage.classList.remove('success');
+                authStatusMessage.classList.add('error');
+                loginButton.classList.remove('loading');
             }
         });
         
-        // Handle Signup
-        signupForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const name = signupForm['signupName'].value;
-            const email = signupForm['signupEmail'].value;
-            const password = signupForm['signupPassword'].value;
-            const confirmPassword = signupForm['confirmPassword'].value;
-            
-            if (password !== confirmPassword) {
-                showMessage('Passwords do not match.', 'error', authStatusMessage);
-                return;
-            }
-            setFormLoading(signupForm, true);
-
-            try {
-                await createUserWithEmailAndPassword(auth, email, password);
-                showMessage('Account created successfully! You are now logged in.', 'success', authStatusMessage);
-            } catch (error) {
-                console.error("Signup failed:", error.message);
-                let errorMessage = 'An unknown error occurred.';
-                if (error.code === 'auth/email-already-in-use') {
-                    errorMessage = 'This email is already in use.';
-                } else if (error.code === 'auth/invalid-email') {
-                    errorMessage = 'Invalid email format.';
-                } else if (error.code === 'auth/weak-password') {
-                    errorMessage = 'Password should be at least 6 characters.';
-                }
-                showMessage(errorMessage, 'error', authStatusMessage);
-            } finally {
-                setFormLoading(signupForm, false);
-            }
+        // Logout functionality
+        logoutButton.addEventListener('click', () => {
+            localStorage.removeItem('user');
+            // Hide dashboard, show login screen, and refresh
+            dashboardContent.style.display = 'none';
+            authContainer.style.display = 'flex';
+            location.reload();
         });
 
-        // Handle Password Reset
-        resetForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = resetForm['resetEmail'].value;
-            setFormLoading(resetForm, true);
-            
-            try {
-                await sendPasswordResetEmail(auth, email);
-                showMessage('Password reset email sent successfully. Check your inbox.', 'success', authStatusMessage);
-            } catch (error) {
-                console.error("Password reset failed:", error.message);
-                let errorMessage = 'An unknown error occurred.';
-                if (error.code === 'auth/invalid-email') {
-                    errorMessage = 'Invalid email address.';
-                } else if (error.code === 'auth/user-not-found') {
-                    errorMessage = 'No user found with that email.';
-                }
-                showMessage(errorMessage, 'error', authStatusMessage);
-            } finally {
-                setFormLoading(resetForm, false);
-            }
-        });
-        
-        // Handle Logout
-        if (logoutButton) {
-            logoutButton.addEventListener('click', async () => {
-                await signOut(auth);
+        // Refresh data button
+        refreshDataButton.addEventListener('click', () => {
+            refreshDataButton.classList.add('loading');
+            Promise.all([
+                fetchStudentsData(),
+                fetchStaffData(),
+                fetchFinancialsData(),
+                fetchActivitiesData()
+            ]).then(([students, staff, financials, activities]) => {
+                updateDashboardCards(students, staff, financials);
+                updateRecentActivities(activities);
+                renderFinancialsChart(financials.chartData[document.getElementById('financialsTimeframe').value]);
+                refreshDataButton.classList.remove('loading');
+            }).catch(error => {
+                console.error("Refresh failed:", error);
+                refreshDataButton.classList.remove('loading');
+                alert("Failed to refresh data. Please check your connection.");
             });
-        }
+        });
 
-        // Function to fetch data from Firestore, now taking the user object as an argument
-        async function fetchDashboardData(user) {
-            // Ensure we have a user before making any Firestore calls
-            if (!user) {
-                console.error("User is not authenticated. Cannot fetch data.");
-                return;
+        // Change chart data when dropdown changes
+        document.getElementById('financialsTimeframe').addEventListener('change', (e) => {
+            fetchFinancialsData().then(data => {
+                renderFinancialsChart(data.chartData[e.target.value]);
+            });
+        });
+        
+        // Set current date
+        const updateCurrentDate = () => {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            currentDateEl.textContent = new Date().toLocaleDateString(undefined, options);
+        };
+
+        // Scroll event for top nav
+        window.addEventListener('scroll', () => {
+            const topNav = document.getElementById('topNav');
+            if (window.scrollY > 0) {
+                topNav.classList.add('scrolled');
+            } else {
+                topNav.classList.remove('scrolled');
             }
-            
-            const studentsRef = collection(db, 'students');
-            const staffRef = collection(db, 'staff');
-
-            try {
-                const studentSnapshot = await getDocs(studentsRef);
-                document.getElementById('student-count').textContent = studentSnapshot.size;
-
-                const staffSnapshot = await getDocs(staffRef);
-                document.getElementById('staff-count').textContent = staffSnapshot.size;
-
-                // You would need to add similar logic for your finances and other data
-            } catch (error) {
-                console.error("Error fetching data:", error);
-                // The error will be 'Missing or insufficient permissions' if a user is not logged in.
+        });
+        
+        // Check for existing user on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCurrentDate();
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (user) {
+                // If a user is logged in, skip the auth page
+                authContainer.style.display = 'none';
+                userNameEl.textContent = user.name;
+                userEmailEl.textContent = user.email;
+                userAvatarEl.textContent = user.avatar;
+                welcomeMessageEl.textContent = `Hello, ${user.name}!`;
+                initializeDashboard();
+            } else {
+                // Otherwise, show the auth page
+                authContainer.style.display = 'flex';
             }
-        }
+        });
     </script>
 </body>
 </html>
