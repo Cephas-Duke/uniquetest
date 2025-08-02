@@ -1219,19 +1219,6 @@
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         
-        // Initialize Firebase
-        let app, auth, db;
-        try {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-        } catch (error) {
-            console.error("Firebase initialization failed:", error);
-            // Fallback to anonymous sign-in if initialization fails
-            showAuthContainer();
-            hideLoadingScreen();
-        }
-
         // DOM elements
         const authContainer = document.getElementById('authContainer');
         const dashboardContent = document.getElementById('dashboardContent');
@@ -1289,46 +1276,64 @@
         // Set initial state
         showLoadingScreen();
 
+        let app, auth, db;
+
         // Perform initial auth check
-        if (auth) {
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    // User is signed in.
-                    const userEmail = user.email || 'Anonymous User';
-                    userNameElement.textContent = userEmail.split('@')[0];
-                    userEmailElement.textContent = userEmail;
-                    userAvatarElement.textContent = userEmail.charAt(0).toUpperCase();
-
-                    // Display the dashboard
-                    showDashboardContent();
-
-                    // Fetch data ONLY AFTER authentication is confirmed
-                    await fetchDataForDashboard(user.uid);
-                    
-                } else {
-                    // User is signed out, show the auth container
-                    showAuthContainer();
+        async function initializeAndAuthenticate() {
+            try {
+                // Check if firebaseConfig is provided and not empty
+                if (Object.keys(firebaseConfig).length === 0) {
+                    throw new Error("Firebase configuration is missing or invalid. Check the platform's configuration.");
                 }
-                hideLoadingScreen();
-            });
+                
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
 
-            // Try to sign in with the provided custom token first
-            if (initialAuthToken) {
-                try {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } catch (error) {
-                    console.error("Error signing in with custom token:", error);
-                    // Fallback to anonymous sign-in if custom token fails
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        // User is signed in.
+                        const userEmail = user.email || 'Anonymous User';
+                        userNameElement.textContent = userEmail.split('@')[0];
+                        userEmailElement.textContent = userEmail;
+                        userAvatarElement.textContent = userEmail.charAt(0).toUpperCase();
+
+                        // Display the dashboard
+                        showDashboardContent();
+                        
+                        // Fetch data ONLY AFTER authentication is confirmed
+                        await fetchDataForDashboard(user.uid);
+                        
+                    } else {
+                        // User is signed out, show the auth container
+                        showAuthContainer();
+                    }
+                    hideLoadingScreen();
+                });
+
+                // Try to sign in with the provided custom token first
+                if (initialAuthToken) {
+                    try {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } catch (error) {
+                        console.error("Error signing in with custom token:", error);
+                        // Fallback to anonymous sign-in if custom token fails
+                        await signInAnonymously(auth);
+                    }
+                } else {
+                    // If no custom token is provided, sign in anonymously
                     await signInAnonymously(auth);
                 }
-            } else {
-                // If no custom token is provided, sign in anonymously
-                await signInAnonymously(auth);
+
+            } catch (error) {
+                console.error("Firebase initialization failed:", error.message);
+                showMessage(`Initialization error: ${error.message}`, 'error', authStatusMessage);
+                showAuthContainer();
+                hideLoadingScreen();
             }
-        } else {
-            console.error("Firebase Auth not initialized.");
         }
 
+        initializeAndAuthenticate();
 
         // Event Listeners for form toggles
         showSignupLink.addEventListener('click', (e) => {
