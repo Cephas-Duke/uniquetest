@@ -1216,7 +1216,6 @@
         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // IMPORTANT: Use the global variables for Firebase configuration and authentication
-        // This is the correct way to initialize Firebase for this environment.
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
@@ -1296,9 +1295,9 @@
         async function initializeAppAndAuth() {
             showLoadingScreen();
             
-            // Check for valid Firebase configuration
+            // Check for valid Firebase configuration and provide a clearer log if it's missing
             if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey) {
-                console.error("Firebase initialization failed: Firebase configuration is missing or invalid.");
+                console.error("Firebase initialization failed: The Firebase configuration object is missing. Please ensure the '__firebase_config' environment variable is correctly set.");
                 showMessage("Firebase initialization failed: This application requires a valid configuration to function. Login/Signup is disabled.", 'error', authStatusMessage);
                 showAuthContainer();
                 hideLoadingScreen();
