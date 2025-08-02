@@ -493,6 +493,7 @@
             overflow: hidden;
             transition: var(--transition);
             animation: fadeIn 0.8s ease-out;
+            animation-fill-mode: backwards;
         }
 
         .welcome-banner:hover {
@@ -1291,7 +1292,7 @@
         // Auth state listener
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // User is signed in
+                // User is signed in. Now we are certain.
                 const userEmail = user.email;
                 userNameElement.textContent = userEmail.split('@')[0]; // Simple way to get a username
                 userEmailElement.textContent = userEmail;
@@ -1300,8 +1301,8 @@
                 // Show dashboard and hide auth container
                 showDashboardContent();
 
-                // Fetch and display data
-                fetchDashboardData();
+                // ONLY FETCH DATA WHEN A USER IS CONFIRMED TO BE LOGGED IN
+                await fetchDashboardData(user);
 
             } else {
                 // User is signed out
@@ -1438,8 +1439,14 @@
             });
         }
 
-        // Dummy function to fetch data from Firestore
-        async function fetchDashboardData() {
+        // Function to fetch data from Firestore, now taking the user object as an argument
+        async function fetchDashboardData(user) {
+            // Ensure we have a user before making any Firestore calls
+            if (!user) {
+                console.error("User is not authenticated. Cannot fetch data.");
+                return;
+            }
+            
             const studentsRef = collection(db, 'students');
             const staffRef = collection(db, 'staff');
 
