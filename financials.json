@@ -1,0 +1,29 @@
+{
+    "revenue": {
+        "thisMonth": 150000,
+        "lastMonth": 145000,
+        "changePercentage": 3.4
+    },
+    "expenses": {
+        "thisMonth": 85000,
+        "lastMonth": 90000,
+        "changePercentage": -5.6
+    },
+    "chartData": {
+        "last6months": {
+            "labels": ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+            "revenues": [120000, 130000, 115000, 140000, 145000, 150000],
+            "expenses": [70000, 75000, 72000, 80000, 90000, 85000]
+        },
+        "last12months": {
+            "labels": ["Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+            "revenues": [110, 115, 125, 120, 130, 135, 120, 130, 115, 140, 145, 150],
+            "expenses": [60, 65, 70, 68, 75, 78, 70, 75, 72, 80, 90, 85]
+        },
+        "thisYear": {
+            "labels": ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+            "revenues": [120000, 130000, 115000, 140000, 145000, 150000],
+            "expenses": [70000, 75000, 72000, 80000, 90000, 85000]
+        }
+    }
+}
