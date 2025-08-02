@@ -787,23 +787,10 @@
             border-top-color: white;
             animation: spin 1s ease-in-out infinite;
         }
-
-        /* Form controls */
-        select.form-control {
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            border: 1px solid var(--medium-gray);
-            background-color: var(--white);
-            color: var(--dark-gray);
-            font-size: 0.875rem;
-            transition: var(--transition);
-            outline: none;
-            cursor: pointer;
-        }
-
-        select.form-control:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        
+        /* Smooth scroll behavior */
+        html {
+            scroll-behavior: smooth;
         }
 
         /* Animations */
@@ -1250,7 +1237,8 @@
 
         // Global Firebase variables
         let app, auth, db;
-        
+        let financialChartInstance; // Store the Chart.js instance
+
         // Functions to show/hide sections
         const showLoadingScreen = () => loadingScreen.classList.add('show');
         const hideLoadingScreen = () => loadingScreen.classList.remove('show');
@@ -1295,13 +1283,13 @@
         async function initializeAppAndAuth() {
             showLoadingScreen();
             
-            // Check for valid Firebase configuration and provide a clearer log if it's missing
+            // Check for valid Firebase configuration
             if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey) {
-                console.error("Firebase initialization failed: The Firebase configuration object is missing. Please ensure the '__firebase_config' environment variable is correctly set.");
-                showMessage("Firebase initialization failed: This application requires a valid configuration to function. Login/Signup is disabled.", 'error', authStatusMessage);
+                console.error("Firebase initialization failed: The Firebase configuration object is missing.");
+                showMessage("Firebase initialization failed: This application requires a valid configuration to function. Please make sure Firebase is set up correctly in the environment.", 'error', authStatusMessage);
                 showAuthContainer();
-                hideLoadingScreen();
                 setFormsDisabled(true);
+                hideLoadingScreen();
                 return;
             }
             
@@ -1322,7 +1310,7 @@
                         
                         // Display the dashboard and fetch data
                         showDashboardContent();
-                        fetchDataForDashboard(user.uid);
+                        fetchDataForDashboard();
                     } else {
                         // User is signed out, show the auth container
                         showAuthContainer();
@@ -1354,8 +1342,6 @@
             }
         }
 
-        // Call the main initialization function on page load
-        initializeAppAndAuth();
 
         // Event Listeners for form toggles
         showSignupLink.addEventListener('click', (e) => {
@@ -1502,9 +1488,9 @@
         }
 
         // Function to fetch all data for the dashboard
-        async function fetchDataForDashboard(userId) {
-            if (!db) {
-                console.error("Firestore is not available. Cannot fetch data.");
+        async function fetchDataForDashboard() {
+            if (!db || !auth.currentUser) {
+                console.error("Firestore is not available or user is not authenticated. Cannot fetch data.");
                 return;
             }
 
@@ -1571,8 +1557,13 @@
                         }
                     ]
                 };
+                
+                // Destroy previous chart instance before creating a new one
+                if (financialChartInstance) {
+                    financialChartInstance.destroy();
+                }
 
-                new Chart(financialChartCanvas, {
+                financialChartInstance = new Chart(financialChartCanvas, {
                     type: 'bar',
                     data: financialData,
                     options: {
@@ -1618,6 +1609,9 @@
                 topNav.classList.remove('scrolled');
             }
         });
+        
+        // Call the main initialization function on page load
+        initializeAppAndAuth();
     </script>
 </body>
 </html>
