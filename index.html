@@ -899,6 +899,7 @@
     </style>
 </head>
 <body>
+    <!-- Loading Screen -->
     <div class="loading-screen" id="loadingScreen">
         <div class="loading-logo">
             <i class="fas fa-school"></i>
@@ -907,6 +908,7 @@
         <div class="loading-spinner-large"></div>
     </div>
 
+    <!-- Authentication Container -->
     <div class="auth-container" id="authContainer">
         <div class="auth-card">
             <div class="auth-header">
@@ -917,6 +919,7 @@
                 <p class="auth-subtitle" id="authSubtitle">Sign in to access your dashboard</p>
             </div>
 
+            <!-- Login Form -->
             <form class="auth-form" id="loginForm">
                 <div class="form-group">
                     <label class="form-label" for="loginEmail">Email Address</label>
@@ -939,6 +942,7 @@
                 </div>
             </form>
 
+            <!-- Signup Form -->
             <form class="auth-form hidden" id="signupForm">
                 <div class="form-group">
                     <label class="form-label" for="signupName">Full Name</label>
@@ -966,6 +970,7 @@
                 </div>
             </form>
 
+            <!-- Reset Password Form -->
             <form class="auth-form hidden" id="resetForm">
                 <div class="form-group">
                     <label class="form-label" for="resetEmail">Email Address</label>
@@ -983,7 +988,9 @@
         </div>
     </div>
 
+    <!-- Dashboard Content -->
     <div class="dashboard-content" id="dashboardContent">
+        <!-- Top Navigation Bar -->
         <nav class="top-nav" id="topNav">
             <div class="school-name">
                 <div class="school-logo">
@@ -1056,16 +1063,21 @@
             </div>
         </nav>
 
+        <!-- Main Content -->
         <main class="main-content">
+            <!-- Status Message -->
             <div id="statusMessage" class="status-message"></div>
 
+            <!-- Welcome Banner -->
             <div class="welcome-banner">
                 <h1 id="welcomeTitle">Welcome to School Management Dashboard</h1>
                 <p>Monitor and manage all school operations from one central location. View key metrics, recent activities, and quick access to all modules.</p>
                 <div class="current-date" id="currentDate"></div>
             </div>
 
+            <!-- Key Metrics -->
             <div class="dashboard-grid">
+                <!-- Students Card -->
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title"><i class="fas fa-user-graduate"></i> Students</h3>
@@ -1078,6 +1090,7 @@
                     </div>
                 </div>
 
+                <!-- Staff Card -->
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title"><i class="fas fa-chalkboard-teacher"></i> Staff</h3>
@@ -1090,6 +1103,7 @@
                     </div>
                 </div>
 
+                <!-- Finances Card -->
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title"><i class="fas fa-money-bill-wave"></i> Finances</h3>
@@ -1103,7 +1117,9 @@
                 </div>
             </div>
 
+            <!-- Charts and Activity Section -->
             <div class="dashboard-grid">
+                <!-- Revenue Chart -->
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title"><i class="fas fa-chart-line"></i> Revenue Trend</h3>
@@ -1118,6 +1134,7 @@
                     </div>
                 </div>
 
+                <!-- Recent Activity -->
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title"><i class="fas fa-bell"></i> Recent Activity</h3>
@@ -1134,6 +1151,7 @@
                 </div>
             </div>
 
+            <!-- Quick Actions -->
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title"><i class="fas fa-bolt"></i> Quick Actions</h3>
@@ -1168,15 +1186,16 @@
         </main>
     </div>
 
+    <!-- Firebase Scripts (Modular V9+) -->
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js" type="module"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js" type="module"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js" type="module"></script>
     
-    <script src="app.js" type="module"></script>
-
     <script type="module">
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
         import { 
             getAuth, 
             onAuthStateChanged, 
@@ -1190,7 +1209,7 @@
             getDocs 
         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // Your Firebase configuration from your file
+        // Your Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBAA6zY40EwbTmWUx1op1cx52C3y0RK3m0",
             authDomain: "heriwadi-manager.firebaseapp.com",
@@ -1203,6 +1222,7 @@
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
@@ -1302,9 +1322,6 @@
                 console.error("Error fetching data:", error);
             }
         }
-
-        // Other event listeners (for forms, navigation, etc.) would go here
-        
     </script>
 </body>
 </html>
