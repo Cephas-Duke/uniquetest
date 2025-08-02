@@ -1192,19 +1192,19 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js" type="module"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js" type="module"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js" type="module"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js" type="module"></script>
     
     <script type="module">
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
         import { 
             getAuth, 
             onAuthStateChanged, 
             signInWithEmailAndPassword, 
             signOut,
             createUserWithEmailAndPassword,
-            sendPasswordResetEmail
+            sendPasswordResetEmail,
+            signInWithCustomToken,
+            signInAnonymously
         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { 
             getFirestore, 
@@ -1213,22 +1213,24 @@
             getDocs 
         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // Your Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBAA6zY40EwbTmWUx1op1cx52C3y0RK3m0",
-            authDomain: "heriwadi-manager.firebaseapp.com",
-            projectId: "heriwadi-manager",
-            storageBucket: "heriwadi-manager.firebasestorage.app",
-            messagingSenderId: "654632910809",
-            appId: "1:654632910809:web:7c65613d2510402a6663c8",
-            measurementId: "G-LLHS6GLB6E"
-        };
-
+        // IMPORTANT: Use the global variables for Firebase configuration and authentication
+        // This is the correct way to initialize Firebase for this environment.
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
         // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        let app, auth, db;
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+        } catch (error) {
+            console.error("Firebase initialization failed:", error);
+            // Fallback to anonymous sign-in if initialization fails
+            showAuthContainer();
+            hideLoadingScreen();
+        }
 
         // DOM elements
         const authContainer = document.getElementById('authContainer');
@@ -1287,27 +1289,46 @@
         // Set initial state
         showLoadingScreen();
 
-        // Auth state listener
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                // User is signed in.
-                const userEmail = user.email;
-                userNameElement.textContent = userEmail.split('@')[0]; // Simple way to get a username
-                userEmailElement.textContent = userEmail;
-                userAvatarElement.textContent = userEmail.charAt(0).toUpperCase();
-                
-                // Show dashboard
-                showDashboardContent();
-                
-                // ONLY FETCH DATA WHEN A USER IS CONFIRMED TO BE LOGGED IN
-                await fetchDataForDashboard(user);
+        // Perform initial auth check
+        if (auth) {
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    // User is signed in.
+                    const userEmail = user.email || 'Anonymous User';
+                    userNameElement.textContent = userEmail.split('@')[0];
+                    userEmailElement.textContent = userEmail;
+                    userAvatarElement.textContent = userEmail.charAt(0).toUpperCase();
 
+                    // Display the dashboard
+                    showDashboardContent();
+
+                    // Fetch data ONLY AFTER authentication is confirmed
+                    await fetchDataForDashboard(user.uid);
+                    
+                } else {
+                    // User is signed out, show the auth container
+                    showAuthContainer();
+                }
+                hideLoadingScreen();
+            });
+
+            // Try to sign in with the provided custom token first
+            if (initialAuthToken) {
+                try {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } catch (error) {
+                    console.error("Error signing in with custom token:", error);
+                    // Fallback to anonymous sign-in if custom token fails
+                    await signInAnonymously(auth);
+                }
             } else {
-                // User is signed out
-                showAuthContainer();
+                // If no custom token is provided, sign in anonymously
+                await signInAnonymously(auth);
             }
-            hideLoadingScreen();
-        });
+        } else {
+            console.error("Firebase Auth not initialized.");
+        }
+
 
         // Event Listeners for form toggles
         showSignupLink.addEventListener('click', (e) => {
@@ -1367,6 +1388,8 @@
                     errorMessage = 'Please enter your password.';
                 } else if (error.code === 'auth/network-request-failed') {
                     errorMessage = 'Network error. Please check your internet connection.';
+                } else if (error.code === 'auth/operation-not-allowed') {
+                    errorMessage = 'Email/password sign-in is not enabled. Please use the platform-provided login.';
                 }
                 showMessage(errorMessage, 'error', authStatusMessage);
             } finally {
@@ -1438,31 +1461,30 @@
         }
 
         // Function to fetch all data for the dashboard
-        async function fetchDataForDashboard(user) {
-            // Ensure we have a user before making any Firestore calls
-            if (!user) {
-                console.error("User is not authenticated. Cannot fetch data.");
+        async function fetchDataForDashboard(userId) {
+            if (!userId) {
+                console.error("User ID is not available. Cannot fetch data.");
                 return;
             }
 
             try {
                 // Fetch students count
-                const studentsRef = collection(db, 'students');
+                const studentsRef = collection(db, `artifacts/${appId}/public/data/students`);
                 const studentSnapshot = await getDocs(studentsRef);
                 totalStudentsValue.textContent = studentSnapshot.size;
 
                 // Fetch receipts count
-                const receiptsRef = collection(db, 'receipts');
+                const receiptsRef = collection(db, `artifacts/${appId}/public/data/receipts`);
                 const receiptSnapshot = await getDocs(receiptsRef);
                 totalReceiptsValue.textContent = receiptSnapshot.size;
 
                 // Fetch expenses count
-                const expensesRef = collection(db, 'expenses');
+                const expensesRef = collection(db, `artifacts/${appId}/public/data/expenses`);
                 const expenseSnapshot = await getDocs(expensesRef);
                 totalExpensesValue.textContent = expenseSnapshot.size;
 
                 // Fetch assets count
-                const assetsRef = collection(db, 'assets');
+                const assetsRef = collection(db, `artifacts/${appId}/public/data/assets`);
                 const assetSnapshot = await getDocs(assetsRef);
                 totalAssetsValue.textContent = assetSnapshot.size;
 
