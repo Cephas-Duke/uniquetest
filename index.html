@@ -165,16 +165,17 @@
             position: relative;
             overflow: hidden;
         }
-
-        .auth-button:hover {
+        
+        .auth-button:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: var(--card-shadow-hover);
         }
 
         .auth-button:disabled {
-            opacity: 0.7;
+            opacity: 0.5;
             cursor: not-allowed;
             transform: none;
+            background: #ccc;
         }
 
         .auth-button .loading-spinner {
@@ -754,25 +755,26 @@
             font-weight: 500;
         }
 
+        .status-message.show {
+            display: block;
+        }
+
         .status-message.success {
             background-color: rgba(76, 201, 240, 0.1);
             color: var(--success-color);
             border-left-color: var(--success-color);
-            display: block;
         }
 
         .status-message.error {
             background-color: rgba(247, 37, 133, 0.1);
             color: var(--error-color);
             border-left-color: var(--error-color);
-            display: block;
         }
 
         .status-message.info {
             background-color: rgba(72, 149, 239, 0.1);
             color: var(--info-color);
             border-left-color: var(--info-color);
-            display: block;
         }
 
         /* Loading spinner */
@@ -1027,7 +1029,7 @@
                         <i class="fas fa-money-bill-wave nav-icon"></i>
                         <span class="nav-text">Expenses</span>
                     </a>
-                </li>
+                    </li>
                 <li class="nav-item">
                     <a href="assets.html" class="nav-link">
                         <i class="fas fa-laptop-house nav-icon"></i>
@@ -1247,6 +1249,9 @@
         const financialChartCanvas = document.getElementById('financialChart');
         const currentDateElement = document.getElementById('currentDate');
 
+        // Global Firebase variables
+        let app, auth, db;
+        
         // Functions to show/hide sections
         const showLoadingScreen = () => loadingScreen.classList.add('show');
         const hideLoadingScreen = () => loadingScreen.classList.remove('show');
@@ -1255,13 +1260,13 @@
 
         function showMessage(message, type, targetElement) {
             targetElement.textContent = message;
-            targetElement.className = `status-message ${type}`;
-            setTimeout(() => {
-                targetElement.textContent = '';
-                targetElement.className = 'status-message';
-            }, 5000);
+            targetElement.className = `status-message show ${type}`;
         }
         
+        function clearMessage(targetElement) {
+             targetElement.className = 'status-message';
+        }
+
         function setFormLoading(form, isLoading) {
             const button = form.querySelector('button');
             if (isLoading) {
@@ -1272,24 +1277,42 @@
                 button.disabled = false;
             }
         }
-
-        // Set initial state
-        showLoadingScreen();
-
-        let app, auth, db;
-
-        // Perform initial auth check
-        async function initializeAndAuthenticate() {
+        
+        function setFormsDisabled(disabled) {
+            const forms = [loginForm, signupForm, resetForm];
+            forms.forEach(form => {
+                form.querySelectorAll('input, button, a').forEach(element => {
+                    element.disabled = disabled;
+                    if (disabled) {
+                       element.classList.add('disabled-element');
+                    } else {
+                       element.classList.remove('disabled-element');
+                    }
+                });
+            });
+        }
+        
+        // Main initialization logic
+        async function initializeAppAndAuth() {
+            showLoadingScreen();
+            
+            // Check for valid Firebase configuration
+            if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey) {
+                console.error("Firebase initialization failed: Firebase configuration is missing or invalid.");
+                showMessage("Firebase initialization failed: This application requires a valid configuration to function. Login/Signup is disabled.", 'error', authStatusMessage);
+                showAuthContainer();
+                hideLoadingScreen();
+                setFormsDisabled(true);
+                return;
+            }
+            
+            // Initialize Firebase services
             try {
-                // Check if firebaseConfig is provided and not empty
-                if (Object.keys(firebaseConfig).length === 0) {
-                    throw new Error("Firebase configuration is missing or invalid. Check the platform's configuration.");
-                }
-                
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
-
+                
+                // Set up the authentication state listener
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
                         // User is signed in.
@@ -1297,21 +1320,19 @@
                         userNameElement.textContent = userEmail.split('@')[0];
                         userEmailElement.textContent = userEmail;
                         userAvatarElement.textContent = userEmail.charAt(0).toUpperCase();
-
-                        // Display the dashboard
+                        
+                        // Display the dashboard and fetch data
                         showDashboardContent();
-                        
-                        // Fetch data ONLY AFTER authentication is confirmed
-                        await fetchDataForDashboard(user.uid);
-                        
+                        fetchDataForDashboard(user.uid);
                     } else {
                         // User is signed out, show the auth container
                         showAuthContainer();
+                        clearMessage(authStatusMessage);
                     }
                     hideLoadingScreen();
                 });
-
-                // Try to sign in with the provided custom token first
+                
+                // Attempt to sign in with the custom token if available
                 if (initialAuthToken) {
                     try {
                         await signInWithCustomToken(auth, initialAuthToken);
@@ -1321,19 +1342,21 @@
                         await signInAnonymously(auth);
                     }
                 } else {
-                    // If no custom token is provided, sign in anonymously
+                    // If no custom token, sign in anonymously
                     await signInAnonymously(auth);
                 }
 
             } catch (error) {
-                console.error("Firebase initialization failed:", error.message);
+                console.error("Firebase initialization failed:", error);
                 showMessage(`Initialization error: ${error.message}`, 'error', authStatusMessage);
                 showAuthContainer();
                 hideLoadingScreen();
+                setFormsDisabled(true);
             }
         }
 
-        initializeAndAuthenticate();
+        // Call the main initialization function on page load
+        initializeAppAndAuth();
 
         // Event Listeners for form toggles
         showSignupLink.addEventListener('click', (e) => {
@@ -1342,7 +1365,7 @@
             signupForm.classList.remove('hidden');
             document.getElementById('authTitle').textContent = 'Create an Account';
             document.getElementById('authSubtitle').textContent = 'Manage your school with ease';
-            authStatusMessage.textContent = '';
+            clearMessage(authStatusMessage);
         });
 
         showLoginLink.addEventListener('click', (e) => {
@@ -1351,7 +1374,7 @@
             loginForm.classList.remove('hidden');
             document.getElementById('authTitle').textContent = 'Welcome Back';
             document.getElementById('authSubtitle').textContent = 'Sign in to access your dashboard';
-            authStatusMessage.textContent = '';
+            clearMessage(authStatusMessage);
         });
 
         forgotPasswordLink.addEventListener('click', (e) => {
@@ -1360,7 +1383,7 @@
             resetForm.classList.remove('hidden');
             document.getElementById('authTitle').textContent = 'Reset Password';
             document.getElementById('authSubtitle').textContent = 'Enter your email to receive a password reset link';
-            authStatusMessage.textContent = '';
+            clearMessage(authStatusMessage);
         });
         
         backToLoginLink.addEventListener('click', (e) => {
@@ -1369,12 +1392,16 @@
             loginForm.classList.remove('hidden');
             document.getElementById('authTitle').textContent = 'Welcome Back';
             document.getElementById('authSubtitle').textContent = 'Sign in to access your dashboard';
-            authStatusMessage.textContent = '';
+            clearMessage(authStatusMessage);
         });
 
         // Handle Login
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!auth) {
+                showMessage('Login is currently unavailable due to a configuration error.', 'error', authStatusMessage);
+                return;
+            }
             const email = loginForm['loginEmail'].value;
             const password = loginForm['loginPassword'].value;
             setFormLoading(loginForm, true);
@@ -1405,6 +1432,10 @@
         // Handle Signup
         signupForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!auth) {
+                showMessage('Signup is currently unavailable due to a configuration error.', 'error', authStatusMessage);
+                return;
+            }
             const name = signupForm['signupName'].value;
             const email = signupForm['signupEmail'].value;
             const password = signupForm['signupPassword'].value;
@@ -1438,6 +1469,10 @@
         // Handle Password Reset
         resetForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!auth) {
+                showMessage('Password reset is currently unavailable due to a configuration error.', 'error', authStatusMessage);
+                return;
+            }
             const email = resetForm['resetEmail'].value;
             setFormLoading(resetForm, true);
             
@@ -1461,14 +1496,16 @@
         // Handle Logout
         if (logoutButton) {
             logoutButton.addEventListener('click', async () => {
-                await signOut(auth);
+                if (auth) {
+                    await signOut(auth);
+                }
             });
         }
 
         // Function to fetch all data for the dashboard
         async function fetchDataForDashboard(userId) {
-            if (!userId) {
-                console.error("User ID is not available. Cannot fetch data.");
+            if (!db) {
+                console.error("Firestore is not available. Cannot fetch data.");
                 return;
             }
 
