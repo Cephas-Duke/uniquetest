@@ -39,6 +39,242 @@
       padding-top: 80px;
     }
 
+    /* Hide dashboard initially */
+    .dashboard-content {
+      display: none;
+    }
+
+    /* Authentication Section Styles */
+    .auth-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    .auth-card {
+      background: var(--white);
+      border-radius: 1rem;
+      box-shadow: var(--card-shadow-hover);
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 400px;
+      margin: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .auth-card::before {
+      content: '';
+      position: absolute;
+      top: -50px;
+      right: -50px;
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+      border-radius: 50%;
+      opacity: 0.1;
+    }
+
+    .auth-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .auth-logo {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+      color: white;
+      font-size: 1.5rem;
+    }
+
+    .auth-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--dark-gray);
+      margin-bottom: 0.5rem;
+    }
+
+    .auth-subtitle {
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    .auth-form {
+      display: block;
+    }
+
+    .auth-form.hidden {
+      display: none;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--dark-gray);
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 2px solid var(--medium-gray);
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      transition: var(--transition);
+      outline: none;
+    }
+
+    .form-input:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    }
+
+    .form-input.error {
+      border-color: var(--error-color);
+    }
+
+    .auth-button {
+      width: 100%;
+      padding: 0.875rem;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .auth-button:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--card-shadow-hover);
+    }
+
+    .auth-button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .auth-button .loading-spinner {
+      display: none;
+    }
+
+    .auth-button.loading .loading-spinner {
+      display: inline-block;
+    }
+
+    .auth-button.loading .button-text {
+      display: none;
+    }
+
+    .auth-toggle {
+      text-align: center;
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--medium-gray);
+    }
+
+    .auth-toggle-text {
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    .auth-toggle-link {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: 600;
+      margin-left: 0.25rem;
+    }
+
+    .auth-toggle-link:hover {
+      text-decoration: underline;
+    }
+
+    .forgot-password {
+      text-align: right;
+      margin-top: 0.5rem;
+    }
+
+    .forgot-password-link {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-size: 0.875rem;
+    }
+
+    .forgot-password-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Loading Screen */
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      color: white;
+      flex-direction: column;
+    }
+
+    .loading-screen.show {
+      display: flex;
+    }
+
+    .loading-logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      font-size: 2rem;
+      animation: pulse 2s infinite;
+    }
+
+    .loading-text {
+      font-size: 1.125rem;
+      font-weight: 500;
+      margin-bottom: 2rem;
+    }
+
+    .loading-spinner-large {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s linear infinite;
+    }
+
     /* Smooth scroll behavior */
     html {
       scroll-behavior: smooth;
@@ -171,6 +407,25 @@
       background-color: rgba(255, 255, 255, 0.3);
     }
 
+    .user-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin-right: 0.5rem;
+    }
+
+    .user-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    .user-email {
+      font-size: 0.75rem;
+      opacity: 0.8;
+      line-height: 1.2;
+    }
+
     .user-dropdown {
       position: absolute;
       top: 100%;
@@ -201,6 +456,11 @@
       align-items: center;
       gap: 0.75rem;
       transition: var(--transition);
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
     }
 
     .dropdown-item:hover {
@@ -581,6 +841,9 @@
       .school-name::after {
         content: 'HCS';
       }
+      .user-info {
+        display: none;
+      }
     }
 
     @media (max-width: 992px) {
@@ -616,6 +879,10 @@
       .quick-actions {
         grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
       }
+      .auth-card {
+        padding: 2rem;
+        margin: 0.5rem;
+      }
     }
 
     @media (max-width: 576px) {
@@ -632,198 +899,296 @@
   </style>
 </head>
 <body>
-  <!-- Top Navigation Bar -->
-  <nav class="top-nav" id="topNav">
-    <div class="school-name">
-      <div class="school-logo">
-        <i class="fas fa-school"></i>
-      </div>
-      <span>Heriwadi Christian Schools Ltd</span>
+  <!-- Loading Screen -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loading-logo">
+      <i class="fas fa-school"></i>
     </div>
-    <ul class="nav-menu">
-      <li class="nav-item">
-        <a href="index.html" class="nav-link active">
-          <i class="fas fa-tachometer-alt nav-icon"></i>
-          <span class="nav-text">Dashboard</span>
-        </a>
-      </li>
-      <li class="nav-item">
-        <a href="receipts.html" class="nav-link">
-          <i class="fas fa-receipt nav-icon"></i>
-          <span class="nav-text">Receipts</span>
-        </a>
-      </li>
-      <li class="nav-item">
-        <a href="expense.html" class="nav-link">
-          <i class="fas fa-money-bill-wave nav-icon"></i>
-          <span class="nav-text">Expenses</span>
-        </a>
-      </li>
-      <li class="nav-item">
-        <a href="assets.html" class="nav-link">
-          <i class="fas fa-laptop-house nav-icon"></i>
-          <span class="nav-text">Assets</span>
-        </a>
-      </li>
-      <li class="nav-item">
-        <a href="staff.html" class="nav-link">
-          <i class="fas fa-chalkboard-teacher nav-icon"></i>
-          <span class="nav-text">Staff</span>
-        </a>
-      </li>
-      <li class="nav-item">
-        <a href="students.html" class="nav-link">
-          <i class="fas fa-user-graduate nav-icon"></i>
-          <span class="nav-text">Students</span>
-        </a>
-      </li>
-      <li class="nav-item">
-        <a href="payroll.html" class="nav-link">
-          <i class="fas fa-money-check-alt nav-icon"></i>
-          <span class="nav-text">Payroll</span>
-        </a>
-      </li>
-    </ul>
-    <div class="user-profile">
-      <div class="user-avatar">AD</div>
-      <div class="user-dropdown">
-        <a href="#" class="dropdown-item">
-          <i class="fas fa-user-circle"></i> My Profile
-        </a>
-        <a href="#" class="dropdown-item">
-          <i class="fas fa-cog"></i> Settings
-        </a>
-        <div class="dropdown-divider"></div>
-        <a href="#" class="dropdown-item">
-          <i class="fas fa-sign-out-alt"></i> Logout
-        </a>
+    <div class="loading-text">Loading Dashboard...</div>
+    <div class="loading-spinner-large"></div>
+  </div>
+
+  <!-- Authentication Container -->
+  <div class="auth-container" id="authContainer">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-logo">
+          <i class="fas fa-school"></i>
+        </div>
+        <h2 class="auth-title" id="authTitle">Welcome Back</h2>
+        <p class="auth-subtitle" id="authSubtitle">Sign in to access your dashboard</p>
       </div>
+
+      <!-- Login Form -->
+      <form class="auth-form" id="loginForm">
+        <div class="form-group">
+          <label class="form-label" for="loginEmail">Email Address</label>
+          <input type="email" class="form-input" id="loginEmail" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="loginPassword">Password</label>
+          <input type="password" class="form-input" id="loginPassword" required>
+          <div class="forgot-password">
+            <a href="#" class="forgot-password-link" id="forgotPasswordLink">Forgot Password?</a>
+          </div>
+        </div>
+        <button type="submit" class="auth-button" id="loginButton">
+          <span class="button-text">Sign In</span>
+          <span class="loading-spinner"></span>
+        </button>
+        <div class="auth-toggle">
+          <span class="auth-toggle-text">Don't have an account?</span>
+          <a href="#" class="auth-toggle-link" id="showSignupForm">Sign Up</a>
+        </div>
+      </form>
+
+      <!-- Signup Form -->
+      <form class="auth-form hidden" id="signupForm">
+        <div class="form-group">
+          <label class="form-label" for="signupName">Full Name</label>
+          <input type="text" class="form-input" id="signupName" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="signupEmail">Email Address</label>
+          <input type="email" class="form-input" id="signupEmail" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="signupPassword">Password</label>
+          <input type="password" class="form-input" id="signupPassword" required minlength="6">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="confirmPassword">Confirm Password</label>
+          <input type="password" class="form-input" id="confirmPassword" required minlength="6">
+        </div>
+        <button type="submit" class="auth-button" id="signupButton">
+          <span class="button-text">Create Account</span>
+          <span class="loading-spinner"></span>
+        </button>
+        <div class="auth-toggle">
+          <span class="auth-toggle-text">Already have an account?</span>
+          <a href="#" class="auth-toggle-link" id="showLoginForm">Sign In</a>
+        </div>
+      </form>
+
+      <!-- Reset Password Form -->
+      <form class="auth-form hidden" id="resetForm">
+        <div class="form-group">
+          <label class="form-label" for="resetEmail">Email Address</label>
+          <input type="email" class="form-input" id="resetEmail" required>
+        </div>
+        <button type="submit" class="auth-button" id="resetButton">
+          <span class="button-text">Send Reset Email</span>
+          <span class="loading-spinner"></span>
+        </button>
+        <div class="auth-toggle">
+          <span class="auth-toggle-text">Remember your password?</span>
+          <a href="#" class="auth-toggle-link" id="backToLoginForm">Sign In</a>
+        </div>
+      </form>
     </div>
-  </nav>
+  </div>
 
-  <!-- Main Content -->
-  <main class="main-content">
-    <!-- Status Message -->
-    <div id="statusMessage" class="status-message"></div>
-
-    <!-- Welcome Banner -->
-    <div class="welcome-banner">
-      <h1>Welcome to School Management Dashboard</h1>
-      <p>Monitor and manage all school operations from one central location. View key metrics, recent activities, and quick access to all modules.</p>
-      <div class="current-date" id="currentDate"></div>
-    </div>
-
-    <!-- Key Metrics -->
-    <div class="dashboard-grid">
-      <!-- Students Card -->
-      <div class="card">
-        <div class="card-header">
-          <h3 class="card-title"><i class="fas fa-user-graduate"></i> Students</h3>
-          <span class="card-meta">Total</span>
+  <!-- Dashboard Content -->
+  <div class="dashboard-content" id="dashboardContent">
+    <!-- Top Navigation Bar -->
+    <nav class="top-nav" id="topNav">
+      <div class="school-name">
+        <div class="school-logo">
+          <i class="fas fa-school"></i>
         </div>
-        <div class="card-value" id="student-count">0</div>
-        <div class="card-footer">
-          <span>This Month: <span id="monthly-students" class="trend-up">+0</span></span>
-          <a href="students.html">View All <i class="fas fa-arrow-right"></i></a>
+        <span>Heriwadi Christian Schools Ltd</span>
+      </div>
+      <ul class="nav-menu">
+        <li class="nav-item">
+          <a href="index.html" class="nav-link active">
+            <i class="fas fa-tachometer-alt nav-icon"></i>
+            <span class="nav-text">Dashboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="receipts.html" class="nav-link">
+            <i class="fas fa-receipt nav-icon"></i>
+            <span class="nav-text">Receipts</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="expense.html" class="nav-link">
+            <i class="fas fa-money-bill-wave nav-icon"></i>
+            <span class="nav-text">Expenses</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="assets.html" class="nav-link">
+            <i class="fas fa-laptop-house nav-icon"></i>
+            <span class="nav-text">Assets</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="staff.html" class="nav-link">
+            <i class="fas fa-chalkboard-teacher nav-icon"></i>
+            <span class="nav-text">Staff</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="students.html" class="nav-link">
+            <i class="fas fa-user-graduate nav-icon"></i>
+            <span class="nav-text">Students</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="payroll.html" class="nav-link">
+            <i class="fas fa-money-check-alt nav-icon"></i>
+            <span class="nav-text">Payroll</span>
+          </a>
+        </li>
+      </ul>
+      <div class="user-profile">
+        <div class="user-info">
+          <div class="user-name" id="userName">Loading...</div>
+          <div class="user-email" id="userEmail">Loading...</div>
+        </div>
+        <div class="user-avatar" id="userAvatar">AD</div>
+        <div class="user-dropdown">
+          <a href="#" class="dropdown-item">
+            <i class="fas fa-user-circle"></i> My Profile
+          </a>
+          <a href="#" class="dropdown-item">
+            <i class="fas fa-cog"></i> Settings
+          </a>
+          <div class="dropdown-divider"></div>
+          <button class="dropdown-item" id="logoutButton">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Status Message -->
+      <div id="statusMessage" class="status-message"></div>
+
+      <!-- Welcome Banner -->
+      <div class="welcome-banner">
+        <h1 id="welcomeTitle">Welcome to School Management Dashboard</h1>
+        <p>Monitor and manage all school operations from one central location. View key metrics, recent activities, and quick access to all modules.</p>
+        <div class="current-date" id="currentDate"></div>
+      </div>
+
+      <!-- Key Metrics -->
+      <div class="dashboard-grid">
+        <!-- Students Card -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-user-graduate"></i> Students</h3>
+            <span class="card-meta">Total</span>
+          </div>
+          <div class="card-value" id="student-count">0</div>
+          <div class="card-footer">
+            <span>This Month: <span id="monthly-students" class="trend-up">+0</span></span>
+            <a href="students.html">View All <i class="fas fa-arrow-right"></i></a>
+          </div>
+        </div>
+
+        <!-- Staff Card -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-chalkboard-teacher"></i> Staff</h3>
+            <span class="card-meta">Total</span>
+          </div>
+          <div class="card-value" id="staff-count">0</div>
+          <div class="card-footer">
+            <span>Active: <span id="active-staff">0</span></span>
+            <a href="staff.html">View All <i class="fas fa-arrow-right"></i></a>
+          </div>
+        </div>
+
+        <!-- Finances Card -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-money-bill-wave"></i> Finances</h3>
+            <span class="card-meta">This Month</span>
+          </div>
+          <div class="card-value">KES <span id="monthly-revenue">0</span></div>
+          <div class="card-footer">
+            <span>Balance: <span id="current-balance">KES 0</span></span>
+            <a href="receipts.html">Details <i class="fas fa-arrow-right"></i></a>
+          </div>
         </div>
       </div>
 
-      <!-- Staff Card -->
-      <div class="card">
-        <div class="card-header">
-          <h3 class="card-title"><i class="fas fa-chalkboard-teacher"></i> Staff</h3>
-          <span class="card-meta">Total</span>
+      <!-- Charts and Activity Section -->
+      <div class="dashboard-grid">
+        <!-- Revenue Chart -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-chart-line"></i> Revenue Trend</h3>
+            <select id="revenue-period" class="form-control">
+              <option value="month">This Month</option>
+              <option value="year">This Year</option>
+              <option value="custom">Custom Range</option>
+            </select>
+          </div>
+          <div class="chart-container">
+            <canvas id="revenueChart"></canvas>
+          </div>
         </div>
-        <div class="card-value" id="staff-count">0</div>
-        <div class="card-footer">
-          <span>Active: <span id="active-staff">0</span></span>
-          <a href="staff.html">View All <i class="fas fa-arrow-right"></i></a>
-        </div>
-      </div>
 
-      <!-- Finances Card -->
-      <div class="card">
-        <div class="card-header">
-          <h3 class="card-title"><i class="fas fa-money-bill-wave"></i> Finances</h3>
-          <span class="card-meta">This Month</span>
-        </div>
-        <div class="card-value">KES <span id="monthly-revenue">0</span></div>
-        <div class="card-footer">
-          <span>Balance: <span id="current-balance">KES 0</span></span>
-          <a href="receipts.html">Details <i class="fas fa-arrow-right"></i></a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Charts and Activity Section -->
-    <div class="dashboard-grid">
-      <!-- Revenue Chart -->
-      <div class="card">
-        <div class="card-header">
-          <h3 class="card-title"><i class="fas fa-chart-line"></i> Revenue Trend</h3>
-          <select id="revenue-period" class="form-control">
-            <option value="month">This Month</option>
-            <option value="year">This Year</option>
-            <option value="custom">Custom Range</option>
-          </select>
-        </div>
-        <div class="chart-container">
-          <canvas id="revenueChart"></canvas>
-        </div>
-      </div>
-
-      <!-- Recent Activity -->
-      <div class="card">
-        <div class="card-header">
-          <h3 class="card-title"><i class="fas fa-bell"></i> Recent Activity</h3>
-          <span class="card-meta">Today</span>
-        </div>
-        <div id="recent-activity">
-          <div class="activity-item">
-            <div class="activity-icon"><i class="fas fa-spinner fa-spin"></i></div>
-            <div class="activity-content">
-              <div class="activity-title">Loading activities...</div>
+        <!-- Recent Activity -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-bell"></i> Recent Activity</h3>
+            <span class="card-meta">Today</span>
+          </div>
+          <div id="recent-activity">
+            <div class="activity-item">
+              <div class="activity-icon"><i class="fas fa-spinner fa-spin"></i></div>
+              <div class="activity-content">
+                <div class="activity-title">Loading activities...</div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Quick Actions -->
-    <div class="card">
-      <div class="card-header">
-        <h3 class="card-title"><i class="fas fa-bolt"></i> Quick Actions</h3>
+      <!-- Quick Actions -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title"><i class="fas fa-bolt"></i> Quick Actions</h3>
+        </div>
+        <div class="quick-actions">
+          <a href="students.html" class="action-btn">
+            <i class="fas fa-user-plus"></i>
+            <span>Add Student</span>
+          </a>
+          <a href="receipts.html" class="action-btn">
+            <i class="fas fa-money-bill"></i>
+            <span>Record Payment</span>
+          </a>
+          <a href="expense.html" class="action-btn">
+            <i class="fas fa-receipt"></i>
+            <span>Add Expense</span>
+          </a>
+          <a href="staff.html" class="action-btn">
+            <i class="fas fa-user-tie"></i>
+            <span>Add Staff</span>
+          </a>
+          <a href="payroll.html" class="action-btn">
+            <i class="fas fa-money-check"></i>
+            <span>Process Payroll</span>
+          </a>
+          <a href="assets.html" class="action-btn">
+            <i class="fas fa-box"></i>
+            <span>Add Asset</span>
+          </a>
+        </div>
       </div>
-      <div class="quick-actions">
-        <a href="students.html" class="action-btn">
-          <i class="fas fa-user-plus"></i>
-          <span>Add Student</span>
-        </a>
-        <a href="receipts.html" class="action-btn">
-          <i class="fas fa-money-bill"></i>
-          <span>Record Payment</span>
-        </a>
-        <a href="expense.html" class="action-btn">
-          <i class="fas fa-receipt"></i>
-          <span>Add Expense</span>
-        </a>
-        <a href="staff.html" class="action-btn">
-          <i class="fas fa-user-tie"></i>
-          <span>Add Staff</span>
-        </a>
-        <a href="payroll.html" class="action-btn">
-          <i class="fas fa-money-check"></i>
-          <span>Process Payroll</span>
-        </a>
-        <a href="assets.html" class="action-btn">
-          <i class="fas fa-box"></i>
-          <span>Add Asset</span>
-        </a>
-      </div>
-    </div>
-  </main>
+    </main>
+  </div>
 
+  <!-- Firebase Scripts -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
   <script>
@@ -842,15 +1207,45 @@
     if (!firebase.apps.length) {
       firebase.initializeApp(firebaseConfig);
     }
+    
+    const auth = firebase.auth();
     const db = firebase.firestore();
+    
+    // Collections
     const studentsCollection = db.collection('students');
     const staffCollection = db.collection('staff');
     const receiptsCollection = db.collection('receipts');
     const expensesCollection = db.collection('expenses');
     const assetsCollection = db.collection('assets');
     const payrollCollection = db.collection('payroll');
+    const usersCollection = db.collection('users');
 
-    // Status message function (consistent with students.html)
+    // DOM Elements
+    const authContainer = document.getElementById('authContainer');
+    const dashboardContent = document.getElementById('dashboardContent');
+    const loadingScreen = document.getElementById('loadingScreen');
+    
+    // Form elements
+    const loginForm = document.getElementById('loginForm');
+    const signupForm = document.getElementById('signupForm');
+    const resetForm = document.getElementById('resetForm');
+    
+    // Button elements
+    const loginButton = document.getElementById('loginButton');
+    const signupButton = document.getElementById('signupButton');
+    const resetButton = document.getElementById('resetButton');
+    const logoutButton = document.getElementById('logoutButton');
+    
+    // Toggle links
+    const showSignupForm = document.getElementById('showSignupForm');
+    const showLoginForm = document.getElementById('showLoginForm');
+    const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+    const backToLoginForm = document.getElementById('backToLoginForm');
+
+    // Current user variable
+    let currentUser = null;
+
+    // Status message function
     function showStatus(message, type = 'info') {
       const statusMessage = document.getElementById("statusMessage");
       statusMessage.textContent = message;
@@ -860,6 +1255,338 @@
         statusMessage.textContent = '';
         statusMessage.className = 'status-message';
       }, 5000);
+    }
+
+    // Show loading state on buttons
+    function setButtonLoading(button, loading) {
+      button.classList.toggle('loading', loading);
+      button.disabled = loading;
+    }
+
+    // Form validation
+    function validateEmail(email) {
+      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return re.test(email);
+    }
+
+    function validatePassword(password) {
+      return password.length >= 6;
+    }
+
+    // Toggle between forms
+    function showForm(formToShow) {
+      const forms = [loginForm, signupForm, resetForm];
+      forms.forEach(form => form.classList.add('hidden'));
+      formToShow.classList.remove('hidden');
+      
+      // Update header text
+      const authTitle = document.getElementById('authTitle');
+      const authSubtitle = document.getElementById('authSubtitle');
+      
+      if (formToShow === loginForm) {
+        authTitle.textContent = 'Welcome Back';
+        authSubtitle.textContent = 'Sign in to access your dashboard';
+      } else if (formToShow === signupForm) {
+        authTitle.textContent = 'Create Account';
+        authSubtitle.textContent = 'Join Heriwadi Christian Schools';
+      } else if (formToShow === resetForm) {
+        authTitle.textContent = 'Reset Password';
+        authSubtitle.textContent = 'Enter your email to reset password';
+      }
+    }
+
+    // Event listeners for form toggles
+    showSignupForm.addEventListener('click', (e) => {
+      e.preventDefault();
+      showForm(signupForm);
+    });
+
+    showLoginForm.addEventListener('click', (e) => {
+      e.preventDefault();
+      showForm(loginForm);
+    });
+
+    forgotPasswordLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      showForm(resetForm);
+      // Pre-fill email if available
+      const loginEmail = document.getElementById('loginEmail').value;
+      if (loginEmail) {
+        document.getElementById('resetEmail').value = loginEmail;
+      }
+    });
+
+    backToLoginForm.addEventListener('click', (e) => {
+      e.preventDefault();
+      showForm(loginForm);
+    });
+
+    // Login form handler
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      
+      // Validation
+      if (!validateEmail(email)) {
+        showStatus('Please enter a valid email address', 'error');
+        document.getElementById('loginEmail').classList.add('error');
+        return;
+      }
+      
+      if (!validatePassword(password)) {
+        showStatus('Password must be at least 6 characters long', 'error');
+        document.getElementById('loginPassword').classList.add('error');
+        return;
+      }
+      
+      // Clear error states
+      document.getElementById('loginEmail').classList.remove('error');
+      document.getElementById('loginPassword').classList.remove('error');
+      
+      setButtonLoading(loginButton, true);
+      
+      try {
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        console.log('Login successful:', userCredential.user.email);
+        // Auth state change handler will take care of showing dashboard
+      } catch (error) {
+        console.error('Login error:', error);
+        let errorMessage = 'Login failed. Please try again.';
+        
+        switch (error.code) {
+          case 'auth/user-not-found':
+            errorMessage = 'No account found with this email address.';
+            break;
+          case 'auth/wrong-password':
+            errorMessage = 'Incorrect password. Please try again.';
+            break;
+          case 'auth/invalid-email':
+            errorMessage = 'Please enter a valid email address.';
+            break;
+          case 'auth/user-disabled':
+            errorMessage = 'This account has been disabled.';
+            break;
+          case 'auth/too-many-requests':
+            errorMessage = 'Too many failed attempts. Please try again later.';
+            break;
+        }
+        
+        showStatus(errorMessage, 'error');
+      } finally {
+        setButtonLoading(loginButton, false);
+      }
+    });
+
+    // Signup form handler
+    signupForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const name = document.getElementById('signupName').value.trim();
+      const email = document.getElementById('signupEmail').value.trim();
+      const password = document.getElementById('signupPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      
+      // Validation
+      if (!name) {
+        showStatus('Please enter your full name', 'error');
+        document.getElementById('signupName').classList.add('error');
+        return;
+      }
+      
+      if (!validateEmail(email)) {
+        showStatus('Please enter a valid email address', 'error');
+        document.getElementById('signupEmail').classList.add('error');
+        return;
+      }
+      
+      if (!validatePassword(password)) {
+        showStatus('Password must be at least 6 characters long', 'error');
+        document.getElementById('signupPassword').classList.add('error');
+        return;
+      }
+      
+      if (password !== confirmPassword) {
+        showStatus('Passwords do not match', 'error');
+        document.getElementById('confirmPassword').classList.add('error');
+        return;
+      }
+      
+      // Clear error states
+      document.querySelectorAll('.form-input').forEach(input => {
+        input.classList.remove('error');
+      });
+      
+      setButtonLoading(signupButton, true);
+      
+      try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        
+        // Update user profile with display name
+        await user.updateProfile({
+          displayName: name
+        });
+        
+        // Create user document in Firestore
+        await usersCollection.doc(user.uid).set({
+          name: name,
+          email: email,
+          role: 'admin', // Default role
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        console.log('Signup successful:', user.email);
+        showStatus('Account created successfully! Welcome!', 'success');
+        
+      } catch (error) {
+        console.error('Signup error:', error);
+        let errorMessage = 'Account creation failed. Please try again.';
+        
+        switch (error.code) {
+          case 'auth/email-already-in-use':
+            errorMessage = 'An account with this email already exists.';
+            break;
+          case 'auth/invalid-email':
+            errorMessage = 'Please enter a valid email address.';
+            break;
+          case 'auth/weak-password':
+            errorMessage = 'Password is too weak. Please choose a stronger password.';
+            break;
+        }
+        
+        showStatus(errorMessage, 'error');
+      } finally {
+        setButtonLoading(signupButton, false);
+      }
+    });
+
+    // Reset password form handler
+    resetForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('resetEmail').value.trim();
+      
+      if (!validateEmail(email)) {
+        showStatus('Please enter a valid email address', 'error');
+        document.getElementById('resetEmail').classList.add('error');
+        return;
+      }
+      
+      document.getElementById('resetEmail').classList.remove('error');
+      setButtonLoading(resetButton, true);
+      
+      try {
+        await auth.sendPasswordResetEmail(email);
+        showStatus('Password reset email sent! Check your inbox.', 'success');
+        showForm(loginForm);
+      } catch (error) {
+        console.error('Password reset error:', error);
+        let errorMessage = 'Failed to send password reset email.';
+        
+        switch (error.code) {
+          case 'auth/user-not-found':
+            errorMessage = 'No account found with this email address.';
+            break;
+          case 'auth/invalid-email':
+            errorMessage = 'Please enter a valid email address.';
+            break;
+        }
+        
+        showStatus(errorMessage, 'error');
+      } finally {
+        setButtonLoading(resetButton, false);
+      }
+    });
+
+    // Logout handler
+    logoutButton.addEventListener('click', async (e) => {
+      e.preventDefault();
+      
+      try {
+        await auth.signOut();
+        showStatus('Logged out successfully', 'success');
+      } catch (error) {
+        console.error('Logout error:', error);
+        showStatus('Error logging out', 'error');
+      }
+    });
+
+    // Auth state observer
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        currentUser = user;
+        console.log('User is signed in:', user.email);
+        
+        // Show loading screen
+        loadingScreen.classList.add('show');
+        authContainer.style.display = 'none';
+        
+        // Update user info in navigation
+        updateUserInfo(user);
+        
+        // Update last login time
+        try {
+          await usersCollection.doc(user.uid).update({
+            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        } catch (error) {
+          console.log('Could not update last login time:', error);
+        }
+        
+        // Load dashboard data
+        await loadDashboardData();
+        
+        // Setup real-time listeners
+        setupRealtimeListeners();
+        
+        // Hide loading screen and show dashboard
+        setTimeout(() => {
+          loadingScreen.classList.remove('show');
+          dashboardContent.style.display = 'block';
+          
+          // Initialize additional features
+          setupNavbarScroll();
+          addCardHoverEffects();
+        }, 1500);
+        
+      } else {
+        currentUser = null;
+        console.log('User is signed out');
+        
+        // Hide dashboard and show auth
+        dashboardContent.style.display = 'none';
+        loadingScreen.classList.remove('show');
+        authContainer.style.display = 'flex';
+        
+        // Reset forms
+        loginForm.reset();
+        signupForm.reset();
+        resetForm.reset();
+        showForm(loginForm);
+      }
+    });
+
+    // Update user info in navigation
+    function updateUserInfo(user) {
+      const userName = document.getElementById('userName');
+      const userEmail = document.getElementById('userEmail');
+      const userAvatar = document.getElementById('userAvatar');
+      const welcomeTitle = document.getElementById('welcomeTitle');
+      
+      // Set user name
+      const displayName = user.displayName || user.email.split('@')[0];
+      userName.textContent = displayName;
+      userEmail.textContent = user.email;
+      
+      // Set avatar initials
+      const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+      userAvatar.textContent = initials;
+      
+      // Update welcome message
+      welcomeTitle.textContent = `Welcome back, ${displayName}!`;
     }
 
     // Format currency
@@ -1405,6 +2132,9 @@
 
     // Set up real-time listeners for all collections
     function setupRealtimeListeners() {
+      // Only setup listeners if user is authenticated
+      if (!currentUser) return;
+      
       // Student count listener
       studentsCollection.onSnapshot(snapshot => {
         const count = snapshot.size;
@@ -1560,13 +2290,8 @@
       });
     }
 
-    // Initialize the page
-    document.addEventListener('DOMContentLoaded', function() {
-      loadDashboardData();
-      setupRealtimeListeners();
-      setupNavbarScroll();
-      
-      // Add hover effects to cards
+    // Add hover effects to cards
+    function addCardHoverEffects() {
       const cards = document.querySelectorAll('.card');
       cards.forEach(card => {
         card.addEventListener('mouseenter', () => {
@@ -1587,6 +2312,31 @@
           });
         });
       });
+    }
+
+    // Initialize the application
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('Application initialized');
+      
+      // Show initial loading screen
+      loadingScreen.classList.add('show');
+      
+      // Auth state observer will handle the rest of the initialization
+    });
+
+    // Prevent back button after logout (security feature)
+    window.addEventListener('pageshow', function(event) {
+      if (event.persisted && !currentUser) {
+        window.location.reload();
+      }
+    });
+
+    // Handle browser refresh - maintain auth state
+    window.addEventListener('beforeunload', function() {
+      if (currentUser) {
+        // User is authenticated, allow reload
+        return;
+      }
     });
   </script>
 </body>
