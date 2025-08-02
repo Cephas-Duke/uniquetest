@@ -165,17 +165,16 @@
             position: relative;
             overflow: hidden;
         }
-        
-        .auth-button:hover:not(:disabled) {
+
+        .auth-button:hover {
             transform: translateY(-2px);
             box-shadow: var(--card-shadow-hover);
         }
 
         .auth-button:disabled {
-            opacity: 0.5;
+            opacity: 0.7;
             cursor: not-allowed;
             transform: none;
-            background: #ccc;
         }
 
         .auth-button .loading-spinner {
@@ -275,7 +274,7 @@
             border-top-color: white;
             animation: spin 1s linear infinite;
         }
-        
+
         /* Smooth scroll behavior */
         html {
             scroll-behavior: smooth;
@@ -543,6 +542,7 @@
             font-weight: 400;
         }
 
+        /* Date display */
         .current-date {
             display: inline-block;
             margin-top: 1rem;
@@ -755,26 +755,25 @@
             font-weight: 500;
         }
 
-        .status-message.show {
-            display: block;
-        }
-
         .status-message.success {
             background-color: rgba(76, 201, 240, 0.1);
             color: var(--success-color);
             border-left-color: var(--success-color);
+            display: block;
         }
 
         .status-message.error {
             background-color: rgba(247, 37, 133, 0.1);
             color: var(--error-color);
             border-left-color: var(--error-color);
+            display: block;
         }
 
         .status-message.info {
             background-color: rgba(72, 149, 239, 0.1);
             color: var(--info-color);
             border-left-color: var(--info-color);
+            display: block;
         }
 
         /* Loading spinner */
@@ -787,10 +786,23 @@
             border-top-color: white;
             animation: spin 1s ease-in-out infinite;
         }
-        
-        /* Smooth scroll behavior */
-        html {
-            scroll-behavior: smooth;
+
+        /* Form controls */
+        select.form-control {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--medium-gray);
+            background-color: var(--white);
+            color: var(--dark-gray);
+            font-size: 0.875rem;
+            transition: var(--transition);
+            outline: none;
+            cursor: pointer;
+        }
+
+        select.form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
         }
 
         /* Animations */
@@ -1016,7 +1028,7 @@
                         <i class="fas fa-money-bill-wave nav-icon"></i>
                         <span class="nav-text">Expenses</span>
                     </a>
-                    </li>
+                </li>
                 <li class="nav-item">
                     <a href="assets.html" class="nav-link">
                         <i class="fas fa-laptop-house nav-icon"></i>
@@ -1070,107 +1082,116 @@
 
             <!-- Welcome Banner -->
             <div class="welcome-banner">
-                <h1 id="welcomeTitle">Welcome to the Dashboard!</h1>
-                <p>Track key metrics and manage your school with ease.</p>
+                <h1 id="welcomeTitle">Welcome to School Management Dashboard</h1>
+                <p>Monitor and manage all school operations from one central location. View key metrics, recent activities, and quick access to all modules.</p>
                 <div class="current-date" id="currentDate"></div>
             </div>
 
-            <!-- Dashboard Grid -->
+            <!-- Key Metrics -->
             <div class="dashboard-grid">
-                <!-- Total Students Card -->
+                <!-- Students Card -->
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-user-graduate"></i> Total Students</h3>
+                        <h3 class="card-title"><i class="fas fa-user-graduate"></i> Students</h3>
+                        <span class="card-meta">Total</span>
                     </div>
-                    <div class="card-value" id="totalStudentsValue">0</div>
+                    <div class="card-value" id="student-count">0</div>
                     <div class="card-footer">
-                        <span>Number of students enrolled</span>
+                        <span>This Month: <span id="monthly-students" class="trend-up">+0</span></span>
+                        <a href="students.html">View All <i class="fas fa-arrow-right"></i></a>
                     </div>
                 </div>
 
-                <!-- Total Receipts Card -->
+                <!-- Staff Card -->
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-receipt"></i> Total Receipts</h3>
+                        <h3 class="card-title"><i class="fas fa-chalkboard-teacher"></i> Staff</h3>
+                        <span class="card-meta">Total</span>
                     </div>
-                    <div class="card-value" id="totalReceiptsValue">0</div>
+                    <div class="card-value" id="staff-count">0</div>
                     <div class="card-footer">
-                        <span>Total fee receipts</span>
+                        <span>Active: <span id="active-staff">0</span></span>
+                        <a href="staff.html">View All <i class="fas fa-arrow-right"></i></a>
                     </div>
                 </div>
 
-                <!-- Total Expenses Card -->
+                <!-- Finances Card -->
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-money-bill-wave"></i> Total Expenses</h3>
+                        <h3 class="card-title"><i class="fas fa-money-bill-wave"></i> Finances</h3>
+                        <span class="card-meta">This Month</span>
                     </div>
-                    <div class="card-value" id="totalExpensesValue">0</div>
+                    <div class="card-value">KES <span id="monthly-revenue">0</span></div>
                     <div class="card-footer">
-                        <span>Total expenses recorded</span>
-                    </div>
-                </div>
-
-                <!-- Assets Card -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-laptop-house"></i> Total Assets</h3>
-                    </div>
-                    <div class="card-value" id="totalAssetsValue">0</div>
-                    <div class="card-footer">
-                        <span>Total school assets</span>
+                        <span>Balance: <span id="current-balance">KES 0</span></span>
+                        <a href="receipts.html">Details <i class="fas fa-arrow-right"></i></a>
                     </div>
                 </div>
             </div>
 
+            <!-- Charts and Activity Section -->
             <div class="dashboard-grid">
-                <!-- Bar Chart Card -->
+                <!-- Revenue Chart -->
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-chart-bar"></i> Monthly Financials</h3>
+                        <h3 class="card-title"><i class="fas fa-chart-line"></i> Revenue Trend</h3>
+                        <select id="revenue-period" class="form-control">
+                            <option value="month">This Month</option>
+                            <option value="year">This Year</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
                     </div>
                     <div class="chart-container">
-                        <canvas id="financialChart"></canvas>
+                        <canvas id="revenueChart"></canvas>
                     </div>
                 </div>
 
-                <!-- Recent Activity Card -->
+                <!-- Recent Activity -->
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-history"></i> Recent Activity</h3>
+                        <h3 class="card-title"><i class="fas fa-bell"></i> Recent Activity</h3>
+                        <span class="card-meta">Today</span>
                     </div>
-                    <div id="recentActivityList">
+                    <div id="recent-activity">
                         <div class="activity-item">
-                            <div class="activity-icon"><i class="fas fa-sync-alt"></i></div>
+                            <div class="activity-icon"><i class="fas fa-spinner fa-spin"></i></div>
                             <div class="activity-content">
-                                <div class="activity-title">Loading...</div>
-                                <div class="activity-time">Just now</div>
+                                <div class="activity-title">Loading activities...</div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Quick Actions Section -->
+            <!-- Quick Actions -->
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title"><i class="fas fa-bolt"></i> Quick Actions</h3>
                 </div>
                 <div class="quick-actions">
-                    <a href="receipts.html" class="action-btn">
-                        <i class="fas fa-plus"></i>
-                        <span>Add New Receipt</span>
-                    </a>
-                    <a href="expense.html" class="action-btn">
-                        <i class="fas fa-file-invoice"></i>
-                        <span>Record Expense</span>
-                    </a>
                     <a href="students.html" class="action-btn">
                         <i class="fas fa-user-plus"></i>
-                        <span>Add New Student</span>
+                        <span>Add Student</span>
+                    </a>
+                    <a href="receipts.html" class="action-btn">
+                        <i class="fas fa-money-bill"></i>
+                        <span>Record Payment</span>
+                    </a>
+                    <a href="expense.html" class="action-btn">
+                        <i class="fas fa-receipt"></i>
+                        <span>Add Expense</span>
                     </a>
                     <a href="staff.html" class="action-btn">
-                        <i class="fas fa-users-cog"></i>
-                        <span>Manage Staff</span>
+                        <i class="fas fa-user-tie"></i>
+                        <span>Add Staff</span>
+                    </a>
+                    <a href="payroll.html" class="action-btn">
+                        <i class="fas fa-money-check"></i>
+                        <span>Process Payroll</span>
+                    </a>
+                    <a href="assets.html" class="action-btn">
+                        <i class="fas fa-box"></i>
+                        <span>Add Asset</span>
                     </a>
                 </div>
             </div>
@@ -1181,19 +1202,19 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js" type="module"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js" type="module"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js" type="module"></script>
     
     <script type="module">
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
         import { 
             getAuth, 
             onAuthStateChanged, 
             signInWithEmailAndPassword, 
             signOut,
             createUserWithEmailAndPassword,
-            sendPasswordResetEmail,
-            signInWithCustomToken,
-            signInAnonymously
+            sendPasswordResetEmail
         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { 
             getFirestore, 
@@ -1202,11 +1223,23 @@
             getDocs 
         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // IMPORTANT: Use the global variables for Firebase configuration and authentication
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-        
+        // Your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBAA6zY40EwbTmWUx1op1cx52C3y0RK3m0",
+            authDomain: "heriwadi-manager.firebaseapp.com",
+            projectId: "heriwadi-manager",
+            storageBucket: "heriwadi-manager.firebasestorage.app",
+            messagingSenderId: "654632910809",
+            appId: "1:654632910809:web:7c65613d2510402a6663c8",
+            measurementId: "G-LLHS6GLB6E"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
         // DOM elements
         const authContainer = document.getElementById('authContainer');
         const dashboardContent = document.getElementById('dashboardContent');
@@ -1218,6 +1251,7 @@
         const userNameElement = document.getElementById('userName');
         const userEmailElement = document.getElementById('userEmail');
         const userAvatarElement = document.getElementById('userAvatar');
+        const welcomeTitle = document.getElementById('welcomeTitle');
         const authStatusMessage = document.getElementById('authStatusMessage');
 
         // Form toggle links
@@ -1225,20 +1259,7 @@
         const showLoginLink = document.getElementById('showLoginForm');
         const forgotPasswordLink = document.getElementById('forgotPasswordLink');
         const backToLoginLink = document.getElementById('backToLoginForm');
-
-        // Dashboard specific elements
-        const totalStudentsValue = document.getElementById('totalStudentsValue');
-        const totalReceiptsValue = document.getElementById('totalReceiptsValue');
-        const totalExpensesValue = document.getElementById('totalExpensesValue');
-        const totalAssetsValue = document.getElementById('totalAssetsValue');
-        const recentActivityList = document.getElementById('recentActivityList');
-        const financialChartCanvas = document.getElementById('financialChart');
-        const currentDateElement = document.getElementById('currentDate');
-
-        // Global Firebase variables
-        let app, auth, db;
-        let financialChartInstance; // Store the Chart.js instance
-
+        
         // Functions to show/hide sections
         const showLoadingScreen = () => loadingScreen.classList.add('show');
         const hideLoadingScreen = () => loadingScreen.classList.remove('show');
@@ -1247,13 +1268,13 @@
 
         function showMessage(message, type, targetElement) {
             targetElement.textContent = message;
-            targetElement.className = `status-message show ${type}`;
+            targetElement.className = `status-message ${type}`;
+            setTimeout(() => {
+                targetElement.textContent = '';
+                targetElement.className = 'status-message';
+            }, 5000);
         }
         
-        function clearMessage(targetElement) {
-             targetElement.className = 'status-message';
-        }
-
         function setFormLoading(form, isLoading) {
             const button = form.querySelector('button');
             if (isLoading) {
@@ -1264,84 +1285,31 @@
                 button.disabled = false;
             }
         }
-        
-        function setFormsDisabled(disabled) {
-            const forms = [loginForm, signupForm, resetForm];
-            forms.forEach(form => {
-                form.querySelectorAll('input, button, a').forEach(element => {
-                    element.disabled = disabled;
-                    if (disabled) {
-                       element.classList.add('disabled-element');
-                    } else {
-                       element.classList.remove('disabled-element');
-                    }
-                });
-            });
-        }
-        
-        // Main initialization logic
-        async function initializeAppAndAuth() {
-            showLoadingScreen();
-            
-            // Check for valid Firebase configuration
-            if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey) {
-                console.error("Firebase initialization failed: The Firebase configuration object is missing.");
-                showMessage("Firebase initialization failed: This application requires a valid configuration to function. Please make sure Firebase is set up correctly in the environment.", 'error', authStatusMessage);
-                showAuthContainer();
-                setFormsDisabled(true);
-                hideLoadingScreen();
-                return;
-            }
-            
-            // Initialize Firebase services
-            try {
-                app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-                
-                // Set up the authentication state listener
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        // User is signed in.
-                        const userEmail = user.email || 'Anonymous User';
-                        userNameElement.textContent = userEmail.split('@')[0];
-                        userEmailElement.textContent = userEmail;
-                        userAvatarElement.textContent = userEmail.charAt(0).toUpperCase();
-                        
-                        // Display the dashboard and fetch data
-                        showDashboardContent();
-                        fetchDataForDashboard();
-                    } else {
-                        // User is signed out, show the auth container
-                        showAuthContainer();
-                        clearMessage(authStatusMessage);
-                    }
-                    hideLoadingScreen();
-                });
-                
-                // Attempt to sign in with the custom token if available
-                if (initialAuthToken) {
-                    try {
-                        await signInWithCustomToken(auth, initialAuthToken);
-                    } catch (error) {
-                        console.error("Error signing in with custom token:", error);
-                        // Fallback to anonymous sign-in if custom token fails
-                        await signInAnonymously(auth);
-                    }
-                } else {
-                    // If no custom token, sign in anonymously
-                    await signInAnonymously(auth);
-                }
 
-            } catch (error) {
-                console.error("Firebase initialization failed:", error);
-                showMessage(`Initialization error: ${error.message}`, 'error', authStatusMessage);
-                showAuthContainer();
-                hideLoadingScreen();
-                setFormsDisabled(true);
-            }
-        }
+        // Set initial state
+        showLoadingScreen();
 
+        // Auth state listener
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // User is signed in. Now we are certain.
+                const userEmail = user.email;
+                userNameElement.textContent = userEmail.split('@')[0]; // Simple way to get a username
+                userEmailElement.textContent = userEmail;
+                userAvatarElement.textContent = userEmail.charAt(0).toUpperCase();
+
+                // Show dashboard and hide auth container
+                showDashboardContent();
+
+                // ONLY FETCH DATA WHEN A USER IS CONFIRMED TO BE LOGGED IN
+                await fetchDashboardData(user);
+
+            } else {
+                // User is signed out
+                showAuthContainer();
+            }
+            hideLoadingScreen();
+        });
 
         // Event Listeners for form toggles
         showSignupLink.addEventListener('click', (e) => {
@@ -1350,7 +1318,7 @@
             signupForm.classList.remove('hidden');
             document.getElementById('authTitle').textContent = 'Create an Account';
             document.getElementById('authSubtitle').textContent = 'Manage your school with ease';
-            clearMessage(authStatusMessage);
+            authStatusMessage.textContent = '';
         });
 
         showLoginLink.addEventListener('click', (e) => {
@@ -1359,7 +1327,7 @@
             loginForm.classList.remove('hidden');
             document.getElementById('authTitle').textContent = 'Welcome Back';
             document.getElementById('authSubtitle').textContent = 'Sign in to access your dashboard';
-            clearMessage(authStatusMessage);
+            authStatusMessage.textContent = '';
         });
 
         forgotPasswordLink.addEventListener('click', (e) => {
@@ -1368,7 +1336,7 @@
             resetForm.classList.remove('hidden');
             document.getElementById('authTitle').textContent = 'Reset Password';
             document.getElementById('authSubtitle').textContent = 'Enter your email to receive a password reset link';
-            clearMessage(authStatusMessage);
+            authStatusMessage.textContent = '';
         });
         
         backToLoginLink.addEventListener('click', (e) => {
@@ -1377,16 +1345,12 @@
             loginForm.classList.remove('hidden');
             document.getElementById('authTitle').textContent = 'Welcome Back';
             document.getElementById('authSubtitle').textContent = 'Sign in to access your dashboard';
-            clearMessage(authStatusMessage);
+            authStatusMessage.textContent = '';
         });
 
         // Handle Login
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!auth) {
-                showMessage('Login is currently unavailable due to a configuration error.', 'error', authStatusMessage);
-                return;
-            }
             const email = loginForm['loginEmail'].value;
             const password = loginForm['loginPassword'].value;
             setFormLoading(loginForm, true);
@@ -1405,8 +1369,6 @@
                     errorMessage = 'Please enter your password.';
                 } else if (error.code === 'auth/network-request-failed') {
                     errorMessage = 'Network error. Please check your internet connection.';
-                } else if (error.code === 'auth/operation-not-allowed') {
-                    errorMessage = 'Email/password sign-in is not enabled. Please use the platform-provided login.';
                 }
                 showMessage(errorMessage, 'error', authStatusMessage);
             } finally {
@@ -1417,10 +1379,6 @@
         // Handle Signup
         signupForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!auth) {
-                showMessage('Signup is currently unavailable due to a configuration error.', 'error', authStatusMessage);
-                return;
-            }
             const name = signupForm['signupName'].value;
             const email = signupForm['signupEmail'].value;
             const password = signupForm['signupPassword'].value;
@@ -1454,10 +1412,6 @@
         // Handle Password Reset
         resetForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!auth) {
-                showMessage('Password reset is currently unavailable due to a configuration error.', 'error', authStatusMessage);
-                return;
-            }
             const email = resetForm['resetEmail'].value;
             setFormLoading(resetForm, true);
             
@@ -1481,137 +1435,34 @@
         // Handle Logout
         if (logoutButton) {
             logoutButton.addEventListener('click', async () => {
-                if (auth) {
-                    await signOut(auth);
-                }
+                await signOut(auth);
             });
         }
 
-        // Function to fetch all data for the dashboard
-        async function fetchDataForDashboard() {
-            if (!db || !auth.currentUser) {
-                console.error("Firestore is not available or user is not authenticated. Cannot fetch data.");
+        // Function to fetch data from Firestore, now taking the user object as an argument
+        async function fetchDashboardData(user) {
+            // Ensure we have a user before making any Firestore calls
+            if (!user) {
+                console.error("User is not authenticated. Cannot fetch data.");
                 return;
             }
+            
+            const studentsRef = collection(db, 'students');
+            const staffRef = collection(db, 'staff');
 
             try {
-                // Fetch students count
-                const studentsRef = collection(db, `artifacts/${appId}/public/data/students`);
                 const studentSnapshot = await getDocs(studentsRef);
-                totalStudentsValue.textContent = studentSnapshot.size;
+                document.getElementById('student-count').textContent = studentSnapshot.size;
 
-                // Fetch receipts count
-                const receiptsRef = collection(db, `artifacts/${appId}/public/data/receipts`);
-                const receiptSnapshot = await getDocs(receiptsRef);
-                totalReceiptsValue.textContent = receiptSnapshot.size;
+                const staffSnapshot = await getDocs(staffRef);
+                document.getElementById('staff-count').textContent = staffSnapshot.size;
 
-                // Fetch expenses count
-                const expensesRef = collection(db, `artifacts/${appId}/public/data/expenses`);
-                const expenseSnapshot = await getDocs(expensesRef);
-                totalExpensesValue.textContent = expenseSnapshot.size;
-
-                // Fetch assets count
-                const assetsRef = collection(db, `artifacts/${appId}/public/data/assets`);
-                const assetSnapshot = await getDocs(assetsRef);
-                totalAssetsValue.textContent = assetSnapshot.size;
-
-                // --- Placeholder for fetching real-time data for charts/activity list ---
-                // For now, we'll populate with dummy data. You would replace this with a real-time listener (onSnapshot)
-                // in a production app.
-
-                // Example: Populate recent activity list (dummy data)
-                const dummyActivities = [
-                    { title: "New student enrolled: Jane Doe", time: "10 mins ago" },
-                    { title: "Received fees for John Smith", time: "2 hours ago" },
-                    { title: "Paid electricity bill", time: "Yesterday" }
-                ];
-                recentActivityList.innerHTML = dummyActivities.map(activity => `
-                    <div class="activity-item">
-                        <div class="activity-icon"><i class="fas fa-history"></i></div>
-                        <div class="activity-content">
-                            <div class="activity-title">${activity.title}</div>
-                            <div class="activity-time">${activity.time}</div>
-                        </div>
-                    </div>
-                `).join('');
-
-                // Example: Populate chart (dummy data)
-                const financialData = {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                    datasets: [
-                        {
-                            label: 'Receipts',
-                            data: [12000, 19000, 3000, 5000, 20000, 30000],
-                            backgroundColor: 'rgba(67, 97, 238, 0.6)',
-                            borderColor: 'var(--primary-color)',
-                            borderWidth: 1,
-                            borderRadius: 5,
-                        },
-                        {
-                            label: 'Expenses',
-                            data: [8000, 10000, 5000, 4000, 15000, 20000],
-                            backgroundColor: 'rgba(247, 37, 133, 0.6)',
-                            borderColor: 'var(--error-color)',
-                            borderWidth: 1,
-                            borderRadius: 5,
-                        }
-                    ]
-                };
-                
-                // Destroy previous chart instance before creating a new one
-                if (financialChartInstance) {
-                    financialChartInstance.destroy();
-                }
-
-                financialChartInstance = new Chart(financialChartCanvas, {
-                    type: 'bar',
-                    data: financialData,
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: true,
-                            },
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                grid: {
-                                    color: 'var(--medium-gray)',
-                                },
-                            },
-                            x: {
-                                grid: {
-                                    display: false,
-                                },
-                            }
-                        }
-                    },
-                });
-
+                // You would need to add similar logic for your finances and other data
             } catch (error) {
-                console.error("Error fetching dashboard data:", error);
-                showMessage('Error fetching data. Please check your network and permissions.', 'error', document.getElementById('statusMessage'));
+                console.error("Error fetching data:", error);
+                // The error will be 'Missing or insufficient permissions' if a user is not logged in.
             }
         }
-        
-        // Set current date
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        currentDateElement.textContent = new Date().toLocaleDateString(undefined, options);
-
-        // Animate elements on scroll
-        window.addEventListener('scroll', () => {
-            const topNav = document.getElementById('topNav');
-            if (window.scrollY > 0) {
-                topNav.classList.add('scrolled');
-            } else {
-                topNav.classList.remove('scrolled');
-            }
-        });
-        
-        // Call the main initialization function on page load
-        initializeAppAndAuth();
     </script>
 </body>
 </html>
