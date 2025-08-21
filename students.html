@@ -258,7 +258,7 @@
       border: 1px solid #ddd;
       border-radius: var(--border-radius);
       font-size: 1rem;
-      transition: var極端(--transition);
+      transition: var(--transition);
     }
 
     input:focus, select:focus, textarea:focus {
@@ -588,6 +588,39 @@
       background: rgba(255, 255, 255, 0.3);
     }
 
+    .transition-option {
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+
+    .transition-option label {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      cursor: pointer;
+      margin: 0;
+    }
+
+    .transition-option input[type="checkbox"] {
+      width: auto;
+      margin-top: 0.2rem;
+    }
+
+    .transition-option strong {
+      color: var(--primary-color);
+    }
+
+    .transition-preview {
+      background: #e3f2fd;
+      border: 1px solid var(--info-color);
+      border-radius: var(--border-radius);
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
@@ -714,11 +747,11 @@
 
     <!-- Term Transition Management -->
     <div class="term-transition-card slide-in">
-      <h3><i class="fas fa-exchange-alt"></i> Term Transition Management</h3>
-      <p>Manage student data across different academic terms and handle balance carry-forwards.</p>
+      <h3><i class="fas fa-exchange-alt"></i> Smart Term Transition Management</h3>
+      <p>Intelligently manage student data across terms. Students with outstanding balances will carry forward only their balance, while students with no balance get a fresh start with all fees reset to zero for easy adjustment.</p>
       <div class="term-actions">
         <button class="btn" id="startTransitionBtn">
-          <i class="fas fa-arrow-right"></i> Start Term Transition
+          <i class="fas fa-arrow-right"></i> Start Smart Transition
         </button>
         <button class="btn" id="copyStudentsBtn">
           <i class="fas fa-copy"></i> Copy Students
@@ -890,16 +923,24 @@
     </div>
   </div>
 
-  <!-- Term Transition Modal -->
+  <!-- Smart Term Transition Modal -->
   <div id="termTransitionModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 class="modal-title">Term Transition Management</h3>
+        <h3 class="modal-title">Smart Term Transition Management</h3>
         <button class="modal-close" id="closeTermTransitionModal">&times;</button>
       </div>
       <div class="modal-body">
-        <h4>Copy Students to New Term</h4>
-        <p>Select the source and target terms to copy student data with balance carry-forward.</p>
+        <h4>Intelligent Student Data Transfer</h4>
+        <p>This smart transition will analyze each student's balance and handle them appropriately:</p>
+        
+        <div class="transition-preview">
+          <h5><i class="fas fa-brain"></i> Smart Processing Rules:</h5>
+          <ul style="margin: 0.5rem 0 0 1rem;">
+            <li><strong>Students with NO balance:</strong> All fee fields reset to 0, ready for new term adjustments</li>
+            <li><strong>Students with outstanding balance:</strong> Only balance carried forward, all fees reset to 0</li>
+          </ul>
+        </div>
         
         <div class="grid" style="margin: 1.5rem 0;">
           <div class="form-group">
@@ -921,17 +962,29 @@
           </div>
         </div>
 
-        <div class="form-group">
+        <div class="transition-option">
           <label>
-            <input type="checkbox" id="carryForwardBalances" checked style="width: auto; margin-right: 0.5rem;">
-            Carry forward outstanding balances to new term
+            <input type="checkbox" id="smartTransition" checked style="width: auto; margin-right: 0.5rem;">
+            <div>
+              <strong>Enable Smart Transition</strong>
+              <div style="font-size: 0.9rem; color: #666; margin-top: 0.25rem;">
+                Automatically handle students based on their balance status:
+                <br>• No balance → Complete reset (all fees = 0)
+                <br>• Has balance → Carry forward balance only, reset fees
+              </div>
+            </div>
           </label>
         </div>
 
-        <div class="form-group">
+        <div class="transition-option">
           <label>
             <input type="checkbox" id="resetPaidAmounts" checked style="width: auto; margin-right: 0.5rem;">
-            Reset paid amounts (recommended for new term)
+            <div>
+              <strong>Reset Paid Amounts</strong>
+              <div style="font-size: 0.9rem; color: #666; margin-top: 0.25rem;">
+                Set all paid amounts to 0 for the new term (recommended)
+              </div>
+            </div>
           </label>
         </div>
 
@@ -940,7 +993,7 @@
             <i class="fas fa-times"></i> Cancel
           </button>
           <button class="btn btn-success" id="executeTransitionBtn">
-            <i class="fas fa-arrow-right"></i> Execute Transition
+            <i class="fas fa-brain"></i> Execute Smart Transition
           </button>
         </div>
       </div>
@@ -1082,7 +1135,7 @@
       document.getElementById('closeImportModal').addEventListener('click', closeImportModal);
       document.getElementById('closeTermSummaryModal').addEventListener('click', closeTermSummaryModal);
       document.getElementById('cancelTransitionBtn').addEventListener('click', closeTermTransitionModal);
-      document.getElementById('executeTransitionBtn').addEventListener('click', executeTermTransition);
+      document.getElementById('executeTransitionBtn').addEventListener('click', executeSmartTermTransition);
       document.getElementById('cancelImportBtn').addEventListener('click', closeImportModal);
       document.getElementById('confirmImportBtn').addEventListener('click', importStudents);
     }
@@ -1587,12 +1640,12 @@
                 <p><strong>Tuition:</strong> KES ${(s.tuition || 0).toLocaleString('en-KE')}</p>
                 <p><strong>Admission Fee:</strong> KES ${(s.adm || 0).toLocaleString('en-KE')}</p>
                 <p><strong>Book Fund:</strong> KES ${(s.books || 0).toLocaleString('en-KE')}</p>
-                <p><strong>Stationery:</strong> KES ${(s.stationery || 极端的0).toLocaleString('en-KE')}</p>
+                <p><strong>Stationery:</strong> KES ${(s.stationery || 0).toLocaleString('en-KE')}</p>
                 <p><strong>Uniform:</strong> KES ${(s.uniform || 0).toLocaleString('en-KE')}</p>
               </div>
               <div>
                 <p><strong>Lunch:</strong> KES ${(s.lunch || 0).toLocaleString('en-KE')}</p>
-                <p><strong>Transport:</极端的> KES ${(s.transport || 0).toLocaleString('en-KE')}</p>
+                <p><strong>Transport:</strong> KES ${(s.transport || 0).toLocaleString('en-KE')}</p>
                 <p><strong>Trip:</strong> KES ${(s.trip || 0).toLocaleString('en-KE')}</p>
                 <p><strong>Graduation:</strong> KES ${(s.graduation || 0).toLocaleString('en-KE')}</p>
               </div>
@@ -1601,7 +1654,7 @@
             <hr style="margin: 1.5rem 0; border-color: #eee;">
             
             <div style="text-align: center;">
-              <div style="display: inline-block; background: #f8f9fa; padding: 极端的1rem; border-radius: var(--border-radius);">
+              <div style="display: inline-block; background: #f8f9fa; padding: 1rem; border-radius: var(--border-radius);">
                 <p style="margin-bottom: 0.5rem;"><strong>Current Term Fee:</strong></p>
                 <p style="font-size: 1.5rem; font-weight: bold; color: var(--primary-color);">
                   KES ${total.toLocaleString('en-KE')}
@@ -1609,7 +1662,7 @@
                 
                 ${carriedForward > 0 ? `
                 <p style="margin: 1rem 0 0.5rem;"><strong>Carried Forward:</strong></p>
-                <p style极端的="font-size: 1.2rem; font-weight: bold; color: var(--warning-color);">
+                <p style="font-size: 1.2rem; font-weight: bold; color: var(--warning-color);">
                   KES ${carriedForward.toLocaleString('en-KE')}
                 </p>
                 ` : ''}
@@ -1621,7 +1674,7 @@
                 
                 <p style="margin: 1rem 0 0.5rem;"><strong>Outstanding Balance:</strong></p>
                 <p style="font-size: 1.5rem; font-weight: bold; color: ${balance > 0 ? 'var(--danger-color)' : 'var(--success-color)'};">
-                  KES ${Math.abs(balance).极端的toLocaleString('en-KE')}
+                  KES ${Math.abs(balance).toLocaleString('en-KE')}
                 </p>
               </div>
             </div>
@@ -1657,7 +1710,7 @@
     }
 
     function closeTermSummaryModal() {
-      document.getElementById极端的('termSummaryModal').classList.remove('show');
+      document.getElementById('termSummaryModal').classList.remove('show');
     }
 
     // Term transition functions
@@ -1665,10 +1718,11 @@
       document.getElementById('termTransitionModal').classList.add('show');
     }
 
-    async function executeTermTransition() {
+    // NEW SMART TERM TRANSITION FUNCTION
+    async function executeSmartTermTransition() {
       const sourceTerm = parseInt(document.getElementById('sourceTerm').value);
       const targetTerm = parseInt(document.getElementById('targetTerm').value);
-      const carryForwardBalances = document.getElementById('carryForwardBalances').checked;
+      const smartTransition = document.getElementById('smartTransition').checked;
       const resetPaidAmounts = document.getElementById('resetPaidAmounts').checked;
 
       if (sourceTerm === targetTerm) {
@@ -1676,19 +1730,21 @@
         return;
       }
 
-      const confirmMessage = `Are you sure you want to copy students from Term ${sourceTerm} to Term ${targetTerm}?\n\n` +
-                           `- Carry forward balances: ${carryForwardBalances ? 'Yes' : 'No'}\n` +
-                           `- Reset paid amounts: ${resetPaidAmounts ? 'Yes' : 'No'}\n\n` +
-                           `This action will overwrite existing students in Term ${targetTerm} with the same names.`;
+      const confirmMessage = `Execute Smart Term Transition from Term ${sourceTerm} to Term ${targetTerm}?\n\n` +
+                           `Smart Processing Rules:\n` +
+                           `• Students with NO balance: All fees reset to 0\n` +
+                           `• Students with balance: Only balance carried forward, fees reset to 0\n` +
+                           `• Reset paid amounts: ${resetPaidAmounts ? 'Yes' : 'No'}\n\n` +
+                           `This will make it easy to set new term fees for all students.`;
 
       if (!confirm(confirmMessage)) return;
 
       const submitBtn = document.querySelector('#termTransitionModal .btn-success');
       submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing Smart Transition...';
 
       try {
-        showStatus(`Executing term transition from Term ${极端的sourceTerm} to Term ${targetTerm}...`, "loading");
+        showStatus(`Executing smart transition from Term ${sourceTerm} to Term ${targetTerm}...`, "loading");
 
         const sourceCollection = getStudentsCollection(sourceTerm, currentYear);
         const targetCollection = getStudentsCollection(targetTerm, currentYear);
@@ -1702,59 +1758,101 @@
         const batch = db.batch();
         let processedCount = 0;
         let studentsWithBalance = 0;
+        let studentsWithoutBalance = 0;
 
         for (const doc of snapshot.docs) {
           const sourceStudent = doc.data();
           
-          // Calculate carry-forward balance
-          let carriedForwardBalance = 0;
-          if (carryForwardBalances) {
-            const sourceTotal = (sourceStudent.tuition || 0) + (sourceStudent.adm || 0) + 
-                                (sourceStudent.books || 0) + (sourceStudent.stationery || 0) + 
-                                (sourceStudent.uniform || 0) + (sourceStudent.lunch || 0) + 
-                                (sourceStudent.transport || 0) + (sourceStudent.trip || 0) + 
-                                (sourceStudent.graduation || 0);
-            const sourceCarriedForward = sourceStudent.carriedForwardBalance || 0;
-            const sourcePaid = sourceStudent.paid || 0;
-            const sourceBalance = sourceTotal + sourceCarriedForward - sourcePaid;
-            
-            carriedForwardBalance = Math.max(0, sourceBalance);
-            if (carriedForwardBalance > 0) {
+          // Calculate current balance
+          const sourceTotal = (sourceStudent.tuition || 0) + (sourceStudent.adm || 0) + 
+                              (sourceStudent.books || 0) + (sourceStudent.stationery || 0) + 
+                              (sourceStudent.uniform || 0) + (sourceStudent.lunch || 0) + 
+                              (sourceStudent.transport || 0) + (sourceStudent.trip || 0) + 
+                              (sourceStudent.graduation || 0);
+          const sourceCarriedForward = sourceStudent.carriedForwardBalance || 0;
+          const sourcePaid = sourceStudent.paid || 0;
+          const currentBalance = sourceTotal + sourceCarriedForward - sourcePaid;
+          
+          let newStudentData;
+          
+          if (smartTransition) {
+            if (currentBalance > 0) {
+              // Student HAS balance - carry forward balance only, reset all fees
               studentsWithBalance++;
+              newStudentData = {
+                name: sourceStudent.name,
+                class: sourceStudent.class,
+                phone: sourceStudent.phone,
+                // Reset all fee fields to 0
+                tuition: 0,
+                adm: 0,
+                books: 0,
+                stationery: 0,
+                uniform: 0,
+                lunch: 0,
+                transport: 0,
+                trip: 0,
+                graduation: 0,
+                total: 0,
+                paid: resetPaidAmounts ? 0 : 0, // Always reset paid for new term
+                balance: currentBalance, // Will be recalculated
+                carriedForwardBalance: currentBalance, // Carry forward the balance
+                term: targetTerm,
+                year: currentYear,
+                transitionType: 'smart_with_balance',
+                copiedFrom: `term_${sourceTerm}`,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              };
+            } else {
+              // Student has NO balance - complete reset, ready for new fees
+              studentsWithoutBalance++;
+              newStudentData = {
+                name: sourceStudent.name,
+                class: sourceStudent.class,
+                phone: sourceStudent.phone,
+                // Reset all fee fields to 0
+                tuition: 0,
+                adm: 0,
+                books: 0,
+                stationery: 0,
+                uniform: 0,
+                lunch: 0,
+                transport: 0,
+                trip: 0,
+                graduation: 0,
+                total: 0,
+                paid: 0,
+                balance: 0,
+                carriedForwardBalance: 0, // No balance to carry forward
+                term: targetTerm,
+                year: currentYear,
+                transitionType: 'smart_no_balance',
+                copiedFrom: `term_${sourceTerm}`,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              };
             }
+          } else {
+            // Regular transition (old behavior)
+            const carriedForwardBalance = Math.max(0, currentBalance);
+            newStudentData = {
+              ...sourceStudent,
+              term: targetTerm,
+              paid: resetPaidAmounts ? 0 : (sourceStudent.paid || 0),
+              carriedForwardBalance: carriedForwardBalance,
+              transitionType: 'regular',
+              copiedFrom: `term_${sourceTerm}`,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            };
+            // Recalculate balance
+            newStudentData.balance = newStudentData.total + newStudentData.carriedForwardBalance - newStudentData.paid;
           }
 
           // Check if student already exists in target term
           const existingQuery = await targetCollection.where('name', '==', sourceStudent.name).get();
           
-          // NEW: Reset all fee amounts to zero, only carry forward the balance
-          const newStudentData = {
-            name: sourceStudent.name,
-            class: sourceStudent.class,
-            phone: sourceStudent.phone,
-            tuition: 0, // Reset to zero
-            adm: 0, // Reset to zero
-            books: 0, // Reset to zero
-            stationery: 0, // Reset to zero
-            uniform: 0, // Reset to zero
-            lunch: 0, // Reset to zero
-            transport: 0, // Reset to zero
-            trip: 0, // Reset to zero
-            graduation: 0, // Reset to zero
-            total: 0, // Reset to zero
-            paid: resetPaidAmounts ? 0 : (sourceStudent.paid || 0),
-            balance: 0, // Will be recalculated
-            carriedForwardBalance: carriedForwardBalance,
-            term: targetTerm,
-            year: currentYear,
-            copiedFrom: `term_${sourceTerm}`,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          };
-
-          // Recalculate balance
-          newStudentData.balance = newStudentData.total + newStudentData.carriedForwardBalance - newStudentData.paid;
-
           if (!existingQuery.empty) {
             // Update existing student
             const existingDoc = existingQuery.docs[0];
@@ -1770,7 +1868,16 @@
 
         await batch.commit();
 
-        showStatus(`Successfully copied ${processedCount} students from Term ${sourceTerm} to Term ${targetTerm}. ${studentsWithBalance} students had balances carried forward.`, "success");
+        let successMessage = `Smart transition completed successfully!\n\n` +
+                           `Processed: ${processedCount} students\n`;
+        
+        if (smartTransition) {
+          successMessage += `• ${studentsWithBalance} students with balance (balance carried forward, fees reset)\n` +
+                          `• ${studentsWithoutBalance} students without balance (complete reset)\n\n` +
+                          `All students are now ready for new term fee adjustments!`;
+        }
+
+        showStatus(successMessage, "success");
         
         if (targetTerm === currentTerm) {
           loadStudents();
@@ -1778,28 +1885,29 @@
         
         closeTermTransitionModal();
 
-        // Record transition in system settings
-        await db.collection('system_settings').doc(`transition_${sourceTerm}_to_${targetTerm}_${Date.now()}`).set({
+        // Record transition details
+        await db.collection('system_settings').doc(`smart_transition_${sourceTerm}_to_${targetTerm}_${Date.now()}`).set({
           sourceTerm,
           targetTerm,
           studentsProcessed: processedCount,
           studentsWithBalance,
-          carryForwardBalances,
+          studentsWithoutBalance,
+          smartTransition,
           resetPaidAmounts,
           executedAt: new Date().toISOString(),
-          executedBy: 'system'
+          transitionType: 'smart'
         });
 
       } catch (error) {
-        console.error('Error executing term transition:', error);
-        showStatus("Error executing term transition: " + error.message, "error");
+        console.error('Error executing smart term transition:', error);
+        showStatus("Error executing smart term transition: " + error.message, "error");
       } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class极端的('fas fa-arrow-right"></i> Execute Transition';
+        submitBtn.innerHTML = '<i class="fas fa-brain"></i> Execute Smart Transition';
       }
     }
 
-    // Copy students between terms (simpler version)
+    // Copy students between terms (simpler version - kept for compatibility)
     async function copyStudentsBetweenTerms() {
       const fromTerm = prompt(`Copy students FROM which term? (1, 2, or 3)`, currentTerm.toString());
       const toTerm = prompt(`Copy students TO which term? (1, 2, or 3)`, (currentTerm === 3 ? 1 : currentTerm + 1).toString());
@@ -1810,7 +1918,7 @@
         return;
       }
 
-      if (!confirm(`Copy all students from Term ${fromTerm} to Term ${toTerm}? This will carry forward outstanding balances and reset all fee amounts to zero.`)) {
+      if (!confirm(`Copy all students from Term ${fromTerm} to Term ${toTerm}? This will carry forward outstanding balances and reset paid amounts.`)) {
         return;
       }
 
@@ -1828,7 +1936,6 @@
 
         const batch = db.batch();
         let processedCount = 0;
-        let studentsWithBalance = 0;
 
         for (const doc of snapshot.docs) {
           const sourceStudent = doc.data();
@@ -1842,31 +1949,16 @@
           const sourceCarriedForward = sourceStudent.carriedForwardBalance || 0;
           const sourcePaid = sourceStudent.paid || 0;
           const balanceToCarryForward = Math.max(0, sourceTotal + sourceCarriedForward - sourcePaid);
-          
-          if (balanceToCarryForward > 0) {
-            studentsWithBalance++;
-          }
 
           // Check if student already exists in target term
           const existingQuery = await toCollection.where('name', '==', sourceStudent.name).get();
           
-          // NEW: Reset all fee amounts to zero, only carry forward the balance
           const studentData = {
-            name: sourceStudent.name,
-            class: sourceStudent.class,
-            phone: sourceStudent.phone,
-            tuition: 0, // Reset to zero
-            adm: 0, // Reset to zero
-            books: 0, // Reset to zero
-            stationery: 0, // Reset to zero
-            uniform: 0, // Reset to zero
-            lunch: 0, // Reset to zero
-            transport: 0, // Reset to zero
-            trip: 0, // Reset to zero
-            graduation: 0, // Reset to zero
-            total: 0, // Reset to zero
+            ...sourceStudent,
+            term: parseInt(toTerm),
             paid: 0, // Reset paid amount for new term
             carriedForwardBalance: balanceToCarryForward,
+            transitionType: 'simple_copy',
             copiedFrom: `term_${fromTerm}`,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
@@ -1889,7 +1981,7 @@
         }
 
         await batch.commit();
-        showStatus(`Successfully copied ${processedCount} students from Term ${fromTerm} to Term ${toTerm}. ${studentsWithBalance} students had balances carried forward.`, "success");
+        showStatus(`Successfully copied ${processedCount} students from Term ${fromTerm} to Term ${toTerm}`, "success");
         
         if (parseInt(toTerm) === currentTerm) {
           loadStudents();
@@ -1905,7 +1997,7 @@
       const modal = document.getElementById('termSummaryModal');
       const content = document.getElementById('termSummaryContent');
       
-      content.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner极端的fa-spin"></i> Loading term summary...</div>';
+      content.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading term summary...</div>';
       modal.classList.add('show');
 
       try {
@@ -1925,16 +2017,20 @@
             continue;
           }
 
-          const students = snapshot.docs.map(doc => ({ id:极端的doc.id, ...doc.data() }));
+          const students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           const totalStudents = students.length;
           const totalFees = students.reduce((sum, s) => {
             return sum + (s.tuition || 0) + (s.adm || 0) + (s.books || 0) + 
                    (s.stationery || 0) + (s.uniform || 0) + 
-                   (s.lunch || 0) + (s.transport || 0) + (s.trip || 极端的0) + (s.graduation || 0);
+                   (s.lunch || 0) + (s.transport || 0) + (s.trip || 0) + (s.graduation || 0);
           }, 0);
-          const totalPaid = students.reduce极端的((sum, s) => sum + (s.paid || 0), 0);
+          const totalPaid = students.reduce((sum, s) => sum + (s.paid || 0), 0);
           const totalCarriedForward = students.reduce((sum, s) => sum + (s.carriedForwardBalance || 0), 0);
           const totalBalance = totalFees + totalCarriedForward - totalPaid;
+
+          // Count smart transition types
+          const smartWithBalance = students.filter(s => s.transitionType === 'smart_with_balance').length;
+          const smartNoBalance = students.filter(s => s.transitionType === 'smart_no_balance').length;
 
           summaryHtml += `
             <div style="margin: 1.5rem 0; padding: 1rem; background: ${term === currentTerm ? '#e3f2fd' : '#f8f9fa'}; border-radius: var(--border-radius); ${term === currentTerm ? 'border: 2px solid var(--primary-color);' : ''}">
@@ -1943,9 +2039,17 @@
                 <div><strong>Students:</strong> ${totalStudents}</div>
                 <div><strong>Term Fees:</strong> KES ${totalFees.toLocaleString('en-KE')}</div>
                 <div><strong>Carried Forward:</strong> KES ${totalCarriedForward.toLocaleString('en-KE')}</div>
-                <div><strong>Paid:</strong> KES ${totalPaid极端的.toLocaleString('en-KE')}</div>
-                <div><极端的strong>Balance:</strong> <span class="${totalBalance > 0 ? 'negative' : 'positive'}">KES ${Math.abs(totalBalance).toLocaleString('en-KE')}</span></div>
+                <div><strong>Paid:</strong> KES ${totalPaid.toLocaleString('en-KE')}</div>
+                <div><strong>Balance:</strong> <span class="${totalBalance > 0 ? 'negative' : 'positive'}">KES ${Math.abs(totalBalance).toLocaleString('en-KE')}</span></div>
               </div>
+              
+              ${(smartWithBalance > 0 || smartNoBalance > 0) ? `
+              <div style="background: rgba(0, 168, 232, 0.1); padding: 0.5rem; border-radius: 4px; margin: 0.5rem 0; font-size: 0.9rem;">
+                <strong>Smart Transition Info:</strong> 
+                ${smartWithBalance > 0 ? `${smartWithBalance} with balance carried forward, ` : ''}
+                ${smartNoBalance > 0 ? `${smartNoBalance} with complete reset` : ''}
+              </div>
+              ` : ''}
               
               <details>
                 <summary style="cursor: pointer; font-weight: bold; margin: 0.5rem 0;">Class Breakdown</summary>
@@ -1979,7 +2083,7 @@
         const students = [];
         
         snapshot.forEach(doc => {
-          const s极端的= doc.data();
+          const s = doc.data();
           const total = (s.tuition || 0) + (s.adm || 0) + (s.books || 0) + 
                        (s.stationery || 0) + (s.uniform || 0) + 
                        (s.lunch || 0) + (s.transport || 0) + (s.trip || 0) + (s.graduation || 0);
@@ -2004,7 +2108,8 @@
             'Current Term Fees': total,
             'Carried Forward': carriedForward,
             'Amount Paid': paid,
-            'Outstanding Balance': balance
+            'Outstanding Balance': balance,
+            'Transition Type': s.transitionType || 'manual'
           });
         });
 
@@ -2023,7 +2128,7 @@
       }
     }
 
-    async function exportClass极端的ToExcel() {
+    async function exportClassToExcel() {
       const classFilter = document.getElementById('classFilter').value;
       if (!classFilter) {
         showStatus("Please select a class to export.", "error");
@@ -2037,9 +2142,9 @@
         
         snapshot.forEach(doc => {
           const s = doc.data();
-          const total = (s.tuition || 0) + (s.adm || 0) + (s极端的.books || 0) + 
+          const total = (s.tuition || 0) + (s.adm || 0) + (s.books || 0) + 
                        (s.stationery || 0) + (s.uniform || 0) + 
-                       (极端的s.lunch || 0) + (s.transport || 0) + (s.trip || 0) + (s.graduation || 0);
+                       (s.lunch || 0) + (s.transport || 0) + (s.trip || 0) + (s.graduation || 0);
           const paid = s.paid || 0;
           const carriedForward = s.carriedForwardBalance || 0;
           const balance = total + carriedForward - paid;
@@ -2054,14 +2159,15 @@
             'Book Fund': s.books || 0,
             Stationery: s.stationery || 0,
             Uniform: s.uniform || 0,
-            Lunch: s极端的.lunch || 0,
+            Lunch: s.lunch || 0,
             Transport: s.transport || 0,
             Trip: s.trip || 0,
             Graduation: s.graduation || 0,
             'Current Term Fees': total,
             'Carried Forward': carriedForward,
             'Amount Paid': paid,
-            'Outstanding Balance': balance
+            'Outstanding Balance': balance,
+            'Transition Type': s.transitionType || 'manual'
           });
         });
 
@@ -2071,8 +2177,8 @@
         }
 
         const worksheet = XLSX.utils.json_to_sheet(students);
-        const workbook =极端的XLSX.utils.book_new();
-        XLSX极端的.utils.book_append_sheet(workbook, worksheet, `${classFilter} Term ${currentTerm}`);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, `${classFilter} Term ${currentTerm}`);
         XLSX.writeFile(workbook, `${classFilter}_term_${currentTerm}_${currentYear}_${new Date().toISOString().split('T')[0]}.xlsx`);
         showStatus(`Students from ${classFilter} (Term ${currentTerm}) exported to Excel successfully!`, "success");
       } catch (error) {
@@ -2115,6 +2221,7 @@
             term: currentTerm,
             year: currentYear,
             carriedForwardBalance: student.carriedForwardBalance || 0,
+            transitionType: 'imported',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           };
@@ -2124,11 +2231,11 @@
         });
 
         await batch.commit();
-        showStatus(`Successfully imported ${importedStudents.length} students to Term ${极端的currentTerm}`, "success");
+        showStatus(`Successfully imported ${importedStudents.length} students to Term ${currentTerm}`, "success");
         loadStudents();
         closeImportModal();
       } catch (error) {
-        showStatus("极端的Error importing students: " + error.message, "error");
+        showStatus("Error importing students: " + error.message, "error");
       } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="fas fa-file-import"></i> Import';
