@@ -777,8 +777,8 @@
               <label for="trip">Trip (KES)</label>
               <input type="number" id="trip" value="0" min="0" />
             </div>
-          </div>
-          <div class="form-group">
+            
+            <div class="form-group">
               <label for="graduation">Graduation (KES)</label>
               <input type="number" id="graduation" value="0" min="0" />
             </div>
@@ -1321,7 +1321,7 @@
       const lunch = +document.getElementById("lunch").value || 0;
       const transport = +document.getElementById("transport").value || 0;
       const trip = +document.getElementById("trip").value || 0;
-      const trip = +document.getElementById("graduation").value || 0;
+      const graduation = +document.getElementById("graduation").value || 0;
       
       if (!name || !sclass || !phone) {
         showStatus("Please fill in all required fields (Name, Class, Phone)", "error");
@@ -1511,7 +1511,7 @@
 
         const printWindow = window.open('', '', 'height=800,width=900');
         
-        // Create a proper HTML document with the logo properly referenced
+        // Create a proper HTML document without referencing missing logo
         printWindow.document.write(`
           <html>
             <head>
@@ -1537,6 +1537,12 @@
                   height: 70px;
                   margin: 0 auto 10px;
                   display: block;
+                  border: 2px solid #000;
+                  border-radius: 50%;
+                  background: #f0f0f0;
+                  line-height: 66px;
+                  text-align: center;
+                  font-weight: bold;
                 }
                 .school-motto {
                   font-size: 12px;
@@ -1660,8 +1666,8 @@
             </head>
             <body>
               <div class="header">
-                <!-- FIXED: Use the correct path to your logo -->
-                <img src="photos/school-logo.jpg" class="school-logo" alt="School Logo">
+                <!-- Placeholder logo without external reference -->
+                <div class="school-logo">HCS</div>
                 <div class="school-motto">LEARN, LEAD, ACHIEVE</div>
                 <div class="school-name">HERIWADI CHRISTIAN SCHOOLS LTD</div>
                 <div class="contact-info">Physical Address: Ongata Rongai</div>
@@ -1716,8 +1722,8 @@
                       { name: 'Book Fund', amount: student.books || 0 },
                       { name: 'Stationery', amount: student.stationery || 0 },
                       { name: 'Transport', amount: student.transport || 0 },
-                      { name: 'Trip', amount: student.trip || 0 }
-                      { name: 'graduation', amount: student.graduation || 0 }
+                      { name: 'Trip', amount: student.trip || 0 },
+                      { name: 'Graduation', amount: student.graduation || 0 }
                     ];
                     let rows = '';
 
@@ -1779,7 +1785,7 @@
         `);
         printWindow.document.close();
         
-        // Wait for the image to load before printing
+        // Wait for the content to load before printing
         setTimeout(() => {
           printWindow.print();
           printWindow.close();
@@ -1857,8 +1863,8 @@
 
             doc.autoTable({
               startY: 95,
-              head: [['Student', 'Tuition', 'Adm Fee', 'Lunch', 'Uniform', 'Book Fund', 'Stationery', 'Transport', 'Trip', 'Paid', 'Balance']],
-              body: tableData.flat(),
+              head: [['Student', 'Tuition', 'Adm Fee', 'Lunch', 'Uniform', 'Book Fund', 'Stationery', 'Transport', 'Trip', 'Graduation', 'Paid', 'Balance']],
+              body: tableData.filter(row => row.length > 0),
               theme: 'grid',
               styles: { fontSize: 8, cellPadding: 2 },
               headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] }
@@ -1956,9 +1962,9 @@
               startY: 145,
               head: [['School fees', 'Admission fees', 'Caution fees', 'Interview', 'Tuition',
                      'Lunch', 'Swimming', 'Uniform', 'Book fund', 'Medical',
-                     'Stationery', 'Transport', 'Trip','graduation', 'School Activities', 'AMOUNT (KSHS)']],
+                     'Stationery', 'Transport', 'Trip', 'Graduation', 'School Activities', 'AMOUNT (KSHS)']],
               body: tableData,
-              foot: [['', '', '', '', '', '', '', '', '', '', '', '', '', 'TOTAL', receipt.paid.toString()]],
+              foot: [['', '', '', '', '', '', '', '', '', '', '', '', '', '', 'TOTAL', receipt.paid.toString()]],
               theme: 'grid',
               styles: { fontSize: 8, cellPadding: 2 },
               headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] },
@@ -2018,7 +2024,7 @@
               { name: 'Book Fund', amount: student.books || 0 },
               { name: 'Stationery', amount: student.stationery || 0 },
               { name: 'Transport', amount: student.transport || 0 },
-              { name: 'Trip', amount: student.trip || 0 }
+              { name: 'Trip', amount: student.trip || 0 },
               { name: 'Graduation', amount: student.graduation || 0 }
             ];
 
