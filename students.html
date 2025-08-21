@@ -258,7 +258,7 @@
       border: 1px solid #ddd;
       border-radius: var(--border-radius);
       font-size: 1rem;
-      transition: var(--transition);
+      transition: var極端(--transition);
     }
 
     input:focus, select:focus, textarea:focus {
@@ -425,7 +425,7 @@
       position: relative;
       transform: translateY(-20px);
       transition: transform 0.3s ease;
-      box-shadow: 0 10px極端25px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     }
 
     .modal.show .modal-content {
@@ -1587,12 +1587,12 @@
                 <p><strong>Tuition:</strong> KES ${(s.tuition || 0).toLocaleString('en-KE')}</p>
                 <p><strong>Admission Fee:</strong> KES ${(s.adm || 0).toLocaleString('en-KE')}</p>
                 <p><strong>Book Fund:</strong> KES ${(s.books || 0).toLocaleString('en-KE')}</p>
-                <p><strong>Stationery:</strong> KES ${(s.stationery || 0).toLocaleString('en-KE')}</p>
+                <p><strong>Stationery:</strong> KES ${(s.stationery || 极端的0).toLocaleString('en-KE')}</p>
                 <p><strong>Uniform:</strong> KES ${(s.uniform || 0).toLocaleString('en-KE')}</p>
               </div>
               <div>
                 <p><strong>Lunch:</strong> KES ${(s.lunch || 0).toLocaleString('en-KE')}</p>
-                <p><strong>Transport:</strong> KES ${(s.transport || 0).toLocaleString('en-KE')}</p>
+                <p><strong>Transport:</极端的> KES ${(s.transport || 0).toLocaleString('en-KE')}</p>
                 <p><strong>Trip:</strong> KES ${(s.trip || 0).toLocaleString('en-KE')}</p>
                 <p><strong>Graduation:</strong> KES ${(s.graduation || 0).toLocaleString('en-KE')}</p>
               </div>
@@ -1601,7 +1601,7 @@
             <hr style="margin: 1.5rem 0; border-color: #eee;">
             
             <div style="text-align: center;">
-              <div style="display: inline-block; background: #f8f9fa; padding: 1rem; border-radius: var(--border-radius);">
+              <div style="display: inline-block; background: #f8f9fa; padding: 极端的1rem; border-radius: var(--border-radius);">
                 <p style="margin-bottom: 0.5rem;"><strong>Current Term Fee:</strong></p>
                 <p style="font-size: 1.5rem; font-weight: bold; color: var(--primary-color);">
                   KES ${total.toLocaleString('en-KE')}
@@ -1609,7 +1609,7 @@
                 
                 ${carriedForward > 0 ? `
                 <p style="margin: 1rem 0 0.5rem;"><strong>Carried Forward:</strong></p>
-                <p style="font-size: 1.2rem; font-weight: bold; color: var(--warning-color);">
+                <p style极端的="font-size: 1.2rem; font-weight: bold; color: var(--warning-color);">
                   KES ${carriedForward.toLocaleString('en-KE')}
                 </p>
                 ` : ''}
@@ -1621,7 +1621,7 @@
                 
                 <p style="margin: 1rem 0 0.5rem;"><strong>Outstanding Balance:</strong></p>
                 <p style="font-size: 1.5rem; font-weight: bold; color: ${balance > 0 ? 'var(--danger-color)' : 'var(--success-color)'};">
-                  KES ${Math.abs(balance).toLocaleString('en-KE')}
+                  KES ${Math.abs(balance).极端的toLocaleString('en-KE')}
                 </p>
               </div>
             </div>
@@ -1657,7 +1657,7 @@
     }
 
     function closeTermSummaryModal() {
-      document.getElementById('termSummaryModal').classList.remove('show');
+      document.getElementById极端的('termSummaryModal').classList.remove('show');
     }
 
     // Term transition functions
@@ -1688,7 +1688,7 @@
       submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
       try {
-        showStatus(`Executing term transition from Term ${sourceTerm} to Term ${targetTerm}...`, "loading");
+        showStatus(`Executing term transition from Term ${极端的sourceTerm} to Term ${targetTerm}...`, "loading");
 
         const sourceCollection = getStudentsCollection(sourceTerm, currentYear);
         const targetCollection = getStudentsCollection(targetTerm, currentYear);
@@ -1701,6 +1701,7 @@
 
         const batch = db.batch();
         let processedCount = 0;
+        let studentsWithBalance = 0;
 
         for (const doc of snapshot.docs) {
           const sourceStudent = doc.data();
@@ -1718,27 +1719,29 @@
             const sourceBalance = sourceTotal + sourceCarriedForward - sourcePaid;
             
             carriedForwardBalance = Math.max(0, sourceBalance);
+            if (carriedForwardBalance > 0) {
+              studentsWithBalance++;
+            }
           }
 
           // Check if student already exists in target term
           const existingQuery = await targetCollection.where('name', '==', sourceStudent.name).get();
           
+          // NEW: Reset all fee amounts to zero, only carry forward the balance
           const newStudentData = {
             name: sourceStudent.name,
             class: sourceStudent.class,
             phone: sourceStudent.phone,
-            tuition: sourceStudent.tuition || 0,
-            adm: sourceStudent.adm || 0,
-            books: sourceStudent.books || 0,
-            stationery: sourceStudent.stationery || 0,
-            uniform: sourceStudent.uniform || 0,
-            lunch: sourceStudent.lunch || 0,
-            transport: sourceStudent.transport || 0,
-            trip: sourceStudent.trip || 0,
-            graduation: sourceStudent.graduation || 0,
-            total: (sourceStudent.tuition || 0) + (sourceStudent.adm || 0) + (sourceStudent.books || 0) + 
-                   (sourceStudent.stationery || 0) + (sourceStudent.uniform || 0) + 
-                   (sourceStudent.lunch || 0) + (sourceStudent.transport || 0) + (sourceStudent.trip || 0) + (sourceStudent.graduation || 0),
+            tuition: 0, // Reset to zero
+            adm: 0, // Reset to zero
+            books: 0, // Reset to zero
+            stationery: 0, // Reset to zero
+            uniform: 0, // Reset to zero
+            lunch: 0, // Reset to zero
+            transport: 0, // Reset to zero
+            trip: 0, // Reset to zero
+            graduation: 0, // Reset to zero
+            total: 0, // Reset to zero
             paid: resetPaidAmounts ? 0 : (sourceStudent.paid || 0),
             balance: 0, // Will be recalculated
             carriedForwardBalance: carriedForwardBalance,
@@ -1767,7 +1770,7 @@
 
         await batch.commit();
 
-        showStatus(`Successfully copied ${processedCount} students from Term ${sourceTerm} to Term ${targetTerm}`, "success");
+        showStatus(`Successfully copied ${processedCount} students from Term ${sourceTerm} to Term ${targetTerm}. ${studentsWithBalance} students had balances carried forward.`, "success");
         
         if (targetTerm === currentTerm) {
           loadStudents();
@@ -1780,6 +1783,7 @@
           sourceTerm,
           targetTerm,
           studentsProcessed: processedCount,
+          studentsWithBalance,
           carryForwardBalances,
           resetPaidAmounts,
           executedAt: new Date().toISOString(),
@@ -1791,7 +1795,7 @@
         showStatus("Error executing term transition: " + error.message, "error");
       } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Execute Transition';
+        submitBtn.innerHTML = '<i class极端的('fas fa-arrow-right"></i> Execute Transition';
       }
     }
 
@@ -1806,7 +1810,7 @@
         return;
       }
 
-      if (!confirm(`Copy all students from Term ${fromTerm} to Term ${toTerm}? This will carry forward outstanding balances and reset paid amounts.`)) {
+      if (!confirm(`Copy all students from Term ${fromTerm} to Term ${toTerm}? This will carry forward outstanding balances and reset all fee amounts to zero.`)) {
         return;
       }
 
@@ -1824,6 +1828,7 @@
 
         const batch = db.batch();
         let processedCount = 0;
+        let studentsWithBalance = 0;
 
         for (const doc of snapshot.docs) {
           const sourceStudent = doc.data();
@@ -1837,13 +1842,29 @@
           const sourceCarriedForward = sourceStudent.carriedForwardBalance || 0;
           const sourcePaid = sourceStudent.paid || 0;
           const balanceToCarryForward = Math.max(0, sourceTotal + sourceCarriedForward - sourcePaid);
+          
+          if (balanceToCarryForward > 0) {
+            studentsWithBalance++;
+          }
 
           // Check if student already exists in target term
           const existingQuery = await toCollection.where('name', '==', sourceStudent.name).get();
           
+          // NEW: Reset all fee amounts to zero, only carry forward the balance
           const studentData = {
-            ...sourceStudent,
-            term: parseInt(toTerm),
+            name: sourceStudent.name,
+            class: sourceStudent.class,
+            phone: sourceStudent.phone,
+            tuition: 0, // Reset to zero
+            adm: 0, // Reset to zero
+            books: 0, // Reset to zero
+            stationery: 0, // Reset to zero
+            uniform: 0, // Reset to zero
+            lunch: 0, // Reset to zero
+            transport: 0, // Reset to zero
+            trip: 0, // Reset to zero
+            graduation: 0, // Reset to zero
+            total: 0, // Reset to zero
             paid: 0, // Reset paid amount for new term
             carriedForwardBalance: balanceToCarryForward,
             copiedFrom: `term_${fromTerm}`,
@@ -1868,7 +1889,7 @@
         }
 
         await batch.commit();
-        showStatus(`Successfully copied ${processedCount} students from Term ${fromTerm} to Term ${toTerm}`, "success");
+        showStatus(`Successfully copied ${processedCount} students from Term ${fromTerm} to Term ${toTerm}. ${studentsWithBalance} students had balances carried forward.`, "success");
         
         if (parseInt(toTerm) === currentTerm) {
           loadStudents();
@@ -1884,7 +1905,7 @@
       const modal = document.getElementById('termSummaryModal');
       const content = document.getElementById('termSummaryContent');
       
-      content.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading term summary...</div>';
+      content.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner极端的fa-spin"></i> Loading term summary...</div>';
       modal.classList.add('show');
 
       try {
@@ -1904,14 +1925,14 @@
             continue;
           }
 
-          const students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          const students = snapshot.docs.map(doc => ({ id:极端的doc.id, ...doc.data() }));
           const totalStudents = students.length;
           const totalFees = students.reduce((sum, s) => {
             return sum + (s.tuition || 0) + (s.adm || 0) + (s.books || 0) + 
                    (s.stationery || 0) + (s.uniform || 0) + 
-                   (s.lunch || 0) + (s.transport || 0) + (s.trip || 0) + (s.graduation || 0);
+                   (s.lunch || 0) + (s.transport || 0) + (s.trip || 极端的0) + (s.graduation || 0);
           }, 0);
-          const totalPaid = students.reduce((sum, s) => sum + (s.paid || 0), 0);
+          const totalPaid = students.reduce极端的((sum, s) => sum + (s.paid || 0), 0);
           const totalCarriedForward = students.reduce((sum, s) => sum + (s.carriedForwardBalance || 0), 0);
           const totalBalance = totalFees + totalCarriedForward - totalPaid;
 
@@ -1922,8 +1943,8 @@
                 <div><strong>Students:</strong> ${totalStudents}</div>
                 <div><strong>Term Fees:</strong> KES ${totalFees.toLocaleString('en-KE')}</div>
                 <div><strong>Carried Forward:</strong> KES ${totalCarriedForward.toLocaleString('en-KE')}</div>
-                <div><strong>Paid:</strong> KES ${totalPaid.toLocaleString('en-KE')}</div>
-                <div><strong>Balance:</strong> <span class="${totalBalance > 0 ? 'negative' : 'positive'}">KES ${Math.abs(totalBalance).toLocaleString('en-KE')}</span></div>
+                <div><strong>Paid:</strong> KES ${totalPaid极端的.toLocaleString('en-KE')}</div>
+                <div><极端的strong>Balance:</strong> <span class="${totalBalance > 0 ? 'negative' : 'positive'}">KES ${Math.abs(totalBalance).toLocaleString('en-KE')}</span></div>
               </div>
               
               <details>
@@ -1958,7 +1979,7 @@
         const students = [];
         
         snapshot.forEach(doc => {
-          const s = doc.data();
+          const s极端的= doc.data();
           const total = (s.tuition || 0) + (s.adm || 0) + (s.books || 0) + 
                        (s.stationery || 0) + (s.uniform || 0) + 
                        (s.lunch || 0) + (s.transport || 0) + (s.trip || 0) + (s.graduation || 0);
@@ -2002,7 +2023,7 @@
       }
     }
 
-    async function exportClassToExcel() {
+    async function exportClass极端的ToExcel() {
       const classFilter = document.getElementById('classFilter').value;
       if (!classFilter) {
         showStatus("Please select a class to export.", "error");
@@ -2016,9 +2037,9 @@
         
         snapshot.forEach(doc => {
           const s = doc.data();
-          const total = (s.tuition || 0) + (s.adm || 0) + (s.books || 0) + 
+          const total = (s.tuition || 0) + (s.adm || 0) + (s极端的.books || 0) + 
                        (s.stationery || 0) + (s.uniform || 0) + 
-                       (s.lunch || 0) + (s.transport || 0) + (s.trip || 0) + (s.graduation || 0);
+                       (极端的s.lunch || 0) + (s.transport || 0) + (s.trip || 0) + (s.graduation || 0);
           const paid = s.paid || 0;
           const carriedForward = s.carriedForwardBalance || 0;
           const balance = total + carriedForward - paid;
@@ -2033,7 +2054,7 @@
             'Book Fund': s.books || 0,
             Stationery: s.stationery || 0,
             Uniform: s.uniform || 0,
-            Lunch: s.lunch || 0,
+            Lunch: s极端的.lunch || 0,
             Transport: s.transport || 0,
             Trip: s.trip || 0,
             Graduation: s.graduation || 0,
@@ -2050,8 +2071,8 @@
         }
 
         const worksheet = XLSX.utils.json_to_sheet(students);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, `${classFilter} Term ${currentTerm}`);
+        const workbook =极端的XLSX.utils.book_new();
+        XLSX极端的.utils.book_append_sheet(workbook, worksheet, `${classFilter} Term ${currentTerm}`);
         XLSX.writeFile(workbook, `${classFilter}_term_${currentTerm}_${currentYear}_${new Date().toISOString().split('T')[0]}.xlsx`);
         showStatus(`Students from ${classFilter} (Term ${currentTerm}) exported to Excel successfully!`, "success");
       } catch (error) {
@@ -2103,11 +2124,11 @@
         });
 
         await batch.commit();
-        showStatus(`Successfully imported ${importedStudents.length} students to Term ${currentTerm}`, "success");
+        showStatus(`Successfully imported ${importedStudents.length} students to Term ${极端的currentTerm}`, "success");
         loadStudents();
         closeImportModal();
       } catch (error) {
-        showStatus("Error importing students: " + error.message, "error");
+        showStatus("极端的Error importing students: " + error.message, "error");
       } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="fas fa-file-import"></i> Import';
