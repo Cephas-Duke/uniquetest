@@ -559,6 +559,33 @@
       font-size: 0.9rem;
     }
 
+    .balance-breakdown {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: var(--border-radius);
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+
+    .balance-breakdown h5 {
+      color: var(--primary-color);
+      margin-bottom: 0.5rem;
+    }
+
+    .balance-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 0.5rem 0;
+      padding: 0.25rem 0;
+    }
+
+    .balance-row.total {
+      border-top: 2px solid var(--primary-color);
+      font-weight: bold;
+      margin-top: 1rem;
+      padding-top: 0.5rem;
+    }
+
     .term-transition-card {
       background: linear-gradient(135deg, var(--warning-color), #ff6f00);
       color: white;
@@ -586,39 +613,6 @@
 
     .term-actions .btn:hover {
       background: rgba(255, 255, 255, 0.3);
-    }
-
-    .transition-option {
-      background: #f8f9fa;
-      border: 1px solid #ddd;
-      border-radius: var(--border-radius);
-      padding: 1rem;
-      margin: 1rem 0;
-    }
-
-    .transition-option label {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.5rem;
-      cursor: pointer;
-      margin: 0;
-    }
-
-    .transition-option input[type="checkbox"] {
-      width: auto;
-      margin-top: 0.2rem;
-    }
-
-    .transition-option strong {
-      color: var(--primary-color);
-    }
-
-    .transition-preview {
-      background: #e3f2fd;
-      border: 1px solid var(--info-color);
-      border-radius: var(--border-radius);
-      padding: 1rem;
-      margin: 1rem 0;
     }
 
     @keyframes spin {
@@ -696,21 +690,6 @@
         grid-template-columns: 1fr 1fr;
       }
     }
-
-    @media print {
-      body * {
-        visibility: hidden;
-      }
-      .print-section, .print-section * {
-        visibility: visible;
-      }
-      .print-section {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-      }
-    }
   </style>
 </head>
 <body>
@@ -770,7 +749,7 @@
       </div>
       
       <div class="balance-info">
-        <i class="fas fa-info-circle"></i> <strong>Note:</strong> When adding students in Term 2 or 3, any previous term balances will be automatically carried forward. Students will inherit their balance from the previous term to ensure continuity.
+        <i class="fas fa-info-circle"></i> <strong>Balance Tracking Update:</strong> Current term balance and carried forward balance are now tracked separately. This allows the current term balance to be zero even when there's a carried forward amount from previous terms.
       </div>
 
       <form id="studentForm">
@@ -856,7 +835,7 @@
 
         <div id="carryForwardInfo" class="balance-info" style="display: none;">
           <p><strong>Previous Term Balance:</strong> <span id="previousBalance">KES 0</span></p>
-          <p>This balance will be carried forward to the new term.</p>
+          <p>This balance will be carried forward separately from the current term calculations.</p>
         </div>
 
         <div style="margin-top: 1.5rem;">
@@ -934,11 +913,10 @@
         <h4>Intelligent Student Data Transfer</h4>
         <p>This smart transition will analyze each student's balance and handle them appropriately:</p>
         
-        <div class="transition-preview">
+        <div style="background: #e3f2fd; border: 1px solid var(--info-color); border-radius: var(--border-radius); padding: 1rem; margin: 1rem 0;">
           <h5><i class="fas fa-brain"></i> Smart Processing Rules:</h5>
           <ul style="margin: 0.5rem 0 0 1rem;">
-            <li><strong>Students with NO balance:</strong> All fee fields reset to 0, ready for new term adjustments</li>
-            <li><strong>Students with outstanding balance:</strong> Only balance carried forward, all fees reset to 0</li>
+            <li><strong>Current Term Balance:</strong> Can be zero even with carried forward amounts, allowing clear separation</li>
           </ul>
         </div>
         
@@ -962,22 +940,20 @@
           </div>
         </div>
 
-        <div class="transition-option">
-          <label>
-            <input type="checkbox" id="smartTransition" checked style="width: auto; margin-right: 0.5rem;">
+        <div style="background: #f8f9fa; border: 1px solid #ddd; border-radius: var(--border-radius); padding: 1rem; margin: 1rem 0;">
+          <label style="display: flex; align-items: flex-start; gap: 0.5rem; cursor: pointer; margin: 0;">
+            <input type="checkbox" id="smartTransition" checked style="width: auto; margin-top: 0.2rem;">
             <div>
               <strong>Enable Smart Transition</strong>
               <div style="font-size: 0.9rem; color: #666; margin-top: 0.25rem;">
-                Automatically handle students based on their balance status:
-                <br>• No balance → Complete reset (all fees = 0)
-                <br>• Has balance → Carry forward balance only, reset fees
+                Automatically handle students based on their balance status with separate tracking
               </div>
             </div>
           </label>
         </div>
 
-        <div class="transition-option">
-          <label>
+        <div style="background: #f8f9fa; border: 1px solid #ddd; border-radius: var(--border-radius); padding: 1rem; margin: 1rem 0;">
+          <label style="display: flex; align-items: flex-start; gap: 0.5rem; cursor: pointer; margin: 0;">
             <input type="checkbox" id="resetPaidAmounts" checked style="width: auto; margin-right: 0.5rem;">
             <div>
               <strong>Reset Paid Amounts</strong>
@@ -1072,7 +1048,7 @@
     }
 
     // Current term and year management
-    let currentTerm = 2; // Default to Term 2 as requested
+    let currentTerm = 2;
     let currentYear = new Date().getFullYear();
     let editingId = null;
 
@@ -1181,6 +1157,33 @@
       }, 5000);
     }
 
+    // IMPROVED BALANCE CALCULATION FUNCTIONS
+    function calculateBalances(student) {
+      // Calculate current term fees total
+      const currentTermTotal = (student.tuition || 0) + (student.adm || 0) + 
+                              (student.books || 0) + (student.stationery || 0) + 
+                              (student.uniform || 0) + (student.lunch || 0) + 
+                              (student.transport || 0) + (student.trip || 0) + 
+                              (student.graduation || 0);
+      
+      // Current term balance (can be zero even with carried forward)
+      const currentTermBalance = currentTermTotal - (student.paid || 0);
+      
+      // Carried forward balance (separate tracking)
+      const carriedForwardBalance = student.carriedForwardBalance || 0;
+      
+      // Total outstanding (sum of both)
+      const totalOutstanding = currentTermBalance + carriedForwardBalance;
+
+      return {
+        currentTermTotal,
+        currentTermBalance,
+        carriedForwardBalance,
+        totalOutstanding,
+        paid: student.paid || 0
+      };
+    }
+
     // Check for existing student in previous terms (for balance carry-forward)
     async function checkForExistingStudent() {
       const studentName = document.getElementById('studentName').value.trim();
@@ -1200,17 +1203,11 @@
         
         if (!snapshot.empty) {
           const studentData = snapshot.docs[0].data();
-          // Calculate balance from previous term
-          const total = (studentData.tuition || 0) + (studentData.adm || 0) + 
-                       (studentData.books || 0) + (studentData.stationery || 0) + 
-                       (studentData.uniform || 0) + (studentData.lunch || 0) + 
-                       (studentData.transport || 0) + (studentData.trip || 0) + (studentData.graduation || 0);
-          const paid = studentData.paid || 0;
-          const carriedForward = studentData.carriedForwardBalance || 0;
-          const previousBalance = total + carriedForward - paid;
+          const balances = calculateBalances(studentData);
           
-          if (previousBalance > 0) {
-            previousBalanceSpan.textContent = `KES ${previousBalance.toLocaleString('en-KE')}`;
+          // Only show if there's something to carry forward
+          if (balances.totalOutstanding > 0) {
+            previousBalanceSpan.textContent = `KES ${balances.totalOutstanding.toLocaleString('en-KE')}`;
             carryForwardInfo.style.display = 'block';
           } else {
             carryForwardInfo.style.display = 'none';
@@ -1266,7 +1263,7 @@
       }
     }
 
-    // Render students in grouped tables
+    // Render students in grouped tables with improved balance display
     function renderStudents(students) {
       const groupedTables = document.getElementById('groupedTables');
       groupedTables.innerHTML = '';
@@ -1299,10 +1296,11 @@
             <tr>
               <th>Name</th>
               <th>Phone</th>
-              <th>Total Fees</th>
-              <th>Paid</th>
-              <th>Balance</th>
+              <th>Current Term Fees</th>
+              <th>Paid This Term</th>
+              <th>Term Balance</th>
               <th>Carried Forward</th>
+              <th>Total Outstanding</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -1312,12 +1310,7 @@
         const tbody = table.querySelector('tbody');
 
         classStudents.forEach(s => {
-          const total = (s.tuition || 0) + (s.adm || 0) + (s.books || 0) + 
-                       (s.stationery || 0) + (s.uniform || 0) + 
-                       (s.lunch || 0) + (s.transport || 0) + (s.trip || 0) + (s.graduation || 0);
-          const paid = s.paid || 0;
-          const carriedForward = s.carriedForwardBalance || 0;
-          const balance = total + carriedForward - paid;
+          const balances = calculateBalances(s);
 
           const row = document.createElement('tr');
           row.innerHTML = `
@@ -1327,13 +1320,18 @@
               </a>
             </td>
             <td>${s.phone || 'N/A'}</td>
-            <td>KES ${total.toLocaleString('en-KE')}</td>
-            <td class="positive">KES ${paid.toLocaleString('en-KE')}</td>
-            <td class="${balance > 0 ? 'negative' : 'positive'}">
-              KES ${Math.abs(balance).toLocaleString('en-KE')}
+            <td>KES ${balances.currentTermTotal.toLocaleString('en-KE')}</td>
+            <td class="positive">KES ${balances.paid.toLocaleString('en-KE')}</td>
+            <td class="${balances.currentTermBalance > 0 ? 'negative' : balances.currentTermBalance < 0 ? 'positive' : ''}">
+              KES ${Math.abs(balances.currentTermBalance).toLocaleString('en-KE')}
+              ${balances.currentTermBalance < 0 ? ' (Overpaid)' : ''}
             </td>
-            <td class="${carriedForward > 0 ? 'negative' : ''}">
-              KES ${carriedForward.toLocaleString('en-KE')}
+            <td class="${balances.carriedForwardBalance > 0 ? 'negative' : ''}">
+              KES ${balances.carriedForwardBalance.toLocaleString('en-KE')}
+            </td>
+            <td class="${balances.totalOutstanding > 0 ? 'negative' : balances.totalOutstanding < 0 ? 'positive' : ''}">
+              KES ${Math.abs(balances.totalOutstanding).toLocaleString('en-KE')}
+              ${balances.totalOutstanding < 0 ? ' (Overpaid)' : ''}
             </td>
             <td>
               <button class="btn btn-sm btn-info" onclick="editStudent('${s.id}')">
@@ -1353,17 +1351,23 @@
       });
     }
 
-    // Update summary statistics
+    // Update summary statistics with improved balance tracking
     function updateSummaryStats(students) {
       const totalStudents = students.length;
-      const totalFees = students.reduce((sum, s) => {
-        return sum + (s.tuition || 0) + (s.adm || 0) + (s.books || 0) + 
-               (s.stationery || 0) + (s.uniform || 0) + 
-               (s.lunch || 0) + (s.transport || 0) + (s.trip || 0) + (s.graduation || 0);
-      }, 0);
-      const totalPaid = students.reduce((sum, s) => sum + (s.paid || 0), 0);
-      const totalCarriedForward = students.reduce((sum, s) => sum + (s.carriedForwardBalance || 0), 0);
-      const totalBalance = totalFees + totalCarriedForward - totalPaid;
+      let totalCurrentTermFees = 0;
+      let totalPaid = 0;
+      let totalCarriedForward = 0;
+      let totalCurrentTermBalance = 0;
+      let totalOutstanding = 0;
+
+      students.forEach(s => {
+        const balances = calculateBalances(s);
+        totalCurrentTermFees += balances.currentTermTotal;
+        totalPaid += balances.paid;
+        totalCarriedForward += balances.carriedForwardBalance;
+        totalCurrentTermBalance += balances.currentTermBalance;
+        totalOutstanding += balances.totalOutstanding;
+      });
 
       document.getElementById('statsContainer').innerHTML = `
         <div class="stats-grid">
@@ -1373,27 +1377,33 @@
           </div>
           <div class="stat-item">
             <h4>Current Term Fees</h4>
-            <p>KES ${totalFees.toLocaleString('en-KE')}</p>
+            <p>KES ${totalCurrentTermFees.toLocaleString('en-KE')}</p>
+          </div>
+          <div class="stat-item">
+            <h4>Paid This Term</h4>
+            <p class="positive">KES ${totalPaid.toLocaleString('en-KE')}</p>
+          </div>
+          <div class="stat-item">
+            <h4>Current Term Balance</h4>
+            <p class="${totalCurrentTermBalance > 0 ? 'negative' : totalCurrentTermBalance < 0 ? 'positive' : ''}">
+              KES ${Math.abs(totalCurrentTermBalance).toLocaleString('en-KE')}
+            </p>
           </div>
           <div class="stat-item">
             <h4>Carried Forward</h4>
             <p class="negative">KES ${totalCarriedForward.toLocaleString('en-KE')}</p>
           </div>
           <div class="stat-item">
-            <h4>Total Paid</h4>
-            <p class="positive">KES ${totalPaid.toLocaleString('en-KE')}</p>
-          </div>
-          <div class="stat-item">
-            <h4>Outstanding Balance</h4>
-            <p class="${totalBalance > 0 ? 'negative' : 'positive'}">
-              KES ${Math.abs(totalBalance).toLocaleString('en-KE')}
+            <h4>Total Outstanding</h4>
+            <p class="${totalOutstanding > 0 ? 'negative' : totalOutstanding < 0 ? 'positive' : ''}">
+              KES ${Math.abs(totalOutstanding).toLocaleString('en-KE')}
             </p>
           </div>
         </div>
       `;
     }
 
-    // Handle student form submission
+    // Handle student form submission with improved balance tracking
     async function handleStudentSubmit(e) {
       e.preventDefault();
 
@@ -1428,7 +1438,7 @@
       submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
       try {
-        const total = tuition + adm + books + stationery + uniform + lunch + transport + trip + graduation;
+        const currentTermTotal = tuition + adm + books + stationery + uniform + lunch + transport + trip + graduation;
         
         // Check for carry-forward balance only when adding new students
         let carriedForwardBalance = 0;
@@ -1439,20 +1449,14 @@
           
           if (!snapshot.empty) {
             const previousStudent = snapshot.docs[0].data();
-            const previousTotal = (previousStudent.tuition || 0) + (previousStudent.adm || 0) + 
-                                  (previousStudent.books || 0) + (previousStudent.stationery || 0) + 
-                                  (previousStudent.uniform || 0) + (previousStudent.lunch || 0) + 
-                                  (previousStudent.transport || 0) + (previousStudent.trip || 0) + 
-                                  (previousStudent.graduation || 0);
-            const previousCarriedForward = previousStudent.carriedForwardBalance || 0;
-            const previousPaid = previousStudent.paid || 0;
-            const previousBalance = previousTotal + previousCarriedForward - previousPaid;
-            
-            carriedForwardBalance = Math.max(0, previousBalance); // Only carry forward positive balances
+            const previousBalances = calculateBalances(previousStudent);
+            carriedForwardBalance = Math.max(0, previousBalances.totalOutstanding);
           }
         }
 
-        const balance = total + carriedForwardBalance - paid;
+        // Calculate balances using the new system
+        const currentTermBalance = currentTermTotal - paid;
+        const totalOutstanding = currentTermBalance + carriedForwardBalance;
 
         const student = { 
           name, 
@@ -1467,10 +1471,11 @@
           transport, 
           trip,
           graduation,
-          total, 
+          currentTermTotal, 
           paid, 
-          balance,
+          currentTermBalance,
           carriedForwardBalance,
+          totalOutstanding,
           term: currentTerm,
           year: currentYear,
           createdAt: editingId ? null : new Date().toISOString(),
@@ -1587,7 +1592,7 @@
       }
     }
 
-    // View student details
+    // View student details with improved balance breakdown
     async function viewStudent(id) {
       try {
         const studentsCollection = getStudentsCollection();
@@ -1601,12 +1606,7 @@
         const modal = document.getElementById('studentModal');
         const content = document.getElementById('modalContent');
 
-        const total = (s.tuition || 0) + (s.adm || 0) + (s.books || 0) + 
-                     (s.stationery || 0) + (s.uniform || 0) + 
-                     (s.lunch || 0) + (s.transport || 0) + (s.trip || 0) + (s.graduation || 0);
-        const paid = s.paid || 0;
-        const carriedForward = s.carriedForwardBalance || 0;
-        const balance = total + carriedForward - paid;
+        const balances = calculateBalances(s);
 
         content.innerHTML = `
           <div style="padding: 1rem;">
@@ -1653,30 +1653,49 @@
             
             <hr style="margin: 1.5rem 0; border-color: #eee;">
             
-            <div style="text-align: center;">
-              <div style="display: inline-block; background: #f8f9fa; padding: 1rem; border-radius: var(--border-radius);">
-                <p style="margin-bottom: 0.5rem;"><strong>Current Term Fee:</strong></p>
-                <p style="font-size: 1.5rem; font-weight: bold; color: var(--primary-color);">
-                  KES ${total.toLocaleString('en-KE')}
-                </p>
-                
-                ${carriedForward > 0 ? `
-                <p style="margin: 1rem 0 0.5rem;"><strong>Carried Forward:</strong></p>
-                <p style="font-size: 1.2rem; font-weight: bold; color: var(--warning-color);">
-                  KES ${carriedForward.toLocaleString('en-KE')}
-                </p>
-                ` : ''}
-                
-                <p style="margin: 1rem 0 0.5rem;"><strong>Amount Paid:</strong></p>
-                <p style="font-size: 1.5rem; font-weight: bold; color: var(--success-color);">
-                  KES ${paid.toLocaleString('en-KE')}
-                </p>
-                
-                <p style="margin: 1rem 0 0.5rem;"><strong>Outstanding Balance:</strong></p>
-                <p style="font-size: 1.5rem; font-weight: bold; color: ${balance > 0 ? 'var(--danger-color)' : 'var(--success-color)'};">
-                  KES ${Math.abs(balance).toLocaleString('en-KE')}
-                </p>
+            <div class="balance-breakdown">
+              <h5><i class="fas fa-calculator"></i> Balance Breakdown</h5>
+              
+              <div class="balance-row">
+                <span><strong>Current Term Total Fees:</strong></span>
+                <span>KES ${balances.currentTermTotal.toLocaleString('en-KE')}</span>
               </div>
+              
+              <div class="balance-row">
+                <span><strong>Amount Paid This Term:</strong></span>
+                <span class="positive">KES ${balances.paid.toLocaleString('en-KE')}</span>
+              </div>
+              
+              <div class="balance-row">
+                <span><strong>Current Term Balance:</strong></span>
+                <span class="${balances.currentTermBalance > 0 ? 'negative' : balances.currentTermBalance < 0 ? 'positive' : ''}">
+                  KES ${Math.abs(balances.currentTermBalance).toLocaleString('en-KE')}
+                  ${balances.currentTermBalance < 0 ? ' (Overpaid)' : ''}
+                </span>
+              </div>
+              
+              ${balances.carriedForwardBalance > 0 ? `
+              <div class="balance-row">
+                <span><strong>Carried Forward from Previous Terms:</strong></span>
+                <span class="negative">KES ${balances.carriedForwardBalance.toLocaleString('en-KE')}</span>
+              </div>
+              ` : ''}
+              
+              <div class="balance-row total">
+                <span><strong>Total Outstanding Balance:</strong></span>
+                <span class="${balances.totalOutstanding > 0 ? 'negative' : balances.totalOutstanding < 0 ? 'positive' : ''}">
+                  KES ${Math.abs(balances.totalOutstanding).toLocaleString('en-KE')}
+                  ${balances.totalOutstanding < 0 ? ' (Overpaid)' : ''}
+                </span>
+              </div>
+            </div>
+            
+            <div style="background: #e3f2fd; border: 1px solid var(--info-color); border-radius: var(--border-radius); padding: 1rem; margin: 1rem 0;">
+              <p style="margin: 0; font-size: 0.9rem;">
+                <i class="fas fa-info-circle"></i> 
+                <strong>Balance Explanation:</strong> Current term balance can be zero even when there's a carried forward amount. 
+                This allows clear separation between new term charges and previous term balances.
+              </p>
             </div>
             
             <div style="text-align: center; margin-top: 2rem;">
@@ -1718,7 +1737,7 @@
       document.getElementById('termTransitionModal').classList.add('show');
     }
 
-    // NEW SMART TERM TRANSITION FUNCTION
+    // ENHANCED SMART TERM TRANSITION with separate balance tracking
     async function executeSmartTermTransition() {
       const sourceTerm = parseInt(document.getElementById('sourceTerm').value);
       const targetTerm = parseInt(document.getElementById('targetTerm').value);
@@ -1731,20 +1750,21 @@
       }
 
       const confirmMessage = `Execute Smart Term Transition from Term ${sourceTerm} to Term ${targetTerm}?\n\n` +
-                           `Smart Processing Rules:\n` +
-                           `• Students with NO balance: All fees reset to 0\n` +
-                           `• Students with balance: Only balance carried forward, fees reset to 0\n` +
+                           `Enhanced Smart Processing:\n` +
+                           `• Current term balances and carried forward balances tracked separately\n` +
+                           `• Students with NO total outstanding: Fresh start with all fees reset to 0\n` +
+                           `• Students with outstanding balance: Balance carried forward separately, current fees reset to 0\n` +
                            `• Reset paid amounts: ${resetPaidAmounts ? 'Yes' : 'No'}\n\n` +
-                           `This will make it easy to set new term fees for all students.`;
+                           `This allows current term balance to be zero even with carried forward amounts.`;
 
       if (!confirm(confirmMessage)) return;
 
       const submitBtn = document.querySelector('#termTransitionModal .btn-success');
       submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing Smart Transition...';
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing Enhanced Smart Transition...';
 
       try {
-        showStatus(`Executing smart transition from Term ${sourceTerm} to Term ${targetTerm}...`, "loading");
+        showStatus(`Executing enhanced smart transition from Term ${sourceTerm} to Term ${targetTerm}...`, "loading");
 
         const sourceCollection = getStudentsCollection(sourceTerm, currentYear);
         const targetCollection = getStudentsCollection(targetTerm, currentYear);
@@ -1759,31 +1779,25 @@
         let processedCount = 0;
         let studentsWithBalance = 0;
         let studentsWithoutBalance = 0;
+        let totalCarriedForward = 0;
 
         for (const doc of snapshot.docs) {
           const sourceStudent = doc.data();
-          
-          // Calculate current balance
-          const sourceTotal = (sourceStudent.tuition || 0) + (sourceStudent.adm || 0) + 
-                              (sourceStudent.books || 0) + (sourceStudent.stationery || 0) + 
-                              (sourceStudent.uniform || 0) + (sourceStudent.lunch || 0) + 
-                              (sourceStudent.transport || 0) + (sourceStudent.trip || 0) + 
-                              (sourceStudent.graduation || 0);
-          const sourceCarriedForward = sourceStudent.carriedForwardBalance || 0;
-          const sourcePaid = sourceStudent.paid || 0;
-          const currentBalance = sourceTotal + sourceCarriedForward - sourcePaid;
+          const sourceBalances = calculateBalances(sourceStudent);
           
           let newStudentData;
           
           if (smartTransition) {
-            if (currentBalance > 0) {
-              // Student HAS balance - carry forward balance only, reset all fees
+            if (sourceBalances.totalOutstanding > 0) {
+              // Student HAS outstanding balance - carry forward separately, reset current term
               studentsWithBalance++;
+              totalCarriedForward += sourceBalances.totalOutstanding;
+              
               newStudentData = {
                 name: sourceStudent.name,
                 class: sourceStudent.class,
                 phone: sourceStudent.phone,
-                // Reset all fee fields to 0
+                // Reset all current term fee fields to 0
                 tuition: 0,
                 adm: 0,
                 books: 0,
@@ -1793,19 +1807,20 @@
                 transport: 0,
                 trip: 0,
                 graduation: 0,
-                total: 0,
+                currentTermTotal: 0,
                 paid: resetPaidAmounts ? 0 : 0, // Always reset paid for new term
-                balance: currentBalance, // Will be recalculated
-                carriedForwardBalance: currentBalance, // Carry forward the balance
+                currentTermBalance: 0, // Current term balance can be zero!
+                carriedForwardBalance: sourceBalances.totalOutstanding, // Separate tracking
+                totalOutstanding: sourceBalances.totalOutstanding, // Will be recalculated as currentTermBalance + carriedForwardBalance
                 term: targetTerm,
                 year: currentYear,
-                transitionType: 'smart_with_balance',
+                transitionType: 'enhanced_smart_with_balance',
                 copiedFrom: `term_${sourceTerm}`,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
               };
             } else {
-              // Student has NO balance - complete reset, ready for new fees
+              // Student has NO outstanding balance - complete fresh start
               studentsWithoutBalance++;
               newStudentData = {
                 name: sourceStudent.name,
@@ -1821,21 +1836,23 @@
                 transport: 0,
                 trip: 0,
                 graduation: 0,
-                total: 0,
+                currentTermTotal: 0,
                 paid: 0,
-                balance: 0,
+                currentTermBalance: 0,
                 carriedForwardBalance: 0, // No balance to carry forward
+                totalOutstanding: 0,
                 term: targetTerm,
                 year: currentYear,
-                transitionType: 'smart_no_balance',
+                transitionType: 'enhanced_smart_no_balance',
                 copiedFrom: `term_${sourceTerm}`,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
               };
             }
           } else {
-            // Regular transition (old behavior)
-            const carriedForwardBalance = Math.max(0, currentBalance);
+            // Regular transition (legacy behavior)
+            const sourceBalances = calculateBalances(sourceStudent);
+            const carriedForwardBalance = Math.max(0, sourceBalances.totalOutstanding);
             newStudentData = {
               ...sourceStudent,
               term: targetTerm,
@@ -1846,8 +1863,12 @@
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString()
             };
-            // Recalculate balance
-            newStudentData.balance = newStudentData.total + newStudentData.carriedForwardBalance - newStudentData.paid;
+            
+            // Recalculate with new system
+            const balances = calculateBalances(newStudentData);
+            newStudentData.currentTermTotal = balances.currentTermTotal;
+            newStudentData.currentTermBalance = balances.currentTermBalance;
+            newStudentData.totalOutstanding = balances.totalOutstanding;
           }
 
           // Check if student already exists in target term
@@ -1868,13 +1889,14 @@
 
         await batch.commit();
 
-        let successMessage = `Smart transition completed successfully!\n\n` +
+        let successMessage = `Enhanced Smart Transition completed successfully!\n\n` +
                            `Processed: ${processedCount} students\n`;
         
         if (smartTransition) {
-          successMessage += `• ${studentsWithBalance} students with balance (balance carried forward, fees reset)\n` +
-                          `• ${studentsWithoutBalance} students without balance (complete reset)\n\n` +
-                          `All students are now ready for new term fee adjustments!`;
+          successMessage += `• ${studentsWithBalance} students with balance (KES ${totalCarriedForward.toLocaleString('en-KE')} carried forward separately)\n` +
+                          `• ${studentsWithoutBalance} students without balance (fresh start)\n\n` +
+                          `All students now have separate tracking of current term vs carried forward balances!\n` +
+                          `Current term balances can be zero even with carried forward amounts.`;
         }
 
         showStatus(successMessage, "success");
@@ -1885,29 +1907,31 @@
         
         closeTermTransitionModal();
 
-        // Record transition details
-        await db.collection('system_settings').doc(`smart_transition_${sourceTerm}_to_${targetTerm}_${Date.now()}`).set({
+        // Record enhanced transition details
+        await db.collection('system_settings').doc(`enhanced_smart_transition_${sourceTerm}_to_${targetTerm}_${Date.now()}`).set({
           sourceTerm,
           targetTerm,
           studentsProcessed: processedCount,
           studentsWithBalance,
           studentsWithoutBalance,
+          totalCarriedForward,
           smartTransition,
           resetPaidAmounts,
           executedAt: new Date().toISOString(),
-          transitionType: 'smart'
+          transitionType: 'enhanced_smart',
+          balanceTrackingVersion: '2.0'
         });
 
       } catch (error) {
-        console.error('Error executing smart term transition:', error);
-        showStatus("Error executing smart term transition: " + error.message, "error");
+        console.error('Error executing enhanced smart term transition:', error);
+        showStatus("Error executing enhanced smart term transition: " + error.message, "error");
       } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="fas fa-brain"></i> Execute Smart Transition';
       }
     }
 
-    // Copy students between terms (simpler version - kept for compatibility)
+    // Copy students between terms (updated for new balance system)
     async function copyStudentsBetweenTerms() {
       const fromTerm = prompt(`Copy students FROM which term? (1, 2, or 3)`, currentTerm.toString());
       const toTerm = prompt(`Copy students TO which term? (1, 2, or 3)`, (currentTerm === 3 ? 1 : currentTerm + 1).toString());
@@ -1918,7 +1942,7 @@
         return;
       }
 
-      if (!confirm(`Copy all students from Term ${fromTerm} to Term ${toTerm}? This will carry forward outstanding balances and reset paid amounts.`)) {
+      if (!confirm(`Copy all students from Term ${fromTerm} to Term ${toTerm}? This will use the enhanced balance tracking system.`)) {
         return;
       }
 
@@ -1932,40 +1956,50 @@
           return;
         }
 
-        showStatus(`Copying ${snapshot.size} students from Term ${fromTerm} to Term ${toTerm}...`, "loading");
+        showStatus(`Copying ${snapshot.size} students from Term ${fromTerm} to Term ${toTerm} with enhanced balance tracking...`, "loading");
 
         const batch = db.batch();
         let processedCount = 0;
+        let totalCarriedForward = 0;
 
         for (const doc of snapshot.docs) {
           const sourceStudent = doc.data();
+          const sourceBalances = calculateBalances(sourceStudent);
+          const balanceToCarryForward = Math.max(0, sourceBalances.totalOutstanding);
           
-          // Calculate balance to carry forward
-          const sourceTotal = (sourceStudent.tuition || 0) + (sourceStudent.adm || 0) + 
-                              (sourceStudent.books || 0) + (sourceStudent.stationery || 0) + 
-                              (sourceStudent.uniform || 0) + (sourceStudent.lunch || 0) + 
-                              (sourceStudent.transport || 0) + (sourceStudent.trip || 0) + 
-                              (sourceStudent.graduation || 0);
-          const sourceCarriedForward = sourceStudent.carriedForwardBalance || 0;
-          const sourcePaid = sourceStudent.paid || 0;
-          const balanceToCarryForward = Math.max(0, sourceTotal + sourceCarriedForward - sourcePaid);
+          if (balanceToCarryForward > 0) {
+            totalCarriedForward += balanceToCarryForward;
+          }
 
           // Check if student already exists in target term
           const existingQuery = await toCollection.where('name', '==', sourceStudent.name).get();
           
           const studentData = {
-            ...sourceStudent,
-            term: parseInt(toTerm),
+            name: sourceStudent.name,
+            class: sourceStudent.class,
+            phone: sourceStudent.phone,
+            // Copy current fee structure but allow modifications
+            tuition: sourceStudent.tuition || 0,
+            adm: sourceStudent.adm || 0,
+            books: sourceStudent.books || 0,
+            stationery: sourceStudent.stationery || 0,
+            uniform: sourceStudent.uniform || 0,
+            lunch: sourceStudent.lunch || 0,
+            transport: sourceStudent.transport || 0,
+            trip: sourceStudent.trip || 0,
+            graduation: sourceStudent.graduation || 0,
+            currentTermTotal: sourceBalances.currentTermTotal, // Will be recalculated
             paid: 0, // Reset paid amount for new term
-            carriedForwardBalance: balanceToCarryForward,
-            transitionType: 'simple_copy',
+            currentTermBalance: sourceBalances.currentTermTotal, // Will be recalculated
+            carriedForwardBalance: balanceToCarryForward, // Separate tracking
+            totalOutstanding: sourceBalances.currentTermTotal + balanceToCarryForward, // Will be recalculated
+            term: parseInt(toTerm),
+            year: currentYear,
+            transitionType: 'enhanced_simple_copy',
             copiedFrom: `term_${fromTerm}`,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           };
-          
-          // Recalculate balance
-          studentData.balance = studentData.total + studentData.carriedForwardBalance - studentData.paid;
           
           if (!existingQuery.empty) {
             // Update existing student
@@ -1981,7 +2015,7 @@
         }
 
         await batch.commit();
-        showStatus(`Successfully copied ${processedCount} students from Term ${fromTerm} to Term ${toTerm}`, "success");
+        showStatus(`Successfully copied ${processedCount} students from Term ${fromTerm} to Term ${toTerm}\nTotal carried forward: KES ${totalCarriedForward.toLocaleString('en-KE')}`, "success");
         
         if (parseInt(toTerm) === currentTerm) {
           loadStudents();
@@ -1992,7 +2026,7 @@
       }
     }
 
-    // View term summary
+    // View term summary with enhanced balance tracking
     async function viewTermSummary() {
       const modal = document.getElementById('termSummaryModal');
       const content = document.getElementById('termSummaryContent');
@@ -2001,7 +2035,7 @@
       modal.classList.add('show');
 
       try {
-        let summaryHtml = `<h3>Academic Year ${currentYear} - Summary Report</h3>`;
+        let summaryHtml = `<h3>Academic Year ${currentYear} - Enhanced Balance Tracking Summary</h3>`;
         
         for (let term = 1; term <= 3; term++) {
           const termCollection = getStudentsCollection(term, currentYear);
@@ -2019,35 +2053,43 @@
 
           const students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           const totalStudents = students.length;
-          const totalFees = students.reduce((sum, s) => {
-            return sum + (s.tuition || 0) + (s.adm || 0) + (s.books || 0) + 
-                   (s.stationery || 0) + (s.uniform || 0) + 
-                   (s.lunch || 0) + (s.transport || 0) + (s.trip || 0) + (s.graduation || 0);
-          }, 0);
-          const totalPaid = students.reduce((sum, s) => sum + (s.paid || 0), 0);
-          const totalCarriedForward = students.reduce((sum, s) => sum + (s.carriedForwardBalance || 0), 0);
-          const totalBalance = totalFees + totalCarriedForward - totalPaid;
+          
+          let totalCurrentTermFees = 0;
+          let totalPaid = 0;
+          let totalCarriedForward = 0;
+          let totalCurrentTermBalance = 0;
+          let totalOutstanding = 0;
 
-          // Count smart transition types
-          const smartWithBalance = students.filter(s => s.transitionType === 'smart_with_balance').length;
-          const smartNoBalance = students.filter(s => s.transitionType === 'smart_no_balance').length;
+          students.forEach(s => {
+            const balances = calculateBalances(s);
+            totalCurrentTermFees += balances.currentTermTotal;
+            totalPaid += balances.paid;
+            totalCarriedForward += balances.carriedForwardBalance;
+            totalCurrentTermBalance += balances.currentTermBalance;
+            totalOutstanding += balances.totalOutstanding;
+          });
+
+          // Count transition types
+          const enhancedSmartWithBalance = students.filter(s => s.transitionType === 'enhanced_smart_with_balance').length;
+          const enhancedSmartNoBalance = students.filter(s => s.transitionType === 'enhanced_smart_no_balance').length;
 
           summaryHtml += `
             <div style="margin: 1.5rem 0; padding: 1rem; background: ${term === currentTerm ? '#e3f2fd' : '#f8f9fa'}; border-radius: var(--border-radius); ${term === currentTerm ? 'border: 2px solid var(--primary-color);' : ''}">
               <h4>Term ${term} ${term === currentTerm ? '(Current)' : ''}</h4>
               <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0;">
                 <div><strong>Students:</strong> ${totalStudents}</div>
-                <div><strong>Term Fees:</strong> KES ${totalFees.toLocaleString('en-KE')}</div>
+                <div><strong>Current Term Fees:</strong> KES ${totalCurrentTermFees.toLocaleString('en-KE')}</div>
+                <div><strong>Paid This Term:</strong> KES ${totalPaid.toLocaleString('en-KE')}</div>
+                <div><strong>Current Term Balance:</strong> <span class="${totalCurrentTermBalance > 0 ? 'negative' : totalCurrentTermBalance < 0 ? 'positive' : ''}">KES ${Math.abs(totalCurrentTermBalance).toLocaleString('en-KE')}</span></div>
                 <div><strong>Carried Forward:</strong> KES ${totalCarriedForward.toLocaleString('en-KE')}</div>
-                <div><strong>Paid:</strong> KES ${totalPaid.toLocaleString('en-KE')}</div>
-                <div><strong>Balance:</strong> <span class="${totalBalance > 0 ? 'negative' : 'positive'}">KES ${Math.abs(totalBalance).toLocaleString('en-KE')}</span></div>
+                <div><strong>Total Outstanding:</strong> <span class="${totalOutstanding > 0 ? 'negative' : totalOutstanding < 0 ? 'positive' : ''}">KES ${Math.abs(totalOutstanding).toLocaleString('en-KE')}</span></div>
               </div>
               
-              ${(smartWithBalance > 0 || smartNoBalance > 0) ? `
+              ${(enhancedSmartWithBalance > 0 || enhancedSmartNoBalance > 0) ? `
               <div style="background: rgba(0, 168, 232, 0.1); padding: 0.5rem; border-radius: 4px; margin: 0.5rem 0; font-size: 0.9rem;">
-                <strong>Smart Transition Info:</strong> 
-                ${smartWithBalance > 0 ? `${smartWithBalance} with balance carried forward, ` : ''}
-                ${smartNoBalance > 0 ? `${smartNoBalance} with complete reset` : ''}
+                <strong>Enhanced Smart Transition Info:</strong> 
+                ${enhancedSmartWithBalance > 0 ? `${enhancedSmartWithBalance} with separate balance tracking, ` : ''}
+                ${enhancedSmartNoBalance > 0 ? `${enhancedSmartNoBalance} with fresh start` : ''}
               </div>
               ` : ''}
               
@@ -2075,7 +2117,7 @@
       }
     }
 
-    // Export functions
+    // Export functions updated for new balance system
     async function exportToExcel() {
       try {
         const studentsCollection = getStudentsCollection();
@@ -2084,12 +2126,7 @@
         
         snapshot.forEach(doc => {
           const s = doc.data();
-          const total = (s.tuition || 0) + (s.adm || 0) + (s.books || 0) + 
-                       (s.stationery || 0) + (s.uniform || 0) + 
-                       (s.lunch || 0) + (s.transport || 0) + (s.trip || 0) + (s.graduation || 0);
-          const paid = s.paid || 0;
-          const carriedForward = s.carriedForwardBalance || 0;
-          const balance = total + carriedForward - paid;
+          const balances = calculateBalances(s);
           
           students.push({
             Name: s.name,
@@ -2105,11 +2142,13 @@
             Transport: s.transport || 0,
             Trip: s.trip || 0,
             Graduation: s.graduation || 0,
-            'Current Term Fees': total,
-            'Carried Forward': carriedForward,
-            'Amount Paid': paid,
-            'Outstanding Balance': balance,
-            'Transition Type': s.transitionType || 'manual'
+            'Current Term Total': balances.currentTermTotal,
+            'Amount Paid': balances.paid,
+            'Current Term Balance': balances.currentTermBalance,
+            'Carried Forward': balances.carriedForwardBalance,
+            'Total Outstanding': balances.totalOutstanding,
+            'Transition Type': s.transitionType || 'manual',
+            'Balance Tracking': 'Enhanced v2.0'
           });
         });
 
@@ -2120,9 +2159,9 @@
 
         const worksheet = XLSX.utils.json_to_sheet(students);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, `Term ${currentTerm} Students`);
-        XLSX.writeFile(workbook, `students_term_${currentTerm}_${currentYear}_${new Date().toISOString().split('T')[0]}.xlsx`);
-        showStatus(`Students data for Term ${currentTerm} exported to Excel successfully!`, "success");
+        XLSX.utils.book_append_sheet(workbook, worksheet, `Term ${currentTerm} Students Enhanced`);
+        XLSX.writeFile(workbook, `students_enhanced_term_${currentTerm}_${currentYear}_${new Date().toISOString().split('T')[0]}.xlsx`);
+        showStatus(`Enhanced students data for Term ${currentTerm} exported to Excel successfully!`, "success");
       } catch (error) {
         showStatus("Error exporting to Excel: " + error.message, "error");
       }
@@ -2142,12 +2181,7 @@
         
         snapshot.forEach(doc => {
           const s = doc.data();
-          const total = (s.tuition || 0) + (s.adm || 0) + (s.books || 0) + 
-                       (s.stationery || 0) + (s.uniform || 0) + 
-                       (s.lunch || 0) + (s.transport || 0) + (s.trip || 0) + (s.graduation || 0);
-          const paid = s.paid || 0;
-          const carriedForward = s.carriedForwardBalance || 0;
-          const balance = total + carriedForward - paid;
+          const balances = calculateBalances(s);
           
           students.push({
             Name: s.name,
@@ -2163,11 +2197,13 @@
             Transport: s.transport || 0,
             Trip: s.trip || 0,
             Graduation: s.graduation || 0,
-            'Current Term Fees': total,
-            'Carried Forward': carriedForward,
-            'Amount Paid': paid,
-            'Outstanding Balance': balance,
-            'Transition Type': s.transitionType || 'manual'
+            'Current Term Total': balances.currentTermTotal,
+            'Amount Paid': balances.paid,
+            'Current Term Balance': balances.currentTermBalance,
+            'Carried Forward': balances.carriedForwardBalance,
+            'Total Outstanding': balances.totalOutstanding,
+            'Transition Type': s.transitionType || 'manual',
+            'Balance Tracking': 'Enhanced v2.0'
           });
         });
 
@@ -2178,9 +2214,9 @@
 
         const worksheet = XLSX.utils.json_to_sheet(students);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, `${classFilter} Term ${currentTerm}`);
-        XLSX.writeFile(workbook, `${classFilter}_term_${currentTerm}_${currentYear}_${new Date().toISOString().split('T')[0]}.xlsx`);
-        showStatus(`Students from ${classFilter} (Term ${currentTerm}) exported to Excel successfully!`, "success");
+        XLSX.utils.book_append_sheet(workbook, worksheet, `${classFilter} Term ${currentTerm} Enhanced`);
+        XLSX.writeFile(workbook, `${classFilter}_enhanced_term_${currentTerm}_${currentYear}_${new Date().toISOString().split('T')[0]}.xlsx`);
+        showStatus(`Enhanced students from ${classFilter} (Term ${currentTerm}) exported to Excel successfully!`, "success");
       } catch (error) {
         showStatus("Error exporting class to Excel: " + error.message, "error");
       }
@@ -2216,12 +2252,17 @@
         const batch = db.batch();
         
         importedStudents.forEach(student => {
+          // Ensure enhanced balance tracking
+          const balances = calculateBalances(student);
           const studentData = {
             ...student,
             term: currentTerm,
             year: currentYear,
+            currentTermTotal: balances.currentTermTotal,
+            currentTermBalance: balances.currentTermBalance,
             carriedForwardBalance: student.carriedForwardBalance || 0,
-            transitionType: 'imported',
+            totalOutstanding: balances.totalOutstanding,
+            transitionType: 'imported_enhanced',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           };
@@ -2231,7 +2272,7 @@
         });
 
         await batch.commit();
-        showStatus(`Successfully imported ${importedStudents.length} students to Term ${currentTerm}`, "success");
+        showStatus(`Successfully imported ${importedStudents.length} students to Term ${currentTerm} with enhanced balance tracking`, "success");
         loadStudents();
         closeImportModal();
       } catch (error) {
