@@ -778,6 +778,11 @@
               <input type="number" id="trip" value="0" min="0" />
             </div>
           </div>
+          <div class="form-group">
+              <label for="graduation">Graduation (KES)</label>
+              <input type="number" id="graduation" value="0" min="0" />
+            </div>
+          </div>
 
           <div class="modal-footer">
             <button type="button" class="btn btn-outline" onclick="closeStudentManager()">
@@ -1198,6 +1203,7 @@
             lunch: 0,
             transport: 0,
             trip: 0,
+            graduation: 0,
             total: 0,
             paid: 0,
             balance: 0,
@@ -1315,6 +1321,7 @@
       const lunch = +document.getElementById("lunch").value || 0;
       const transport = +document.getElementById("transport").value || 0;
       const trip = +document.getElementById("trip").value || 0;
+      const trip = +document.getElementById("graduation").value || 0;
       
       if (!name || !sclass || !phone) {
         showStatus("Please fill in all required fields (Name, Class, Phone)", "error");
@@ -1327,7 +1334,7 @@
         return;
       }
 
-      const total = tuition + adm + books + stationery + uniform + lunch + transport + trip;
+      const total = tuition + adm + books + stationery + uniform + lunch + transport + trip + graduation;
       const newStudent = { 
         name, 
         class: sclass, 
@@ -1340,6 +1347,7 @@
         lunch, 
         transport, 
         trip,
+        graduation,
         total, 
         paid: 0, 
         balance: total,
@@ -1709,6 +1717,7 @@
                       { name: 'Stationery', amount: student.stationery || 0 },
                       { name: 'Transport', amount: student.transport || 0 },
                       { name: 'Trip', amount: student.trip || 0 }
+                      { name: 'graduation', amount: student.graduation || 0 }
                     ];
                     let rows = '';
 
@@ -1838,6 +1847,7 @@
                   student.stationery || 0,
                   student.transport || 0,
                   student.trip || 0,
+                  student.graduation || 0,
                   r.paid,
                   r.balance
                 ];
@@ -1937,6 +1947,7 @@
               student?.stationery > 0 ? student.stationery.toString() : '',
               student?.transport > 0 ? student.transport.toString() : '',
               student?.trip > 0 ? student.trip.toString() : '',
+              student?.graduation > 0 ? student.graduation.toString() : '',
               '',
               receipt.paid.toString()
             ]];
@@ -1945,7 +1956,7 @@
               startY: 145,
               head: [['School fees', 'Admission fees', 'Caution fees', 'Interview', 'Tuition',
                      'Lunch', 'Swimming', 'Uniform', 'Book fund', 'Medical',
-                     'Stationery', 'Transport', 'Trip', 'School Activities', 'AMOUNT (KSHS)']],
+                     'Stationery', 'Transport', 'Trip','graduation', 'School Activities', 'AMOUNT (KSHS)']],
               body: tableData,
               foot: [['', '', '', '', '', '', '', '', '', '', '', '', '', 'TOTAL', receipt.paid.toString()]],
               theme: 'grid',
@@ -1990,8 +2001,8 @@
         const studentsCollection = getStudentsCollection();
         const snapshot = await receiptsCollection.get();
         const data = [];
-        const feeItems = ['tuition', 'adm', 'lunch', 'uniform', 'books', 'stationery', 'transport', 'trip'];
-        const totals = { tuition: 0, adm: 0, lunch: 0, uniform: 0, books: 0, stationery: 0, transport: 0, trip: 0 };
+        const feeItems = ['tuition', 'adm', 'lunch', 'uniform', 'books', 'stationery', 'transport', 'trip', 'graduation'];
+        const totals = { tuition: 0, adm: 0, lunch: 0, uniform: 0, books: 0, stationery: 0, transport: 0, trip: 0, graduation: 0 };
 
         await Promise.all(snapshot.docs.map(async doc => {
           const receipt = doc.data();
@@ -2008,6 +2019,7 @@
               { name: 'Stationery', amount: student.stationery || 0 },
               { name: 'Transport', amount: student.transport || 0 },
               { name: 'Trip', amount: student.trip || 0 }
+              { name: 'Graduation', amount: student.graduation || 0 }
             ];
 
             let paidSoFar = 0;
