@@ -289,7 +289,6 @@
       background-color: #f8f9fa;
     }
 
-    /* Enhanced Term Navigation */
     .term-navigator {
       background: white;
       border-radius: var(--border-radius);
@@ -606,7 +605,6 @@
   <div class="container">
     <div id="statusMessage" class="status-message"></div>
 
-    <!-- Enhanced Term Navigator -->
     <div class="term-navigator no-print">
       <h2 style="color: var(--primary-color); margin-bottom: 1rem;">
         <i class="fas fa-calendar-alt"></i> Academic Terms Management
@@ -630,7 +628,6 @@
         </div>
       </div>
       <div class="term-overview" id="termOverview">
-        <!-- Term statistics will be populated here -->
       </div>
     </div>
 
@@ -754,7 +751,6 @@
         </select>
         <select id="monthFilter" class="filter-select" onchange="loadExpenses()">
           <option value="">Filter by Month</option>
-          <!-- Months will be populated dynamically -->
         </select>
       </div>
 
@@ -828,44 +824,59 @@
       showStatus(`Viewing ${term === 'all' ? 'all terms' : term}`, "info");
     }
 
-    // Load expenses from Firestore
+    // FIXED: Load expenses without requiring composite indexes
     function loadExpenses() {
       const searchQuery = document.getElementById('searchInput').value.toLowerCase();
       const categoryFilter = document.getElementById('categoryFilter').value;
       const monthFilter = document.getElementById('monthFilter').value;
 
+      // Start with a simple query to avoid index issues
       let query = expensesCollection;
       
-      // Apply term filter if not "all"
-      if (currentActiveTerm !== 'all') {
-        query = query.where('term', '==', currentActiveTerm);
-      }
-      
-      if (categoryFilter) {
+      // Only add ONE filter at a time to avoid composite index requirements
+      if (categoryFilter && !monthFilter) {
+        // Filter by category only
         query = query.where('category', '==', categoryFilter);
-      }
-      
-      if (monthFilter) {
+      } else if (monthFilter && !categoryFilter) {
+        // Filter by month only
         query = query.where('date', '>=', `${monthFilter}-01`)
                      .where('date', '<=', `${monthFilter}-31`);
       }
+      // If both filters are selected or term filter is needed, we'll filter client-side
 
-      query.orderBy('date', 'desc').get().then(snapshot => {
-        const expensesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      query.get().then(snapshot => {
+        let expensesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Apply client-side filtering for complex filters
+        if (currentActiveTerm !== 'all') {
+          expensesData = expensesData.filter(e => e.term === currentActiveTerm);
+        }
+        
+        if (categoryFilter && monthFilter) {
+          expensesData = expensesData.filter(e => 
+            e.category === categoryFilter && 
+            e.date.startsWith(monthFilter)
+          );
+        }
         
         // Filter by search query if provided
-        const filteredExpenses = searchQuery
-          ? expensesData.filter(e => e.description.toLowerCase().includes(searchQuery))
-          : expensesData;
+        if (searchQuery) {
+          expensesData = expensesData.filter(e => 
+            e.description.toLowerCase().includes(searchQuery)
+          );
+        }
 
-        renderGroupedExpenses(filteredExpenses);
-        updateSummaryStats(filteredExpenses);
+        // Sort by date (descending) client-side
+        expensesData.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        renderGroupedExpenses(expensesData);
+        updateSummaryStats(expensesData);
       }).catch(error => {
         console.error('Error loading expenses:', error);
         showStatus(`Error loading expenses: ${error.message}`, "error");
       });
 
-      // Load all data for term navigator
+      // Load all data for term navigator (simple query without ordering)
       expensesCollection.get().then(snapshot => {
         allExpensesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         updateTermNavigator();
@@ -906,6 +917,18 @@
           <div class="term-stat">
             <h4><i class="fas fa-calendar-check"></i> Active Terms</h4>
             <div class="value">${Object.values(termStats).filter(s => s.count > 0).length}</div>
+          </div>
+          <div class="term-stat">
+            <h4><i class="fas fa-receipt"></i> Total Transactions</h4>
+            <div class="value">${totalCount}</div>
+          </div>
+          <div class="term-stat">
+            <h4><i class="fas fa-money-bill-wave"></i> Grand Total</h4>
+            <div class="value">KES ${grandTotal.toLocaleString('en-KE', { minimumFractionDigits: 2 })}</div>
+          </div>
+          <div class="term-stat">
+            <h4><i class="fas fa-chart-line"></i> Average per Term</h4>
+            <div class="value">KES ${(grandTotal / 3).toLocaleString('en-KE', { minimumFractionDigits: 2 })}</div>
           </div>
         `;
       } else {
@@ -1134,29 +1157,31 @@
       try {
         let query = expensesCollection;
         
-        if (currentActiveTerm !== 'all') {
-          query = query.where('term', '==', currentActiveTerm);
-        }
-        
-        const snapshot = await query.orderBy('date', 'desc').get();
-        const expenses = [];
+        const snapshot = await query.get();
+        let expenses = [];
         
         snapshot.forEach(doc => {
           const e = doc.data();
-          expenses.push({
-            Term: e.term,
-            Date: e.date,
-            Description: e.description,
-            Category: e.category,
-            Amount: e.amount,
-            'Amount (KES)': `KES ${e.amount.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-          });
+          // Filter client-side if needed
+          if (currentActiveTerm === 'all' || e.term === currentActiveTerm) {
+            expenses.push({
+              Term: e.term,
+              Date: e.date,
+              Description: e.description,
+              Category: e.category,
+              Amount: e.amount,
+              'Amount (KES)': `KES ${e.amount.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            });
+          }
         });
 
         if (expenses.length === 0) {
           showStatus("No expenses to export for current selection", "error");
           return;
         }
+
+        // Sort by date descending
+        expenses.sort((a, b) => new Date(b.Date) - new Date(a.Date));
 
         const worksheet = XLSX.utils.json_to_sheet(expenses);
         const workbook = XLSX.utils.book_new();
@@ -1287,7 +1312,7 @@
     // Export all expenses to Excel
     async function exportAllToExcel() {
       try {
-        const snapshot = await expensesCollection.orderBy('date', 'desc').get();
+        const snapshot = await expensesCollection.get();
         const expenses = [];
         
         snapshot.forEach(doc => {
@@ -1307,6 +1332,9 @@
           return;
         }
 
+        // Sort by date descending
+        expenses.sort((a, b) => new Date(b.Date) - new Date(a.Date));
+
         const worksheet = XLSX.utils.json_to_sheet(expenses);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "All_Expenses");
@@ -1318,18 +1346,16 @@
       }
     }
 
-    // Render charts for expense analysis
+    // FIXED: Render charts for expense analysis (using simple queries)
     async function renderCharts() {
       try {
-        let query = expensesCollection;
+        const snapshot = await expensesCollection.get();
+        let expensesData = snapshot.docs.map(doc => doc.data());
         
-        // Filter by current active term if not "all"
+        // Filter client-side by current active term if not "all"
         if (currentActiveTerm !== 'all') {
-          query = query.where('term', '==', currentActiveTerm);
+          expensesData = expensesData.filter(e => e.term === currentActiveTerm);
         }
-        
-        const snapshot = await query.get();
-        const expensesData = snapshot.docs.map(doc => doc.data());
         
         if (expensesData.length === 0) {
           showStatus("No data available for charts", "error");
@@ -1492,20 +1518,8 @@
       });
       
       // Show welcome message
-      showStatus("Expense management system loaded. Select a term to view specific data.", "info");
+      showStatus("Expense management system loaded successfully. Index issues resolved!", "success");
     });
   </script>
 </body>
-</html> fa-receipt"></i> Total Transactions</h4>
-            <div class="value">${totalCount}</div>
-          </div>
-          <div class="term-stat">
-            <h4><i class="fas fa-money-bill-wave"></i> Grand Total</h4>
-            <div class="value">KES ${grandTotal.toLocaleString('en-KE', { minimumFractionDigits: 2 })}</div>
-          </div>
-          <div class="term-stat">
-            <h4><i class="fas fa-chart-line"></i> Average per Term</h4>
-            <div class="value">KES ${(grandTotal / 3).toLocaleString('en-KE', { minimumFractionDigits: 2 })}</div>
-          </div>
-          <div class="term-stat">
-            <h4><i class="fas
+</html>
