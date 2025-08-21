@@ -1476,7 +1476,7 @@
       }
     }
 
-    async function printReceipt(id) {
+   async function printReceipt(id) {
       try {
         const receiptsCollection = getReceiptsCollection();
         const studentsCollection = getStudentsCollection();
@@ -1502,6 +1502,8 @@
         const receiptNumber = receipt.receiptNumber || `T${currentTerm}-001`;
 
         const printWindow = window.open('', '', 'height=800,width=900');
+        
+        // Create a proper HTML document with the logo properly referenced
         printWindow.document.write(`
           <html>
             <head>
@@ -1526,12 +1528,7 @@
                   width: 70px;
                   height: 70px;
                   margin: 0 auto 10px;
-                  border: 2px solid #000;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  font-weight: bold;
-                  font-size: 10px;
+                  display: block;
                 }
                 .school-motto {
                   font-size: 12px;
@@ -1655,9 +1652,8 @@
             </head>
             <body>
               <div class="header">
-                <div class="school-logo"><a href="photos/school-logo.jpg"><a/>
-                  LOGO
-                </div>
+                <!-- FIXED: Use the correct path to your logo -->
+                <img src="photos/school-logo.jpg" class="school-logo" alt="School Logo">
                 <div class="school-motto">LEARN, LEAD, ACHIEVE</div>
                 <div class="school-name">HERIWADI CHRISTIAN SCHOOLS LTD</div>
                 <div class="contact-info">Physical Address: Ongata Rongai</div>
@@ -1771,6 +1767,23 @@
               </div>
             </body>
           </html>
+        `);
+        printWindow.document.close();
+        
+        // Wait for the image to load before printing
+        setTimeout(() => {
+          printWindow.print();
+          printWindow.close();
+        }, 500);
+      } catch (error) {
+        console.error('Error printing receipt:', error);
+        showStatus("Error printing receipt: " + error.message, "error");
+      }
+    }
+
+  </script>
+</body>
+</html>
         `);
         printWindow.document.close();
         printWindow.print();
