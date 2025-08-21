@@ -1005,7 +1005,6 @@
     let currentTerm = 2; // Default to Term 2 as requested
     let currentYear = new Date().getFullYear();
     let editingId = null;
-    let migrationCompleted = false;
 
     // Collection references with term support
     const getStudentsCollection = (term = currentTerm, year = currentYear) => 
@@ -1019,12 +1018,10 @@
       "Grade 4", "Grade 5", "Grade 6"
     ];
 
-    // Initialize data migration on first load
+    // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
       updateCurrentYearDisplay();
-      initializeMigration().then(() => {
-        loadStudents();
-      });
+      loadStudents();
       
       // Add event listeners
       document.getElementById('studentForm').addEventListener('submit', handleStudentSubmit);
@@ -1068,58 +1065,6 @@
       showStatus(`Switched to Term ${term}`, "info");
     }
 
-    // Migration function to move existing data to Term 2
-    async function initializeMigration() {
-      try {
-        // Check if migration has already been done
-        const migrationDoc = await db.collection('system_settings').doc('student_migration_status').get();
-        
-        if (migrationDoc.exists && migrationDoc.data().term_migration_completed) {
-          migrationCompleted = true;
-          console.log('Student migration already completed');
-          return;
-        }
-
-        showStatus("Initializing term-based student data structure...", "loading");
-
-        // Migrate existing students to Term 2
-        const oldStudents = await db.collection('students').get();
-        const newStudentsCollection = getStudentsCollection(2, currentYear);
-        
-        if (!oldStudents.empty) {
-          const batch = db.batch();
-          oldStudents.forEach(doc => {
-            const studentData = {
-              ...doc.data(),
-              term: 2,
-              year: currentYear,
-              migratedFrom: 'original_collection',
-              carriedForwardBalance: 0 // No previous balance for migrated students
-            };
-            const newDocRef = newStudentsCollection.doc(doc.id);
-            batch.set(newDocRef, studentData);
-          });
-          await batch.commit();
-          console.log(`Migrated ${oldStudents.size} students to Term 2`);
-        }
-
-        // Mark migration as completed
-        await db.collection('system_settings').doc('student_migration_status').set({
-          term_migration_completed: true,
-          migration_date: new Date().toISOString(),
-          migrated_students: oldStudents.size
-        });
-
-        migrationCompleted = true;
-        showStatus("Student term-based data structure initialized successfully!", "success");
-        
-      } catch (error) {
-        console.error('Student migration error:', error);
-        showStatus("Migration completed with some errors. System should still work.", "warning");
-        migrationCompleted = true;
-      }
-    }
-
     // Status message function
     function showStatus(message, type = 'info') {
       const statusMessage = document.getElementById("statusMessage");
@@ -1138,7 +1083,10 @@
     // Check for existing student in previous terms (for balance carry-forward)
     async function checkForExistingStudent() {
       const studentName = document.getElementById('studentName').value.trim();
-      if (!studentName || currentTerm === 1) return;
+      if (!studentName || currentTerm === 1) {
+        document.getElementById('carryForwardInfo').style.display = 'none';
+        return;
+      }
 
       try {
         // Check previous term for existing student
@@ -1151,7 +1099,14 @@
         
         if (!snapshot.empty) {
           const studentData = snapshot.docs[0].data();
-          const previousBalance = studentData.balance || 0;
+          // Calculate balance from previous term
+          const total = (studentData.tuition || 0) + (studentData.adm || 0) + 
+                       (studentData.books || 0) + (studentData.stationery || 0) + 
+                       (studentData.uniform || 0) + (studentData.lunch || 0) + 
+                       (studentData.transport || 0) + (studentData.trip || 0) + (studentData.graduation || 0);
+          const paid = studentData.paid || 0;
+          const carriedForward = studentData.carriedForwardBalance || 0;
+          const previousBalance = total + carriedForward - paid;
           
           if (previousBalance > 0) {
             previousBalanceSpan.textContent = `KES ${previousBalance.toLocaleString('en-KE')}`;
@@ -1164,6 +1119,7 @@
         }
       } catch (error) {
         console.error('Error checking for existing student:', error);
+        document.getElementById('carryForwardInfo').style.display = 'none';
       }
     }
 
@@ -1204,7 +1160,7 @@
         updateSummaryStats(filteredStudents);
       } catch (error) {
         console.error("Error loading students:", error);
-        showStatus(`Error loading students: ${error.message}. Check Firebase rules or network.`, "error");
+        showStatus(`Error loading students: ${error.message}`, "error");
         groupedTables.innerHTML = `<div class="status-message error">Error loading students: ${error.message}</div>`;
       }
     }
@@ -1371,9 +1327,9 @@
       submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
       try {
-        const total = tuition + adm + books + stationery + uniform + lunch + transport + trip;
+        const total = tuition + adm + books + stationery + uniform + lunch + transport + trip + graduation;
         
-        // Check for carry-forward balance
+        // Check for carry-forward balance only when adding new students
         let carriedForwardBalance = 0;
         if (currentTerm > 1 && !editingId) {
           const previousTerm = currentTerm - 1;
@@ -1382,11 +1338,14 @@
           
           if (!snapshot.empty) {
             const previousStudent = snapshot.docs[0].data();
-            const previousBalance = (previousStudent.tuition || 0) + (previousStudent.adm || 0) + 
+            const previousTotal = (previousStudent.tuition || 0) + (previousStudent.adm || 0) + 
                                   (previousStudent.books || 0) + (previousStudent.stationery || 0) + 
                                   (previousStudent.uniform || 0) + (previousStudent.lunch || 0) + 
                                   (previousStudent.transport || 0) + (previousStudent.trip || 0) + 
-                                  (previousStudent.carriedForwardBalance || 0) - (previousStudent.paid || 0);
+                                  (previousStudent.graduation || 0);
+            const previousCarriedForward = previousStudent.carriedForwardBalance || 0;
+            const previousPaid = previousStudent.paid || 0;
+            const previousBalance = previousTotal + previousCarriedForward - previousPaid;
             
             carriedForwardBalance = Math.max(0, previousBalance); // Only carry forward positive balances
           }
@@ -1413,16 +1372,21 @@
           carriedForwardBalance,
           term: currentTerm,
           year: currentYear,
-          createdAt: new Date().toISOString(),
+          createdAt: editingId ? null : new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
 
         const studentsCollection = getStudentsCollection();
 
         if (editingId !== null) {
-          // Update existing student
+          // Update existing student - preserve carried forward balance
+          const existingDoc = await studentsCollection.doc(editingId).get();
+          const existingData = existingDoc.data();
+          
           await studentsCollection.doc(editingId).update({
             ...student,
+            carriedForwardBalance: existingData.carriedForwardBalance || 0, // Preserve existing balance
+            createdAt: existingData.createdAt, // Preserve original creation date
             updatedAt: new Date().toISOString()
           });
           showStatus(`Student ${name} updated successfully for Term ${currentTerm}!`, "success");
@@ -1576,9 +1540,9 @@
                 <p><strong>Admission Fee:</strong> KES ${(s.adm || 0).toLocaleString('en-KE')}</p>
                 <p><strong>Book Fund:</strong> KES ${(s.books || 0).toLocaleString('en-KE')}</p>
                 <p><strong>Stationery:</strong> KES ${(s.stationery || 0).toLocaleString('en-KE')}</p>
+                <p><strong>Uniform:</strong> KES ${(s.uniform || 0).toLocaleString('en-KE')}</p>
               </div>
               <div>
-                <p><strong>Uniform:</strong> KES ${(s.uniform || 0).toLocaleString('en-KE')}</p>
                 <p><strong>Lunch:</strong> KES ${(s.lunch || 0).toLocaleString('en-KE')}</p>
                 <p><strong>Transport:</strong> KES ${(s.transport || 0).toLocaleString('en-KE')}</p>
                 <p><strong>Trip:</strong> KES ${(s.trip || 0).toLocaleString('en-KE')}</p>
@@ -1696,11 +1660,14 @@
           // Calculate carry-forward balance
           let carriedForwardBalance = 0;
           if (carryForwardBalances) {
-            const sourceBalance = (sourceStudent.tuition || 0) + (sourceStudent.adm || 0) + 
+            const sourceTotal = (sourceStudent.tuition || 0) + (sourceStudent.adm || 0) + 
                                 (sourceStudent.books || 0) + (sourceStudent.stationery || 0) + 
                                 (sourceStudent.uniform || 0) + (sourceStudent.lunch || 0) + 
                                 (sourceStudent.transport || 0) + (sourceStudent.trip || 0) + 
-                                (sourceStudent.carriedForwardBalance || 0) - (sourceStudent.paid || 0);
+                                (sourceStudent.graduation || 0);
+            const sourceCarriedForward = sourceStudent.carriedForwardBalance || 0;
+            const sourcePaid = sourceStudent.paid || 0;
+            const sourceBalance = sourceTotal + sourceCarriedForward - sourcePaid;
             
             carriedForwardBalance = Math.max(0, sourceBalance);
           }
@@ -1785,8 +1752,13 @@
       const fromTerm = prompt(`Copy students FROM which term? (1, 2, or 3)`, currentTerm.toString());
       const toTerm = prompt(`Copy students TO which term? (1, 2, or 3)`, (currentTerm === 3 ? 1 : currentTerm + 1).toString());
 
-      if (!fromTerm || !toTerm || fromTerm === toTerm) {
+      if (!fromTerm || !toTerm || fromTerm === toTerm || 
+          !['1', '2', '3'].includes(fromTerm) || !['1', '2', '3'].includes(toTerm)) {
         showStatus("Invalid term selection", "error");
+        return;
+      }
+
+      if (!confirm(`Copy all students from Term ${fromTerm} to Term ${toTerm}? This will carry forward outstanding balances and reset paid amounts.`)) {
         return;
       }
 
@@ -1800,26 +1772,55 @@
           return;
         }
 
+        showStatus(`Copying ${snapshot.size} students from Term ${fromTerm} to Term ${toTerm}...`, "loading");
+
         const batch = db.batch();
-        snapshot.forEach(doc => {
+        let processedCount = 0;
+
+        for (const doc of snapshot.docs) {
+          const sourceStudent = doc.data();
+          
+          // Calculate balance to carry forward
+          const sourceTotal = (sourceStudent.tuition || 0) + (sourceStudent.adm || 0) + 
+                              (sourceStudent.books || 0) + (sourceStudent.stationery || 0) + 
+                              (sourceStudent.uniform || 0) + (sourceStudent.lunch || 0) + 
+                              (sourceStudent.transport || 0) + (sourceStudent.trip || 0) + 
+                              (sourceStudent.graduation || 0);
+          const sourceCarriedForward = sourceStudent.carriedForwardBalance || 0;
+          const sourcePaid = sourceStudent.paid || 0;
+          const balanceToCarryForward = Math.max(0, sourceTotal + sourceCarriedForward - sourcePaid);
+
+          // Check if student already exists in target term
+          const existingQuery = await toCollection.where('name', '==', sourceStudent.name).get();
+          
           const studentData = {
-            ...doc.data(),
+            ...sourceStudent,
             term: parseInt(toTerm),
             paid: 0, // Reset paid amount for new term
-            carriedForwardBalance: Math.max(0, doc.data().balance || 0), // Carry forward positive balance
+            carriedForwardBalance: balanceToCarryForward,
             copiedFrom: `term_${fromTerm}`,
+            createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           };
           
           // Recalculate balance
           studentData.balance = studentData.total + studentData.carriedForwardBalance - studentData.paid;
           
-          const newDocRef = toCollection.doc();
-          batch.set(newDocRef, studentData);
-        });
+          if (!existingQuery.empty) {
+            // Update existing student
+            const existingDoc = existingQuery.docs[0];
+            batch.update(existingDoc.ref, studentData);
+          } else {
+            // Create new student
+            const newDocRef = toCollection.doc();
+            batch.set(newDocRef, studentData);
+          }
+          
+          processedCount++;
+        }
 
         await batch.commit();
-        showStatus(`Successfully copied ${snapshot.size} students from Term ${fromTerm} to Term ${toTerm}`, "success");
+        showStatus(`Successfully copied ${processedCount} students from Term ${fromTerm} to Term ${toTerm}`, "success");
         
         if (parseInt(toTerm) === currentTerm) {
           loadStudents();
@@ -1857,7 +1858,11 @@
 
           const students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           const totalStudents = students.length;
-          const totalFees = students.reduce((sum, s) => sum + (s.total || 0), 0);
+          const totalFees = students.reduce((sum, s) => {
+            return sum + (s.tuition || 0) + (s.adm || 0) + (s.books || 0) + 
+                   (s.stationery || 0) + (s.uniform || 0) + 
+                   (s.lunch || 0) + (s.transport || 0) + (s.trip || 0) + (s.graduation || 0);
+          }, 0);
           const totalPaid = students.reduce((sum, s) => sum + (s.paid || 0), 0);
           const totalCarriedForward = students.reduce((sum, s) => sum + (s.carriedForwardBalance || 0), 0);
           const totalBalance = totalFees + totalCarriedForward - totalPaid;
