@@ -425,7 +425,7 @@
       position: relative;
       transform: translateY(-20px);
       transition: transform 0.3s ease;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 10px極端25px rgba(0, 0, 0, 0.2);
     }
 
     .modal.show .modal-content {
@@ -438,6 +438,10 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      position: sticky;
+      top: 0;
+      background: white;
+      z-index: 10;
     }
 
     .modal-title {
@@ -469,6 +473,9 @@
       display: flex;
       justify-content: flex-end;
       gap: 0.75rem;
+      position: sticky;
+      bottom: 0;
+      background: white;
     }
 
     .grid {
@@ -502,11 +509,13 @@
     .stat-item h4 {
       margin-bottom: 0.5rem;
       color: var(--primary-color);
+      font-size: 0.9rem;
     }
 
     .stat-item p {
       font-size: 1.25rem;
       font-weight: bold;
+      margin: 0;
     }
 
     .student-link {
@@ -645,6 +654,14 @@
         width: 100%;
         justify-content: space-between;
       }
+      
+      .modal-content {
+        width: 95%;
+      }
+      
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+      }
     }
 
     @media print {
@@ -689,9 +706,9 @@
         </div>
       </div>
       <div class="term-buttons">
-        <button class="term-btn" data-term="1" onclick="switchTerm(1)">Term 1</button>
-        <button class="term-btn active" data-term="2" onclick="switchTerm(2)">Term 2</button>
-        <button class="term-btn" data-term="3" onclick="switchTerm(3)">Term 3</button>
+        <button class="term-btn" data-term="1" id="term1Btn">Term 1</button>
+        <button class="term-btn active" data-term="2" id="term2Btn">Term 2</button>
+        <button class="term-btn" data-term="3" id="term3Btn">Term 3</button>
       </div>
     </div>
 
@@ -700,13 +717,13 @@
       <h3><i class="fas fa-exchange-alt"></i> Term Transition Management</h3>
       <p>Manage student data across different academic terms and handle balance carry-forwards.</p>
       <div class="term-actions">
-        <button class="btn" onclick="openTermTransitionModal()">
+        <button class="btn" id="startTransitionBtn">
           <i class="fas fa-arrow-right"></i> Start Term Transition
         </button>
-        <button class="btn" onclick="copyStudentsBetweenTerms()">
+        <button class="btn" id="copyStudentsBtn">
           <i class="fas fa-copy"></i> Copy Students
         </button>
-        <button class="btn" onclick="viewTermSummary()">
+        <button class="btn" id="viewSummaryBtn">
           <i class="fas fa-chart-line"></i> Term Summary
         </button>
       </div>
@@ -824,13 +841,13 @@
       <div class="card-header">
         <h2 class="card-title">Student Records - <span id="currentTermRecords">Term 2</span></h2>
         <div class="btn-group">
-          <button class="btn btn-info" onclick="exportToExcel()">
+          <button class="btn btn-info" id="exportAllBtn">
             <i class="fas fa-file-excel"></i> Export All
           </button>
-          <button class="btn btn-warning" onclick="exportClassToExcel()">
+          <button class="btn btn-warning" id="exportClassBtn">
             <i class="fas fa-file-export"></i> Export Class
           </button>
-          <button class="btn btn-danger" onclick="showImportModal()">
+          <button class="btn btn-danger" id="importBtn">
             <i class="fas fa-file-import"></i> Import
           </button>
         </div>
@@ -839,9 +856,9 @@
       <div class="search-container">
         <div class="search-box">
           <i class="fas fa-search"></i>
-          <input type="text" id="searchInput" placeholder="Search by name..." oninput="loadStudents()">
+          <input type="text" id="searchInput" placeholder="Search by name...">
         </div>
-        <select id="classFilter" class="filter-select" onchange="loadStudents()">
+        <select id="classFilter" class="filter-select">
           <option value="">Filter by Class</option>
           <option value="Play Group">Play Group</option>
           <option value="PP1">PP1</option>
@@ -865,7 +882,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h3 class="modal-title">Student Details</h3>
-        <button class="modal-close" onclick="closeModal()">&times;</button>
+        <button class="modal-close" id="closeStudentModal">&times;</button>
       </div>
       <div class="modal-body">
         <div id="modalContent"></div>
@@ -878,7 +895,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h3 class="modal-title">Term Transition Management</h3>
-        <button class="modal-close" onclick="closeTermTransitionModal()">&times;</button>
+        <button class="modal-close" id="closeTermTransitionModal">&times;</button>
       </div>
       <div class="modal-body">
         <h4>Copy Students to New Term</h4>
@@ -919,10 +936,10 @@
         </div>
 
         <div class="modal-footer">
-          <button class="btn btn-outline" onclick="closeTermTransitionModal()">
+          <button class="btn btn-outline" id="cancelTransitionBtn">
             <i class="fas fa-times"></i> Cancel
           </button>
-          <button class="btn btn-success" onclick="executeTermTransition()">
+          <button class="btn btn-success" id="executeTransitionBtn">
             <i class="fas fa-arrow-right"></i> Execute Transition
           </button>
         </div>
@@ -935,16 +952,16 @@
     <div class="modal-content">
       <div class="modal-header">
         <h3 class="modal-title">Import Students</h3>
-        <button class="modal-close" onclick="closeImportModal()">&times;</button>
+        <button class="modal-close" id="closeImportModal">&times;</button>
       </div>
       <div class="modal-body">
         <p>Select a JSON file containing student data to import:</p>
         <input type="file" id="importFile" accept=".json" style="margin: 1rem 0;">
         <div class="modal-footer">
-          <button class="btn btn-outline" onclick="closeImportModal()">
+          <button class="btn btn-outline" id="cancelImportBtn">
             <i class="fas fa-times"></i> Cancel
           </button>
-          <button class="btn btn-success" onclick="importStudents()">
+          <button class="btn btn-success" id="confirmImportBtn">
             <i class="fas fa-file-import"></i> Import
           </button>
         </div>
@@ -957,7 +974,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h3 class="modal-title">Term Summary Report</h3>
-        <button class="modal-close" onclick="closeTermSummaryModal()">&times;</button>
+        <button class="modal-close" id="closeTermSummaryModal">&times;</button>
       </div>
       <div class="modal-body">
         <div id="termSummaryContent"></div>
@@ -1022,10 +1039,7 @@
     document.addEventListener('DOMContentLoaded', function() {
       updateCurrentYearDisplay();
       loadStudents();
-      
-      // Add event listeners
-      document.getElementById('studentForm').addEventListener('submit', handleStudentSubmit);
-      document.getElementById('studentName').addEventListener('input', checkForExistingStudent);
+      setupEventListeners();
       
       // Initialize modals
       const modals = ['studentModal', 'termTransitionModal', 'importModal', 'termSummaryModal'];
@@ -1038,6 +1052,40 @@
         });
       });
     });
+
+    // Set up all event listeners
+    function setupEventListeners() {
+      // Term buttons
+      document.getElementById('term1Btn').addEventListener('click', () => switchTerm(1));
+      document.getElementById('term2Btn').addEventListener('click', () => switchTerm(2));
+      document.getElementById('term3Btn').addEventListener('click', () => switchTerm(3));
+      
+      // Form submission
+      document.getElementById('studentForm').addEventListener('submit', handleStudentSubmit);
+      document.getElementById('studentName').addEventListener('input', checkForExistingStudent);
+      
+      // Search and filter
+      document.getElementById('searchInput').addEventListener('input', loadStudents);
+      document.getElementById('classFilter').addEventListener('change', loadStudents);
+      
+      // Action buttons
+      document.getElementById('startTransitionBtn').addEventListener('click', openTermTransitionModal);
+      document.getElementById('copyStudentsBtn').addEventListener('click', copyStudentsBetweenTerms);
+      document.getElementById('viewSummaryBtn').addEventListener('click', viewTermSummary);
+      document.getElementById('exportAllBtn').addEventListener('click', exportToExcel);
+      document.getElementById('exportClassBtn').addEventListener('click', exportClassToExcel);
+      document.getElementById('importBtn').addEventListener('click', showImportModal);
+      
+      // Modal buttons
+      document.getElementById('closeStudentModal').addEventListener('click', closeModal);
+      document.getElementById('closeTermTransitionModal').addEventListener('click', closeTermTransitionModal);
+      document.getElementById('closeImportModal').addEventListener('click', closeImportModal);
+      document.getElementById('closeTermSummaryModal').addEventListener('click', closeTermSummaryModal);
+      document.getElementById('cancelTransitionBtn').addEventListener('click', closeTermTransitionModal);
+      document.getElementById('executeTransitionBtn').addEventListener('click', executeTermTransition);
+      document.getElementById('cancelImportBtn').addEventListener('click', closeImportModal);
+      document.getElementById('confirmImportBtn').addEventListener('click', importStudents);
+    }
 
     function updateCurrentYearDisplay() {
       document.getElementById('currentYear').textContent = currentYear;
@@ -2069,7 +2117,7 @@
 
     // Helper function to read file as text
     function readFileAsText(file) {
-      return new Promise((resolve, reject) {
+      return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = event => resolve(event.target.result);
         reader.onerror = error => reject(error);
