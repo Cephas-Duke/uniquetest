@@ -793,6 +793,10 @@
             <label for="trip">Trip (KES)</label>
             <input type="number" id="trip" value="0" min="0">
           </div>
+           <div class="form-group">
+            <label for="graduation">Graduation (KES)</label>
+            <input type="number" id="graduation" value="0" min="0">
+          </div>
           
           <div class="form-group">
             <label for="paid">Amount Paid (KES)</label>
@@ -1253,7 +1257,7 @@
         classStudents.forEach(s => {
           const total = (s.tuition || 0) + (s.adm || 0) + (s.books || 0) + 
                        (s.stationery || 0) + (s.uniform || 0) + 
-                       (s.lunch || 0) + (s.transport || 0) + (s.trip || 0);
+                       (s.lunch || 0) + (s.transport || 0) + (s.trip || 0) + (s.graduation || 0);
           const paid = s.paid || 0;
           const carriedForward = s.carriedForwardBalance || 0;
           const balance = total + carriedForward - paid;
@@ -1298,7 +1302,7 @@
       const totalFees = students.reduce((sum, s) => {
         return sum + (s.tuition || 0) + (s.adm || 0) + (s.books || 0) + 
                (s.stationery || 0) + (s.uniform || 0) + 
-               (s.lunch || 0) + (s.transport || 0) + (s.trip || 0);
+               (s.lunch || 0) + (s.transport || 0) + (s.trip || 0) + (s.graduation || 0);
       }, 0);
       const totalPaid = students.reduce((sum, s) => sum + (s.paid || 0), 0);
       const totalCarriedForward = students.reduce((sum, s) => sum + (s.carriedForwardBalance || 0), 0);
@@ -1347,6 +1351,7 @@
       const lunch = parseFloat(document.getElementById('lunch').value) || 0;
       const transport = parseFloat(document.getElementById('transport').value) || 0;
       const trip = parseFloat(document.getElementById('trip').value) || 0;
+      const graduation = parseFloat(document.getElementById('graduation').value) || 0;
       const paid = parseFloat(document.getElementById('paid').value) || 0;
 
       // Validation
@@ -1401,6 +1406,7 @@
           lunch, 
           transport, 
           trip,
+          graduation,
           total, 
           paid, 
           balance,
@@ -1476,6 +1482,7 @@
         document.getElementById('lunch').value = s.lunch || 0;
         document.getElementById('transport').value = s.transport || 0;
         document.getElementById('trip').value = s.trip || 0;
+        document.getElementById('graduation').value = s.graduation || 0;
         document.getElementById('paid').value = s.paid || 0;
 
         // Show carry-forward info if applicable
@@ -1531,7 +1538,7 @@
 
         const total = (s.tuition || 0) + (s.adm || 0) + (s.books || 0) + 
                      (s.stationery || 0) + (s.uniform || 0) + 
-                     (s.lunch || 0) + (s.transport || 0) + (s.trip || 0);
+                     (s.lunch || 0) + (s.transport || 0) + (s.trip || 0) + (s.graduation || 0);
         const paid = s.paid || 0;
         const carriedForward = s.carriedForwardBalance || 0;
         const balance = total + carriedForward - paid;
@@ -1575,6 +1582,7 @@
                 <p><strong>Lunch:</strong> KES ${(s.lunch || 0).toLocaleString('en-KE')}</p>
                 <p><strong>Transport:</strong> KES ${(s.transport || 0).toLocaleString('en-KE')}</p>
                 <p><strong>Trip:</strong> KES ${(s.trip || 0).toLocaleString('en-KE')}</p>
+                <p><strong>Graduation:</strong> KES ${(s.graduation || 0).toLocaleString('en-KE')}</p>
               </div>
             </div>
             
@@ -1712,9 +1720,10 @@
             lunch: sourceStudent.lunch || 0,
             transport: sourceStudent.transport || 0,
             trip: sourceStudent.trip || 0,
+            graduation: sourceStudent.graduation || 0,
             total: (sourceStudent.tuition || 0) + (sourceStudent.adm || 0) + (sourceStudent.books || 0) + 
                    (sourceStudent.stationery || 0) + (sourceStudent.uniform || 0) + 
-                   (sourceStudent.lunch || 0) + (sourceStudent.transport || 0) + (sourceStudent.trip || 0),
+                   (sourceStudent.lunch || 0) + (sourceStudent.transport || 0) + (sourceStudent.trip || 0) + (sourceStudent.graduation || 0),
             paid: resetPaidAmounts ? 0 : (sourceStudent.paid || 0),
             balance: 0, // Will be recalculated
             carriedForwardBalance: carriedForwardBalance,
@@ -1899,7 +1908,7 @@
           const s = doc.data();
           const total = (s.tuition || 0) + (s.adm || 0) + (s.books || 0) + 
                        (s.stationery || 0) + (s.uniform || 0) + 
-                       (s.lunch || 0) + (s.transport || 0) + (s.trip || 0);
+                       (s.lunch || 0) + (s.transport || 0) + (s.trip || 0) + (s.graduation || 0);
           const paid = s.paid || 0;
           const carriedForward = s.carriedForwardBalance || 0;
           const balance = total + carriedForward - paid;
@@ -1917,6 +1926,7 @@
             Lunch: s.lunch || 0,
             Transport: s.transport || 0,
             Trip: s.trip || 0,
+            Graduation: s.graduation || 0,
             'Current Term Fees': total,
             'Carried Forward': carriedForward,
             'Amount Paid': paid,
@@ -1955,7 +1965,7 @@
           const s = doc.data();
           const total = (s.tuition || 0) + (s.adm || 0) + (s.books || 0) + 
                        (s.stationery || 0) + (s.uniform || 0) + 
-                       (s.lunch || 0) + (s.transport || 0) + (s.trip || 0);
+                       (s.lunch || 0) + (s.transport || 0) + (s.trip || 0) + (s.graduation || 0);
           const paid = s.paid || 0;
           const carriedForward = s.carriedForwardBalance || 0;
           const balance = total + carriedForward - paid;
@@ -1973,6 +1983,7 @@
             Lunch: s.lunch || 0,
             Transport: s.transport || 0,
             Trip: s.trip || 0,
+            Graduation: s.graduation || 0,
             'Current Term Fees': total,
             'Carried Forward': carriedForward,
             'Amount Paid': paid,
