@@ -550,19 +550,12 @@
       font-size: 0.9rem;
     }
 
-    .carry-forward-display {
-      background-color: #e8f4fd;
-      border: 1px solid #bee5eb;
+    .carry-forward-details {
+      background-color: #e8f5e8;
+      border: 1px solid #c3e6c3;
       border-radius: var(--border-radius);
       padding: 1rem;
-      margin-bottom: 1rem;
-      font-size: 0.9rem;
-    }
-
-    .carry-forward-display .amount {
-      font-size: 1.1rem;
-      font-weight: bold;
-      color: var(--warning-color);
+      margin: 1rem 0;
     }
 
     .term-transition-card {
@@ -699,235 +692,6 @@
     <div class="term-selector slide-in">
       <div>
         <h3><i class="fas fa-calendar-alt"></i> Academic Term</h3>
-        <div class="current-term-info">
-          Current Academic Year: <span id="currentYear">2024</span>
-        </div>
-      </div>
-      <div class="term-buttons">
-        <button class="term-btn" data-term="1" onclick="switchTerm(1)">Term 1</button>
-        <button class="term-btn active" data-term="2" onclick="switchTerm(2)">Term 2</button>
-        <button class="term-btn" data-term="3" onclick="switchTerm(3)">Term 3</button>
-      </div>
-    </div>
-
-    <!-- Term Transition Management -->
-    <div class="term-transition-card slide-in">
-      <h3><i class="fas fa-exchange-alt"></i> Term Transition Management</h3>
-      <p>Manage student data across different academic terms and handle balance carry-forwards.</p>
-      <div class="term-actions">
-        <button class="btn" onclick="openTermTransitionModal()">
-          <i class="fas fa-arrow-right"></i> Start Term Transition
-        </button>
-        <button class="btn" onclick="copyStudentsBetweenTerms()">
-          <i class="fas fa-copy"></i> Copy Students
-        </button>
-        <button class="btn" onclick="viewTermSummary()">
-          <i class="fas fa-chart-line"></i> Term Summary
-        </button>
-      </div>
-    </div>
-
-    <div id="statusMessage" class="status-message"></div>
-
-    <div class="card slide-in">
-      <div class="card-header">
-        <h2 class="card-title">Student Registration - <span id="currentTermDisplay">Term 2</span></h2>
-      </div>
-      
-      <div class="balance-info">
-        <i class="fas fa-info-circle"></i> <strong>Note:</strong> When adding students in Term 2 or 3, any previous term balances will be automatically carried forward. Students will inherit their balance from the previous term to ensure continuity.
-      </div>
-
-      <form id="studentForm">
-        <div class="grid">
-          <div class="form-group">
-            <label for="studentName"><i class="fas fa-user-graduate"></i> Student Name</label>
-            <input type="text" id="studentName" required>
-          </div>
-          
-          <div class="form-group">
-            <label for="studentClass"><i class="fas fa-chalkboard"></i> Class</label>
-            <select id="studentClass" required>
-              <option value="">Select Class</option>
-              <option value="Play Group">Play Group</option>
-              <option value="PP1">PP1</option>
-              <option value="PP2">PP2</option>
-              <option value="Grade 1">Grade 1</option>
-              <option value="Grade 2">Grade 2</option>
-              <option value="Grade 3">Grade 3</option>
-              <option value="Grade 4">Grade 4</option>
-              <option value="Grade 5">Grade 5</option>
-              <option value="Grade 6">Grade 6</option>
-            </select>
-          </div>
-          
-          <div class="form-group">
-            <label for="phone"><i class="fas fa-phone"></i> Phone Number</label>
-            <input type="tel" id="phone" placeholder="e.g., +254712345678" pattern="^\+?[1-9]\d{9,14}$" required>
-          </div>
-        </div>
-
-        <h3 style="margin: 1.5rem 0 0.5rem;">Fee Structure for <span id="feeTermDisplay">Term 2</span></h3>
-        <div class="fee-grid">
-          <div class="form-group">
-            <label for="tuition">Tuition (KES)</label>
-            <input type="number" id="tuition" value="0" min="0">
-          </div>
-          
-          <div class="form-group">
-            <label for="adm">Admission Fee (KES)</label>
-            <input type="number" id="adm" value="0" min="0">
-          </div>
-          
-          <div class="form-group">
-            <label for="books">Book Fund (KES)</label>
-            <input type="number" id="books" value="0" min="0">
-          </div>
-          
-          <div class="form-group">
-            <label for="stationery">Stationery (KES)</label>
-            <input type="number" id="stationery" value="0" min="0">
-          </div>
-          
-          <div class="form-group">
-            <label for="uniform">Uniform (KES)</label>
-            <input type="number" id="uniform" value="0" min="0">
-          </div>
-          
-          <div class="form-group">
-            <label for="lunch">Lunch (KES)</label>
-            <input type="number" id="lunch" value="0" min="0">
-          </div>
-          
-          <div class="form-group">
-            <label for="transport">Transport (KES)</label>
-            <input type="number" id="transport" value="0" min="0">
-          </div>
-          
-          <div class="form-group">
-            <label for="trip">Trip (KES)</label>
-            <input type="number" id="trip" value="0" min="0">
-          </div>
-           <div class="form-group">
-            <label for="graduation">Graduation (KES)</label>
-            <input type="number" id="graduation" value="0" min="0">
-          </div>
-          
-          <div class="form-group">
-            <label for="paid">Amount Paid (KES)</label>
-            <input type="number" id="paid" value="0" min="0">
-          </div>
-        </div>
-
-        <div id="carryForwardInfo" class="carry-forward-display" style="display: none;">
-          <h4><i class="fas fa-arrow-right"></i> Balance Carry Forward</h4>
-          <p><strong>Previous Term:</strong> <span id="previousTermInfo">Term 1</span></p>
-          <p><strong>Outstanding Balance:</strong> <span id="previousBalance" class="amount">KES 0</span></p>
-          <p><small>This balance will be automatically carried forward to the current term.</small></p>
-        </div>
-
-        <div style="margin-top: 1.5rem;">
-          <button type="submit" class="btn btn-success" id="submitBtn">
-            <i class="fas fa-save"></i> Add Student
-          </button>
-          <button type="reset" class="btn btn-outline" style="margin-left: 0.5rem;" onclick="resetForm()">
-            <i class="fas fa-undo"></i> Reset
-          </button>
-        </div>
-      </form>
-    </div>
-
-    <div class="card slide-in">
-      <div class="card-header">
-        <h2 class="card-title">Student Records - <span id="currentTermRecords">Term 2</span></h2>
-        <div class="btn-group">
-          <button class="btn btn-info" onclick="exportToExcel()">
-            <i class="fas fa-file-excel"></i> Export All
-          </button>
-          <button class="btn btn-warning" onclick="exportClassToExcel()">
-            <i class="fas fa-file-export"></i> Export Class
-          </button>
-          <button class="btn btn-danger" onclick="showImportModal()">
-            <i class="fas fa-file-import"></i> Import
-          </button>
-        </div>
-      </div>
-
-      <div class="search-container">
-        <div class="search-box">
-          <i class="fas fa-search"></i>
-          <input type="text" id="searchInput" placeholder="Search by name..." oninput="loadStudents()">
-        </div>
-        <select id="classFilter" class="filter-select" onchange="loadStudents()">
-          <option value="">Filter by Class</option>
-          <option value="Play Group">Play Group</option>
-          <option value="PP1">PP1</option>
-          <option value="PP2">PP2</option>
-          <option value="Grade 1">Grade 1</option>
-          <option value="Grade 2">Grade 2</option>
-          <option value="Grade 3">Grade 3</option>
-          <option value="Grade 4">Grade 4</option>
-          <option value="Grade 5">Grade 5</option>
-          <option value="Grade 6">Grade 6</option>
-        </select>
-      </div>
-
-      <div id="statsContainer"></div>
-      <div id="groupedTables"></div>
-    </div>
-  </div>
-
-  <!-- Student Detail Modal -->
-  <div id="studentModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 class="modal-title">Student Details</h3>
-        <button class="modal-close" onclick="closeModal()">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div id="modalContent"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Term Transition Modal -->
-  <div id="termTransitionModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 class="modal-title">Term Transition Management</h3>
-        <button class="modal-close" onclick="closeTermTransitionModal()">&times;</button>
-      </div>
-      <div class="modal-body">
-        <h4>Copy Students to New Term</h4>
-        <p>Select the source and target terms to copy student data with balance carry-forward.</p>
-        
-        <div class="grid" style="margin: 1.5rem 0;">
-          <div class="form-group">
-            <label for="sourceTerm">From Term</label>
-            <select id="sourceTerm" required>
-              <option value="1">Term 1</option>
-              <option value="2" selected>Term 2</option>
-              <option value="3">Term 3</option>
-            </select>
-          </div>
-          
-          <div class="form-group">
-            <label for="targetTerm">To Term</label>
-            <select id="targetTerm" required>
-              <option value="1">Term 1</option>
-              <option value="2">Term 2</option>
-              <option value="3">Term 3</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>
-            <input type="checkbox" id="resetPaidAmounts" checked style="width: auto; margin-right: 0.5rem;">
-            Reset paid amounts (recommended for new term)
-          </label>
-        </div>
-
         <div class="modal-footer">
           <button class="btn btn-outline" onclick="closeTermTransitionModal()">
             <i class="fas fa-times"></i> Cancel
@@ -1008,6 +772,7 @@
     } catch (error) {
       console.error('Firebase initialization error:', error);
       showStatus("Failed to initialize Firebase. Check your configuration.", "error");
+      throw error;
     }
 
     // Current term and year management
@@ -1034,7 +799,7 @@
       
       // Add event listeners
       document.getElementById('studentForm').addEventListener('submit', handleStudentSubmit);
-      document.getElementById('studentName').addEventListener('input', debounce(checkForExistingStudent, 500));
+      document.getElementById('studentName').addEventListener('input', checkForExistingStudent);
       
       // Initialize modals
       const modals = ['studentModal', 'termTransitionModal', 'importModal', 'termSummaryModal'];
@@ -1047,19 +812,6 @@
         });
       });
     });
-
-    // Debounce function to prevent too many API calls
-    function debounce(func, wait) {
-      let timeout;
-      return function executedFunction(...args) {
-        const later = () => {
-          clearTimeout(timeout);
-          func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-      };
-    }
 
     function updateCurrentYearDisplay() {
       document.getElementById('currentYear').textContent = currentYear;
@@ -1102,17 +854,11 @@
       }, 5000);
     }
 
-    // FIXED: Check for existing student in previous terms (for balance carry-forward)
+    // Enhanced check for existing student with detailed breakdown
     async function checkForExistingStudent() {
       const studentName = document.getElementById('studentName').value.trim();
-      const carryForwardInfo = document.getElementById('carryForwardInfo');
-      const previousBalanceSpan = document.getElementById('previousBalance');
-      const previousTermInfo = document.getElementById('previousTermInfo');
-      
-      // Hide carry forward info initially
-      carryForwardInfo.style.display = 'none';
-      
-      if (!studentName || currentTerm === 1 || editingId !== null) {
+      if (!studentName || currentTerm === 1) {
+        document.getElementById('carryForwardInfo').style.display = 'none';
         return;
       }
 
@@ -1120,41 +866,80 @@
         // Check previous term for existing student
         const previousTerm = currentTerm - 1;
         const previousStudentsCollection = getStudentsCollection(previousTerm, currentYear);
+        const snapshot = await previousStudentsCollection.where('name', '==', studentName).get();
         
-        console.log(`Checking for student "${studentName}" in Term ${previousTerm}`);
-        
-        const snapshot = await previousStudentsCollection
-          .where('name', '==', studentName)
-          .limit(1)
-          .get();
+        const carryForwardInfo = document.getElementById('carryForwardInfo');
+        const previousBalanceSpan = document.getElementById('previousBalance');
+        const previousTermBreakdown = document.getElementById('previousTermBreakdown');
         
         if (!snapshot.empty) {
           const studentData = snapshot.docs[0].data();
-          console.log('Found previous student data:', studentData);
           
-          // Calculate balance from previous term
-          const total = (studentData.tuition || 0) + (studentData.adm || 0) + 
-                       (studentData.books || 0) + (studentData.stationery || 0) + 
-                       (studentData.uniform || 0) + (studentData.lunch || 0) + 
-                       (studentData.transport || 0) + (studentData.trip || 0) + 
-                       (studentData.graduation || 0);
+          // Calculate detailed breakdown
+          const fees = {
+            tuition: studentData.tuition || 0,
+            adm: studentData.adm || 0,
+            books: studentData.books || 0,
+            stationery: studentData.stationery || 0,
+            uniform: studentData.uniform || 0,
+            lunch: studentData.lunch || 0,
+            transport: studentData.transport || 0,
+            trip: studentData.trip || 0,
+            graduation: studentData.graduation || 0
+          };
+          
+          const totalFees = Object.values(fees).reduce((sum, fee) => sum + fee, 0);
           const paid = studentData.paid || 0;
-          const carriedForward = studentData.carriedForwardBalance || 0;
-          const previousBalance = total + carriedForward - paid;
+          const previousCarriedForward = studentData.carriedForwardBalance || 0;
+          const currentBalance = totalFees + previousCarriedForward - paid;
           
-          console.log(`Previous balance calculation: Total: ${total}, Paid: ${paid}, Carried Forward: ${carriedForward}, Balance: ${previousBalance}`);
-          
-          if (previousBalance > 0) {
-            previousBalanceSpan.textContent = `KES ${previousBalance.toLocaleString('en-KE')}`;
-            previousTermInfo.textContent = `Term ${previousTerm}`;
+          if (currentBalance > 0) {
+            // Show detailed breakdown
+            const breakdownHtml = `
+              <div style="background: #f8f9fa; padding: 0.75rem; border-radius: 4px; margin-bottom: 0.75rem;">
+                <h5 style="margin-bottom: 0.5rem;">Term ${previousTerm} Fee Breakdown:</h5>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.9rem;">
+                  ${fees.tuition > 0 ? `<div>Tuition: KES ${fees.tuition.toLocaleString('en-KE')}</div>` : ''}
+                  ${fees.adm > 0 ? `<div>Admission: KES ${fees.adm.toLocaleString('en-KE')}</div>` : ''}
+                  ${fees.books > 0 ? `<div>Books: KES ${fees.books.toLocaleString('en-KE')}</div>` : ''}
+                  ${fees.stationery > 0 ? `<div>Stationery: KES ${fees.stationery.toLocaleString('en-KE')}</div>` : ''}
+                  ${fees.uniform > 0 ? `<div>Uniform: KES ${fees.uniform.toLocaleString('en-KE')}</div>` : ''}
+                  ${fees.lunch > 0 ? `<div>Lunch: KES ${fees.lunch.toLocaleString('en-KE')}</div>` : ''}
+                  ${fees.transport > 0 ? `<div>Transport: KES ${fees.transport.toLocaleString('en-KE')}</div>` : ''}
+                  ${fees.trip > 0 ? `<div>Trip: KES ${fees.trip.toLocaleString('en-KE')}</div>` : ''}
+                  ${fees.graduation > 0 ? `<div>Graduation: KES ${fees.graduation.toLocaleString('en-KE')}</div>` : ''}
+                </div>
+                <div style="border-top: 1px solid #ddd; margin: 0.5rem 0; padding-top: 0.5rem;">
+                  <div style="display: flex; justify-content: space-between;">
+                    <span>Total Fees:</span>
+                    <strong>KES ${totalFees.toLocaleString('en-KE')}</strong>
+                  </div>
+                  ${previousCarriedForward > 0 ? `
+                    <div style="display: flex; justify-content: space-between;">
+                      <span>Previous Balance:</span>
+                      <strong>KES ${previousCarriedForward.toLocaleString('en-KE')}</strong>
+                    </div>
+                  ` : ''}
+                  <div style="display: flex; justify-content: space-between;">
+                    <span>Amount Paid:</span>
+                    <strong class="positive">KES ${paid.toLocaleString('en-KE')}</strong>
+                  </div>
+                </div>
+              </div>
+            `;
+            
+            previousTermBreakdown.innerHTML = breakdownHtml;
+            previousBalanceSpan.textContent = `KES ${currentBalance.toLocaleString('en-KE')}`;
             carryForwardInfo.style.display = 'block';
+          } else {
+            carryForwardInfo.style.display = 'none';
           }
         } else {
-          console.log(`No previous student found with name "${studentName}" in Term ${previousTerm}`);
+          carryForwardInfo.style.display = 'none';
         }
       } catch (error) {
         console.error('Error checking for existing student:', error);
-        showStatus('Error checking previous term data: ' + error.message, 'error');
+        document.getElementById('carryForwardInfo').style.display = 'none';
       }
     }
 
@@ -1327,7 +1112,7 @@
       `;
     }
 
-    // FIXED: Handle student form submission with proper carry forward calculation
+    // Handle student form submission
     async function handleStudentSubmit(e) {
       e.preventDefault();
 
@@ -1364,12 +1149,12 @@
       try {
         const total = tuition + adm + books + stationery + uniform + lunch + transport + trip + graduation;
         
-        // FIXED: Check for carry-forward balance only when adding new students
+        // Check for carry-forward balance only when adding new students
         let carriedForwardBalance = 0;
         if (currentTerm > 1 && !editingId) {
           const previousTerm = currentTerm - 1;
           const previousStudentsCollection = getStudentsCollection(previousTerm, currentYear);
-          const snapshot = await previousStudentsCollection.where('name', '==', name).limit(1).get();
+          const snapshot = await previousStudentsCollection.where('name', '==', name).get();
           
           if (!snapshot.empty) {
             const previousStudent = snapshot.docs[0].data();
@@ -1382,11 +1167,7 @@
             const previousPaid = previousStudent.paid || 0;
             const previousBalance = previousTotal + previousCarriedForward - previousPaid;
             
-            // Only carry forward positive balances
-            if (previousBalance > 0) {
-              carriedForwardBalance = previousBalance;
-              console.log(`Carrying forward balance of KES ${carriedForwardBalance} from Term ${previousTerm}`);
-            }
+            carriedForwardBalance = Math.max(0, previousBalance); // Only carry forward positive balances
           }
         }
 
@@ -1436,7 +1217,7 @@
           showStatus(`Student ${name} added successfully to Term ${currentTerm}!`, "success");
           
           if (carriedForwardBalance > 0) {
-            showStatus(`Balance of KES ${carriedForwardBalance.toLocaleString('en-KE')} carried forward from Term ${currentTerm - 1}.`, "info");
+            showStatus(`Balance of KES ${carriedForwardBalance.toLocaleString('en-KE')} carried forward from previous term.`, "info");
           }
         }
 
@@ -1444,7 +1225,6 @@
         document.getElementById('carryForwardInfo').style.display = 'none';
         loadStudents();
       } catch (error) {
-        console.error('Error saving student:', error);
         showStatus("Error saving student: " + error.message, "error");
       } finally {
         submitBtn.disabled = false;
@@ -1491,9 +1271,17 @@
 
         // Show carry-forward info if applicable
         if (s.carriedForwardBalance > 0) {
-          document.getElementById('previousBalance').textContent = `KES ${s.carriedForwardBalance.toLocaleString('en-KE')}`;
-          document.getElementById('previousTermInfo').textContent = `Previous Term`;
-          document.getElementById('carryForwardInfo').style.display = 'block';
+          const carryForwardInfo = document.getElementById('carryForwardInfo');
+          const previousBalanceSpan = document.getElementById('previousBalance');
+          const previousTermBreakdown = document.getElementById('previousTermBreakdown');
+          
+          previousBalanceSpan.textContent = `KES ${s.carriedForwardBalance.toLocaleString('en-KE')}`;
+          previousTermBreakdown.innerHTML = `
+            <div style="background: #f8f9fa; padding: 0.75rem; border-radius: 4px;">
+              <p><strong>Note:</strong> This student has a carried forward balance from the previous term.</p>
+            </div>
+          `;
+          carryForwardInfo.style.display = 'block';
         }
 
         const submitBtn = document.getElementById('submitBtn');
@@ -1506,7 +1294,6 @@
         // Scroll to form
         document.getElementById('studentForm').scrollIntoView({ behavior: 'smooth' });
       } catch (error) {
-        console.error('Error loading student:', error);
         showStatus("Error loading student: " + error.message, "error");
       }
     }
@@ -1524,7 +1311,6 @@
           loadStudents();
         }
       } catch (error) {
-        console.error('Error deleting student:', error);
         showStatus("Error deleting student: " + error.message, "error");
       }
     }
@@ -1634,7 +1420,6 @@
 
         modal.classList.add('show');
       } catch (error) {
-        console.error('Error viewing student:', error);
         showStatus("Error viewing student: " + error.message, "error");
       }
     }
@@ -1658,13 +1443,9 @@
 
     // Term transition functions
     function openTermTransitionModal() {
-      // Set default values based on current term
-      document.getElementById('sourceTerm').value = currentTerm.toString();
-      document.getElementById('targetTerm').value = currentTerm === 3 ? '1' : (currentTerm + 1).toString();
       document.getElementById('termTransitionModal').classList.add('show');
     }
 
-    // FIXED: Execute term transition with proper error handling and batch operations
     async function executeTermTransition() {
       const sourceTerm = parseInt(document.getElementById('sourceTerm').value);
       const targetTerm = parseInt(document.getElementById('targetTerm').value);
@@ -1684,7 +1465,6 @@
       if (!confirm(confirmMessage)) return;
 
       const submitBtn = document.querySelector('#termTransitionModal .btn-success');
-      const originalText = submitBtn.innerHTML;
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
@@ -1700,129 +1480,116 @@
           return;
         }
 
-        console.log(`Found ${snapshot.size} students in source term ${sourceTerm}`);
-
-        // Process students in batches to avoid Firestore limits
-        const batchSize = 500;
-        const students = [];
-        snapshot.forEach(doc => {
-          students.push({ id: doc.id, ...doc.data() });
-        });
-
         let processedCount = 0;
-        const totalStudents = students.length;
+        const batchSize = 500; // Firestore batch limit
+        let batch = db.batch();
+        let operationCount = 0;
 
-        for (let i = 0; i < students.length; i += batchSize) {
-          const batch = db.batch();
-          const batchStudents = students.slice(i, i + batchSize);
+        for (const doc of snapshot.docs) {
+          const sourceStudent = doc.data();
           
-          for (const sourceStudent of batchStudents) {
-            // Calculate carry-forward balance
-            let carriedForwardBalance = 0;
-            if (carryForwardBalances) {
-              const sourceTotal = (sourceStudent.tuition || 0) + (sourceStudent.adm || 0) + 
-                                  (sourceStudent.books || 0) + (sourceStudent.stationery || 0) + 
-                                  (sourceStudent.uniform || 0) + (sourceStudent.lunch || 0) + 
-                                  (sourceStudent.transport || 0) + (sourceStudent.trip || 0) + 
-                                  (sourceStudent.graduation || 0);
-              const sourceCarriedForward = sourceStudent.carriedForwardBalance || 0;
-              const sourcePaid = sourceStudent.paid || 0;
-              const sourceBalance = sourceTotal + sourceCarriedForward - sourcePaid;
-              
-              carriedForwardBalance = Math.max(0, sourceBalance);
-            }
-
-            // Check if student already exists in target term
-            const existingQuery = await targetCollection.where('name', '==', sourceStudent.name).limit(1).get();
+          // Calculate carry-forward balance
+          let carriedForwardBalance = 0;
+          if (carryForwardBalances) {
+            const sourceTotal = (sourceStudent.tuition || 0) + (sourceStudent.adm || 0) + 
+                                (sourceStudent.books || 0) + (sourceStudent.stationery || 0) + 
+                                (sourceStudent.uniform || 0) + (sourceStudent.lunch || 0) + 
+                                (sourceStudent.transport || 0) + (sourceStudent.trip || 0) + 
+                                (sourceStudent.graduation || 0);
+            const sourceCarriedForward = sourceStudent.carriedForwardBalance || 0;
+            const sourcePaid = sourceStudent.paid || 0;
+            const sourceBalance = sourceTotal + sourceCarriedForward - sourcePaid;
             
-            const newStudentData = {
-              name: sourceStudent.name,
-              class: sourceStudent.class,
-              phone: sourceStudent.phone,
-              tuition: sourceStudent.tuition || 0,
-              adm: sourceStudent.adm || 0,
-              books: sourceStudent.books || 0,
-              stationery: sourceStudent.stationery || 0,
-              uniform: sourceStudent.uniform || 0,
-              lunch: sourceStudent.lunch || 0,
-              transport: sourceStudent.transport || 0,
-              trip: sourceStudent.trip || 0,
-              graduation: sourceStudent.graduation || 0,
-              total: (sourceStudent.tuition || 0) + (sourceStudent.adm || 0) + (sourceStudent.books || 0) + 
-                     (sourceStudent.stationery || 0) + (sourceStudent.uniform || 0) + 
-                     (sourceStudent.lunch || 0) + (sourceStudent.transport || 0) + (sourceStudent.trip || 0) + (sourceStudent.graduation || 0),
-              paid: resetPaidAmounts ? 0 : (sourceStudent.paid || 0),
-              carriedForwardBalance: carriedForwardBalance,
-              term: targetTerm,
-              year: currentYear,
-              copiedFrom: `term_${sourceTerm}`,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            };
-
-            // Recalculate balance
-            newStudentData.balance = newStudentData.total + newStudentData.carriedForwardBalance - newStudentData.paid;
-
-            if (!existingQuery.empty) {
-              // Update existing student
-              const existingDoc = existingQuery.docs[0];
-              batch.update(existingDoc.ref, {
-                ...newStudentData,
-                updatedAt: new Date().toISOString()
-              });
-            } else {
-              // Create new student
-              const newDocRef = targetCollection.doc();
-              batch.set(newDocRef, newStudentData);
-            }
-
-            processedCount++;
+            carriedForwardBalance = Math.max(0, sourceBalance);
           }
 
-          // Commit this batch
-          await batch.commit();
-          console.log(`Processed batch ${Math.floor(i/batchSize) + 1}, students: ${processedCount}/${totalStudents}`);
+          // Check if student already exists in target term
+          const existingQuery = await targetCollection.where('name', '==', sourceStudent.name).get();
+          
+          const newStudentData = {
+            name: sourceStudent.name,
+            class: sourceStudent.class,
+            phone: sourceStudent.phone,
+            tuition: sourceStudent.tuition || 0,
+            adm: sourceStudent.adm || 0,
+            books: sourceStudent.books || 0,
+            stationery: sourceStudent.stationery || 0,
+            uniform: sourceStudent.uniform || 0,
+            lunch: sourceStudent.lunch || 0,
+            transport: sourceStudent.transport || 0,
+            trip: sourceStudent.trip || 0,
+            graduation: sourceStudent.graduation || 0,
+            total: (sourceStudent.tuition || 0) + (sourceStudent.adm || 0) + (sourceStudent.books || 0) + 
+                   (sourceStudent.stationery || 0) + (sourceStudent.uniform || 0) + 
+                   (sourceStudent.lunch || 0) + (sourceStudent.transport || 0) + (sourceStudent.trip || 0) + (sourceStudent.graduation || 0),
+            paid: resetPaidAmounts ? 0 : (sourceStudent.paid || 0),
+            balance: 0, // Will be recalculated
+            carriedForwardBalance: carriedForwardBalance,
+            term: targetTerm,
+            year: currentYear,
+            copiedFrom: `term_${sourceTerm}`,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
 
-          // Update progress
-          showStatus(`Processing... ${processedCount}/${totalStudents} students`, "loading");
+          // Recalculate balance
+          newStudentData.balance = newStudentData.total + newStudentData.carriedForwardBalance - newStudentData.paid;
+
+          if (!existingQuery.empty) {
+            // Update existing student
+            const existingDoc = existingQuery.docs[0];
+            batch.update(existingDoc.ref, newStudentData);
+          } else {
+            // Create new student
+            const newDocRef = targetCollection.doc();
+            batch.set(newDocRef, newStudentData);
+          }
+
+          operationCount++;
+          processedCount++;
+
+          // Commit batch when reaching limit
+          if (operationCount >= batchSize) {
+            await batch.commit();
+            batch = db.batch();
+            operationCount = 0;
+          }
+        }
+
+        // Commit any remaining operations
+        if (operationCount > 0) {
+          await batch.commit();
         }
 
         showStatus(`Successfully copied ${processedCount} students from Term ${sourceTerm} to Term ${targetTerm}`, "success");
         
-        // If we're copying to the current term, refresh the display
         if (targetTerm === currentTerm) {
           loadStudents();
         }
         
         closeTermTransitionModal();
 
-        // Record transition in system settings for audit trail
-        try {
-          await db.collection('system_settings').doc(`transition_${sourceTerm}_to_${targetTerm}_${Date.now()}`).set({
-            sourceTerm,
-            targetTerm,
-            studentsProcessed: processedCount,
-            carryForwardBalances,
-            resetPaidAmounts,
-            executedAt: new Date().toISOString(),
-            executedBy: 'system',
-            year: currentYear
-          });
-        } catch (auditError) {
-          console.error('Error recording transition audit:', auditError);
-          // Don't fail the main operation for audit errors
-        }
+        // Record transition in system settings
+        await db.collection('system_settings').doc(`transition_${sourceTerm}_to_${targetTerm}_${Date.now()}`).set({
+          sourceTerm,
+          targetTerm,
+          studentsProcessed: processedCount,
+          carryForwardBalances,
+          resetPaidAmounts,
+          executedAt: new Date().toISOString(),
+          executedBy: 'system'
+        });
 
       } catch (error) {
         console.error('Error executing term transition:', error);
         showStatus("Error executing term transition: " + error.message, "error");
       } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = originalText;
+        submitBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Execute Transition';
       }
     }
 
-    // FIXED: Copy students between terms (simpler version with better error handling)
+    // Copy students between terms (simpler version)
     async function copyStudentsBetweenTerms() {
       const fromTerm = prompt(`Copy students FROM which term? (1, 2, or 3)`, currentTerm.toString());
       const toTerm = prompt(`Copy students TO which term? (1, 2, or 3)`, (currentTerm === 3 ? 1 : currentTerm + 1).toString());
@@ -1838,8 +1605,6 @@
       }
 
       try {
-        showStatus(`Loading students from Term ${fromTerm}...`, "loading");
-        
         const fromCollection = getStudentsCollection(parseInt(fromTerm), currentYear);
         const toCollection = getStudentsCollection(parseInt(toTerm), currentYear);
         
@@ -1851,60 +1616,64 @@
 
         showStatus(`Copying ${snapshot.size} students from Term ${fromTerm} to Term ${toTerm}...`, "loading");
 
-        const students = [];
-        snapshot.forEach(doc => {
-          students.push({ id: doc.id, ...doc.data() });
-        });
-
         let processedCount = 0;
         const batchSize = 500;
+        let batch = db.batch();
+        let operationCount = 0;
 
-        for (let i = 0; i < students.length; i += batchSize) {
-          const batch = db.batch();
-          const batchStudents = students.slice(i, i + batchSize);
+        for (const doc of snapshot.docs) {
+          const sourceStudent = doc.data();
+          
+          // Calculate balance to carry forward
+          const sourceTotal = (sourceStudent.tuition || 0) + (sourceStudent.adm || 0) + 
+                              (sourceStudent.books || 0) + (sourceStudent.stationery || 0) + 
+                              (sourceStudent.uniform || 0) + (sourceStudent.lunch || 0) + 
+                              (sourceStudent.transport || 0) + (sourceStudent.trip || 0) + 
+                              (sourceStudent.graduation || 0);
+          const sourceCarriedForward = sourceStudent.carriedForwardBalance || 0;
+          const sourcePaid = sourceStudent.paid || 0;
+          const balanceToCarryForward = Math.max(0, sourceTotal + sourceCarriedForward - sourcePaid);
 
-          for (const sourceStudent of batchStudents) {
-            // Calculate balance to carry forward
-            const sourceTotal = (sourceStudent.tuition || 0) + (sourceStudent.adm || 0) + 
-                                (sourceStudent.books || 0) + (sourceStudent.stationery || 0) + 
-                                (sourceStudent.uniform || 0) + (sourceStudent.lunch || 0) + 
-                                (sourceStudent.transport || 0) + (sourceStudent.trip || 0) + 
-                                (sourceStudent.graduation || 0);
-            const sourceCarriedForward = sourceStudent.carriedForwardBalance || 0;
-            const sourcePaid = sourceStudent.paid || 0;
-            const balanceToCarryForward = Math.max(0, sourceTotal + sourceCarriedForward - sourcePaid);
-
-            // Check if student already exists in target term
-            const existingQuery = await toCollection.where('name', '==', sourceStudent.name).limit(1).get();
-            
-            const studentData = {
-              ...sourceStudent,
-              term: parseInt(toTerm),
-              paid: 0, // Reset paid amount for new term
-              carriedForwardBalance: balanceToCarryForward,
-              copiedFrom: `term_${fromTerm}`,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            };
-            
-            // Recalculate balance
-            studentData.balance = studentData.total + studentData.carriedForwardBalance - studentData.paid;
-            
-            if (!existingQuery.empty) {
-              // Update existing student
-              const existingDoc = existingQuery.docs[0];
-              batch.update(existingDoc.ref, studentData);
-            } else {
-              // Create new student
-              const newDocRef = toCollection.doc();
-              batch.set(newDocRef, studentData);
-            }
-            
-            processedCount++;
+          // Check if student already exists in target term
+          const existingQuery = await toCollection.where('name', '==', sourceStudent.name).get();
+          
+          const studentData = {
+            ...sourceStudent,
+            term: parseInt(toTerm),
+            paid: 0, // Reset paid amount for new term
+            carriedForwardBalance: balanceToCarryForward,
+            copiedFrom: `term_${fromTerm}`,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          
+          // Recalculate balance
+          studentData.balance = studentData.total + studentData.carriedForwardBalance - studentData.paid;
+          
+          if (!existingQuery.empty) {
+            // Update existing student
+            const existingDoc = existingQuery.docs[0];
+            batch.update(existingDoc.ref, studentData);
+          } else {
+            // Create new student
+            const newDocRef = toCollection.doc();
+            batch.set(newDocRef, studentData);
           }
+          
+          operationCount++;
+          processedCount++;
 
+          // Commit batch when reaching limit
+          if (operationCount >= batchSize) {
+            await batch.commit();
+            batch = db.batch();
+            operationCount = 0;
+          }
+        }
+
+        // Commit any remaining operations
+        if (operationCount > 0) {
           await batch.commit();
-          showStatus(`Processing... ${processedCount}/${students.length} students`, "loading");
         }
 
         showStatus(`Successfully copied ${processedCount} students from Term ${fromTerm} to Term ${toTerm}`, "success");
@@ -2037,7 +1806,6 @@
         XLSX.writeFile(workbook, `students_term_${currentTerm}_${currentYear}_${new Date().toISOString().split('T')[0]}.xlsx`);
         showStatus(`Students data for Term ${currentTerm} exported to Excel successfully!`, "success");
       } catch (error) {
-        console.error('Error exporting to Excel:', error);
         showStatus("Error exporting to Excel: " + error.message, "error");
       }
     }
@@ -2095,7 +1863,6 @@
         XLSX.writeFile(workbook, `${classFilter}_term_${currentTerm}_${currentYear}_${new Date().toISOString().split('T')[0]}.xlsx`);
         showStatus(`Students from ${classFilter} (Term ${currentTerm}) exported to Excel successfully!`, "success");
       } catch (error) {
-        console.error('Error exporting class to Excel:', error);
         showStatus("Error exporting class to Excel: " + error.message, "error");
       }
     }
@@ -2115,7 +1882,6 @@
       }
 
       const submitBtn = document.querySelector('#importModal .btn-success');
-      const originalText = submitBtn.innerHTML;
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importing...';
 
@@ -2128,40 +1894,43 @@
         }
 
         const studentsCollection = getStudentsCollection();
-        let processedCount = 0;
+        let batch = db.batch();
+        let operationCount = 0;
         const batchSize = 500;
-
-        for (let i = 0; i < importedStudents.length; i += batchSize) {
-          const batch = db.batch();
-          const batchStudents = importedStudents.slice(i, i + batchSize);
+        
+        importedStudents.forEach(student => {
+          const studentData = {
+            ...student,
+            term: currentTerm,
+            year: currentYear,
+            carriedForwardBalance: student.carriedForwardBalance || 0,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
           
-          batchStudents.forEach(student => {
-            const studentData = {
-              ...student,
-              term: currentTerm,
-              year: currentYear,
-              carriedForwardBalance: student.carriedForwardBalance || 0,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            };
-            
-            const docRef = studentsCollection.doc();
-            batch.set(docRef, studentData);
-            processedCount++;
-          });
+          const docRef = studentsCollection.doc();
+          batch.set(docRef, studentData);
+          operationCount++;
 
+          if (operationCount >= batchSize) {
+            batch.commit();
+            batch = db.batch();
+            operationCount = 0;
+          }
+        });
+
+        if (operationCount > 0) {
           await batch.commit();
         }
 
-        showStatus(`Successfully imported ${processedCount} students to Term ${currentTerm}`, "success");
+        showStatus(`Successfully imported ${importedStudents.length} students to Term ${currentTerm}`, "success");
         loadStudents();
         closeImportModal();
       } catch (error) {
-        console.error('Error importing students:', error);
         showStatus("Error importing students: " + error.message, "error");
       } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = originalText;
+        submitBtn.innerHTML = '<i class="fas fa-file-import"></i> Import';
         fileInput.value = '';
       }
     }
@@ -2205,3 +1974,241 @@
   </script>
 </body>
 </html>
+                current-term-info">
+          Current Academic Year: <span id="currentYear">2024</span>
+        </div>
+      </div>
+      <div class="term-buttons">
+        <button class="term-btn" data-term="1" onclick="switchTerm(1)">Term 1</button>
+        <button class="term-btn active" data-term="2" onclick="switchTerm(2)">Term 2</button>
+        <button class="term-btn" data-term="3" onclick="switchTerm(3)">Term 3</button>
+      </div>
+    </div>
+
+    <!-- Term Transition Management -->
+    <div class="term-transition-card slide-in">
+      <h3><i class="fas fa-exchange-alt"></i> Term Transition Management</h3>
+      <p>Manage student data across different academic terms and handle balance carry-forwards.</p>
+      <div class="term-actions">
+        <button class="btn" onclick="openTermTransitionModal()">
+          <i class="fas fa-arrow-right"></i> Start Term Transition
+        </button>
+        <button class="btn" onclick="copyStudentsBetweenTerms()">
+          <i class="fas fa-copy"></i> Copy Students
+        </button>
+        <button class="btn" onclick="viewTermSummary()">
+          <i class="fas fa-chart-line"></i> Term Summary
+        </button>
+      </div>
+    </div>
+
+    <div id="statusMessage" class="status-message"></div>
+
+    <div class="card slide-in">
+      <div class="card-header">
+        <h2 class="card-title">Student Registration - <span id="currentTermDisplay">Term 2</span></h2>
+      </div>
+      
+      <div class="balance-info">
+        <i class="fas fa-info-circle"></i> <strong>Note:</strong> When adding students in Term 2 or 3, any previous term balances will be automatically carried forward. Students will inherit their balance from the previous term to ensure continuity.
+      </div>
+
+      <form id="studentForm">
+        <div class="grid">
+          <div class="form-group">
+            <label for="studentName"><i class="fas fa-user-graduate"></i> Student Name</label>
+            <input type="text" id="studentName" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="studentClass"><i class="fas fa-chalkboard"></i> Class</label>
+            <select id="studentClass" required>
+              <option value="">Select Class</option>
+              <option value="Play Group">Play Group</option>
+              <option value="PP1">PP1</option>
+              <option value="PP2">PP2</option>
+              <option value="Grade 1">Grade 1</option>
+              <option value="Grade 2">Grade 2</option>
+              <option value="Grade 3">Grade 3</option>
+              <option value="Grade 4">Grade 4</option>
+              <option value="Grade 5">Grade 5</option>
+              <option value="Grade 6">Grade 6</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="phone"><i class="fas fa-phone"></i> Phone Number</label>
+            <input type="tel" id="phone" placeholder="e.g., +254712345678" pattern="^\+?[1-9]\d{9,14}$" required>
+          </div>
+        </div>
+
+        <h3 style="margin: 1.5rem 0 0.5rem;">Fee Structure for <span id="feeTermDisplay">Term 2</span></h3>
+        <div class="fee-grid">
+          <div class="form-group">
+            <label for="tuition">Tuition (KES)</label>
+            <input type="number" id="tuition" value="0" min="0">
+          </div>
+          
+          <div class="form-group">
+            <label for="adm">Admission Fee (KES)</label>
+            <input type="number" id="adm" value="0" min="0">
+          </div>
+          
+          <div class="form-group">
+            <label for="books">Book Fund (KES)</label>
+            <input type="number" id="books" value="0" min="0">
+          </div>
+          
+          <div class="form-group">
+            <label for="stationery">Stationery (KES)</label>
+            <input type="number" id="stationery" value="0" min="0">
+          </div>
+          
+          <div class="form-group">
+            <label for="uniform">Uniform (KES)</label>
+            <input type="number" id="uniform" value="0" min="0">
+          </div>
+          
+          <div class="form-group">
+            <label for="lunch">Lunch (KES)</label>
+            <input type="number" id="lunch" value="0" min="0">
+          </div>
+          
+          <div class="form-group">
+            <label for="transport">Transport (KES)</label>
+            <input type="number" id="transport" value="0" min="0">
+          </div>
+          
+          <div class="form-group">
+            <label for="trip">Trip (KES)</label>
+            <input type="number" id="trip" value="0" min="0">
+          </div>
+           <div class="form-group">
+            <label for="graduation">Graduation (KES)</label>
+            <input type="number" id="graduation" value="0" min="0">
+          </div>
+          
+          <div class="form-group">
+            <label for="paid">Amount Paid (KES)</label>
+            <input type="number" id="paid" value="0" min="0">
+          </div>
+        </div>
+
+        <div id="carryForwardInfo" class="carry-forward-details" style="display: none;">
+          <h4><i class="fas fa-arrow-right"></i> Balance Carry Forward Details</h4>
+          <div id="previousTermBreakdown"></div>
+          <div style="margin-top: 0.5rem;">
+            <strong>Total Balance to Carry Forward: <span id="previousBalance">KES 0</span></strong>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.5rem;">
+          <button type="submit" class="btn btn-success" id="submitBtn">
+            <i class="fas fa-save"></i> Add Student
+          </button>
+          <button type="reset" class="btn btn-outline" style="margin-left: 0.5rem;">
+            <i class="fas fa-undo"></i> Reset
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card slide-in">
+      <div class="card-header">
+        <h2 class="card-title">Student Records - <span id="currentTermRecords">Term 2</span></h2>
+        <div class="btn-group">
+          <button class="btn btn-info" onclick="exportToExcel()">
+            <i class="fas fa-file-excel"></i> Export All
+          </button>
+          <button class="btn btn-warning" onclick="exportClassToExcel()">
+            <i class="fas fa-file-export"></i> Export Class
+          </button>
+          <button class="btn btn-danger" onclick="showImportModal()">
+            <i class="fas fa-file-import"></i> Import
+          </button>
+        </div>
+      </div>
+
+      <div class="search-container">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Search by name..." oninput="loadStudents()">
+        </div>
+        <select id="classFilter" class="filter-select" onchange="loadStudents()">
+          <option value="">Filter by Class</option>
+          <option value="Play Group">Play Group</option>
+          <option value="PP1">PP1</option>
+          <option value="PP2">PP2</option>
+          <option value="Grade 1">Grade 1</option>
+          <option value="Grade 2">Grade 2</option>
+          <option value="Grade 3">Grade 3</option>
+          <option value="Grade 4">Grade 4</option>
+          <option value="Grade 5">Grade 5</option>
+          <option value="Grade 6">Grade 6</option>
+        </select>
+      </div>
+
+      <div id="statsContainer"></div>
+      <div id="groupedTables"></div>
+    </div>
+  </div>
+
+  <!-- Student Detail Modal -->
+  <div id="studentModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Student Details</h3>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="modalContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Term Transition Modal -->
+  <div id="termTransitionModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Term Transition Management</h3>
+        <button class="modal-close" onclick="closeTermTransitionModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <h4>Copy Students to New Term</h4>
+        <p>Select the source and target terms to copy student data with balance carry-forward.</p>
+        
+        <div class="grid" style="margin: 1.5rem 0;">
+          <div class="form-group">
+            <label for="sourceTerm">From Term</label>
+            <select id="sourceTerm" required>
+              <option value="1">Term 1</option>
+              <option value="2" selected>Term 2</option>
+              <option value="3">Term 3</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="targetTerm">To Term</label>
+            <select id="targetTerm" required>
+              <option value="1">Term 1</option>
+              <option value="2">Term 2</option>
+              <option value="3" selected>Term 3</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="carryForwardBalances" checked style="width: auto; margin-right: 0.5rem;">
+            Carry forward outstanding balances to new term
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="resetPaidAmounts" checked style="width: auto; margin-right: 0.5rem;">
+            Reset paid amounts (recommended for new term)
+          </label>
+        </div>
+
+        <div class="
