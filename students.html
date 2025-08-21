@@ -86,6 +86,59 @@
       padding: 0 1.5rem;
     }
 
+    .term-selector {
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      padding: 1rem 1.5rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .term-selector h3 {
+      color: var(--primary-color);
+      margin: 0;
+    }
+
+    .term-buttons {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .term-btn {
+      padding: 0.5rem 1rem;
+      border: 2px solid var(--primary-color);
+      background: transparent;
+      color: var(--primary-color);
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: var(--transition);
+      font-weight: 500;
+    }
+
+    .term-btn.active {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .term-btn:hover {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .current-term-info {
+      background: var(--info-color);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: var(--border-radius);
+      font-weight: 500;
+    }
+
     .card {
       background: white;
       border-radius: var(--border-radius);
@@ -137,6 +190,17 @@
     .btn:hover {
       background: var(--secondary-color);
       transform: translateY(-2px);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--primary-color);
+      color: var(--primary-color);
+    }
+
+    .btn-outline:hover {
+      background: var(--primary-color);
+      color: white;
     }
 
     .btn-success {
@@ -252,6 +316,12 @@
     }
 
     .status-message.info {
+      background-color: rgba(23, 162, 184, 0.1);
+      color: var(--info-color);
+      border-left: 4px solid var(--info-color);
+    }
+
+    .status-message.loading {
       background-color: rgba(23, 162, 184, 0.1);
       color: var(--info-color);
       border-left: 4px solid var(--info-color);
@@ -471,8 +541,64 @@
       margin-right: 0.5rem;
     }
 
+    .balance-info {
+      background-color: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: var(--border-radius);
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .term-transition-card {
+      background: linear-gradient(135deg, var(--warning-color), #ff6f00);
+      color: white;
+      padding: 1.5rem;
+      border-radius: var(--border-radius);
+      margin-bottom: 1.5rem;
+    }
+
+    .term-transition-card h3 {
+      margin-bottom: 1rem;
+    }
+
+    .term-actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+
+    .term-actions .btn {
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      color: white;
+    }
+
+    .term-actions .btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
     @keyframes spin {
       to { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.5s ease forwards;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .slide-in {
+      animation: slideIn 0.5s ease forwards;
     }
 
     @media (max-width: 768px) {
@@ -509,6 +635,16 @@
       .fee-grid {
         grid-template-columns: 1fr 1fr;
       }
+
+      .term-selector {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .term-buttons {
+        width: 100%;
+        justify-content: space-between;
+      }
     }
 
     @media print {
@@ -544,12 +680,49 @@
   </header>
 
   <div class="container">
+    <!-- Term Selector -->
+    <div class="term-selector slide-in">
+      <div>
+        <h3><i class="fas fa-calendar-alt"></i> Academic Term</h3>
+        <div class="current-term-info">
+          Current Academic Year: <span id="currentYear">2024</span>
+        </div>
+      </div>
+      <div class="term-buttons">
+        <button class="term-btn" data-term="1" onclick="switchTerm(1)">Term 1</button>
+        <button class="term-btn active" data-term="2" onclick="switchTerm(2)">Term 2</button>
+        <button class="term-btn" data-term="3" onclick="switchTerm(3)">Term 3</button>
+      </div>
+    </div>
+
+    <!-- Term Transition Management -->
+    <div class="term-transition-card slide-in">
+      <h3><i class="fas fa-exchange-alt"></i> Term Transition Management</h3>
+      <p>Manage student data across different academic terms and handle balance carry-forwards.</p>
+      <div class="term-actions">
+        <button class="btn" onclick="openTermTransitionModal()">
+          <i class="fas fa-arrow-right"></i> Start Term Transition
+        </button>
+        <button class="btn" onclick="copyStudentsBetweenTerms()">
+          <i class="fas fa-copy"></i> Copy Students
+        </button>
+        <button class="btn" onclick="viewTermSummary()">
+          <i class="fas fa-chart-line"></i> Term Summary
+        </button>
+      </div>
+    </div>
+
     <div id="statusMessage" class="status-message"></div>
 
-    <div class="card">
+    <div class="card slide-in">
       <div class="card-header">
-        <h2 class="card-title">Student Registration</h2>
+        <h2 class="card-title">Student Registration - <span id="currentTermDisplay">Term 2</span></h2>
       </div>
+      
+      <div class="balance-info">
+        <i class="fas fa-info-circle"></i> <strong>Note:</strong> When adding students in Term 2 or 3, any previous term balances will be automatically carried forward. Students will inherit their balance from the previous term to ensure continuity.
+      </div>
+
       <form id="studentForm">
         <div class="grid">
           <div class="form-group">
@@ -579,7 +752,7 @@
           </div>
         </div>
 
-        <h3 style="margin: 1.5rem 0 0.5rem;">Fee Structure</h3>
+        <h3 style="margin: 1.5rem 0 0.5rem;">Fee Structure for <span id="feeTermDisplay">Term 2</span></h3>
         <div class="fee-grid">
           <div class="form-group">
             <label for="tuition">Tuition (KES)</label>
@@ -627,6 +800,11 @@
           </div>
         </div>
 
+        <div id="carryForwardInfo" class="balance-info" style="display: none;">
+          <p><strong>Previous Term Balance:</strong> <span id="previousBalance">KES 0</span></p>
+          <p>This balance will be carried forward to the new term.</p>
+        </div>
+
         <div style="margin-top: 1.5rem;">
           <button type="submit" class="btn btn-success" id="submitBtn">
             <i class="fas fa-save"></i> Add Student
@@ -638,9 +816,9 @@
       </form>
     </div>
 
-    <div class="card">
+    <div class="card slide-in">
       <div class="card-header">
-        <h2 class="card-title">Student Records</h2>
+        <h2 class="card-title">Student Records - <span id="currentTermRecords">Term 2</span></h2>
         <div class="btn-group">
           <button class="btn btn-info" onclick="exportToExcel()">
             <i class="fas fa-file-excel"></i> Export All
@@ -691,6 +869,63 @@
     </div>
   </div>
 
+  <!-- Term Transition Modal -->
+  <div id="termTransitionModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Term Transition Management</h3>
+        <button class="modal-close" onclick="closeTermTransitionModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <h4>Copy Students to New Term</h4>
+        <p>Select the source and target terms to copy student data with balance carry-forward.</p>
+        
+        <div class="grid" style="margin: 1.5rem 0;">
+          <div class="form-group">
+            <label for="sourceTerm">From Term</label>
+            <select id="sourceTerm" required>
+              <option value="1">Term 1</option>
+              <option value="2" selected>Term 2</option>
+              <option value="3">Term 3</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="targetTerm">To Term</label>
+            <select id="targetTerm" required>
+              <option value="1">Term 1</option>
+              <option value="2">Term 2</option>
+              <option value="3">Term 3</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="carryForwardBalances" checked style="width: auto; margin-right: 0.5rem;">
+            Carry forward outstanding balances to new term
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="resetPaidAmounts" checked style="width: auto; margin-right: 0.5rem;">
+            Reset paid amounts (recommended for new term)
+          </label>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="closeTermTransitionModal()">
+            <i class="fas fa-times"></i> Cancel
+          </button>
+          <button class="btn btn-success" onclick="executeTermTransition()">
+            <i class="fas fa-arrow-right"></i> Execute Transition
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Import Modal -->
   <div id="importModal" class="modal">
     <div class="modal-content">
@@ -709,6 +944,19 @@
             <i class="fas fa-file-import"></i> Import
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Term Summary Modal -->
+  <div id="termSummaryModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Term Summary Report</h3>
+        <button class="modal-close" onclick="closeTermSummaryModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="termSummaryContent"></div>
       </div>
     </div>
   </div>
@@ -734,20 +982,139 @@
     };
 
     // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const studentsCollection = db.collection('students');
+    let app, db;
+    try {
+      if (!firebase.apps.length) {
+        app = firebase.initializeApp(firebaseConfig);
+      } else {
+        app = firebase.app();
+      }
+      db = firebase.firestore();
+      console.log("Firebase initialized successfully");
+    } catch (error) {
+      console.error('Firebase initialization error:', error);
+      showStatus("Failed to initialize Firebase. Check your configuration.", "error");
+      throw error;
+    }
 
-    const form = document.getElementById('studentForm');
-    const groupedTables = document.getElementById('groupedTables');
-    const statsContainer = document.getElementById('statsContainer');
+    // Current term and year management
+    let currentTerm = 2; // Default to Term 2 as requested
+    let currentYear = new Date().getFullYear();
     let editingId = null;
+    let migrationCompleted = false;
+
+    // Collection references with term support
+    const getStudentsCollection = (term = currentTerm, year = currentYear) => 
+      db.collection(`students_${year}_term_${term}`);
+    const getReceiptsCollection = (term = currentTerm, year = currentYear) => 
+      db.collection(`receipts_${year}_term_${term}`);
 
     const classes = [
       "Play Group", "PP1", "PP2",
       "Grade 1", "Grade 2", "Grade 3",
       "Grade 4", "Grade 5", "Grade 6"
     ];
+
+    // Initialize data migration on first load
+    document.addEventListener('DOMContentLoaded', function() {
+      updateCurrentYearDisplay();
+      initializeMigration().then(() => {
+        loadStudents();
+      });
+      
+      // Add event listeners
+      document.getElementById('studentForm').addEventListener('submit', handleStudentSubmit);
+      document.getElementById('studentName').addEventListener('input', checkForExistingStudent);
+      
+      // Initialize modals
+      const modals = ['studentModal', 'termTransitionModal', 'importModal', 'termSummaryModal'];
+      modals.forEach(modalId => {
+        const modal = document.getElementById(modalId);
+        modal.addEventListener('click', function(e) {
+          if (e.target === modal) {
+            modal.classList.remove('show');
+          }
+        });
+      });
+    });
+
+    function updateCurrentYearDisplay() {
+      document.getElementById('currentYear').textContent = currentYear;
+    }
+
+    function switchTerm(term) {
+      currentTerm = term;
+      
+      // Update UI to show active term
+      document.querySelectorAll('.term-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.term) === term);
+      });
+      
+      // Update all term displays
+      document.getElementById('currentTermDisplay').textContent = `Term ${term}`;
+      document.getElementById('currentTermRecords').textContent = `Term ${term}`;
+      document.getElementById('feeTermDisplay').textContent = `Term ${term}`;
+      
+      // Reset editing state
+      resetForm();
+      
+      // Refresh data for the new term
+      loadStudents();
+      
+      showStatus(`Switched to Term ${term}`, "info");
+    }
+
+    // Migration function to move existing data to Term 2
+    async function initializeMigration() {
+      try {
+        // Check if migration has already been done
+        const migrationDoc = await db.collection('system_settings').doc('student_migration_status').get();
+        
+        if (migrationDoc.exists && migrationDoc.data().term_migration_completed) {
+          migrationCompleted = true;
+          console.log('Student migration already completed');
+          return;
+        }
+
+        showStatus("Initializing term-based student data structure...", "loading");
+
+        // Migrate existing students to Term 2
+        const oldStudents = await db.collection('students').get();
+        const newStudentsCollection = getStudentsCollection(2, currentYear);
+        
+        if (!oldStudents.empty) {
+          const batch = db.batch();
+          oldStudents.forEach(doc => {
+            const studentData = {
+              ...doc.data(),
+              term: 2,
+              year: currentYear,
+              migratedFrom: 'original_collection',
+              carriedForwardBalance: 0 // No previous balance for migrated students
+            };
+            const newDocRef = newStudentsCollection.doc(doc.id);
+            batch.set(newDocRef, studentData);
+          });
+          await batch.commit();
+          console.log(`Migrated ${oldStudents.size} students to Term 2`);
+        }
+
+        // Mark migration as completed
+        await db.collection('system_settings').doc('student_migration_status').set({
+          term_migration_completed: true,
+          migration_date: new Date().toISOString(),
+          migrated_students: oldStudents.size
+        });
+
+        migrationCompleted = true;
+        showStatus("Student term-based data structure initialized successfully!", "success");
+        
+      } catch (error) {
+        console.error('Student migration error:', error);
+        showStatus("Migration completed with some errors. System should still work.", "warning");
+        migrationCompleted = true;
+      }
+    }
 
     // Status message function
     function showStatus(message, type = 'info') {
@@ -764,19 +1131,56 @@
       }, 5000);
     }
 
+    // Check for existing student in previous terms (for balance carry-forward)
+    async function checkForExistingStudent() {
+      const studentName = document.getElementById('studentName').value.trim();
+      if (!studentName || currentTerm === 1) return;
+
+      try {
+        // Check previous term for existing student
+        const previousTerm = currentTerm - 1;
+        const previousStudentsCollection = getStudentsCollection(previousTerm, currentYear);
+        const snapshot = await previousStudentsCollection.where('name', '==', studentName).get();
+        
+        const carryForwardInfo = document.getElementById('carryForwardInfo');
+        const previousBalanceSpan = document.getElementById('previousBalance');
+        
+        if (!snapshot.empty) {
+          const studentData = snapshot.docs[0].data();
+          const previousBalance = studentData.balance || 0;
+          
+          if (previousBalance > 0) {
+            previousBalanceSpan.textContent = `KES ${previousBalance.toLocaleString('en-KE')}`;
+            carryForwardInfo.style.display = 'block';
+          } else {
+            carryForwardInfo.style.display = 'none';
+          }
+        } else {
+          carryForwardInfo.style.display = 'none';
+        }
+      } catch (error) {
+        console.error('Error checking for existing student:', error);
+      }
+    }
+
     // Load students from Firestore
     async function loadStudents() {
+      const groupedTables = document.getElementById('groupedTables');
+      const statsContainer = document.getElementById('statsContainer');
+      
       groupedTables.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading students...</div>';
+      
       const searchQuery = document.getElementById('searchInput').value.toLowerCase();
       const classFilter = document.getElementById('classFilter').value;
 
-      let query = studentsCollection;
-      if (classFilter) {
-        query = query.where('class', '==', classFilter);
-      }
-
       try {
-        const snapshot = await query.get();
+        const studentsCollection = getStudentsCollection();
+        let query = studentsCollection;
+        if (classFilter) {
+          query = query.where('class', '==', classFilter);
+        }
+
+        const snapshot = await query.orderBy('name').get();
         const students = [];
         snapshot.forEach(doc => {
           students.push({ id: doc.id, ...doc.data() });
@@ -787,7 +1191,7 @@
           : students;
 
         if (filteredStudents.length === 0) {
-          groupedTables.innerHTML = '<div class="status-message info">No students found matching your criteria.</div>';
+          groupedTables.innerHTML = `<div class="status-message info">No students found for Term ${currentTerm} matching your criteria.</div>`;
           statsContainer.innerHTML = '';
           return;
         }
@@ -796,12 +1200,14 @@
         updateSummaryStats(filteredStudents);
       } catch (error) {
         console.error("Error loading students:", error);
-        showStatus("Error loading students: " + error.message, "error");
+        showStatus(`Error loading students: ${error.message}. Check Firebase rules or network.`, "error");
+        groupedTables.innerHTML = `<div class="status-message error">Error loading students: ${error.message}</div>`;
       }
     }
 
     // Render students in grouped tables
     function renderStudents(students) {
+      const groupedTables = document.getElementById('groupedTables');
       groupedTables.innerHTML = '';
       
       classes.forEach(cls => {
@@ -814,7 +1220,7 @@
         const header = document.createElement('div');
         header.className = 'class-header';
         header.innerHTML = `
-          <h3>${cls}</h3>
+          <h3>${cls} - Term ${currentTerm}</h3>
           <span class="badge">${classStudents.length} student${classStudents.length !== 1 ? 's' : ''}</span>
         `;
         header.onclick = () => {
@@ -835,6 +1241,7 @@
               <th>Total Fees</th>
               <th>Paid</th>
               <th>Balance</th>
+              <th>Carried Forward</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -848,7 +1255,8 @@
                        (s.stationery || 0) + (s.uniform || 0) + 
                        (s.lunch || 0) + (s.transport || 0) + (s.trip || 0);
           const paid = s.paid || 0;
-          const balance = total - paid;
+          const carriedForward = s.carriedForwardBalance || 0;
+          const balance = total + carriedForward - paid;
 
           const row = document.createElement('tr');
           row.innerHTML = `
@@ -862,6 +1270,9 @@
             <td class="positive">KES ${paid.toLocaleString('en-KE')}</td>
             <td class="${balance > 0 ? 'negative' : 'positive'}">
               KES ${Math.abs(balance).toLocaleString('en-KE')}
+            </td>
+            <td class="${carriedForward > 0 ? 'negative' : ''}">
+              KES ${carriedForward.toLocaleString('en-KE')}
             </td>
             <td>
               <button class="btn btn-sm btn-info" onclick="editStudent('${s.id}')">
@@ -890,24 +1301,29 @@
                (s.lunch || 0) + (s.transport || 0) + (s.trip || 0);
       }, 0);
       const totalPaid = students.reduce((sum, s) => sum + (s.paid || 0), 0);
-      const totalBalance = totalFees - totalPaid;
+      const totalCarriedForward = students.reduce((sum, s) => sum + (s.carriedForwardBalance || 0), 0);
+      const totalBalance = totalFees + totalCarriedForward - totalPaid;
 
-      statsContainer.innerHTML = `
+      document.getElementById('statsContainer').innerHTML = `
         <div class="stats-grid">
           <div class="stat-item">
             <h4>Total Students</h4>
             <p>${totalStudents}</p>
           </div>
           <div class="stat-item">
-            <h4>Total Fees</h4>
+            <h4>Current Term Fees</h4>
             <p>KES ${totalFees.toLocaleString('en-KE')}</p>
+          </div>
+          <div class="stat-item">
+            <h4>Carried Forward</h4>
+            <p class="negative">KES ${totalCarriedForward.toLocaleString('en-KE')}</p>
           </div>
           <div class="stat-item">
             <h4>Total Paid</h4>
             <p class="positive">KES ${totalPaid.toLocaleString('en-KE')}</p>
           </div>
           <div class="stat-item">
-            <h4>Total Balance</h4>
+            <h4>Outstanding Balance</h4>
             <p class="${totalBalance > 0 ? 'negative' : 'positive'}">
               KES ${Math.abs(totalBalance).toLocaleString('en-KE')}
             </p>
@@ -916,63 +1332,8 @@
       `;
     }
 
-    // Edit student function
-    async function editStudent(id) {
-      try {
-        const doc = await studentsCollection.doc(id).get();
-        if (!doc.exists) {
-          showStatus("Student not found", "error");
-          return;
-        }
-        
-        const s = doc.data();
-        editingId = id;
-
-        document.getElementById('studentName').value = s.name;
-        document.getElementById('studentClass').value = s.class;
-        document.getElementById('phone').value = s.phone || '';
-        document.getElementById('tuition').value = s.tuition || 0;
-        document.getElementById('adm').value = s.adm || 0;
-        document.getElementById('books').value = s.books || 0;
-        document.getElementById('stationery').value = s.stationery || 0;
-        document.getElementById('uniform').value = s.uniform || 0;
-        document.getElementById('lunch').value = s.lunch || 0;
-        document.getElementById('transport').value = s.transport || 0;
-        document.getElementById('trip').value = s.trip || 0;
-        document.getElementById('paid').value = s.paid || 0;
-
-        const submitBtn = document.getElementById('submitBtn');
-        submitBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
-        submitBtn.classList.add('btn-warning');
-        submitBtn.classList.remove('btn-success');
-        
-        showStatus(`Editing student: ${s.name}`, "info");
-        
-        // Scroll to form
-        document.getElementById('studentForm').scrollIntoView({ behavior: 'smooth' });
-      } catch (error) {
-        showStatus("Error loading student: " + error.message, "error");
-      }
-    }
-
-    // Delete student function
-    async function deleteStudent(id) {
-      try {
-        const doc = await studentsCollection.doc(id).get();
-        const studentName = doc.data().name;
-        
-        if (confirm(`Are you sure you want to delete ${studentName}? This action cannot be undone.`)) {
-          await studentsCollection.doc(id).delete();
-          showStatus(`Student ${studentName} deleted successfully`, "success");
-          loadStudents();
-        }
-      } catch (error) {
-        showStatus("Error deleting student: " + error.message, "error");
-      }
-    }
-
-    // Form submission handler
-    form.addEventListener('submit', async function(e) {
+    // Handle student form submission
+    async function handleStudentSubmit(e) {
       e.preventDefault();
 
       const name = document.getElementById('studentName').value.trim();
@@ -1000,55 +1361,164 @@
         return;
       }
 
-      const total = tuition + adm + books + stationery + uniform + lunch + transport + trip;
-      const balance = total - paid;
-
-      const student = { 
-        name, 
-        class: studentClass, 
-        phone, 
-        tuition, 
-        adm, 
-        books, 
-        stationery, 
-        uniform, 
-        lunch, 
-        transport, 
-        trip,
-        total, 
-        paid, 
-        balance 
-      };
-
       const submitBtn = document.getElementById('submitBtn');
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
       try {
-        if (editingId !== null) {
-          await studentsCollection.doc(editingId).update(student);
-          showStatus(`Student ${name} updated successfully!`, "success");
-          editingId = null;
-          submitBtn.innerHTML = '<i class="fas fa-save"></i> Add Student';
-          submitBtn.classList.remove('btn-warning');
-          submitBtn.classList.add('btn-success');
-        } else {
-          await studentsCollection.add(student);
-          showStatus(`Student ${name} added successfully!`, "success");
+        const total = tuition + adm + books + stationery + uniform + lunch + transport + trip;
+        
+        // Check for carry-forward balance
+        let carriedForwardBalance = 0;
+        if (currentTerm > 1 && !editingId) {
+          const previousTerm = currentTerm - 1;
+          const previousStudentsCollection = getStudentsCollection(previousTerm, currentYear);
+          const snapshot = await previousStudentsCollection.where('name', '==', name).get();
+          
+          if (!snapshot.empty) {
+            const previousStudent = snapshot.docs[0].data();
+            const previousBalance = (previousStudent.tuition || 0) + (previousStudent.adm || 0) + 
+                                  (previousStudent.books || 0) + (previousStudent.stationery || 0) + 
+                                  (previousStudent.uniform || 0) + (previousStudent.lunch || 0) + 
+                                  (previousStudent.transport || 0) + (previousStudent.trip || 0) + 
+                                  (previousStudent.carriedForwardBalance || 0) - (previousStudent.paid || 0);
+            
+            carriedForwardBalance = Math.max(0, previousBalance); // Only carry forward positive balances
+          }
         }
 
-        form.reset();
+        const balance = total + carriedForwardBalance - paid;
+
+        const student = { 
+          name, 
+          class: studentClass, 
+          phone, 
+          tuition, 
+          adm, 
+          books, 
+          stationery, 
+          uniform, 
+          lunch, 
+          transport, 
+          trip,
+          total, 
+          paid, 
+          balance,
+          carriedForwardBalance,
+          term: currentTerm,
+          year: currentYear,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+
+        const studentsCollection = getStudentsCollection();
+
+        if (editingId !== null) {
+          // Update existing student
+          await studentsCollection.doc(editingId).update({
+            ...student,
+            updatedAt: new Date().toISOString()
+          });
+          showStatus(`Student ${name} updated successfully for Term ${currentTerm}!`, "success");
+          resetForm();
+        } else {
+          // Add new student
+          await studentsCollection.add(student);
+          showStatus(`Student ${name} added successfully to Term ${currentTerm}!`, "success");
+          
+          if (carriedForwardBalance > 0) {
+            showStatus(`Balance of KES ${carriedForwardBalance.toLocaleString('en-KE')} carried forward from previous term.`, "info");
+          }
+        }
+
+        document.getElementById('studentForm').reset();
+        document.getElementById('carryForwardInfo').style.display = 'none';
         loadStudents();
       } catch (error) {
         showStatus("Error saving student: " + error.message, "error");
       } finally {
         submitBtn.disabled = false;
+        submitBtn.innerHTML = editingId ? '<i class="fas fa-save"></i> Save Changes' : '<i class="fas fa-save"></i> Add Student';
       }
-    });
+    }
+
+    // Reset form to add mode
+    function resetForm() {
+      editingId = null;
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.innerHTML = '<i class="fas fa-save"></i> Add Student';
+      submitBtn.classList.remove('btn-warning');
+      submitBtn.classList.add('btn-success');
+      document.getElementById('carryForwardInfo').style.display = 'none';
+    }
+
+    // Edit student function
+    async function editStudent(id) {
+      try {
+        const studentsCollection = getStudentsCollection();
+        const doc = await studentsCollection.doc(id).get();
+        if (!doc.exists) {
+          showStatus("Student not found", "error");
+          return;
+        }
+        
+        const s = doc.data();
+        editingId = id;
+
+        document.getElementById('studentName').value = s.name;
+        document.getElementById('studentClass').value = s.class;
+        document.getElementById('phone').value = s.phone || '';
+        document.getElementById('tuition').value = s.tuition || 0;
+        document.getElementById('adm').value = s.adm || 0;
+        document.getElementById('books').value = s.books || 0;
+        document.getElementById('stationery').value = s.stationery || 0;
+        document.getElementById('uniform').value = s.uniform || 0;
+        document.getElementById('lunch').value = s.lunch || 0;
+        document.getElementById('transport').value = s.transport || 0;
+        document.getElementById('trip').value = s.trip || 0;
+        document.getElementById('paid').value = s.paid || 0;
+
+        // Show carry-forward info if applicable
+        if (s.carriedForwardBalance > 0) {
+          document.getElementById('previousBalance').textContent = `KES ${s.carriedForwardBalance.toLocaleString('en-KE')}`;
+          document.getElementById('carryForwardInfo').style.display = 'block';
+        }
+
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+        submitBtn.classList.add('btn-warning');
+        submitBtn.classList.remove('btn-success');
+        
+        showStatus(`Editing student: ${s.name} (Term ${currentTerm})`, "info");
+        
+        // Scroll to form
+        document.getElementById('studentForm').scrollIntoView({ behavior: 'smooth' });
+      } catch (error) {
+        showStatus("Error loading student: " + error.message, "error");
+      }
+    }
+
+    // Delete student function
+    async function deleteStudent(id) {
+      try {
+        const studentsCollection = getStudentsCollection();
+        const doc = await studentsCollection.doc(id).get();
+        const studentName = doc.data().name;
+        
+        if (confirm(`Are you sure you want to delete ${studentName} from Term ${currentTerm}? This action cannot be undone.`)) {
+          await studentsCollection.doc(id).delete();
+          showStatus(`Student ${studentName} deleted successfully from Term ${currentTerm}`, "success");
+          loadStudents();
+        }
+      } catch (error) {
+        showStatus("Error deleting student: " + error.message, "error");
+      }
+    }
 
     // View student details
     async function viewStudent(id) {
       try {
+        const studentsCollection = getStudentsCollection();
         const doc = await studentsCollection.doc(id).get();
         if (!doc.exists) {
           showStatus("Student not found", "error");
@@ -1063,12 +1533,13 @@
                      (s.stationery || 0) + (s.uniform || 0) + 
                      (s.lunch || 0) + (s.transport || 0) + (s.trip || 0);
         const paid = s.paid || 0;
-        const balance = total - paid;
+        const carriedForward = s.carriedForwardBalance || 0;
+        const balance = total + carriedForward - paid;
 
         content.innerHTML = `
           <div style="padding: 1rem;">
             <h3 style="text-align: center; margin-bottom: 1.5rem; color: var(--primary-color);">
-              ${s.name} - ${s.class}
+              ${s.name} - ${s.class} (Term ${currentTerm})
             </h3>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
@@ -1076,16 +1547,20 @@
                 <p><strong><i class="fas fa-user"></i> Name:</strong> ${s.name}</p>
                 <p><strong><i class="fas fa-chalkboard"></i> Class:</strong> ${s.class}</p>
                 <p><strong><i class="fas fa-phone"></i> Phone:</strong> ${s.phone || 'N/A'}</p>
+                <p><strong><i class="fas fa-calendar"></i> Term:</strong> ${s.term || currentTerm}</p>
               </div>
               <div>
-                <p><strong><i class="fas fa-calendar"></i> Last Updated:</strong> 
-                  ${new Date(doc.updateTime?.toDate() || new Date()).toLocaleString()}
+                <p><strong><i class="fas fa-calendar-plus"></i> Created:</strong> 
+                  ${s.createdAt ? new Date(s.createdAt).toLocaleDateString() : 'N/A'}
+                </p>
+                <p><strong><i class="fas fa-edit"></i> Last Updated:</strong> 
+                  ${s.updatedAt ? new Date(s.updatedAt).toLocaleDateString() : 'N/A'}
                 </p>
               </div>
             </div>
             
             <h4 style="margin: 1.5rem 0 1rem; color: var(--primary-color);">
-              <i class="fas fa-money-bill-wave"></i> Fee Details
+              <i class="fas fa-money-bill-wave"></i> Fee Details - Term ${currentTerm}
             </h4>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
@@ -1107,17 +1582,24 @@
             
             <div style="text-align: center;">
               <div style="display: inline-block; background: #f8f9fa; padding: 1rem; border-radius: var(--border-radius);">
-                <p style="margin-bottom: 0.5rem;"><strong>Total Fee:</strong></p>
+                <p style="margin-bottom: 0.5rem;"><strong>Current Term Fee:</strong></p>
                 <p style="font-size: 1.5rem; font-weight: bold; color: var(--primary-color);">
                   KES ${total.toLocaleString('en-KE')}
                 </p>
+                
+                ${carriedForward > 0 ? `
+                <p style="margin: 1rem 0 0.5rem;"><strong>Carried Forward:</strong></p>
+                <p style="font-size: 1.2rem; font-weight: bold; color: var(--warning-color);">
+                  KES ${carriedForward.toLocaleString('en-KE')}
+                </p>
+                ` : ''}
                 
                 <p style="margin: 1rem 0 0.5rem;"><strong>Amount Paid:</strong></p>
                 <p style="font-size: 1.5rem; font-weight: bold; color: var(--success-color);">
                   KES ${paid.toLocaleString('en-KE')}
                 </p>
                 
-                <p style="margin: 1rem 0 0.5rem;"><strong>Balance:</strong></p>
+                <p style="margin: 1rem 0 0.5rem;"><strong>Outstanding Balance:</strong></p>
                 <p style="font-size: 1.5rem; font-weight: bold; color: ${balance > 0 ? 'var(--danger-color)' : 'var(--success-color)'};">
                   KES ${Math.abs(balance).toLocaleString('en-KE')}
                 </p>
@@ -1141,14 +1623,275 @@
       }
     }
 
-    // Close modal
+    // Close modal functions
     function closeModal() {
       document.getElementById('studentModal').classList.remove('show');
     }
 
-    // Export all students to Excel
+    function closeTermTransitionModal() {
+      document.getElementById('termTransitionModal').classList.remove('show');
+    }
+
+    function closeImportModal() {
+      document.getElementById('importModal').classList.remove('show');
+    }
+
+    function closeTermSummaryModal() {
+      document.getElementById('termSummaryModal').classList.remove('show');
+    }
+
+    // Term transition functions
+    function openTermTransitionModal() {
+      document.getElementById('termTransitionModal').classList.add('show');
+    }
+
+    async function executeTermTransition() {
+      const sourceTerm = parseInt(document.getElementById('sourceTerm').value);
+      const targetTerm = parseInt(document.getElementById('targetTerm').value);
+      const carryForwardBalances = document.getElementById('carryForwardBalances').checked;
+      const resetPaidAmounts = document.getElementById('resetPaidAmounts').checked;
+
+      if (sourceTerm === targetTerm) {
+        showStatus("Source and target terms cannot be the same", "error");
+        return;
+      }
+
+      const confirmMessage = `Are you sure you want to copy students from Term ${sourceTerm} to Term ${targetTerm}?\n\n` +
+                           `- Carry forward balances: ${carryForwardBalances ? 'Yes' : 'No'}\n` +
+                           `- Reset paid amounts: ${resetPaidAmounts ? 'Yes' : 'No'}\n\n` +
+                           `This action will overwrite existing students in Term ${targetTerm} with the same names.`;
+
+      if (!confirm(confirmMessage)) return;
+
+      const submitBtn = document.querySelector('#termTransitionModal .btn-success');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+      try {
+        showStatus(`Executing term transition from Term ${sourceTerm} to Term ${targetTerm}...`, "loading");
+
+        const sourceCollection = getStudentsCollection(sourceTerm, currentYear);
+        const targetCollection = getStudentsCollection(targetTerm, currentYear);
+        
+        const snapshot = await sourceCollection.get();
+        if (snapshot.empty) {
+          showStatus(`No students found in Term ${sourceTerm}`, "error");
+          return;
+        }
+
+        const batch = db.batch();
+        let processedCount = 0;
+
+        for (const doc of snapshot.docs) {
+          const sourceStudent = doc.data();
+          
+          // Calculate carry-forward balance
+          let carriedForwardBalance = 0;
+          if (carryForwardBalances) {
+            const sourceBalance = (sourceStudent.tuition || 0) + (sourceStudent.adm || 0) + 
+                                (sourceStudent.books || 0) + (sourceStudent.stationery || 0) + 
+                                (sourceStudent.uniform || 0) + (sourceStudent.lunch || 0) + 
+                                (sourceStudent.transport || 0) + (sourceStudent.trip || 0) + 
+                                (sourceStudent.carriedForwardBalance || 0) - (sourceStudent.paid || 0);
+            
+            carriedForwardBalance = Math.max(0, sourceBalance);
+          }
+
+          // Check if student already exists in target term
+          const existingQuery = await targetCollection.where('name', '==', sourceStudent.name).get();
+          
+          const newStudentData = {
+            name: sourceStudent.name,
+            class: sourceStudent.class,
+            phone: sourceStudent.phone,
+            tuition: sourceStudent.tuition || 0,
+            adm: sourceStudent.adm || 0,
+            books: sourceStudent.books || 0,
+            stationery: sourceStudent.stationery || 0,
+            uniform: sourceStudent.uniform || 0,
+            lunch: sourceStudent.lunch || 0,
+            transport: sourceStudent.transport || 0,
+            trip: sourceStudent.trip || 0,
+            total: (sourceStudent.tuition || 0) + (sourceStudent.adm || 0) + (sourceStudent.books || 0) + 
+                   (sourceStudent.stationery || 0) + (sourceStudent.uniform || 0) + 
+                   (sourceStudent.lunch || 0) + (sourceStudent.transport || 0) + (sourceStudent.trip || 0),
+            paid: resetPaidAmounts ? 0 : (sourceStudent.paid || 0),
+            balance: 0, // Will be recalculated
+            carriedForwardBalance: carriedForwardBalance,
+            term: targetTerm,
+            year: currentYear,
+            copiedFrom: `term_${sourceTerm}`,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+
+          // Recalculate balance
+          newStudentData.balance = newStudentData.total + newStudentData.carriedForwardBalance - newStudentData.paid;
+
+          if (!existingQuery.empty) {
+            // Update existing student
+            const existingDoc = existingQuery.docs[0];
+            batch.update(existingDoc.ref, newStudentData);
+          } else {
+            // Create new student
+            const newDocRef = targetCollection.doc();
+            batch.set(newDocRef, newStudentData);
+          }
+
+          processedCount++;
+        }
+
+        await batch.commit();
+
+        showStatus(`Successfully copied ${processedCount} students from Term ${sourceTerm} to Term ${targetTerm}`, "success");
+        
+        if (targetTerm === currentTerm) {
+          loadStudents();
+        }
+        
+        closeTermTransitionModal();
+
+        // Record transition in system settings
+        await db.collection('system_settings').doc(`transition_${sourceTerm}_to_${targetTerm}_${Date.now()}`).set({
+          sourceTerm,
+          targetTerm,
+          studentsProcessed: processedCount,
+          carryForwardBalances,
+          resetPaidAmounts,
+          executedAt: new Date().toISOString(),
+          executedBy: 'system'
+        });
+
+      } catch (error) {
+        console.error('Error executing term transition:', error);
+        showStatus("Error executing term transition: " + error.message, "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Execute Transition';
+      }
+    }
+
+    // Copy students between terms (simpler version)
+    async function copyStudentsBetweenTerms() {
+      const fromTerm = prompt(`Copy students FROM which term? (1, 2, or 3)`, currentTerm.toString());
+      const toTerm = prompt(`Copy students TO which term? (1, 2, or 3)`, (currentTerm === 3 ? 1 : currentTerm + 1).toString());
+
+      if (!fromTerm || !toTerm || fromTerm === toTerm) {
+        showStatus("Invalid term selection", "error");
+        return;
+      }
+
+      try {
+        const fromCollection = getStudentsCollection(parseInt(fromTerm), currentYear);
+        const toCollection = getStudentsCollection(parseInt(toTerm), currentYear);
+        
+        const snapshot = await fromCollection.get();
+        if (snapshot.empty) {
+          showStatus(`No students found in Term ${fromTerm}`, "info");
+          return;
+        }
+
+        const batch = db.batch();
+        snapshot.forEach(doc => {
+          const studentData = {
+            ...doc.data(),
+            term: parseInt(toTerm),
+            paid: 0, // Reset paid amount for new term
+            carriedForwardBalance: Math.max(0, doc.data().balance || 0), // Carry forward positive balance
+            copiedFrom: `term_${fromTerm}`,
+            updatedAt: new Date().toISOString()
+          };
+          
+          // Recalculate balance
+          studentData.balance = studentData.total + studentData.carriedForwardBalance - studentData.paid;
+          
+          const newDocRef = toCollection.doc();
+          batch.set(newDocRef, studentData);
+        });
+
+        await batch.commit();
+        showStatus(`Successfully copied ${snapshot.size} students from Term ${fromTerm} to Term ${toTerm}`, "success");
+        
+        if (parseInt(toTerm) === currentTerm) {
+          loadStudents();
+        }
+      } catch (error) {
+        console.error('Error copying students:', error);
+        showStatus("Error copying students: " + error.message, "error");
+      }
+    }
+
+    // View term summary
+    async function viewTermSummary() {
+      const modal = document.getElementById('termSummaryModal');
+      const content = document.getElementById('termSummaryContent');
+      
+      content.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading term summary...</div>';
+      modal.classList.add('show');
+
+      try {
+        let summaryHtml = `<h3>Academic Year ${currentYear} - Summary Report</h3>`;
+        
+        for (let term = 1; term <= 3; term++) {
+          const termCollection = getStudentsCollection(term, currentYear);
+          const snapshot = await termCollection.get();
+          
+          if (snapshot.empty) {
+            summaryHtml += `
+              <div style="margin: 1.5rem 0; padding: 1rem; background: #f8f9fa; border-radius: var(--border-radius);">
+                <h4>Term ${term}</h4>
+                <p>No students found</p>
+              </div>
+            `;
+            continue;
+          }
+
+          const students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          const totalStudents = students.length;
+          const totalFees = students.reduce((sum, s) => sum + (s.total || 0), 0);
+          const totalPaid = students.reduce((sum, s) => sum + (s.paid || 0), 0);
+          const totalCarriedForward = students.reduce((sum, s) => sum + (s.carriedForwardBalance || 0), 0);
+          const totalBalance = totalFees + totalCarriedForward - totalPaid;
+
+          summaryHtml += `
+            <div style="margin: 1.5rem 0; padding: 1rem; background: ${term === currentTerm ? '#e3f2fd' : '#f8f9fa'}; border-radius: var(--border-radius); ${term === currentTerm ? 'border: 2px solid var(--primary-color);' : ''}">
+              <h4>Term ${term} ${term === currentTerm ? '(Current)' : ''}</h4>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0;">
+                <div><strong>Students:</strong> ${totalStudents}</div>
+                <div><strong>Term Fees:</strong> KES ${totalFees.toLocaleString('en-KE')}</div>
+                <div><strong>Carried Forward:</strong> KES ${totalCarriedForward.toLocaleString('en-KE')}</div>
+                <div><strong>Paid:</strong> KES ${totalPaid.toLocaleString('en-KE')}</div>
+                <div><strong>Balance:</strong> <span class="${totalBalance > 0 ? 'negative' : 'positive'}">KES ${Math.abs(totalBalance).toLocaleString('en-KE')}</span></div>
+              </div>
+              
+              <details>
+                <summary style="cursor: pointer; font-weight: bold; margin: 0.5rem 0;">Class Breakdown</summary>
+                <div style="margin: 1rem 0;">
+                  ${classes.map(cls => {
+                    const classStudents = students.filter(s => s.class === cls);
+                    return classStudents.length > 0 ? `
+                      <div style="margin: 0.5rem 0;">
+                        <strong>${cls}:</strong> ${classStudents.length} student${classStudents.length !== 1 ? 's' : ''}
+                      </div>
+                    ` : '';
+                  }).join('')}
+                </div>
+              </details>
+            </div>
+          `;
+        }
+
+        content.innerHTML = summaryHtml;
+      } catch (error) {
+        console.error('Error loading term summary:', error);
+        content.innerHTML = `<div class="status-message error">Error loading term summary: ${error.message}</div>`;
+      }
+    }
+
+    // Export functions
     async function exportToExcel() {
       try {
+        const studentsCollection = getStudentsCollection();
         const snapshot = await studentsCollection.get();
         const students = [];
         
@@ -1158,11 +1901,13 @@
                        (s.stationery || 0) + (s.uniform || 0) + 
                        (s.lunch || 0) + (s.transport || 0) + (s.trip || 0);
           const paid = s.paid || 0;
-          const balance = total - paid;
+          const carriedForward = s.carriedForwardBalance || 0;
+          const balance = total + carriedForward - paid;
           
           students.push({
             Name: s.name,
             Class: s.class,
+            Term: s.term || currentTerm,
             Phone: s.phone || '',
             Tuition: s.tuition || 0,
             'Admission Fee': s.adm || 0,
@@ -1172,28 +1917,28 @@
             Lunch: s.lunch || 0,
             Transport: s.transport || 0,
             Trip: s.trip || 0,
-            'Total Fees': total,
+            'Current Term Fees': total,
+            'Carried Forward': carriedForward,
             'Amount Paid': paid,
-            Balance: balance
+            'Outstanding Balance': balance
           });
         });
 
         if (students.length === 0) {
-          showStatus("No student data available to export.", "error");
+          showStatus(`No student data available to export for Term ${currentTerm}.`, "error");
           return;
         }
 
         const worksheet = XLSX.utils.json_to_sheet(students);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Students");
-        XLSX.writeFile(workbook, `students_export_${new Date().toISOString().split('T')[0]}.xlsx`);
-        showStatus("Students data exported to Excel successfully!", "success");
+        XLSX.utils.book_append_sheet(workbook, worksheet, `Term ${currentTerm} Students`);
+        XLSX.writeFile(workbook, `students_term_${currentTerm}_${currentYear}_${new Date().toISOString().split('T')[0]}.xlsx`);
+        showStatus(`Students data for Term ${currentTerm} exported to Excel successfully!`, "success");
       } catch (error) {
         showStatus("Error exporting to Excel: " + error.message, "error");
       }
     }
 
-    // Export selected class to Excel
     async function exportClassToExcel() {
       const classFilter = document.getElementById('classFilter').value;
       if (!classFilter) {
@@ -1202,6 +1947,7 @@
       }
 
       try {
+        const studentsCollection = getStudentsCollection();
         const snapshot = await studentsCollection.where('class', '==', classFilter).get();
         const students = [];
         
@@ -1211,11 +1957,13 @@
                        (s.stationery || 0) + (s.uniform || 0) + 
                        (s.lunch || 0) + (s.transport || 0) + (s.trip || 0);
           const paid = s.paid || 0;
-          const balance = total - paid;
+          const carriedForward = s.carriedForwardBalance || 0;
+          const balance = total + carriedForward - paid;
           
           students.push({
             Name: s.name,
             Class: s.class,
+            Term: s.term || currentTerm,
             Phone: s.phone || '',
             Tuition: s.tuition || 0,
             'Admission Fee': s.adm || 0,
@@ -1225,38 +1973,33 @@
             Lunch: s.lunch || 0,
             Transport: s.transport || 0,
             Trip: s.trip || 0,
-            'Total Fees': total,
+            'Current Term Fees': total,
+            'Carried Forward': carriedForward,
             'Amount Paid': paid,
-            Balance: balance
+            'Outstanding Balance': balance
           });
         });
 
         if (students.length === 0) {
-          showStatus(`No students found in ${classFilter} to export.`, "error");
+          showStatus(`No students found in ${classFilter} for Term ${currentTerm} to export.`, "error");
           return;
         }
 
         const worksheet = XLSX.utils.json_to_sheet(students);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, classFilter);
-        XLSX.writeFile(workbook, `${classFilter}_students_${new Date().toISOString().split('T')[0]}.xlsx`);
-        showStatus(`Students from ${classFilter} exported to Excel successfully!`, "success");
+        XLSX.utils.book_append_sheet(workbook, worksheet, `${classFilter} Term ${currentTerm}`);
+        XLSX.writeFile(workbook, `${classFilter}_term_${currentTerm}_${currentYear}_${new Date().toISOString().split('T')[0]}.xlsx`);
+        showStatus(`Students from ${classFilter} (Term ${currentTerm}) exported to Excel successfully!`, "success");
       } catch (error) {
         showStatus("Error exporting class to Excel: " + error.message, "error");
       }
     }
 
-    // Show import modal
+    // Import functions
     function showImportModal() {
       document.getElementById('importModal').classList.add('show');
     }
 
-    // Close import modal
-    function closeImportModal() {
-      document.getElementById('importModal').classList.remove('show');
-    }
-
-    // Import students from JSON
     async function importStudents() {
       const fileInput = document.getElementById('importFile');
       const file = fileInput.files[0];
@@ -1278,14 +2021,25 @@
           throw new Error("Invalid file format. Expected an array of student objects.");
         }
 
+        const studentsCollection = getStudentsCollection();
         const batch = db.batch();
+        
         importedStudents.forEach(student => {
+          const studentData = {
+            ...student,
+            term: currentTerm,
+            year: currentYear,
+            carriedForwardBalance: student.carriedForwardBalance || 0,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          
           const docRef = studentsCollection.doc();
-          batch.set(docRef, student);
+          batch.set(docRef, studentData);
         });
 
         await batch.commit();
-        showStatus(`Successfully imported ${importedStudents.length} students`, "success");
+        showStatus(`Successfully imported ${importedStudents.length} students to Term ${currentTerm}`, "success");
         loadStudents();
         closeImportModal();
       } catch (error) {
@@ -1307,17 +2061,31 @@
       });
     }
 
-    // Initialize the page
-    document.addEventListener('DOMContentLoaded', () => {
-      loadStudents();
-      
-      // Keyboard shortcuts
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-          closeModal();
-          closeImportModal();
+    // Add keyboard shortcuts for term switching
+    document.addEventListener('keydown', function(e) {
+      if (e.altKey) {
+        switch(e.key) {
+          case '1':
+            e.preventDefault();
+            switchTerm(1);
+            break;
+          case '2':
+            e.preventDefault();
+            switchTerm(2);
+            break;
+          case '3':
+            e.preventDefault();
+            switchTerm(3);
+            break;
         }
-      });
+      }
+      
+      if (e.key === 'Escape') {
+        closeModal();
+        closeTermTransitionModal();
+        closeImportModal();
+        closeTermSummaryModal();
+      }
     });
   </script>
 </body>
