@@ -1174,157 +1174,170 @@
       }
     }
 
-    async function handleReceiptSubmit(e) {
-      e.preventDefault();
-      
-      const studentInput = document.getElementById("studentInput").value;
-      const amount = parseFloat(document.getElementById("amountPaid").value);
-      const mode = document.getElementById("paymentMode").value;
-      const notes = document.getElementById("receiptNotes").value;
-      const submitBtn = document.getElementById("submitBtn");
+    <!-- Replace the entire handleReceiptSubmit function with this updated version -->
+async function handleReceiptSubmit(e) {
+  e.preventDefault();
+  
+  const studentInput = document.getElementById("studentInput").value;
+  const amount = parseFloat(document.getElementById("amountPaid").value);
+  const mode = document.getElementById("paymentMode").value;
+  const notes = document.getElementById("receiptNotes").value;
+  const submitBtn = document.getElementById("submitBtn");
 
-      if (!studentInput) {
-        showStatus("Please enter or select a student name", "error");
-        return;
-      }
+  if (!studentInput) {
+    showStatus("Please enter or select a student name", "error");
+    return;
+  }
 
-      if (amount <= 0) {
-        showStatus("Amount must be greater than 0", "error");
-        return;
-      }
+  if (amount <= 0) {
+    showStatus("Amount must be greater than 0", "error");
+    return;
+  }
 
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<span class="spinner"></span> Processing...';
-      showStatus("Processing payment and sending SMS...", "loading");
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<span class="spinner"></span> Processing...';
+  showStatus("Processing payment and sending SMS...", "loading");
 
-      try {
-        // Use current time in EAT (Africa/Nairobi)
-        const currentDate = new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
-        const receiptDate = new Date(currentDate);
+  try {
+    // Use current time in EAT (Africa/Nairobi)
+    const currentDate = new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
+    const receiptDate = new Date(currentDate);
 
-        // Extract name and class from input (format: "Name (Class)")
-        const match = studentInput.match(/^(.+?)\s*\((.+?)\)$/);
-        let studentName, studentClass, studentId = null;
-        
-        if (match) {
-          studentName = match[1].trim();
-          studentClass = match[2].trim();
-        } else {
-          studentName = studentInput.trim();
-          studentClass = "Unknown";
-        }
-
-        // Check if student exists in current term
-        const studentsCollection = getStudentsCollection();
-        const studentSnapshot = await studentsCollection.where('name', '==', studentName).get();
-        let student;
-        
-        if (!studentSnapshot.empty) {
-          student = studentSnapshot.docs[0].data();
-          studentId = studentSnapshot.docs[0].id;
-        } else {
-          // Create new student if not found
-          const newStudent = {
-            name: studentName,
-            class: studentClass,
-            phone: "+254000000000",
-            tuition: 0,
-            adm: 0,
-            books: 0,
-            stationery: 0,
-            uniform: 0,
-            lunch: 0,
-            transport: 0,
-            trip: 0,
-            graduation: 0,
-            total: 0,
-            paid: 0,
-            balance: 0,
-            term: currentTerm,
-            year: currentYear
-          };
-          const docRef = await studentsCollection.add(newStudent);
-          studentId = docRef.id;
-          student = newStudent;
-        }
-
-        // Calculate new values
-        const newPaid = (student.paid || 0) + amount;
-        const newBalance = (student.total || 0) - newPaid;
-
-        const updatedStudent = {
-          ...student,
-          paid: newPaid,
-          balance: newBalance
-        };
-
-        // Get total number of receipts for current term for receipt number
-        const receiptsCollection = getReceiptsCollection();
-        const snapshot = await receiptsCollection.get();
-        const receiptCount = snapshot.size + 1;
-        const receiptNumber = `T${currentTerm}-${String(receiptCount).padStart(3, '0')}`;
-
-        const receipt = {
-          name: studentName,
-          class: studentClass,
-          paid: amount,
-          balance: newBalance,
-          mode: mode,
-          notes: notes || null,
-          date: receiptDate.toISOString(),
-          receiptNumber: receiptNumber,
-          term: currentTerm,
-          year: currentYear
-        };
-
-        await db.runTransaction(async transaction => {
-          const studentDocRef = studentsCollection.doc(studentId);
-          const receiptRef = receiptsCollection.doc();
-          transaction.update(studentDocRef, updatedStudent);
-          transaction.set(receiptRef, receipt);
-          receipt.id = receiptRef.id;
-        });
-
-        // Format time in EAT for SMS
-        const timeString = receiptDate.toLocaleTimeString('en-US', {
-          timeZone: 'Africa/Nairobi',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true
-        }).toUpperCase();
-        
-        const smsMessage = `Dear parent to ${studentName}, ${studentClass}, Amount of KES ${amount} Receipt No. ${receiptNumber} was received on ${receiptDate.toLocaleDateString('en-GB')} at ${timeString}. Balance: ${newBalance}. Term ${currentTerm}.`;
-        const smsSent = await sendSMS(student.phone, smsMessage);
-        
-        showStatus(`Receipt saved${smsSent ? ' and SMS sent' : ''} successfully for Term ${currentTerm}!`, "success");
-        updateReceiptTable();
-        populateStudents();
-        
-        // Show receipt preview
-        const preview = document.getElementById('receiptPreview');
-        const previewContent = document.getElementById('previewContent');
-        previewContent.innerHTML = `
-          <p><strong>Student:</strong> ${studentName} (${studentClass})</p>
-          <p><strong>Term:</strong> ${currentTerm}</p>
-          <p><strong>Amount Paid:</strong> ${amount.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</p>
-          <p><strong>Payment Mode:</strong> ${mode}</p>
-          <p><strong>Date:</strong> ${receiptDate.toLocaleDateString('en-GB')} ${timeString}</p>
-          <p><strong>Balance:</strong> ${newBalance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</p>
-          ${notes ? `<p><strong>Notes:</strong> ${notes}</p>` : ''}
-          <p><strong>Receipt No:</strong> ${receiptNumber}</p>
-        `;
-        preview.style.display = 'block';
-        
-        // Reset form
-        document.getElementById("receiptForm").reset();
-      } catch (error) {
-        console.error('Error processing receipt:', error);
-        showStatus(`Error: ${error.message}. Receipt may not have been saved.`, "error");
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fas fa-save"></i> Save Receipt & Send SMS';
-      }
+    // Extract name and class from input (format: "Name (Class)")
+    const match = studentInput.match(/^(.+?)\s*\((.+?)\)$/);
+    let studentName, studentClass, studentId = null;
+    
+    if (match) {
+      studentName = match[1].trim();
+      studentClass = match[2].trim();
+    } else {
+      studentName = studentInput.trim();
+      studentClass = "Unknown";
     }
+
+    // Check if student exists in current term
+    const studentsCollection = getStudentsCollection();
+    const studentSnapshot = await studentsCollection.where('name', '==', studentName).get();
+    let student;
+    
+    if (!studentSnapshot.empty) {
+      student = studentSnapshot.docs[0].data();
+      studentId = studentSnapshot.docs[0].id;
+    } else {
+      // Create new student if not found
+      const newStudent = {
+        name: studentName,
+        class: studentClass,
+        phone: "+254000000000",
+        tuition: 0,
+        adm: 0,
+        books: 0,
+        stationery: 0,
+        uniform: 0,
+        lunch: 0,
+        transport: 0,
+        trip: 0,
+        graduation: 0,
+        total: 0,
+        paid: 0,
+        balance: 0,
+        term: currentTerm,
+        year: currentYear
+      };
+      const docRef = await studentsCollection.add(newStudent);
+      studentId = docRef.id;
+      student = newStudent;
+    }
+
+    // Calculate new values - IMPORTANT: Use the current balance from student record
+    const currentPaid = student.paid || 0;
+    const currentBalance = student.balance || student.total || 0;
+    
+    // Calculate new balance after payment
+    const newPaid = currentPaid + amount;
+    const newBalance = currentBalance - amount;
+
+    // Ensure balance doesn't go negative
+    if (newBalance < 0) {
+      showStatus("Payment amount exceeds the outstanding balance. Please enter a valid amount.", "error");
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fas fa-save"></i> Save Receipt & Send SMS';
+      return;
+    }
+
+    const updatedStudent = {
+      ...student,
+      paid: newPaid,
+      balance: newBalance
+    };
+
+    // Get total number of receipts for current term for receipt number
+    const receiptsCollection = getReceiptsCollection();
+    const snapshot = await receiptsCollection.get();
+    const receiptCount = snapshot.size + 1;
+    const receiptNumber = `T${currentTerm}-${String(receiptCount).padStart(3, '0')}`;
+
+    const receipt = {
+      name: studentName,
+      class: studentClass,
+      paid: amount,
+      balance: newBalance, // This is the key change - using the updated balance
+      mode: mode,
+      notes: notes || null,
+      date: receiptDate.toISOString(),
+      receiptNumber: receiptNumber,
+      term: currentTerm,
+      year: currentYear
+    };
+
+    await db.runTransaction(async transaction => {
+      const studentDocRef = studentsCollection.doc(studentId);
+      const receiptRef = receiptsCollection.doc();
+      transaction.update(studentDocRef, updatedStudent);
+      transaction.set(receiptRef, receipt);
+      receipt.id = receiptRef.id;
+    });
+
+    // Format time in EAT for SMS
+    const timeString = receiptDate.toLocaleTimeString('en-US', {
+      timeZone: 'Africa/Nairobi',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    }).toUpperCase();
+    
+    const smsMessage = `Dear parent to ${studentName}, ${studentClass}, Amount of KES ${amount} Receipt No. ${receiptNumber} was received on ${receiptDate.toLocaleDateString('en-GB')} at ${timeString}. Balance: ${newBalance}. Term ${currentTerm}.`;
+    const smsSent = await sendSMS(student.phone, smsMessage);
+    
+    showStatus(`Receipt saved${smsSent ? ' and SMS sent' : ''} successfully for Term ${currentTerm}!`, "success");
+    updateReceiptTable();
+    populateStudents();
+    
+    // Show receipt preview
+    const preview = document.getElementById('receiptPreview');
+    const previewContent = document.getElementById('previewContent');
+    previewContent.innerHTML = `
+      <p><strong>Student:</strong> ${studentName} (${studentClass})</p>
+      <p><strong>Term:</strong> ${currentTerm}</p>
+      <p><strong>Amount Paid:</strong> ${amount.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</p>
+      <p><strong>Payment Mode:</strong> ${mode}</p>
+      <p><strong>Date:</strong> ${receiptDate.toLocaleDateString('en-GB')} ${timeString}</p>
+      <p><strong>Balance:</strong> ${newBalance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</p>
+      ${notes ? `<p><strong>Notes:</strong> ${notes}</p>` : ''}
+      <p><strong>Receipt No:</strong> ${receiptNumber}</p>
+    `;
+    preview.style.display = 'block';
+    
+    // Reset form
+    document.getElementById("receiptForm").reset();
+  } catch (error) {
+    console.error('Error processing receipt:', error);
+    showStatus(`Error: ${error.message}. Receipt may not have been saved.`, "error");
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<i class="fas fa-save"></i> Save Receipt & Send SMS';
+  }
+}
 
     function openStudentManager() {
       const modal = document.getElementById('studentManagerModal');
@@ -1478,44 +1491,45 @@
       }
     }
 
-    async function deleteReceipt(id) {
-      if (confirm("Are you sure you want to delete this receipt?")) {
-        try {
-          const receiptsCollection = getReceiptsCollection();
-          const studentsCollection = getStudentsCollection();
+async function deleteReceipt(id) {
+  if (confirm("Are you sure you want to delete this receipt?")) {
+    try {
+      const receiptsCollection = getReceiptsCollection();
+      const studentsCollection = getStudentsCollection();
+      
+      const receiptRef = receiptsCollection.doc(id);
+      const receiptDoc = await receiptRef.get();
+      
+      if (receiptDoc.exists) {
+        const receipt = receiptDoc.data();
+        const studentQuery = await studentsCollection.where('name', '==', receipt.name).get();
+        
+        if (!studentQuery.empty) {
+          const studentDoc = studentQuery.docs[0];
+          const studentData = studentDoc.data();
           
-          const receiptRef = receiptsCollection.doc(id);
-          const receiptDoc = await receiptRef.get();
+          // Calculate the new balance by adding back the deleted payment amount
+          const updatedStudent = {
+            ...studentData,
+            paid: studentData.paid - receipt.paid,
+            balance: studentData.balance + receipt.paid
+          };
           
-          if (receiptDoc.exists) {
-            const receipt = receiptDoc.data();
-            const studentQuery = await studentsCollection.where('name', '==', receipt.name).get();
-            
-            if (!studentQuery.empty) {
-              const studentDoc = studentQuery.docs[0];
-              const studentData = studentDoc.data();
-              
-              const updatedStudent = {
-                ...studentData,
-                paid: studentData.paid - receipt.paid,
-                balance: studentData.balance + receipt.paid
-              };
-              
-              await db.runTransaction(async transaction => {
-                transaction.update(studentDoc.ref, updatedStudent);
-                transaction.delete(receiptRef);
-              });
-              
-              showStatus(`Receipt deleted and student balance updated successfully for Term ${currentTerm}`, "success");
-              updateReceiptTable();
-            }
-          }
-        } catch (error) {
-          console.error('Error deleting receipt:', error);
-          showStatus("Error deleting receipt: " + error.message, "error");
+          await db.runTransaction(async transaction => {
+            transaction.update(studentDoc.ref, updatedStudent);
+            transaction.delete(receiptRef);
+          });
+          
+          showStatus(`Receipt deleted and student balance updated successfully for Term ${currentTerm}`, "success");
+          updateReceiptTable();
         }
       }
+    } catch (error) {
+      console.error('Error deleting receipt:', error);
+      showStatus("Error deleting receipt: " + error.message, "error");
     }
+  }
+}
 
     async function printReceipt(id) {
   try {
