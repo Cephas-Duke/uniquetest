@@ -805,74 +805,6 @@
             box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
         }
 
-        /* Pending Accounts Section */
-        .pending-accounts-list {
-            margin-top: 1rem;
-        }
-
-        .pending-account-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.75rem;
-            border-bottom: 1px solid var(--medium-gray);
-            transition: var(--transition);
-        }
-
-        .pending-account-item:hover {
-            background-color: rgba(0, 0, 0, 0.02);
-        }
-
-        .pending-account-info {
-            flex: 1;
-        }
-
-        .pending-account-name {
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-        }
-
-        .pending-account-email {
-            font-size: 0.875rem;
-            color: #666;
-        }
-
-        .pending-account-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .approve-btn, .reject-btn {
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .approve-btn {
-            background: var(--success-color);
-            color: white;
-            border: none;
-        }
-
-        .reject-btn {
-            background: var(--error-color);
-            color: white;
-            border: none;
-        }
-
-        .approve-btn:hover {
-            background: #3aa8d0;
-            transform: translateY(-2px);
-        }
-
-        .reject-btn:hover {
-            background: #d61f74;
-            transform: translateY(-2px);
-        }
-
         /* Animations */
         @keyframes fadeIn {
             from { opacity: 0; }
@@ -1211,18 +1143,6 @@
                     </div>
                 </div>
             </section>
-
-            <section class="dashboard-grid">
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <i class="fas fa-user-check"></i>
-                            Pending Account Approvals
-                        </div>
-                    </div>
-                    <div class="pending-accounts-list" id="pendingAccountsList"></div>
-                </div>
-            </section>
             
             <div class="dashboard-grid" style="grid-template-columns: 2fr 1fr;">
                 <div class="card">
@@ -1290,7 +1210,6 @@
         const authSubtitle = document.getElementById('authSubtitle');
         const authStatusMessage = document.getElementById('authStatusMessage');
         const loginButton = document.getElementById('loginButton');
-        const signupButton = document.getElementById('signupButton');
 
         // Dashboard Elements
         const userNameEl = document.getElementById('userName');
@@ -1306,7 +1225,6 @@
         const revenueTrendEl = document.getElementById('revenueTrend');
         const expenseTrendEl = document.getElementById('expenseTrend');
         const recentActivitiesListEl = document.getElementById('recentActivitiesList');
-        const pendingAccountsListEl = document.getElementById('pendingAccountsList');
         const currentDateEl = document.getElementById('currentDate');
         const refreshDataButton = document.getElementById('refreshDataButton');
         const logoutButton = document.getElementById('logoutButton');
@@ -1315,9 +1233,12 @@
         let financialsChart;
 
         // --- Data Fetching Functions (Simulated API Calls) ---
+        // In a real application, these would be `fetch('/api/students')`, etc.
         const fetchStudentsData = async () => {
             console.log("Fetching student data...");
+            // Simulate API delay
             await new Promise(resolve => setTimeout(resolve, 500));
+            // Simulate fetching data from a JSON file
             const response = await fetch('students.json');
             const data = await response.json();
             return data;
@@ -1347,129 +1268,37 @@
             return data;
         };
 
-        // --- User Account Management ---
-        const getUsers = () => {
-            return JSON.parse(localStorage.getItem('users')) || [];
-        };
-
-        const saveUsers = (users) => {
-            localStorage.setItem('users', JSON.stringify(users));
-        };
-
-        const getPendingAccounts = () => {
-            return JSON.parse(localStorage.getItem('pendingAccounts')) || [];
-        };
-
-        const savePendingAccounts = (accounts) => {
-            localStorage.setItem('pendingAccounts', JSON.stringify(accounts));
-        };
-
-        const updatePendingAccountsUI = () => {
-            const pendingAccounts = getPendingAccounts();
-            pendingAccountsListEl.innerHTML = '';
-            if (pendingAccounts.length === 0) {
-                pendingAccountsListEl.innerHTML = '<p class="activity-time">No pending accounts.</p>';
-                return;
-            }
-            pendingAccounts.forEach(account => {
-                const accountItem = document.createElement('div');
-                accountItem.className = 'pending-account-item';
-                accountItem.innerHTML = `
-                    <div class="pending-account-info">
-                        <div class="pending-account-name">${account.name}</div>
-                        <div class="pending-account-email">${account.email}</div>
-                    </div>
-                    <div class="pending-account-actions">
-                        <button class="approve-btn" data-email="${account.email}">Approve</button>
-                        <button class="reject-btn" data-email="${account.email}">Reject</button>
-                    </div>
-                `;
-                pendingAccountsListEl.appendChild(accountItem);
-                anime({
-                    targets: accountItem,
-                    opacity: [0, 1],
-                    translateX: [20, 0],
-                    duration: 800,
-                    easing: 'easeOutQuad'
-                });
-            });
-
-            // Add event listeners for approve/reject buttons
-            document.querySelectorAll('.approve-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const email = btn.getAttribute('data-email');
-                    approveAccount(email);
-                });
-            });
-
-            document.querySelectorAll('.reject-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const email = btn.getAttribute('data-email');
-                    rejectAccount(email);
-                });
-            });
-        };
-
-        const approveAccount = (email) => {
-            const pendingAccounts = getPendingAccounts();
-            const users = getUsers();
-            const account = pendingAccounts.find(acc => acc.email === email);
-            if (account) {
-                users.push({ ...account, isApproved: true });
-                saveUsers(users);
-                const updatedPending = pendingAccounts.filter(acc => acc.email !== email);
-                savePendingAccounts(updatedPending);
-                updatePendingAccountsUI();
-                authStatusMessage.textContent = `Account for ${account.name} approved.`;
-                authStatusMessage.classList.remove('error');
-                authStatusMessage.classList.add('success');
-                setTimeout(() => {
-                    authStatusMessage.classList.remove('success');
-                    authStatusMessage.textContent = '';
-                }, 3000);
-            }
-        };
-
-        const rejectAccount = (email) => {
-            const pendingAccounts = getPendingAccounts();
-            const updatedPending = pendingAccounts.filter(acc => acc.email !== email);
-            savePendingAccounts(updatedPending);
-            updatePendingAccountsUI();
-            authStatusMessage.textContent = `Account for ${email} rejected.`;
-            authStatusMessage.classList.remove('success');
-            authStatusMessage.classList.add('error');
-            setTimeout(() => {
-                authStatusMessage.classList.remove('error');
-                authStatusMessage.textContent = '';
-            }, 3000);
-        };
-
         // --- Dashboard Update Functions ---
         const updateDashboardCards = (studentsData, staffData, financialsData) => {
+            // Students Card
             const totalStudents = studentsData.total;
             const studentTrend = studentsData.growthPercentage;
             totalStudentsEl.textContent = totalStudents;
             studentTrendEl.textContent = `${studentTrend}%`;
-            totalStudentsEl.classList.add('pulse');
+            totalStudentsEl.classList.add('pulse'); // Add pulse animation
             
+            // Staff Card
             const totalStaff = staffData.total;
             const staffTrend = staffData.changePercentage;
             totalStaffEl.textContent = totalStaff;
             staffTrendEl.textContent = `${staffTrend}%`;
             totalStaffEl.classList.add('pulse');
 
+            // Financials Card
             const totalRevenue = financialsData.revenue.thisMonth;
             const revenueTrend = financialsData.revenue.changePercentage;
             totalRevenueEl.textContent = `$${totalRevenue.toLocaleString()}`;
             revenueTrendEl.textContent = `${revenueTrend}%`;
             totalRevenueEl.classList.add('pulse');
 
+            // Expenses Card
             const totalExpenses = financialsData.expenses.thisMonth;
             const expenseTrend = financialsData.expenses.changePercentage;
             totalExpensesEl.textContent = `$${totalExpenses.toLocaleString()}`;
             expenseTrendEl.textContent = `${expenseTrend}%`;
             totalExpensesEl.classList.add('pulse');
 
+            // Remove pulse after animation
             setTimeout(() => {
                 totalStudentsEl.classList.remove('pulse');
                 totalStaffEl.classList.remove('pulse');
@@ -1477,6 +1306,7 @@
                 totalExpensesEl.classList.remove('pulse');
             }, 500);
 
+            // Update trend colors
             if (studentTrend >= 0) studentTrendEl.parentElement.className = 'trend-up'; else studentTrendEl.parentElement.className = 'trend-down';
             if (staffTrend >= 0) staffTrendEl.parentElement.className = 'trend-up'; else staffTrendEl.parentElement.className = 'trend-down';
             if (revenueTrend >= 0) revenueTrendEl.parentElement.className = 'trend-up'; else revenueTrendEl.parentElement.className = 'trend-down';
@@ -1484,7 +1314,7 @@
         };
 
         const updateRecentActivities = (activitiesData) => {
-            recentActivitiesListEl.innerHTML = '';
+            recentActivitiesListEl.innerHTML = ''; // Clear existing activities
             activitiesData.forEach(activity => {
                 const activityItem = document.createElement('div');
                 activityItem.className = 'activity-item';
@@ -1604,8 +1434,10 @@
 
         const initializeDashboard = async () => {
             try {
+                // Show a brief loading screen
                 loadingScreen.classList.add('show');
                 
+                // Fetch all data concurrently to improve performance
                 const [students, staff, financials, activities] = await Promise.all([
                     fetchStudentsData(),
                     fetchStaffData(),
@@ -1613,15 +1445,17 @@
                     fetchActivitiesData()
                 ]);
 
+                // Update UI elements with fetched data
                 updateDashboardCards(students, staff, financials);
                 updateRecentActivities(activities);
                 renderFinancialsChart(financials.chartData.last6months);
-                updatePendingAccountsUI();
                 
+                // Hide loading screen and show dashboard
                 setTimeout(() => {
                     loadingScreen.classList.remove('show');
                     authContainer.style.display = 'none';
                     dashboardContent.style.display = 'block';
+                    // Animate dashboard elements
                     anime({
                         targets: '.main-content > *',
                         translateY: [50, 0],
@@ -1630,10 +1464,11 @@
                         delay: anime.stagger(100),
                         easing: 'easeOutQuad'
                     });
-                }, 1000);
+                }, 1000); // Wait for a moment to show the loading screen
 
             } catch (error) {
                 console.error("Failed to load dashboard data:", error);
+                // Handle error gracefully, maybe show a retry button
                 loadingScreen.innerHTML = `<div class="auth-card">
                     <p style="color: black; text-align: center;">Failed to load data. Please try again later.</p>
                     <button class="auth-button" style="margin-top: 1rem;" onclick="location.reload()">Retry</button>
@@ -1651,7 +1486,6 @@
             resetForm.classList.add('hidden');
             authTitle.textContent = "Create an Account";
             authSubtitle.textContent = "Join our platform to get started";
-            authStatusMessage.textContent = '';
         });
 
         showLoginLink.addEventListener('click', (e) => {
@@ -1661,7 +1495,6 @@
             resetForm.classList.add('hidden');
             authTitle.textContent = "Welcome Back";
             authSubtitle.textContent = "Sign in to access your dashboard";
-            authStatusMessage.textContent = '';
         });
 
         forgotPasswordLink.addEventListener('click', (e) => {
@@ -1670,7 +1503,6 @@
             resetForm.classList.remove('hidden');
             authTitle.textContent = "Reset Password";
             authSubtitle.textContent = "Enter your email to receive a reset link";
-            authStatusMessage.textContent = '';
         });
         
         backToLoginLink.addEventListener('click', (e) => {
@@ -1679,105 +1511,51 @@
             loginForm.classList.remove('hidden');
             authTitle.textContent = "Welcome Back";
             authSubtitle.textContent = "Sign in to access your dashboard";
-            authStatusMessage.textContent = '';
         });
         
-        // Signup form submission
-        signupForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            signupButton.classList.add('loading');
-            const name = document.getElementById('signupName').value;
-            const email = document.getElementById('signupEmail').value;
-            const password = document.getElementById('signupPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-
-            if (password !== confirmPassword) {
-                authStatusMessage.textContent = "Passwords do not match.";
-                authStatusMessage.classList.remove('success');
-                authStatusMessage.classList.add('error');
-                signupButton.classList.remove('loading');
-                return;
-            }
-
-            const users = getUsers();
-            const pendingAccounts = getPendingAccounts();
-            if (users.some(user => user.email === email) || pendingAccounts.some(acc => acc.email === email)) {
-                authStatusMessage.textContent = "Email already registered.";
-                authStatusMessage.classList.remove('success');
-                authStatusMessage.classList.add('error');
-                signupButton.classList.remove('loading');
-                return;
-            }
-
-            // Simulate server request
-            await new Promise(resolve => setTimeout(resolve, 2000));
-
-            // Store in pending accounts
-            pendingAccounts.push({ name, email, password, isApproved: false });
-            savePendingAccounts(pendingAccounts);
-
-            authStatusMessage.textContent = "Account created. Awaiting admin approval.";
-            authStatusMessage.classList.remove('error');
-            authStatusMessage.classList.add('success');
-            signupButton.classList.remove('loading');
-
-            // Reset form and switch to login
-            signupForm.reset();
-            setTimeout(() => {
-                signupForm.classList.add('hidden');
-                loginForm.classList.remove('hidden');
-                authTitle.textContent = "Welcome Back";
-                authSubtitle.textContent = "Sign in to access your dashboard";
-                authStatusMessage.textContent = '';
-            }, 2000);
-        });
-
-        // Login form submission
+        // Simulating user login
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             loginButton.classList.add('loading');
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
 
-            // Simulate server request
+            // Simulate a server request
             await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // For this example, any email and password will "succeed"
+            if (email && password) {
+                // Store user info in a mock session
+                const user = { name: 'Admin', email: email, avatar: 'AD' };
+                localStorage.setItem('user', JSON.stringify(user));
+                
+                // Update user details in the nav bar
+                userNameEl.textContent = user.name;
+                userEmailEl.textContent = user.email;
+                userAvatarEl.textContent = user.avatar;
+                welcomeMessageEl.textContent = `Hello, ${user.name}!`;
 
-            const users = getUsers();
-            const user = users.find(u => u.email === email && u.password === password);
+                // Show success message and redirect
+                authStatusMessage.textContent = "Login successful! Redirecting...";
+                authStatusMessage.classList.remove('error');
+                authStatusMessage.classList.add('success');
+                loginButton.classList.remove('loading');
+                
+                // Initialize the dashboard after a short delay
+                setTimeout(initializeDashboard, 1500);
 
-            if (!user) {
+            } else {
                 authStatusMessage.textContent = "Invalid email or password.";
                 authStatusMessage.classList.remove('success');
                 authStatusMessage.classList.add('error');
                 loginButton.classList.remove('loading');
-                return;
             }
-
-            if (!user.isApproved) {
-                authStatusMessage.textContent = "Your account is pending approval.";
-                authStatusMessage.classList.remove('success');
-                authStatusMessage.classList.add('error');
-                loginButton.classList.remove('loading');
-                return;
-            }
-
-            localStorage.setItem('user', JSON.stringify({ name: user.name, email: user.email, avatar: 'AD' }));
-            userNameEl.textContent = user.name;
-            userEmailEl.textContent = user.email;
-            userAvatarEl.textContent = 'AD';
-            welcomeMessageEl.textContent = `Hello, ${user.name}!`;
-
-            authStatusMessage.textContent = "Login successful! Redirecting...";
-            authStatusMessage.classList.remove('error');
-            authStatusMessage.classList.add('success');
-            loginButton.classList.remove('loading');
-
-            setTimeout(initializeDashboard, 1500);
         });
-
+        
         // Logout functionality
         logoutButton.addEventListener('click', () => {
             localStorage.removeItem('user');
+            // Hide dashboard, show login screen, and refresh
             dashboardContent.style.display = 'none';
             authContainer.style.display = 'flex';
             location.reload();
@@ -1795,7 +1573,6 @@
                 updateDashboardCards(students, staff, financials);
                 updateRecentActivities(activities);
                 renderFinancialsChart(financials.chartData[document.getElementById('financialsTimeframe').value]);
-                updatePendingAccountsUI();
                 refreshDataButton.classList.remove('loading');
             }).catch(error => {
                 console.error("Refresh failed:", error);
@@ -1832,20 +1609,15 @@
             updateCurrentDate();
             const user = JSON.parse(localStorage.getItem('user'));
             if (user) {
-                const users = getUsers();
-                const validUser = users.find(u => u.email === user.email && u.isApproved);
-                if (validUser) {
-                    authContainer.style.display = 'none';
-                    userNameEl.textContent = validUser.name;
-                    userEmailEl.textContent = validUser.email;
-                    userAvatarEl.textContent = 'AD';
-                    welcomeMessageEl.textContent = `Hello, ${validUser.name}!`;
-                    initializeDashboard();
-                } else {
-                    localStorage.removeItem('user');
-                    authContainer.style.display = 'flex';
-                }
+                // If a user is logged in, skip the auth page
+                authContainer.style.display = 'none';
+                userNameEl.textContent = user.name;
+                userEmailEl.textContent = user.email;
+                userAvatarEl.textContent = user.avatar;
+                welcomeMessageEl.textContent = `Hello, ${user.name}!`;
+                initializeDashboard();
             } else {
+                // Otherwise, show the auth page
                 authContainer.style.display = 'flex';
             }
         });
