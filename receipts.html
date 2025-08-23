@@ -1208,6 +1208,30 @@
       }
     }
 
+    // Function to get balance carried forward from previous terms
+    async function getBalanceCarriedForward(studentName, currentTerm, currentYear) {
+      let balanceCarriedForward = 0;
+      
+      // Check all previous terms for outstanding balances
+      for (let term = 1; term < currentTerm; term++) {
+        try {
+          const prevStudentsCollection = getStudentsCollection(term, currentYear);
+          const prevStudentSnapshot = await prevStudentsCollection.where('name', '==', studentName).get();
+          
+          if (!prevStudentSnapshot.empty) {
+            const prevStudent = prevStudentSnapshot.docs[0].data();
+            if (prevStudent.balance > 0) {
+              balanceCarriedForward += prevStudent.balance;
+            }
+          }
+        } catch (error) {
+          console.error(`Error checking balance for term ${term}:`, error);
+        }
+      }
+      
+      return balanceCarriedForward;
+    }
+
     async function handleReceiptSubmit(e) {
       e.preventDefault();
       
@@ -1282,13 +1306,18 @@
           student = newStudent;
         }
 
-        // Calculate new values - THIS IS THE FIXED PART
+        // Calculate new values - THIS IS THE MODIFIED PART
         // Get the latest student data to ensure we have the current balance
         const latestStudentDoc = await studentsCollection.doc(studentId).get();
         const latestStudent = latestStudentDoc.data();
         
+        // Get balance carried forward from previous terms
+        const balanceCarriedForward = await getBalanceCarriedForward(studentName, currentTerm, currentYear);
+        
+        // Calculate total outstanding balance (term balance + balance carried forward)
+        const totalOutstandingBalance = (latestStudent.total || 0) + balanceCarriedForward;
         const newPaid = (latestStudent.paid || 0) + amount;
-        const newBalance = (latestStudent.total || 0) - newPaid;
+        const newBalance = totalOutstandingBalance - newPaid;
 
         const updatedStudent = {
           ...latestStudent,
@@ -1579,6 +1608,9 @@
         const receiptDate = new Date(currentDate);
         const receiptNumber = receipt.receiptNumber || `T${currentTerm}-001`;
 
+        // Get balance carried forward from previous terms
+        const balanceCarriedForward = await getBalanceCarriedForward(receipt.name, currentTerm, currentYear);
+
         // Get logo data URL
         const logoDataUrl = await getLogoDataUrl();
 
@@ -1796,6 +1828,7 @@
                   <div><strong>Class:</strong> <span>${receipt.class}</span></div>
                   <div><strong>Term:</strong> <span>${currentTerm}</span></div>
                   <div><strong>Academic Year:</strong> <span>${currentYear}</span></div>
+                  ${balanceCarriedForward > 0 ? `<div><strong>Balance Carried Forward:</strong> <span>${balanceCarriedForward.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</span></div>` : ''}
                   ${receipt.notes ? `<div><strong>Notes:</strong> <span>${receipt.notes}</span></div>` : ''}
                 </div>
 
