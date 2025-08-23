@@ -945,7 +945,7 @@
             <input type="checkbox" id="smartTransition" checked style="width: auto; margin-top: 0.2rem;">
             <div>
               <strong>Enable Smart Transition</strong>
-              <div style="font-size: 0.9rem; color: #666; margin-top: 0.25rem;">
+              <div style="font-size: 0.9rem; color: 666; margin-top: 0.25rem;">
                 Automatically handle students based on their balance status with separate tracking
               </div>
             </div>
@@ -957,7 +957,7 @@
             <input type="checkbox" id="resetPaidAmounts" checked style="width: auto; margin-right: 0.5rem;">
             <div>
               <strong>Reset Paid Amounts</strong>
-              <div style="font-size: 0.9rem; color: #666; margin-top: 0.25rem;">
+              <div style="font-size: 0.9rem; color: 666; margin-top: 0.25rem;">
                 Set all paid amounts to 0 for the new term (recommended)
               </div>
             </div>
@@ -1478,17 +1478,17 @@
           totalOutstanding,
           term: currentTerm,
           year: currentYear,
-          createdAt: editingId ? null : new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
 
         const studentsCollection = getStudentsCollection();
 
         if (editingId !== null) {
-          // Update existing student - preserve carried forward balance
+          // Update existing student - preserve carried forward balance and createdAt
           const existingDoc = await studentsCollection.doc(editingId).get();
           const existingData = existingDoc.data();
           
+          // Preserve the original createdAt field and carriedForwardBalance
           await studentsCollection.doc(editingId).update({
             ...student,
             carriedForwardBalance: existingData.carriedForwardBalance || 0, // Preserve existing balance
@@ -1499,7 +1499,10 @@
           resetForm();
         } else {
           // Add new student
-          await studentsCollection.add(student);
+          await studentsCollection.add({
+            ...student,
+            createdAt: new Date().toISOString() // Only set createdAt for new students
+          });
           showStatus(`Student ${name} added successfully to Term ${currentTerm}!`, "success");
           
           if (carriedForwardBalance > 0) {
@@ -2216,7 +2219,7 @@
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, `${classFilter} Term ${currentTerm} Enhanced`);
         XLSX.writeFile(workbook, `${classFilter}_enhanced_term_${currentTerm}_${currentYear}_${new Date().toISOString().split('T')[0]}.xlsx`);
-        showStatus(`Enhanced students from ${classFilter} (Term ${currentTerm}) exported to Excel successfully!`, "success");
+        showStatus(`Enhanced students from ${classFilter} (Term ${currentTerm) exported to Excel successfully!`, "success");
       } catch (error) {
         showStatus("Error exporting class to Excel: " + error.message, "error");
       }
@@ -2286,7 +2289,7 @@
 
     // Helper function to read file as text
     function readFileAsText(file) {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve, reject) {
         const reader = new FileReader();
         reader.onload = event => resolve(event.target.result);
         reader.onerror = error => reject(error);
