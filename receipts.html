@@ -867,8 +867,9 @@
       throw error;
     }
     
-    // Current term and year management
-    let currentTerm = 2; // Default to Term 2 as requested
+    // MODIFIED: Current term and year management with persistent storage
+    // Try to get saved term from sessionStorage, fallback to default Term 2
+    let currentTerm = parseInt(sessionStorage.getItem('heriwadi_current_term')) || 2;
     let currentYear = new Date().getFullYear();
     
     // Collection references with term support
@@ -915,6 +916,8 @@
 
     document.addEventListener('DOMContentLoaded', function() {
       updateCurrentYearDisplay();
+      // MODIFIED: Initialize UI with saved term on page load
+      initializeTermFromStorage();
       initializeMigration().then(() => {
         populateStudents();
         updateReceiptTable();
@@ -932,12 +935,38 @@
       });
     });
 
+    // NEW FUNCTION: Initialize term from storage and update UI
+    function initializeTermFromStorage() {
+      // Update UI to show the correct term
+      document.querySelectorAll('.term-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.term) === currentTerm);
+      });
+      
+      // Update all term displays
+      updateTermDisplays();
+      
+      console.log(`Initialized with Term ${currentTerm} from storage`);
+    }
+
+    // NEW FUNCTION: Update all term displays in the UI
+    function updateTermDisplays() {
+      document.getElementById('currentTermDisplay').textContent = `Term ${currentTerm}`;
+      document.getElementById('currentTermRecords').textContent = `Term ${currentTerm}`;
+      document.getElementById('modalTermDisplay').textContent = `Term ${currentTerm}`;
+      document.getElementById('feeTermDisplay').textContent = `Term ${currentTerm}`;
+      document.getElementById('existingStudentsTermDisplay').textContent = `Term ${currentTerm}`;
+    }
+
     function updateCurrentYearDisplay() {
       document.getElementById('currentYear').textContent = currentYear;
     }
 
+    // MODIFIED: Updated switchTerm function with persistent storage
     function switchTerm(term) {
       currentTerm = term;
+      
+      // SAVE term to sessionStorage for persistence across page navigation
+      sessionStorage.setItem('heriwadi_current_term', term.toString());
       
       // Update UI to show active term
       document.querySelectorAll('.term-btn').forEach(btn => {
@@ -945,17 +974,13 @@
       });
       
       // Update all term displays
-      document.getElementById('currentTermDisplay').textContent = `Term ${term}`;
-      document.getElementById('currentTermRecords').textContent = `Term ${term}`;
-      document.getElementById('modalTermDisplay').textContent = `Term ${term}`;
-      document.getElementById('feeTermDisplay').textContent = `Term ${term}`;
-      document.getElementById('existingStudentsTermDisplay').textContent = `Term ${term}`;
+      updateTermDisplays();
       
       // Refresh data for the new term
       populateStudents();
       updateReceiptTable();
       
-      showStatus(`Switched to Term ${term}`, "info");
+      showStatus(`Switched to Term ${term} - This selection will persist across pages`, "success");
     }
 
     // Migration function to move existing data to Term 2
@@ -2257,6 +2282,41 @@
         }
       }
     });
+
+    // ADDITIONAL FUNCTIONS FOR COMPLETE PERSISTENCE
+
+    // Function to clear term selection (useful for debugging)
+    function clearTermSelection() {
+      sessionStorage.removeItem('heriwadi_current_term');
+      showStatus("Term selection cleared. Page will reload with default Term 2.", "info");
+      setTimeout(() => location.reload(), 1500);
+    }
+
+    // Function to get current term for other scripts/pages to use
+    function getCurrentTerm() {
+      return currentTerm;
+    }
+
+    // Function to set term programmatically
+    function setCurrentTerm(term) {
+      if (term >= 1 && term <= 3) {
+        switchTerm(term);
+      } else {
+        showStatus("Invalid term. Please use 1, 2, or 3.", "error");
+      }
+    }
+
+    // Make functions available globally for debugging
+    window.heriwadi = {
+      getCurrentTerm,
+      setCurrentTerm,
+      clearTermSelection,
+      switchTerm
+    };
+
+    console.log("Heriwadi School Management System initialized with persistent term selection");
+    console.log("Use window.heriwadi.getCurrentTerm() to check current term");
+    console.log("Use window.heriwadi.setCurrentTerm(1|2|3) to change term programmatically");
   </script>
 </body>
 </html>
