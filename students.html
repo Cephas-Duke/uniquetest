@@ -1480,122 +1480,132 @@
     }
 
     // Handle student form submission with improved balance tracking
-    async function handleStudentSubmit(e) {
-      e.preventDefault();
+async function handleStudentSubmit(e) {
+  e.preventDefault();
 
-      const name = document.getElementById('studentName').value.trim();
-      const studentClass = document.getElementById('studentClass').value;
-      const phone = document.getElementById('phone').value.trim();
-      const tuition = parseFloat(document.getElementById('tuition').value) || 0;
-      const adm = parseFloat(document.getElementById('adm').value) || 0;
-      const books = parseFloat(document.getElementById('books').value) || 0;
-      const stationery = parseFloat(document.getElementById('stationery').value) || 0;
-      const uniform = parseFloat(document.getElementById('uniform').value) || 0;
-      const lunch = parseFloat(document.getElementById('lunch').value) || 0;
-      const transport = parseFloat(document.getElementById('transport').value) || 0;
-      const trip = parseFloat(document.getElementById('trip').value) || 0;
-      const graduation = parseFloat(document.getElementById('graduation').value) || 0;
-      const paid = parseFloat(document.getElementById('paid').value) || 0;
+  const name = document.getElementById('studentName').value.trim();
+  const studentClass = document.getElementById('studentClass').value;
+  const phone = document.getElementById('phone').value.trim();
+  const tuition = parseFloat(document.getElementById('tuition').value) || 0;
+  const adm = parseFloat(document.getElementById('adm').value) || 0;
+  const books = parseFloat(document.getElementById('books').value) || 0;
+  const stationery = parseFloat(document.getElementById('stationery').value) || 0;
+  const uniform = parseFloat(document.getElementById('uniform').value) || 0;
+  const lunch = parseFloat(document.getElementById('lunch').value) || 0;
+  const transport = parseFloat(document.getElementById('transport').value) || 0;
+  const trip = parseFloat(document.getElementById('trip').value) || 0;
+  const graduation = parseFloat(document.getElementById('graduation').value) || 0;
+  const paid = parseFloat(document.getElementById('paid').value) || 0;
 
-      // Validation
-      if (!name || !studentClass || !phone) {
-        showStatus("Please fill in all required fields (Name, Class, Phone)", "error");
-        return;
-      }
+  // Validation
+  if (!name || !studentClass || !phone) {
+    showStatus("Please fill in all required fields (Name, Class, Phone)", "error");
+    return;
+  }
 
-      const phoneRegex = /^\+?[1-9]\d{9,14}$/;
-      if (!phoneRegex.test(phone)) {
-        showStatus("Please enter a valid phone number (e.g., +254712345678)", "error");
-        return;
-      }
+  const phoneRegex = /^\+?[1-9]\d{9,14}$/;
+  if (!phoneRegex.test(phone)) {
+    showStatus("Please enter a valid phone number (e.g., +254712345678)", "error");
+    return;
+  }
 
-      const submitBtn = document.getElementById('submitBtn');
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
-      try {
-        const currentTermTotal = tuition + adm + books + stationery + uniform + lunch + transport + trip + graduation;
-        
-        // Check for carry-forward balance only when adding new students
-        let carriedForwardBalance = 0;
-        if (currentTerm > 1 && !editingId) {
-          const previousTerm = currentTerm - 1;
-          const previousStudentsCollection = getStudentsCollection(previousTerm, currentYear);
-          const snapshot = await previousStudentsCollection.where('name', '==', name).get();
-          
-          if (!snapshot.empty) {
-            const previousStudent = snapshot.docs[0].data();
-            const previousBalances = calculateBalances(previousStudent);
-            carriedForwardBalance = Math.max(0, previousBalances.totalOutstanding);
-          }
-        }
-
-        // Calculate balances using the new system
-        const currentTermBalance = currentTermTotal - paid;
-        const totalOutstanding = currentTermBalance + carriedForwardBalance;
-
-        const student = { 
-          name, 
-          class: studentClass, 
-          phone, 
-          tuition, 
-          adm, 
-          books, 
-          stationery, 
-          uniform, 
-          lunch, 
-          transport, 
-          trip,
-          graduation,
-          currentTermTotal, 
-          paid, 
-          currentTermBalance,
-          carriedForwardBalance,
-          totalOutstanding,
-          term: currentTerm,
-          year: currentYear,
-          updatedAt: new Date().toISOString()
-        };
-
-        const studentsCollection = getStudentsCollection();
-
-        if (editingId !== null) {
-          // Update existing student - preserve carried forward balance and createdAt
-          const existingDoc = await studentsCollection.doc(editingId).get();
-          const existingData = existingDoc.data();
-          
-          // Preserve the original createdAt field and carriedForwardBalance
-          await studentsCollection.doc(editingId).update({
-            ...student,
-            carriedForwardBalance: existingData.carriedForwardBalance || 0, // Preserve existing balance
-            createdAt: existingData.createdAt, // Preserve original creation date
-            updatedAt: new Date().toISOString()
-          });
-          showStatus(`Student ${name} updated successfully for Term ${currentTerm}!`, "success");
-          resetForm();
-        } else {
-          // Add new student
-          await studentsCollection.add({
-            ...student,
-            createdAt: new Date().toISOString() // Only set createdAt for new students
-          });
-          showStatus(`Student ${name} added successfully to Term ${currentTerm}!`, "success");
-          
-          if (carriedForwardBalance > 0) {
-            showStatus(`Balance of KES ${carriedForwardBalance.toLocaleString('en-KE')} carried forward from previous term.`, "info");
-          }
-        }
-
-        document.getElementById('studentForm').reset();
-        document.getElementById('carryForwardInfo').style.display = 'none';
-        loadStudents();
-      } catch (error) {
-        showStatus("Error saving student: " + error.message, "error");
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = editingId ? '<i class="fas fa-save"></i> Save Changes' : '<i class="fas fa-save"></i> Add Student';
+  try {
+    const currentTermTotal = tuition + adm + books + stationery + uniform + lunch + transport + trip + graduation;
+    
+    // Check for carry-forward balance only when adding new students
+    let carriedForwardBalance = 0;
+    if (currentTerm > 1 && !editingId) {
+      const previousTerm = currentTerm - 1;
+      const previousStudentsCollection = getStudentsCollection(previousTerm, currentYear);
+      const snapshot = await previousStudentsCollection.where('name', '==', name).get();
+      
+      if (!snapshot.empty) {
+        const previousStudent = snapshot.docs[0].data();
+        const previousBalances = calculateBalances(previousStudent);
+        carriedForwardBalance = Math.max(0, previousBalances.totalOutstanding);
       }
     }
+
+    // Calculate balances using the new system
+    const currentTermBalance = currentTermTotal - paid;
+    const totalOutstanding = currentTermBalance + carriedForwardBalance;
+
+    const student = { 
+      name, 
+      class: studentClass, 
+      phone, 
+      tuition, 
+      adm, 
+      books, 
+      stationery, 
+      uniform, 
+      lunch, 
+      transport, 
+      trip,
+      graduation,
+      currentTermTotal, 
+      paid, 
+      currentTermBalance,
+      carriedForwardBalance,
+      totalOutstanding,
+      term: currentTerm,
+      year: currentYear,
+      updatedAt: new Date().toISOString()
+    };
+
+    const studentsCollection = getStudentsCollection();
+
+    if (editingId !== null) {
+      // Update existing student - preserve carried forward balance and handle createdAt properly
+      const existingDoc = await studentsCollection.doc(editingId).get();
+      const existingData = existingDoc.data();
+      
+      // Prepare update data
+      const updateData = {
+        ...student,
+        carriedForwardBalance: existingData.carriedForwardBalance || 0, // Preserve existing balance
+        updatedAt: new Date().toISOString()
+      };
+      
+      // Only add createdAt if it exists in the existing document
+      if (existingData.createdAt) {
+        updateData.createdAt = existingData.createdAt;
+      } else {
+        // If createdAt doesn't exist, set it to current time as a fallback
+        updateData.createdAt = new Date().toISOString();
+      }
+      
+      await studentsCollection.doc(editingId).update(updateData);
+      showStatus(`Student ${name} updated successfully for Term ${currentTerm}!`, "success");
+      resetForm();
+    } else {
+      // Add new student
+      await studentsCollection.add({
+        ...student,
+        createdAt: new Date().toISOString() // Only set createdAt for new students
+      });
+      showStatus(`Student ${name} added successfully to Term ${currentTerm}!`, "success");
+      
+      if (carriedForwardBalance > 0) {
+        showStatus(`Balance of KES ${carriedForwardBalance.toLocaleString('en-KE')} carried forward from previous term.`, "info");
+      }
+    }
+
+    document.getElementById('studentForm').reset();
+    document.getElementById('carryForwardInfo').style.display = 'none';
+    loadStudents();
+  } catch (error) {
+    console.error("Error saving student:", error);
+    showStatus("Error saving student: " + error.message, "error");
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = editingId ? '<i class="fas fa-save"></i> Save Changes' : '<i class="fas fa-save"></i> Add Student';
+  }
+}
 
     // Reset form to add mode
     function resetForm() {
