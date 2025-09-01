@@ -9,37 +9,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
-    /* Your existing CSS styles remain unchanged */
     :root {
-      --primary-color: #005fa3;
-      --secondary-color: #004080;
-      --accent-color: #00a8e8;
-      --light-color: #f8f9fa;
-      --dark-color: #343a40;
-      --success-color: #28a745;
-      --danger-color: #dc3545;
-      --warning-color: #ffc107;
-      --info-color: #17a2b8;
-      --border-radius: 8px;
-      --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      --transition: all 0.3s ease;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: 'Roboto', sans-serif;
-      background-color: #f5f7fa;
-      color: #333;
-      line-height: 1.6;
-    }
-
-    /* ... (all your existing CSS styles remain exactly the same) ... */
-     :root {
       --primary-color: #005fa3;
       --secondary-color: #004080;
       --accent-color: #00a8e8;
@@ -616,10 +586,6 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
   </style>
 </head>
 <body>
@@ -867,8 +833,7 @@
       throw error;
     }
     
-    // MODIFIED: Current term and year management with persistent storage
-    // Try to get saved term from sessionStorage, fallback to default Term 2
+    // Current term and year management with persistent storage
     let currentTerm = parseInt(sessionStorage.getItem('heriwadi_current_term')) || 2;
     let currentYear = new Date().getFullYear();
     
@@ -880,6 +845,10 @@
 
     // Initialize data migration on first load
     let migrationCompleted = false;
+
+    // Real-time student data listeners
+    let studentListener = null;
+    let receiptListener = null;
 
     // Logo handling function - converts image to base64
     function getLogoDataUrl() {
@@ -914,13 +883,51 @@
       });
     }
 
+    // Setup real-time listeners for student and receipt changes
+    function setupRealTimeListeners() {
+      // Remove any existing listeners
+      if (studentListener) {
+        studentListener();
+      }
+      if (receiptListener) {
+        receiptListener();
+      }
+      
+      // Set up real-time listener for students
+      const studentsCollection = getStudentsCollection();
+      studentListener = studentsCollection.onSnapshot(
+        (snapshot) => {
+          console.log("Student data changed - refreshing UI");
+          populateStudents();
+          updateReceiptTable();
+        },
+        (error) => {
+          console.error("Error in student listener:", error);
+        }
+      );
+      
+      // Set up real-time listener for receipts
+      const receiptsCollection = getReceiptsCollection();
+      receiptListener = receiptsCollection.onSnapshot(
+        (snapshot) => {
+          console.log("Receipt data changed - refreshing UI");
+          updateReceiptTable();
+        },
+        (error) => {
+          console.error("Error in receipt listener:", error);
+        }
+      );
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
       updateCurrentYearDisplay();
-      // MODIFIED: Initialize UI with saved term on page load
+      // Initialize UI with saved term on page load
       initializeTermFromStorage();
       initializeMigration().then(() => {
         populateStudents();
         updateReceiptTable();
+        // Set up real-time listeners after migration
+        setupRealTimeListeners();
       });
       
       // Add event listeners for form validation
@@ -935,7 +942,7 @@
       });
     });
 
-    // NEW FUNCTION: Initialize term from storage and update UI
+    // Initialize term from storage and update UI
     function initializeTermFromStorage() {
       // Update UI to show the correct term
       document.querySelectorAll('.term-btn').forEach(btn => {
@@ -948,7 +955,7 @@
       console.log(`Initialized with Term ${currentTerm} from storage`);
     }
 
-    // NEW FUNCTION: Update all term displays in the UI
+    // Update all term displays in the UI
     function updateTermDisplays() {
       document.getElementById('currentTermDisplay').textContent = `Term ${currentTerm}`;
       document.getElementById('currentTermRecords').textContent = `Term ${currentTerm}`;
@@ -961,7 +968,7 @@
       document.getElementById('currentYear').textContent = currentYear;
     }
 
-    // MODIFIED: Updated switchTerm function with persistent storage
+    // Updated switchTerm function with persistent storage and listener refresh
     function switchTerm(term) {
       currentTerm = term;
       
@@ -976,9 +983,10 @@
       // Update all term displays
       updateTermDisplays();
       
-      // Refresh data for the new term
+      // Refresh data for the new term AND refresh listeners
       populateStudents();
       updateReceiptTable();
+      setupRealTimeListeners(); // Refresh listeners for the new term
       
       showStatus(`Switched to Term ${term} - This selection will persist across pages`, "success");
     }
@@ -1232,8 +1240,6 @@
         showStatus(`Error loading receipts: ${error.message}. Check Firebase rules or network.`, "error");
       }
     }
-
-    // REMOVED: getBalanceCarriedForward function, as balances are now per-term independent
 
     async function handleReceiptSubmit(e) {
       e.preventDefault();
@@ -1607,8 +1613,6 @@
         const currentDate = new Date(receipt.date).toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
         const receiptDate = new Date(currentDate);
         const receiptNumber = receipt.receiptNumber || `T${currentTerm}-001`;
-
-        // REMOVED: balanceCarriedForward, as balances are per-term
 
         // Get logo data URL
         const logoDataUrl = await getLogoDataUrl();
@@ -2062,8 +2066,7 @@
           doc.text("Paybill No. 8713144", 20, 88);
 
           doc.text("A/c: Name of learner & Grade", 130, 75);
-          doc.text(`No. ${receiptNumber}`, 130, 82);
-          doc.text(`Date: ${receiptDate.toLocaleDateString('en-GB')} ${receiptDate.toLocaleTimeString('en-US', { timeZone: 'Africa/Nairobi', hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}`, 130, 89);
+          doc.text(`No. ${receiptNumber}, Date: ${receiptDate.toLocaleDateString('en-GB')}`, 130, 82);
 
           doc.text(`Received from (Student Name): ${receipt.name}`, 20, 105);
           doc.text(`Grade: ${receipt.class}`, 20, 113);
@@ -2256,8 +2259,6 @@
       }
     });
 
-    // ADDITIONAL FUNCTIONS FOR COMPLETE PERSISTENCE
-
     // Function to clear term selection (useful for debugging)
     function clearTermSelection() {
       sessionStorage.removeItem('heriwadi_current_term');
@@ -2278,6 +2279,16 @@
         showStatus("Invalid term. Please use 1, 2, or 3.", "error");
       }
     }
+
+    // Clean up listeners when leaving the page
+    window.addEventListener('beforeunload', function() {
+      if (studentListener) {
+        studentListener();
+      }
+      if (receiptListener) {
+        receiptListener();
+      }
+    });
 
     // Make functions available globally for debugging
     window.heriwadi = {
