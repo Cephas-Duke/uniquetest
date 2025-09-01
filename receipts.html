@@ -881,6 +881,10 @@
     // Initialize data migration on first load
     let migrationCompleted = false;
 
+    // ADDED: Real-time student data listeners
+    let studentListener = null;
+    let receiptListener = null;
+
     // Logo handling function - converts image to base64
     function getLogoDataUrl() {
       return new Promise((resolve) => {
@@ -914,6 +918,42 @@
       });
     }
 
+    // ADDED: Setup real-time listeners for student and receipt changes
+    function setupRealTimeListeners() {
+      // Remove any existing listeners
+      if (studentListener) {
+        studentListener();
+      }
+      if (receiptListener) {
+        receiptListener();
+      }
+      
+      // Set up real-time listener for students
+      const studentsCollection = getStudentsCollection();
+      studentListener = studentsCollection.onSnapshot(
+        (snapshot) => {
+          console.log("Student data changed - refreshing UI");
+          populateStudents();
+          updateReceiptTable();
+        },
+        (error) => {
+          console.error("Error in student listener:", error);
+        }
+      );
+      
+      // Set up real-time listener for receipts
+      const receiptsCollection = getReceiptsCollection();
+      receiptListener = receiptsCollection.onSnapshot(
+        (snapshot) => {
+          console.log("Receipt data changed - refreshing UI");
+          updateReceiptTable();
+        },
+        (error) => {
+          console.error("Error in receipt listener:", error);
+        }
+      );
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
       updateCurrentYearDisplay();
       // MODIFIED: Initialize UI with saved term on page load
@@ -921,6 +961,8 @@
       initializeMigration().then(() => {
         populateStudents();
         updateReceiptTable();
+        // ADDED: Set up real-time listeners after migration
+        setupRealTimeListeners();
       });
       
       // Add event listeners for form validation
@@ -931,7 +973,7 @@
       // Initialize modals
       const modal = document.getElementById('studentManagerModal');
       modal.addEventListener('click', function(e) {
-        if (e.target === modal) closeStudentManager();
+        if e.target === modal) closeStudentManager();
       });
     });
 
@@ -961,7 +1003,7 @@
       document.getElementById('currentYear').textContent = currentYear;
     }
 
-    // MODIFIED: Updated switchTerm function with persistent storage
+    // MODIFIED: Updated switchTerm function with persistent storage and listener refresh
     function switchTerm(term) {
       currentTerm = term;
       
@@ -976,9 +1018,10 @@
       // Update all term displays
       updateTermDisplays();
       
-      // Refresh data for the new term
+      // Refresh data for the new term AND refresh listeners
       populateStudents();
       updateReceiptTable();
+      setupRealTimeListeners(); // ADDED: Refresh listeners for the new term
       
       showStatus(`Switched to Term ${term} - This selection will persist across pages`, "success");
     }
@@ -2278,6 +2321,16 @@
         showStatus("Invalid term. Please use 1, 2, or 3.", "error");
       }
     }
+
+    // ADDED: Clean up listeners when leaving the page
+    window.addEventListener('beforeunload', function() {
+      if (studentListener) {
+        studentListener();
+      }
+      if (receiptListener) {
+        receiptListener();
+      }
+    });
 
     // Make functions available globally for debugging
     window.heriwadi = {
