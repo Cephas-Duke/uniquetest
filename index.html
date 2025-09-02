@@ -1195,6 +1195,72 @@
     </div>
 
     <script>
+        // Mock data - replacing external API calls
+        const MOCK_DATA = {
+            students: {
+                total: 1248,
+                growthPercentage: 12.5
+            },
+            staff: {
+                total: 87,
+                changePercentage: -2.3
+            },
+            financials: {
+                revenue: {
+                    thisMonth: 125000,
+                    changePercentage: 8.7
+                },
+                expenses: {
+                    thisMonth: 98000,
+                    changePercentage: 5.2
+                },
+                chartData: {
+                    last6months: {
+                        labels: ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+                        revenues: [95000, 108000, 122000, 115000, 134000, 125000],
+                        expenses: [88000, 92000, 98000, 94000, 102000, 98000]
+                    },
+                    last12months: {
+                        labels: ['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+                        revenues: [89000, 76000, 85000, 92000, 98000, 105000, 95000, 108000, 122000, 115000, 134000, 125000],
+                        expenses: [82000, 79000, 84000, 87000, 89000, 91000, 88000, 92000, 98000, 94000, 102000, 98000]
+                    },
+                    thisYear: {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+                        revenues: [85000, 92000, 98000, 105000, 95000, 108000, 122000, 115000, 134000, 125000],
+                        expenses: [84000, 87000, 89000, 91000, 88000, 92000, 98000, 94000, 102000, 98000]
+                    }
+                }
+            },
+            activities: [
+                {
+                    title: "New student enrolled: Sarah Johnson",
+                    time: "2 minutes ago",
+                    icon: "user-plus"
+                },
+                {
+                    title: "Monthly fee payment received",
+                    time: "15 minutes ago",
+                    icon: "credit-card"
+                },
+                {
+                    title: "Staff meeting scheduled",
+                    time: "1 hour ago",
+                    icon: "calendar"
+                },
+                {
+                    title: "Equipment purchase approved",
+                    time: "2 hours ago",
+                    icon: "shopping-cart"
+                },
+                {
+                    title: "New teacher hired: Dr. Michael Brown",
+                    time: "4 hours ago",
+                    icon: "user-tie"
+                }
+            ]
+        };
+
         // DOM Elements
         const loadingScreen = document.getElementById('loadingScreen');
         const authContainer = document.getElementById('authContainer');
@@ -1232,40 +1298,30 @@
         // Chart.js instance
         let financialsChart;
 
-        // --- Data Fetching Functions (Simulated API Calls) ---
-        // In a real application, these would be `fetch('/api/students')`, etc.
+        // --- Data Fetching Functions (Using Mock Data) ---
         const fetchStudentsData = async () => {
             console.log("Fetching student data...");
             // Simulate API delay
             await new Promise(resolve => setTimeout(resolve, 500));
-            // Simulate fetching data from a JSON file
-            const response = await fetch('students.json');
-            const data = await response.json();
-            return data;
+            return MOCK_DATA.students;
         };
 
         const fetchStaffData = async () => {
             console.log("Fetching staff data...");
             await new Promise(resolve => setTimeout(resolve, 500));
-            const response = await fetch('staff.json');
-            const data = await response.json();
-            return data;
+            return MOCK_DATA.staff;
         };
 
         const fetchFinancialsData = async () => {
             console.log("Fetching financial data...");
             await new Promise(resolve => setTimeout(resolve, 500));
-            const response = await fetch('financials.json');
-            const data = await response.json();
-            return data;
+            return MOCK_DATA.financials;
         };
 
         const fetchActivitiesData = async () => {
             console.log("Fetching recent activities...");
             await new Promise(resolve => setTimeout(resolve, 500));
-            const response = await fetch('activities.json');
-            const data = await response.json();
-            return data;
+            return MOCK_DATA.activities;
         };
 
         // --- Dashboard Update Functions ---
@@ -1273,28 +1329,28 @@
             // Students Card
             const totalStudents = studentsData.total;
             const studentTrend = studentsData.growthPercentage;
-            totalStudentsEl.textContent = totalStudents;
+            totalStudentsEl.textContent = totalStudents.toLocaleString();
             studentTrendEl.textContent = `${studentTrend}%`;
-            totalStudentsEl.classList.add('pulse'); // Add pulse animation
+            totalStudentsEl.classList.add('pulse');
             
             // Staff Card
             const totalStaff = staffData.total;
             const staffTrend = staffData.changePercentage;
             totalStaffEl.textContent = totalStaff;
-            staffTrendEl.textContent = `${staffTrend}%`;
+            staffTrendEl.textContent = `${Math.abs(staffTrend)}%`;
             totalStaffEl.classList.add('pulse');
 
             // Financials Card
             const totalRevenue = financialsData.revenue.thisMonth;
             const revenueTrend = financialsData.revenue.changePercentage;
-            totalRevenueEl.textContent = `$${totalRevenue.toLocaleString()}`;
+            totalRevenueEl.textContent = `${totalRevenue.toLocaleString()}`;
             revenueTrendEl.textContent = `${revenueTrend}%`;
             totalRevenueEl.classList.add('pulse');
 
             // Expenses Card
             const totalExpenses = financialsData.expenses.thisMonth;
             const expenseTrend = financialsData.expenses.changePercentage;
-            totalExpensesEl.textContent = `$${totalExpenses.toLocaleString()}`;
+            totalExpensesEl.textContent = `${totalExpenses.toLocaleString()}`;
             expenseTrendEl.textContent = `${expenseTrend}%`;
             totalExpensesEl.classList.add('pulse');
 
@@ -1314,8 +1370,8 @@
         };
 
         const updateRecentActivities = (activitiesData) => {
-            recentActivitiesListEl.innerHTML = ''; // Clear existing activities
-            activitiesData.forEach(activity => {
+            recentActivitiesListEl.innerHTML = '';
+            activitiesData.forEach((activity, index) => {
                 const activityItem = document.createElement('div');
                 activityItem.className = 'activity-item';
                 activityItem.innerHTML = `
@@ -1331,14 +1387,19 @@
                     </div>
                 `;
                 recentActivitiesListEl.appendChild(activityItem);
-                anime({
-                    targets: activityItem,
-                    opacity: [0, 1],
-                    translateX: [20, 0],
-                    duration: 800,
-                    easing: 'easeOutQuad',
-                    delay: (el, i) => i * 100
-                });
+                
+                // Animate items if anime.js is available
+                if (typeof anime !== 'undefined') {
+                    setTimeout(() => {
+                        anime({
+                            targets: activityItem,
+                            opacity: [0, 1],
+                            translateX: [20, 0],
+                            duration: 800,
+                            easing: 'easeOutQuad'
+                        });
+                    }, index * 100);
+                }
             });
         };
         
@@ -1361,9 +1422,9 @@
                             label: 'Revenue',
                             data: revenues,
                             backgroundColor: 'rgba(76, 201, 240, 0.2)',
-                            borderColor: 'var(--success-color)',
+                            borderColor: '#4cc9f0',
                             borderWidth: 2,
-                            pointBackgroundColor: 'var(--success-color)',
+                            pointBackgroundColor: '#4cc9f0',
                             tension: 0.4,
                             fill: true,
                         },
@@ -1371,9 +1432,9 @@
                             label: 'Expenses',
                             data: expenses,
                             backgroundColor: 'rgba(247, 37, 133, 0.2)',
-                            borderColor: 'var(--error-color)',
+                            borderColor: '#f72585',
                             borderWidth: 2,
-                            pointBackgroundColor: 'var(--error-color)',
+                            pointBackgroundColor: '#f72585',
                             tension: 0.4,
                             fill: true,
                         }
@@ -1387,7 +1448,7 @@
                             display: true,
                             position: 'top',
                             labels: {
-                                color: 'var(--dark-gray)',
+                                color: '#212529',
                                 font: {
                                     size: 14
                                 }
@@ -1400,7 +1461,7 @@
                                     if (label) {
                                         label += ': ';
                                     }
-                                    label += `$${context.parsed.y.toLocaleString()}`;
+                                    label += `${context.parsed.y.toLocaleString()}`;
                                     return label;
                                 }
                             }
@@ -1410,12 +1471,12 @@
                         y: {
                             beginAtZero: true,
                             grid: {
-                                color: 'var(--medium-gray)',
+                                color: '#e9ecef',
                             },
                             ticks: {
-                                color: 'var(--dark-gray)',
+                                color: '#212529',
                                 callback: function(value, index, values) {
-                                    return '$' + value.toLocaleString();
+                                    return ' + value.toLocaleString();
                                 }
                             }
                         },
@@ -1424,7 +1485,7 @@
                                 display: false
                             },
                             ticks: {
-                                color: 'var(--dark-gray)'
+                                color: '#212529'
                             }
                         }
                     }
@@ -1455,24 +1516,27 @@
                     loadingScreen.classList.remove('show');
                     authContainer.style.display = 'none';
                     dashboardContent.style.display = 'block';
-                    // Animate dashboard elements
-                    anime({
-                        targets: '.main-content > *',
-                        translateY: [50, 0],
-                        opacity: [0, 1],
-                        duration: 800,
-                        delay: anime.stagger(100),
-                        easing: 'easeOutQuad'
-                    });
-                }, 1000); // Wait for a moment to show the loading screen
+                    
+                    // Animate dashboard elements if anime.js is available
+                    if (typeof anime !== 'undefined') {
+                        anime({
+                            targets: '.main-content > *',
+                            translateY: [50, 0],
+                            opacity: [0, 1],
+                            duration: 800,
+                            delay: anime.stagger(100),
+                            easing: 'easeOutQuad'
+                        });
+                    }
+                }, 1000);
 
             } catch (error) {
                 console.error("Failed to load dashboard data:", error);
-                // Handle error gracefully, maybe show a retry button
-                loadingScreen.innerHTML = `<div class="auth-card">
-                    <p style="color: black; text-align: center;">Failed to load data. Please try again later.</p>
-                    <button class="auth-button" style="margin-top: 1rem;" onclick="location.reload()">Retry</button>
-                </div>`;
+                loadingScreen.innerHTML = `
+                    <div class="auth-card">
+                        <p style="color: black; text-align: center;">Failed to load data. Please try again later.</p>
+                        <button class="auth-button" style="margin-top: 1rem;" onclick="location.reload()">Retry</button>
+                    </div>`;
             }
         };
 
@@ -1525,9 +1589,8 @@
             
             // For this example, any email and password will "succeed"
             if (email && password) {
-                // Store user info in a mock session
+                // Store user info (in a real app, you'd use proper authentication)
                 const user = { name: 'Admin', email: email, avatar: 'AD' };
-                localStorage.setItem('user', JSON.stringify(user));
                 
                 // Update user details in the nav bar
                 userNameEl.textContent = user.name;
@@ -1554,7 +1617,6 @@
         
         // Logout functionality
         logoutButton.addEventListener('click', () => {
-            localStorage.removeItem('user');
             // Hide dashboard, show login screen, and refresh
             dashboardContent.style.display = 'none';
             authContainer.style.display = 'flex';
@@ -1604,22 +1666,11 @@
             }
         });
         
-        // Check for existing user on page load
+        // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
             updateCurrentDate();
-            const user = JSON.parse(localStorage.getItem('user'));
-            if (user) {
-                // If a user is logged in, skip the auth page
-                authContainer.style.display = 'none';
-                userNameEl.textContent = user.name;
-                userEmailEl.textContent = user.email;
-                userAvatarEl.textContent = user.avatar;
-                welcomeMessageEl.textContent = `Hello, ${user.name}!`;
-                initializeDashboard();
-            } else {
-                // Otherwise, show the auth page
-                authContainer.style.display = 'flex';
-            }
+            // Show the auth page by default
+            authContainer.style.display = 'flex';
         });
     </script>
 </body>
