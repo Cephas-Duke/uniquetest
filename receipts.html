@@ -1121,14 +1121,14 @@
           opt.value = `${s.name} (${s.class})`;
           opt.dataset.id = s.id;
           studentList.appendChild(opt);
-       });
+        });
       } catch (error) {
         console.error('Error populating students:', error);
         showStatus(`Error loading students: ${error.message}. Check Firebase rules or network.`, "error");
       }
     }
 
-    // NEW FUNCTION: Calculate balance carried forward from previous terms
+    // FUNCTION: Calculate balance carried forward from previous terms
     async function getBalanceCarriedForward(studentName, currentTerm, currentYear) {
       let balanceCarriedForward = 0;
       
@@ -1237,12 +1237,6 @@
             if (!studentSnapshot.empty) {
               const student = studentSnapshot.docs[0].data();
               
-              // Calculate balance carried forward from previous terms
-              const balanceCarriedForward = await getBalanceCarriedForward(r.name, currentTerm, currentYear);
-              
-              // Calculate total outstanding balance (term balance + carried forward)
-              const totalOutstandingBalance = student.balance + balanceCarriedForward;
-              
               const row = document.createElement('tr');
               row.innerHTML = `
                 <td>
@@ -1250,7 +1244,7 @@
                   <small>${r.class} - Term ${currentTerm}</small>
                 </td>
                 <td>${r.paid.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
-                <td>${totalOutstandingBalance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
+                <td>${student.balance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
                 <td>${r.mode}</td>
                 <td>${new Date(r.date).toLocaleDateString('en-GB')}</td>
                 <td>
@@ -1353,17 +1347,15 @@
         // Calculate balance carried forward from previous terms
         const balanceCarriedForward = await getBalanceCarriedForward(studentName, currentTerm, currentYear);
         
-        // Calculate new values for this term only
+        // Calculate new values - INCLUDING BALANCE CARRIED FORWARD
+        const totalOutstandingBalance = (student.total || 0) + balanceCarriedForward;
         const newPaid = (student.paid || 0) + amount;
-        const thisTermBalance = (student.total || 0) - newPaid;
-        
-        // Calculate total outstanding balance
-        const totalOutstanding = thisTermBalance + balanceCarriedForward;
+        const newBalance = totalOutstandingBalance - newPaid;
 
         const updatedStudent = {
           ...student,
           paid: newPaid,
-          balance: thisTermBalance
+          balance: newBalance
         };
 
         // Get total number of receipts for current term for receipt number
@@ -1376,7 +1368,7 @@
           name: studentName,
           class: studentClass,
           paid: amount,
-          balance: totalOutstanding,
+          balance: newBalance,
           mode: mode,
           notes: notes || null,
           date: receiptDate.toISOString(),
@@ -1401,7 +1393,7 @@
           hour12: true
         }).toUpperCase();
         
-        const smsMessage = `Dear parent to ${studentName}, ${studentClass}, Amount of KES ${amount} Receipt No. ${receiptNumber} was received on ${receiptDate.toLocaleDateString('en-GB')} at ${timeString}. Balance: ${totalOutstanding}. Term ${currentTerm}.`;
+        const smsMessage = `Dear parent to ${studentName}, ${studentClass}, Amount of KES ${amount} Receipt No. ${receiptNumber} was received on ${receiptDate.toLocaleDateString('en-GB')} at ${timeString}. Balance: ${newBalance}. Term ${currentTerm}.`;
         const smsSent = await sendSMS(student.phone, smsMessage);
         
         showStatus(`Receipt saved${smsSent ? ' and SMS sent' : ''} successfully for Term ${currentTerm}!`, "success");
@@ -1417,7 +1409,7 @@
           <p><strong>Amount Paid:</strong> ${amount.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</p>
           <p><strong>Payment Mode:</strong> ${mode}</p>
           <p><strong>Date:</strong> ${receiptDate.toLocaleDateString('en-GB')} ${timeString}</p>
-          <p><strong>Balance:</strong> ${totalOutstanding.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</p>
+          <p><strong>Balance:</strong> ${newBalance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</p>
           ${notes ? `<p><strong>Notes:</strong> ${notes}</p>` : ''}
           <p><strong>Receipt No:</strong> ${receiptNumber}</p>
         `;
@@ -1476,6 +1468,8 @@
       }
 
       const total = tuition + adm + books + stationery + uniform + lunch + transport + trip + graduation;
+      const balanceCarriedForward = await getBalanceCarriedForward(name, currentTerm, currentYear);
+      const initialBalance = total + balanceCarriedForward;
       const newStudent = { 
         name, 
         class: sclass, 
@@ -1491,7 +1485,7 @@
         graduation,
         total, 
         paid: 0, 
-        balance: total,
+        balance: initialBalance,
         term: currentTerm,
         year: currentYear
       };
@@ -1524,9 +1518,8 @@
         
         list.innerHTML = '';
         
-        for (const doc of snapshot.docs) {
+        snapshot.forEach(doc => {
           const s = { id: doc.id, ...doc.data() };
-          const totalOutstanding = s.balance + await getBalanceCarriedForward(s.name, currentTerm, currentYear);
           const li = document.createElement("li");
           li.className = 'student-item';
           li.style.padding = '0.75rem';
@@ -1541,15 +1534,14 @@
               <small>${s.phone}</small><br>
               <small>Total: ${s.total.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}, 
               Paid: ${s.paid.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}, 
-              This Term Balance: ${s.balance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}, 
-              Total Outstanding: ${totalOutstanding.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</small>
+              Balance: ${s.balance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</small>
             </div>
             <button class="btn btn-sm btn-danger" onclick="deleteStudent('${s.id}')">
               <i class="fas fa-trash"></i>
             </button>
           `;
           list.appendChild(li);
-        }
+        });
       } catch (error) {
         console.error('Error rendering student list:', error);
         showStatus("Error loading student list: " + error.message, "error");
@@ -1651,7 +1643,7 @@
         const receiptDate = new Date(currentDate);
         const receiptNumber = receipt.receiptNumber || `T${currentTerm}-001`;
 
-        // Calculate balance carried forward from previous terms
+        // Calculate balance carried forward from previous terms for display
         const balanceCarriedForward = await getBalanceCarriedForward(receipt.name, currentTerm, currentYear);
 
         // Get logo data URL
@@ -1659,7 +1651,6 @@
 
         const printWindow = window.open('', '', 'height=800,width=900');
         
-        // Create a proper HTML document with corrected logo handling
         printWindow.document.write(`
           <html>
             <head>
@@ -1690,7 +1681,6 @@
                   height: 70px;
                   margin: 0 auto 8px;
                   display: block;
-                  /* Removed border-radius to make it square */
                   object-fit: contain;
                 }
                 .logo-fallback {
@@ -1699,7 +1689,6 @@
                   margin: 0 auto 8px;
                   display: block;
                   border: 2px solid #000;
-                  /* Removed border-radius to make it square */
                   background: #f0f0f0;
                   line-height: 66px;
                   text-align: center;
@@ -1882,16 +1871,14 @@
                     <tr>
                       <th><strong>Fee Item</strong></th>
                       <th><strong>Fee Charged</strong></th>
-                      <th><strong>Fee Paid</strong></th>
-                      <th><strong>Receipt Balance</strong></th>
+                      <th><strong>Total Paid</strong></th>
+                      <th><strong>Balance</strong></th>
                     </tr>
                   </thead>
                   <tbody>
                     ${(() => {
-                      // Calculate total outstanding balance including carried forward
-                      const totalOutstandingBalance = student.balance + balanceCarriedForward;
-                      let initialBalance = student.balance + receipt.paid; // This term before payment
-                      let remainingPaid = receipt.paid;
+                      let remainingPaid = Math.min(student.paid, student.total);
+                      let initialBalance = student.total;
                       const fees = [
                         { name: 'Tuition', amount: student.tuition || 0 },
                         { name: 'Adm Fee', amount: student.adm || 0 },
@@ -1922,12 +1909,16 @@
                         `;
                       });
 
-                      // Show carried forward balance if applicable
+                      const carriedPaid = Math.max(0, student.paid - student.total);
+                      const carriedBalance = Math.max(0, balanceCarriedForward - carriedPaid);
+
                       if (balanceCarriedForward > 0) {
                         rows += `
-                          <tr class="total-row">
-                            <td colspan="3" style="text-align: right; padding-right: 8px;"><strong>Balance Carried Forward</strong></td>
-                            <td><strong>${balanceCarriedForward.toLocaleString()}</strong></td>
+                          <tr class="fees-row">
+                            <td>Balance Carried Forward</td>
+                            <td>${balanceCarriedForward.toLocaleString()}</td>
+                            <td>${carriedPaid.toLocaleString()}</td>
+                            <td>${carriedBalance.toLocaleString()}</td>
                           </tr>
                         `;
                       }
@@ -1935,7 +1926,7 @@
                       rows += `
                         <tr class="total-row">
                           <td colspan="3" style="text-align: right; padding-right: 8px;"><strong>Total Receipt Balance</strong></td>
-                          <td><strong>${totalOutstandingBalance.toLocaleString()}</strong></td>
+                          <td><strong>${student.balance.toLocaleString()}</strong></td>
                         </tr>
                       `;
 
@@ -1946,7 +1937,7 @@
 
                 <div class="payment-details">
                   <div class="payment-left">
-                    <div><strong>Amount Paid:</strong> ${Number(receipt.paid).toLocaleString()}</div>
+                    <div><strong>Amount Paid This Receipt:</strong> ${Number(receipt.paid).toLocaleString()}</div>
                     <div><strong>Term:</strong> ${currentTerm}</div>
                   </div>
                   <div class="payment-right" style="text-align: right;">
@@ -2033,12 +2024,6 @@
               if (!studentSnapshot.empty) {
                 const student = studentSnapshot.docs[0].data();
                 
-                // Calculate balance carried forward from previous terms
-                const balanceCarriedForward = await getBalanceCarriedForward(r.name, currentTerm, currentYear);
-                
-                // Calculate total outstanding balance (term balance + carried forward)
-                const totalOutstandingBalance = student.balance + balanceCarriedForward;
-                
                 return [
                   r.name,
                   student.tuition || 0,
@@ -2051,7 +2036,7 @@
                   student.trip || 0,
                   student.graduation || 0,
                   r.paid,
-                  totalOutstandingBalance
+                  student.balance
                 ];
               }
               return [];
@@ -2095,9 +2080,6 @@
           const receiptDate = new Date(currentDate);
 
           const receiptNumber = receipt.receiptNumber || `T${currentTerm}-001`;
-
-          const balanceCarriedForward = await getBalanceCarriedForward(receipt.name, currentTerm, currentYear);
-          const totalOutstandingBalance = student.balance + balanceCarriedForward;
 
           if (!isFirstReceipt) {
             doc.addPage();
@@ -2175,7 +2157,7 @@
           doc.setFont(undefined, 'normal');
 
           doc.text(`Cash/Paybill: ${receipt.mode}`, 20, detailsY);
-          doc.text(`Fee Balance: ${Number(totalOutstandingBalance).toLocaleString()}`, 20, detailsY + 8);
+          doc.text(`Fee Balance: ${Number(student.balance).toLocaleString()}`, 20, detailsY + 8);
           doc.text(`Term: ${currentTerm}`, 20, detailsY + 16);
 
           doc.text("For: Heriwadi Christian Schools", 130, detailsY);
@@ -2245,7 +2227,7 @@
                   AmountPaid: feePaid,
                   Date: new Date(receipt.date).toLocaleDateString('en-GB'),
                   BalanceCarriedForward: balanceCarriedForward,
-                  TotalOutstandingBalance: student.balance + balanceCarriedForward
+                  TotalOutstandingBalance: student.balance
                 });
               }
             });
