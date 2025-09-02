@@ -804,124 +804,158 @@
     </div>
   </div>
 
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script>
-    // Mock Firebase for demonstration
-    const mockData = {
-      students: [
-        {
-          id: '1',
-          name: 'Brenda Joy',
-          class: 'Grade 1',
-          phone: '254797071126',
-          tuition: 4200,
-          adm: 700,
-          books: 0,
-          stationery: 0,
-          uniform: 0,
-          lunch: 0,
-          transport: 0,
-          trip: 0,
-          graduation: 0,
-          total: 4900,
-          paid: 1550,
-          balance: 3350,
-          term: 3,
-          year: 2025
-        }
-      ],
-      receipts: [
-        {
-          id: '1',
-          name: 'Brenda Joy',
-          class: 'Grade 1',
-          paid: 1550,
-          mode: 'Bank',
-          date: '2025-09-02T12:12:00Z',
-          receiptNumber: 'T3-156',
-          term: 3,
-          year: 2025
-        }
-      ]
+    // Initialize Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyBAA6zY40EwbTmWUx1op1cx52C3y0RK3m0",
+      authDomain: "heriwadi-manager.firebaseapp.com",
+      projectId: "heriwadi-manager",
+      storageBucket: "heriwadi-manager.appspot.com",
+      messagingSenderId: "654632910809",
+      appId: "1:654632910809:web:7c65613d2510402a6663c8",
+      measurementId: "G-LLHS6GLB6E"
     };
 
-    let currentTerm = 3;
-    let currentYear = 2025;
-
-    // CENTRALIZED BALANCE CALCULATION FUNCTION
-    async function calculateStudentBalance(studentName, currentTerm, currentYear) {
-      // This function ensures consistent balance calculation across the entire app
-      let termBalance = 0;
-      let balanceCarriedForward = 0;
-      let totalPaidThisTerm = 0;
-      let termTotal = 0;
-
-      try {
-        // Get current term student data
-        const currentStudent = mockData.students.find(s => 
-          s.name === studentName && s.term === currentTerm && s.year === currentYear
-        );
-        
-        if (currentStudent) {
-          termBalance = currentStudent.balance || 0;
-          totalPaidThisTerm = currentStudent.paid || 0;
-          termTotal = currentStudent.total || 0;
-        }
-
-        // Calculate balance carried forward from previous terms
-        if (currentTerm > 1) {
-          for (let term = 1; term < currentTerm; term++) {
-            const prevStudent = mockData.students.find(s => 
-              s.name === studentName && s.term === term && s.year === currentYear
-            );
-            
-            if (prevStudent && prevStudent.balance > 0) {
-              balanceCarriedForward += prevStudent.balance;
-            }
-          }
-        }
-
-        return {
-          termBalance: termBalance,
-          balanceCarriedForward: balanceCarriedForward,
-          totalOutstandingBalance: termBalance + balanceCarriedForward,
-          termTotal: termTotal,
-          totalPaidThisTerm: totalPaidThisTerm
-        };
-      } catch (error) {
-        console.error('Error calculating balance:', error);
-        return {
-          termBalance: 0,
-          balanceCarriedForward: 0,
-          totalOutstandingBalance: 0,
-          termTotal: 0,
-          totalPaidThisTerm: 0
-        };
+    let app, db;
+    try {
+      if (!firebase.apps.length) {
+        app = firebase.initializeApp(firebaseConfig);
+      } else {
+        app = firebase.app();
       }
+      db = firebase.firestore();
+      console.log("Firebase initialized successfully");
+    } catch (error) {
+      console.error('Firebase initialization error:', error);
+      showStatus("Failed to initialize Firebase. Check your configuration.", "error");
+      throw error;
+    }
+    
+    // Current term and year management with persistent storage
+    let currentTerm = parseInt(sessionStorage.getItem('heriwadi_current_term')) || 2;
+    let currentYear = new Date().getFullYear();
+    
+    // Collection references with term support
+    const getStudentsCollection = (term = currentTerm, year = currentYear) => 
+      db.collection(`students_${year}_term_${term}`);
+    const getReceiptsCollection = (term = currentTerm, year = currentYear) => 
+      db.collection(`receipts_${year}_term_${term}`);
+
+    // Initialize data migration on first load
+    let migrationCompleted = false;
+
+    // Real-time student data listeners
+    let studentListener = null;
+    let receiptListener = null;
+
+    // Logo handling function - converts image to base64
+    function getLogoDataUrl() {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // Set canvas size to match desired logo size
+          canvas.width = 70;
+          canvas.height = 70;
+          
+          // Draw image to canvas
+          ctx.drawImage(img, 0, 0, 70, 70);
+          
+          // Get base64 data URL
+          const dataUrl = canvas.toDataURL('image/png');
+          resolve(dataUrl);
+        };
+        
+        img.onerror = function() {
+          console.log('Logo image not found, using fallback');
+          // Return a simple fallback (empty data URL)
+          resolve('');
+        };
+        
+        // Try to load the logo image
+        img.src = 'photos/school-logo.jpg';
+      });
+    }
+
+    // Setup real-time listeners for student and receipt changes
+    function setupRealTimeListeners() {
+      // Remove any existing listeners
+      if (studentListener) {
+        studentListener();
+      }
+      if (receiptListener) {
+        receiptListener();
+      }
+      
+      // Set up real-time listener for students
+      const studentsCollection = getStudentsCollection();
+      studentListener = studentsCollection.onSnapshot(
+        (snapshot) => {
+          console.log("Student data changed - refreshing UI");
+          populateStudents();
+          updateReceiptTable();
+        },
+        (error) => {
+          console.error("Error in student listener:", error);
+        }
+      );
+      
+      // Set up real-time listener for receipts
+      const receiptsCollection = getReceiptsCollection();
+      receiptListener = receiptsCollection.onSnapshot(
+        (snapshot) => {
+          console.log("Receipt data changed - refreshing UI");
+          updateReceiptTable();
+        },
+        (error) => {
+          console.error("Error in receipt listener:", error);
+        }
+      );
     }
 
     document.addEventListener('DOMContentLoaded', function() {
       updateCurrentYearDisplay();
+      // Initialize UI with saved term on page load
       initializeTermFromStorage();
-      populateStudents();
-      updateReceiptTable();
+      initializeMigration().then(() => {
+        populateStudents();
+        updateReceiptTable();
+        // Set up real-time listeners after migration
+        setupRealTimeListeners();
+      });
       
+      // Add event listeners for form validation
       document.getElementById('amountPaid').addEventListener('input', validateAmount);
       document.getElementById('receiptForm').addEventListener('submit', handleReceiptSubmit);
       document.getElementById('studentForm').addEventListener('submit', handleStudentSubmit);
       
+      // Initialize modals
       const modal = document.getElementById('studentManagerModal');
       modal.addEventListener('click', function(e) {
         if (e.target === modal) closeStudentManager();
       });
     });
 
+    // Initialize term from storage and update UI
     function initializeTermFromStorage() {
+      // Update UI to show the correct term
       document.querySelectorAll('.term-btn').forEach(btn => {
         btn.classList.toggle('active', parseInt(btn.dataset.term) === currentTerm);
       });
+      
+      // Update all term displays
       updateTermDisplays();
+      
+      console.log(`Initialized with Term ${currentTerm} from storage`);
     }
 
+    // Update all term displays in the UI
     function updateTermDisplays() {
       document.getElementById('currentTermDisplay').textContent = `Term ${currentTerm}`;
       document.getElementById('currentTermRecords').textContent = `Term ${currentTerm}`;
@@ -934,15 +968,99 @@
       document.getElementById('currentYear').textContent = currentYear;
     }
 
+    // Updated switchTerm function with persistent storage and listener refresh
     function switchTerm(term) {
       currentTerm = term;
+      
+      // SAVE term to sessionStorage for persistence across page navigation
+      sessionStorage.setItem('heriwadi_current_term', term.toString());
+      
+      // Update UI to show active term
       document.querySelectorAll('.term-btn').forEach(btn => {
         btn.classList.toggle('active', parseInt(btn.dataset.term) === term);
       });
+      
+      // Update all term displays
       updateTermDisplays();
+      
+      // Refresh data for the new term AND refresh listeners
       populateStudents();
       updateReceiptTable();
-      showStatus(`Switched to Term ${term}`, "success");
+      setupRealTimeListeners(); // Refresh listeners for the new term
+      
+      showStatus(`Switched to Term ${term} - This selection will persist across pages`, "success");
+    }
+
+    // Migration function to move existing data to Term 2
+    async function initializeMigration() {
+      try {
+        // Check if migration has already been done
+        const migrationDoc = await db.collection('system_settings').doc('migration_status').get();
+        
+        if (migrationDoc.exists && migrationDoc.data().term_migration_completed) {
+          migrationCompleted = true;
+          console.log('Migration already completed');
+          return;
+        }
+
+        showStatus("Initializing term-based data structure...", "loading");
+
+        // Migrate existing students to Term 2
+        const oldStudents = await db.collection('students').get();
+        const newStudentsCollection = getStudentsCollection(2, currentYear);
+        
+        if (!oldStudents.empty) {
+          const batch = db.batch();
+          oldStudents.forEach(doc => {
+            const studentData = {
+              ...doc.data(),
+              term: 2,
+              year: currentYear,
+              migratedFrom: 'original_collection'
+            };
+            const newDocRef = newStudentsCollection.doc(doc.id);
+            batch.set(newDocRef, studentData);
+          });
+          await batch.commit();
+          console.log(`Migrated ${oldStudents.size} students to Term 2`);
+        }
+
+        // Migrate existing receipts to Term 2
+        const oldReceipts = await db.collection('receipts').get();
+        const newReceiptsCollection = getReceiptsCollection(2, currentYear);
+        
+        if (!oldReceipts.empty) {
+          const batch = db.batch();
+          oldReceipts.forEach(doc => {
+            const receiptData = {
+              ...doc.data(),
+              term: 2,
+              year: currentYear,
+              migratedFrom: 'original_collection'
+            };
+            const newDocRef = newReceiptsCollection.doc(doc.id);
+            batch.set(newDocRef, receiptData);
+          });
+          await batch.commit();
+          console.log(`Migrated ${oldReceipts.size} receipts to Term 2`);
+        }
+
+        // Mark migration as completed
+        await db.collection('system_settings').doc('migration_status').set({
+          term_migration_completed: true,
+          migration_date: new Date().toISOString(),
+          migrated_students: oldStudents.size,
+          migrated_receipts: oldReceipts.size
+        });
+
+        migrationCompleted = true;
+        showStatus("Term-based data structure initialized successfully!", "success");
+        
+      } catch (error) {
+        console.error('Migration error:', error);
+        showStatus("Migration completed with some errors. System should still work.", "warning");
+        migrationCompleted = true;
+      }
     }
 
     function validateAmount() {
@@ -968,21 +1086,37 @@
       }, 5000);
     }
 
+    async function sendSMS(phone, message) {
+      try {
+        const response = await fetch("/send-sms", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone, message })
+        });
+        const result = await response.json();
+        return result.success;
+      } catch (error) {
+        console.error('SMS Error:', error);
+        return false;
+      }
+    }
+
     async function populateStudents() {
       try {
         const studentList = document.getElementById("studentList");
         studentList.innerHTML = "";
         
-        const termStudents = mockData.students.filter(s => 
-          s.term === currentTerm && s.year === currentYear
-        );
+        const studentsCollection = getStudentsCollection();
+        const snapshot = await studentsCollection.orderBy('name').get();
         
-        if (termStudents.length === 0) {
+        if (snapshot.empty) {
+          console.log(`No students found for Term ${currentTerm}`);
           showStatus(`No students found for Term ${currentTerm}. Add a student first.`, "info");
           return;
         }
         
-        termStudents.forEach(s => {
+        snapshot.forEach(doc => {
+          const s = { id: doc.id, ...doc.data() };
           const opt = document.createElement("option");
           opt.value = `${s.name} (${s.class})`;
           opt.dataset.id = s.id;
@@ -990,8 +1124,36 @@
         });
       } catch (error) {
         console.error('Error populating students:', error);
-        showStatus(`Error loading students: ${error.message}`, "error");
+        showStatus(`Error loading students: ${error.message}. Check Firebase rules or network.`, "error");
       }
+    }
+
+    // NEW FUNCTION: Calculate balance carried forward from previous terms
+    async function getBalanceCarriedForward(studentName, currentTerm, currentYear) {
+      let balanceCarriedForward = 0;
+      
+      // If we're in Term 1, there's no previous term to carry forward from
+      if (currentTerm === 1) return 0;
+      
+      try {
+        // Check all previous terms for outstanding balances
+        for (let term = 1; term < currentTerm; term++) {
+          const prevStudentsCollection = getStudentsCollection(term, currentYear);
+          const prevStudentSnapshot = await prevStudentsCollection.where('name', '==', studentName).get();
+          
+          if (!prevStudentSnapshot.empty) {
+            const prevStudent = prevStudentSnapshot.docs[0].data();
+            // Add any outstanding balance from previous term
+            if (prevStudent.balance > 0) {
+              balanceCarriedForward += prevStudent.balance;
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error calculating carried forward balance:', error);
+      }
+      
+      return balanceCarriedForward;
     }
 
     async function updateReceiptTable() {
@@ -1000,21 +1162,25 @@
         groupedReceipts.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading receipts...</div>';
         
         const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-        const termReceipts = mockData.receipts.filter(r => 
-          r.term === currentTerm && r.year === currentYear
-        );
+        const receiptsCollection = getReceiptsCollection();
+        const snapshot = await receiptsCollection.orderBy('date', 'desc').get();
         
-        if (termReceipts.length === 0) {
+        if (snapshot.empty) {
           groupedReceipts.innerHTML = `<div class="status-message info">No receipts found for Term ${currentTerm}.</div>`;
           return;
         }
 
+        const receipts = [];
+        snapshot.forEach(doc => {
+          receipts.push({ id: doc.id, ...doc.data() });
+        });
+
         const filteredReceipts = searchQuery
-          ? termReceipts.filter(r => r.name.toLowerCase().includes(searchQuery))
-          : termReceipts;
+          ? receipts.filter(r => r.name.toLowerCase().includes(searchQuery))
+          : receipts;
 
         if (filteredReceipts.length === 0) {
-          groupedReceipts.innerHTML = '<div class="status-message info">No receipts match your search.</div>';
+          groupedReceipts.innerHTML = '<div class="status-message info>No receipts match your search.</div>';
           return;
         }
 
@@ -1065,30 +1231,39 @@
           `;
           const tbody = table.querySelector('tbody');
 
-          // Use centralized balance calculation
           await Promise.all(classReceipts.map(async r => {
-            const balanceInfo = await calculateStudentBalance(r.name, currentTerm, currentYear);
-            
-            const row = document.createElement('tr');
-            row.innerHTML = `
-              <td>
-                <strong>${r.name}</strong><br>
-                <small>${r.class} - Term ${currentTerm}</small>
-              </td>
-              <td>${r.paid.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
-              <td>${balanceInfo.totalOutstandingBalance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
-              <td>${r.mode}</td>
-              <td>${new Date(r.date).toLocaleDateString('en-GB')}</td>
-              <td>
-                <button class="btn btn-sm btn-info" onclick="printReceipt('${r.id}')">
-                  <i class="fas fa-print"></i> Print
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="deleteReceipt('${r.id}')">
-                  <i class="fas fa-trash"></i> Delete
-                </button>
-              </td>
-            `;
-            tbody.appendChild(row);
+            const studentsCollection = getStudentsCollection();
+            const studentSnapshot = await studentsCollection.where('name', '==', r.name).get();
+            if (!studentSnapshot.empty) {
+              const student = studentSnapshot.docs[0].data();
+              
+              // Calculate balance carried forward from previous terms
+              const balanceCarriedForward = await getBalanceCarriedForward(r.name, currentTerm, currentYear);
+              
+              // Calculate total outstanding balance (term balance + carried forward)
+              const totalOutstandingBalance = student.balance + balanceCarriedForward;
+              
+              const row = document.createElement('tr');
+              row.innerHTML = `
+                <td>
+                  <strong>${r.name}</strong><br>
+                  <small>${r.class} - Term ${currentTerm}</small>
+                </td>
+                <td>${r.paid.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
+                <td>${totalOutstandingBalance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
+                <td>${r.mode}</td>
+                <td>${new Date(r.date).toLocaleDateString('en-GB')}</td>
+                <td>
+                  <button class="btn btn-sm btn-info" onclick="printReceipt('${r.id}')">
+                    <i class="fas fa-print"></i> Print
+                  </button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteReceipt('${r.id}')">
+                    <i class="fas fa-trash"></i> Delete
+                  </button>
+                </td>
+              `;
+              tbody.appendChild(row);
+            }
           }));
 
           content.appendChild(table);
@@ -1097,7 +1272,7 @@
         }
       } catch (error) {
         console.error('Error updating receipt table:', error);
-        showStatus(`Error loading receipts: ${error.message}`, "error");
+        showStatus(`Error loading receipts: ${error.message}. Check Firebase rules or network.`, "error");
       }
     }
 
@@ -1122,12 +1297,16 @@
 
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<span class="spinner"></span> Processing...';
-      showStatus("Processing payment...", "loading");
+      showStatus("Processing payment and sending SMS...", "loading");
 
       try {
-        const currentDate = new Date();
+        // Use current time in EAT (Africa/Nairobi)
+        const currentDate = new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
+        const receiptDate = new Date(currentDate);
+
+        // Extract name and class from input (format: "Name (Class)")
         const match = studentInput.match(/^(.+?)\s*\((.+?)\)$/);
-        let studentName, studentClass;
+        let studentName, studentClass, studentId = null;
         
         if (match) {
           studentName = match[1].trim();
@@ -1137,45 +1316,97 @@
           studentClass = "Unknown";
         }
 
-        // Get current balance info using centralized function
-        const balanceInfo = await calculateStudentBalance(studentName, currentTerm, currentYear);
+        // Check if student exists in current term
+        const studentsCollection = getStudentsCollection();
+        const studentSnapshot = await studentsCollection.where('name', '==', studentName).get();
+        let student;
         
-        // Calculate new balance after payment
-        const newBalance = balanceInfo.totalOutstandingBalance - amount;
+        if (!studentSnapshot.empty) {
+          student = studentSnapshot.docs[0].data();
+          studentId = studentSnapshot.docs[0].id;
+        } else {
+          // Create new student if not found
+          const newStudent = {
+            name: studentName,
+            class: studentClass,
+            phone: "+254000000000",
+            tuition: 0,
+            adm: 0,
+            books: 0,
+            stationery: 0,
+            uniform: 0,
+            lunch: 0,
+            transport: 0,
+            trip: 0,
+            graduation: 0,
+            total: 0,
+            paid: 0,
+            balance: 0,
+            term: currentTerm,
+            year: currentYear
+          };
+          const docRef = await studentsCollection.add(newStudent);
+          studentId = docRef.id;
+          student = newStudent;
+        }
 
-        // Create receipt
-        const receiptNumber = `T${currentTerm}-${String(mockData.receipts.length + 1).padStart(3, '0')}`;
+        // Calculate balance carried forward from previous terms
+        const balanceCarriedForward = await getBalanceCarriedForward(studentName, currentTerm, currentYear);
+        
+        // Calculate new values - INCLUDING BALANCE CARRIED FORWARD
+        const totalOutstandingBalance = (student.total || 0) + balanceCarriedForward;
+        const newPaid = (student.paid || 0) + amount;
+        const newBalance = totalOutstandingBalance - newPaid;
+
+        const updatedStudent = {
+          ...student,
+          paid: newPaid,
+          balance: newBalance
+        };
+
+        // Get total number of receipts for current term for receipt number
+        const receiptsCollection = getReceiptsCollection();
+        const snapshot = await receiptsCollection.get();
+        const receiptCount = snapshot.size + 1;
+        const receiptNumber = `T${currentTerm}-${String(receiptCount).padStart(3, '0')}`;
+
         const receipt = {
-          id: Date.now().toString(),
           name: studentName,
           class: studentClass,
           paid: amount,
+          balance: newBalance,
           mode: mode,
           notes: notes || null,
-          date: currentDate.toISOString(),
+          date: receiptDate.toISOString(),
           receiptNumber: receiptNumber,
           term: currentTerm,
           year: currentYear
         };
 
-        // Add to mock data
-        mockData.receipts.push(receipt);
-        
-        // Update student record
-        const studentIndex = mockData.students.findIndex(s => 
-          s.name === studentName && s.term === currentTerm && s.year === currentYear
-        );
-        
-        if (studentIndex !== -1) {
-          mockData.students[studentIndex].paid += amount;
-          mockData.students[studentIndex].balance = Math.max(0, mockData.students[studentIndex].balance - amount);
-        }
+        await db.runTransaction(async transaction => {
+          const studentDocRef = studentsCollection.doc(studentId);
+          const receiptRef = receiptsCollection.doc();
+          transaction.update(studentDocRef, updatedStudent);
+          transaction.set(receiptRef, receipt);
+          receipt.id = receiptRef.id;
+        });
 
-        showStatus(`Receipt saved successfully for Term ${currentTerm}!`, "success");
+        // Format time in EAT for SMS
+        const timeString = receiptDate.toLocaleTimeString('en-US', {
+          timeZone: 'Africa/Nairobi',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        }).toUpperCase();
+        
+        const smsMessage = `Dear parent to ${studentName}, ${studentClass}, Amount of KES ${amount} Receipt No. ${receiptNumber} was received on ${receiptDate.toLocaleDateString('en-GB')} at ${timeString}. Balance: ${newBalance}. Term ${currentTerm}.`;
+        const smsSent = await sendSMS(student.phone, smsMessage);
+        
+        showStatus(`Receipt saved${smsSent ? ' and SMS sent' : ''} successfully for Term ${currentTerm}!`, "success");
         updateReceiptTable();
         populateStudents();
         
-        // Show receipt preview with CONSISTENT balance calculation
+        // Show receipt preview
         const preview = document.getElementById('receiptPreview');
         const previewContent = document.getElementById('previewContent');
         previewContent.innerHTML = `
@@ -1183,13 +1414,14 @@
           <p><strong>Term:</strong> ${currentTerm}</p>
           <p><strong>Amount Paid:</strong> ${amount.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</p>
           <p><strong>Payment Mode:</strong> ${mode}</p>
-          <p><strong>Date:</strong> ${currentDate.toLocaleDateString('en-GB')} ${currentDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}</p>
+          <p><strong>Date:</strong> ${receiptDate.toLocaleDateString('en-GB')} ${timeString}</p>
           <p><strong>Balance:</strong> ${newBalance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</p>
           ${notes ? `<p><strong>Notes:</strong> ${notes}</p>` : ''}
           <p><strong>Receipt No:</strong> ${receiptNumber}</p>
         `;
         preview.style.display = 'block';
         
+        // Reset form
         document.getElementById("receiptForm").reset();
       } catch (error) {
         console.error('Error processing receipt:', error);
@@ -1243,7 +1475,6 @@
 
       const total = tuition + adm + books + stationery + uniform + lunch + transport + trip + graduation;
       const newStudent = { 
-        id: Date.now().toString(),
         name, 
         class: sclass, 
         phone, 
@@ -1264,14 +1495,15 @@
       };
 
       try {
-        mockData.students.push(newStudent);
+        const studentsCollection = getStudentsCollection();
+        const docRef = await studentsCollection.add(newStudent);
         showStatus(`Student ${name} added successfully to Term ${currentTerm}!`, "success");
         document.getElementById("studentForm").reset();
         renderStudentList();
         populateStudents();
       } catch (error) {
         console.error('Error adding student:', error);
-        showStatus(`Error adding student: ${error.message}`, "error");
+        showStatus(`Error adding student: ${error.message}. Check Firebase rules or network.`, "error");
       }
     }
 
@@ -1280,21 +1512,18 @@
         const list = document.getElementById("studentListDisplay");
         list.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading students...</div>';
         
-        const termStudents = mockData.students.filter(s => 
-          s.term === currentTerm && s.year === currentYear
-        );
+        const studentsCollection = getStudentsCollection();
+        const snapshot = await studentsCollection.orderBy('name').get();
         
-        if (termStudents.length === 0) {
+        if (snapshot.empty) {
           list.innerHTML = `<div class="status-message info">No students found for Term ${currentTerm}.</div>`;
           return;
         }
         
         list.innerHTML = '';
         
-        for (const s of termStudents) {
-          // Use centralized balance calculation for consistency
-          const balanceInfo = await calculateStudentBalance(s.name, currentTerm, currentYear);
-          
+        snapshot.forEach(doc => {
+          const s = { id: doc.id, ...doc.data() };
           const li = document.createElement("li");
           li.className = 'student-item';
           li.style.padding = '0.75rem';
@@ -1307,17 +1536,16 @@
             <div>
               <strong>${s.name}</strong> (${s.class}) - Term ${currentTerm}<br>
               <small>${s.phone}</small><br>
-              <small>Total: ${balanceInfo.termTotal.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}, 
-              Paid: ${balanceInfo.totalPaidThisTerm.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}, 
-              Balance: ${balanceInfo.totalOutstandingBalance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</small>
-              ${balanceInfo.balanceCarriedForward > 0 ? `<br><small style="color: #dc3545;">Carried Forward: ${balanceInfo.balanceCarriedForward.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</small>` : ''}
+              <small>Total: ${s.total.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}, 
+              Paid: ${s.paid.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}, 
+              Balance: ${s.balance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</small>
             </div>
             <button class="btn btn-sm btn-danger" onclick="deleteStudent('${s.id}')">
               <i class="fas fa-trash"></i>
             </button>
           `;
           list.appendChild(li);
-        }
+        });
       } catch (error) {
         console.error('Error rendering student list:', error);
         showStatus("Error loading student list: " + error.message, "error");
@@ -1325,21 +1553,26 @@
     }
 
     async function deleteStudent(id) {
-      if (confirm(`Are you sure you want to delete this student from Term ${currentTerm}?`)) {
+      if (confirm(`Are you sure you want to delete this student from Term ${currentTerm}? All associated receipts will also be deleted.`)) {
         try {
-          const studentIndex = mockData.students.findIndex(s => s.id === id);
-          if (studentIndex !== -1) {
-            const studentName = mockData.students[studentIndex].name;
+          const studentsCollection = getStudentsCollection();
+          const receiptsCollection = getReceiptsCollection();
+          
+          const studentRef = studentsCollection.doc(id);
+          const studentDoc = await studentRef.get();
+          
+          if (studentDoc.exists) {
+            const studentName = studentDoc.data().name;
+            const receiptsQuery = await receiptsCollection.where('name', '==', studentName).get();
             
-            // Remove student
-            mockData.students.splice(studentIndex, 1);
+            const batch = db.batch();
+            receiptsQuery.forEach(doc => {
+              batch.delete(doc.ref);
+            });
+            batch.delete(studentRef);
             
-            // Remove associated receipts
-            mockData.receipts = mockData.receipts.filter(r => 
-              !(r.name === studentName && r.term === currentTerm && r.year === currentYear)
-            );
-            
-            showStatus(`Student and associated receipts deleted successfully from Term ${currentTerm}`, "success");
+            await batch.commit();
+            showStatus(`Student and all associated receipts deleted successfully from Term ${currentTerm}`, "success");
             renderStudentList();
             populateStudents();
             updateReceiptTable();
@@ -1354,25 +1587,34 @@
     async function deleteReceipt(id) {
       if (confirm("Are you sure you want to delete this receipt?")) {
         try {
-          const receiptIndex = mockData.receipts.findIndex(r => r.id === id);
-          if (receiptIndex !== -1) {
-            const receipt = mockData.receipts[receiptIndex];
+          const receiptsCollection = getReceiptsCollection();
+          const studentsCollection = getStudentsCollection();
+          
+          const receiptRef = receiptsCollection.doc(id);
+          const receiptDoc = await receiptRef.get();
+          
+          if (receiptDoc.exists) {
+            const receipt = receiptDoc.data();
+            const studentQuery = await studentsCollection.where('name', '==', receipt.name).get();
             
-            // Update student record
-            const studentIndex = mockData.students.findIndex(s => 
-              s.name === receipt.name && s.term === currentTerm && s.year === currentYear
-            );
-            
-            if (studentIndex !== -1) {
-              mockData.students[studentIndex].paid -= receipt.paid;
-              mockData.students[studentIndex].balance += receipt.paid;
+            if (!studentQuery.empty) {
+              const studentDoc = studentQuery.docs[0];
+              const studentData = studentDoc.data();
+              
+              const updatedStudent = {
+                ...studentData,
+                paid: studentData.paid - receipt.paid,
+                balance: studentData.balance + receipt.paid
+              };
+              
+              await db.runTransaction(async transaction => {
+                transaction.update(studentDoc.ref, updatedStudent);
+                transaction.delete(receiptRef);
+              });
+              
+              showStatus(`Receipt deleted and student balance updated successfully for Term ${currentTerm}`, "success");
+              updateReceiptTable();
             }
-            
-            // Remove receipt
-            mockData.receipts.splice(receiptIndex, 1);
-            
-            showStatus(`Receipt deleted and student balance updated successfully for Term ${currentTerm}`, "success");
-            updateReceiptTable();
           }
         } catch (error) {
           console.error('Error deleting receipt:', error);
@@ -1383,140 +1625,352 @@
 
     async function printReceipt(id) {
       try {
-        const receipt = mockData.receipts.find(r => r.id === id);
-        if (!receipt) {
+        const receiptsCollection = getReceiptsCollection();
+        const studentsCollection = getStudentsCollection();
+        
+        const receiptDoc = await receiptsCollection.doc(id).get();
+        if (!receiptDoc.exists) {
           showStatus("Receipt not found", "error");
           return;
         }
         
-        const student = mockData.students.find(s => 
-          s.name === receipt.name && s.term === currentTerm && s.year === currentYear
-        );
+        const receipt = receiptDoc.data();
+        const studentSnapshot = await studentsCollection.where('name', '==', receipt.name).get();
         
-        if (!student) {
+        if (studentSnapshot.empty) {
           showStatus("Associated student not found", "error");
           return;
         }
         
-        // Use centralized balance calculation for PDF consistency
-        const balanceInfo = await calculateStudentBalance(receipt.name, currentTerm, currentYear);
-        
-        const currentDate = new Date(receipt.date);
+        const student = studentSnapshot.docs[0].data();
+        const currentDate = new Date(receipt.date).toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
+        const receiptDate = new Date(currentDate);
         const receiptNumber = receipt.receiptNumber || `T${currentTerm}-001`;
+
+        // Calculate balance carried forward from previous terms
+        const balanceCarriedForward = await getBalanceCarriedForward(receipt.name, currentTerm, currentYear);
+
+        // Get logo data URL
+        const logoDataUrl = await getLogoDataUrl();
 
         const printWindow = window.open('', '', 'height=800,width=900');
         
+        // Create a proper HTML document with corrected logo handling
         printWindow.document.write(`
           <html>
             <head>
               <title>Official Receipt - ${receipt.name} - Term ${currentTerm}</title>
               <style>
-                @page { size: A4; margin: 10mm; }
-                body { font-family: Arial, sans-serif; margin: 0; padding: 10mm; font-size: 11px; line-height: 1.2; }
-                .header { text-align: center; margin-bottom: 15px; border-bottom: 2px solid #000; padding-bottom: 10px; }
-                .school-name { font-size: 16px; font-weight: bold; margin: 6px 0 4px 0; }
-                .receipt-title { font-size: 14px; font-weight: bold; margin: 15px 0 10px 0; text-decoration: underline; }
-                .student-info { margin-bottom: 12px; line-height: 1.4; }
-                .fees-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 8px; }
-                .fees-table th, .fees-table td { border: 1px solid #000; padding: 5px 3px; text-align: center; }
-                .fees-table th { background-color: #f8f8f8; font-weight: bold; }
-                .total-row { font-weight: bold; background-color: #f0f0f0; }
-                .payment-details { margin: 15px 0; display: flex; justify-content: space-between; font-size: 10px; }
-                .signatures { margin-top: 30px; display: flex; justify-content: space-between; }
-                .signature-box { text-align: center; width: 180px; }
-                .signature-line { border-bottom: 1px solid #000; margin-bottom: 4px; height: 25px; }
-                .refund-policy { text-align: center; margin-top: 20px; font-size: 9px; font-weight: bold; border-top: 1px solid #000; padding-top: 8px; }
+                @page { 
+                  size: A4; 
+                  margin: 10mm;
+                }
+                body { 
+                  font-family: Arial, sans-serif; 
+                  margin: 0; 
+                  padding: 10mm; 
+                  font-size: 11px; 
+                  line-height: 1.2;
+                  background: white;
+                  max-height: 277mm; /* A4 height minus margins */
+                  overflow: hidden;
+                }
+                .header { 
+                  text-align: center; 
+                  margin-bottom: 15px; 
+                  border-bottom: 2px solid #000;
+                  padding-bottom: 10px;
+                }
+                .school-logo {
+                  width: 70px;
+                  height: 70px;
+                  margin: 0 auto 8px;
+                  display: block;
+                  /* Removed border-radius to make it square */
+                  object-fit: contain;
+                }
+                .logo-fallback {
+                  width: 70px;
+                  height: 70px;
+                  margin: 0 auto 8px;
+                  display: block;
+                  border: 2px solid #000;
+                  /* Removed border-radius to make it square */
+                  background: #f0f0f0;
+                  line-height: 66px;
+                  text-align: center;
+                  font-weight: bold;
+                  font-size: 12px;
+                  color: #333;
+                }
+                .school-motto {
+                  font-size: 11px;
+                  font-weight: bold;
+                  margin: 4px 0;
+                }
+                .school-name { 
+                  font-size: 16px; 
+                  font-weight: bold; 
+                  color: #000; 
+                  margin: 6px 0 4px 0; 
+                  letter-spacing: 1px;
+                }
+                .contact-info { 
+                  font-size: 9px; 
+                  margin: 1px 0;
+                  color: #333;
+                }
+                .receipt-title { 
+                  font-size: 14px; 
+                  font-weight: bold; 
+                  margin: 15px 0 10px 0; 
+                  text-decoration: underline;
+                }
+                .receipt-header {
+                  display: flex;
+                  justify-content: space-between;
+                  margin-bottom: 15px;
+                  align-items: flex-end;
+                }
+                .receipt-number {
+                  font-size: 11px;
+                  font-weight: bold;
+                }
+                .paybill-info {
+                  font-size: 9px;
+                  text-align: right;
+                }
+                .student-info { 
+                  margin-bottom: 12px; 
+                  line-height: 1.4;
+                }
+                .student-info div {
+                  margin-bottom: 6px;
+                  display: flex;
+                }
+                .student-info strong {
+                  min-width: 150px;
+                  display: inline-block;
+                }
+                .term-info {
+                  background-color: #f0f0f0;
+                  padding: 8px;
+                  margin: 12px 0;
+                  border: 1px solid #ddd;
+                  text-align: center;
+                  font-weight: bold;
+                  font-size: 11px;
+                }
+                .payment-section {
+                  margin: 15px 0 12px 0;
+                  font-weight: bold;
+                  font-size: 11px;
+                }
+                .fees-table { 
+                  width: 100%; 
+                  border-collapse: collapse; 
+                  margin: 12px 0; 
+                  font-size: 8px;
+                }
+                .fees-table th, .fees-table td { 
+                  border: 1px solid #000; 
+                  padding: 5px 3px; 
+                  text-align: center;
+                  vertical-align: middle;
+                }
+                .fees-table th { 
+                  background-color: #f8f8f8; 
+                  font-weight: bold; 
+                  font-size: 8px;
+                }
+                .fees-row td {
+                  font-size: 8px;
+                  height: 25px;
+                }
+                .total-row { 
+                  font-weight: bold; 
+                  background-color: #f0f0f0;
+                }
+                .total-row td {
+                  font-size: 9px;
+                }
+                .payment-details {
+                  margin: 15px 0;
+                  display: flex;
+                  justify-content: space-between;
+                  font-size: 10px;
+                  page-break-inside: avoid;
+                }
+                .signatures { 
+                  margin-top: 30px;
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: flex-end;
+                  page-break-inside: avoid;
+                }
+                .signature-box { 
+                  text-align: center; 
+                  width: 180px; 
+                }
+                .signature-line { 
+                  border-bottom: 1px solid #000; 
+                  margin-bottom: 4px; 
+                  height: 25px; 
+                }
+                .refund-policy {
+                  text-align: center;
+                  margin-top: 20px;
+                  font-size: 9px;
+                  font-weight: bold;
+                  border-top: 1px solid #000;
+                  padding-top: 8px;
+                  page-break-inside: avoid;
+                }
+                /* Ensure everything fits on one page */
+                .content-container {
+                  max-height: 240mm;
+                  overflow: hidden;
+                }
               </style>
             </head>
             <body>
-              <div class="header">
-                <div class="school-name">HERIWADI CHRISTIAN SCHOOLS LTD</div>
-                <div>P.O. Box 62503 - 00200, Ongata Rongai, Kenya</div>
-                <div>Mobile: 0723 322449 | Email: heriwadics@gmail.com</div>
-              </div>
-
-              <div style="background-color: #f0f0f0; padding: 8px; margin: 12px 0; border: 1px solid #ddd; text-align: center; font-weight: bold;">
-                ACADEMIC YEAR ${currentYear} - TERM ${currentTerm}
-              </div>
-
-              <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                <div class="receipt-title">OFFICIAL RECEIPT</div>
-                <div style="text-align: right;">
-                  <strong>No. ${receiptNumber}</strong><br>
-                  <strong>Date:</strong> ${currentDate.toLocaleDateString('en-GB')} ${currentDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}
+              <div class="content-container">
+                <div class="header">
+                  ${logoDataUrl ? 
+                    `<img src="${logoDataUrl}" alt="School Logo" class="school-logo" />` : 
+                    `<div class="logo-fallback">HCS</div>`
+                  }
+                  <div class="school-motto">LEARN, LEAD, ACHIEVE</div>
+                  <div class="school-name">HERIWADI CHRISTIAN SCHOOLS LTD</div>
+                  <div class="contact-info">Physical Address: Ongata Rongai</div>
+                  <div class="contact-info">Postal Address: P.O. Box 62503 - 00200, Ongata Rongai, Kenya</div>
+                  <div class="contact-info">Mobile: 0723 322449</div>
+                  <div class="contact-info">Email: heriwadics@gmail.com</div>
                 </div>
-              </div>
 
-              <div class="student-info">
-                <div><strong>Student:</strong> ${receipt.name}</div>
-                <div><strong>Class:</strong> ${receipt.class}</div>
-                <div><strong>Term:</strong> ${currentTerm}</div>
-                <div><strong>Academic Year:</strong> ${currentYear}</div>
-                ${receipt.notes ? `<div><strong>Notes:</strong> ${receipt.notes}</div>` : ''}
-              </div>
-
-              <div style="font-weight: bold; margin: 15px 0;">Mode of Payment: ${receipt.mode}</div>
-
-              <table class="fees-table">
-                <thead>
-                  <tr>
-                    <th>Fee Item</th>
-                    <th>Fee Charged</th>
-                    <th>Fee Paid</th>
-                    <th>Receipt Balance</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr><td>Tuition</td><td>${student.tuition || 0}</td><td>${Math.min(receipt.paid, student.tuition || 0)}</td><td>${Math.max(0, (student.tuition || 0) - Math.min(receipt.paid, student.tuition || 0))}</td></tr>
-                  <tr><td>Admission Fee</td><td>${student.adm || 0}</td><td>0</td><td>${student.adm || 0}</td></tr>
-                  <tr><td>Lunch</td><td>${student.lunch || 0}</td><td>0</td><td>${student.lunch || 0}</td></tr>
-                  <tr><td>Uniform</td><td>${student.uniform || 0}</td><td>0</td><td>${student.uniform || 0}</td></tr>
-                  <tr><td>Book Fund</td><td>${student.books || 0}</td><td>0</td><td>${student.books || 0}</td></tr>
-                  <tr><td>Stationery</td><td>${student.stationery || 0}</td><td>0</td><td>${student.stationery || 0}</td></tr>
-                  <tr><td>Transport</td><td>${student.transport || 0}</td><td>0</td><td>${student.transport || 0}</td></tr>
-                  <tr><td>Trip</td><td>${student.trip || 0}</td><td>0</td><td>${student.trip || 0}</td></tr>
-                  <tr><td>Graduation</td><td>${student.graduation || 0}</td><td>0</td><td>${student.graduation || 0}</td></tr>
-                  ${balanceInfo.balanceCarriedForward > 0 ? `
-                  <tr class="total-row">
-                    <td colspan="3" style="text-align: right; padding-right: 8px;"><strong>Balance Carried Forward</strong></td>
-                    <td><strong>${balanceInfo.balanceCarriedForward.toLocaleString()}</strong></td>
-                  </tr>` : ''}
-                  <tr class="total-row">
-                    <td colspan="3" style="text-align: right; padding-right: 8px;"><strong>Total Outstanding Balance</strong></td>
-                    <td><strong>${balanceInfo.totalOutstandingBalance.toLocaleString()}</strong></td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <div class="payment-details">
-                <div>
-                  <div><strong>Amount Paid:</strong> ${receipt.paid.toLocaleString()}</div>
-                  <div><strong>Term:</strong> ${currentTerm}</div>
+                <div class="term-info">
+                  ACADEMIC YEAR ${currentYear} - TERM ${currentTerm}
                 </div>
-                <div style="text-align: right;">
-                  <div><strong>For Heriwadi Christian Schools Ltd</strong></div>
-                </div>
-              </div>
 
-              <div class="signatures">
-                <div class="signature-box">
-                  <div class="signature-line"></div>
-                  <div style="font-size: 8px;">Accountant/Cashier</div>
+                <div class="receipt-header">
+                  <div>
+                    <div class="receipt-title">RECEIPT</div>
+                  </div>
+                  <div class="paybill-info">
+                    <strong>No. ${receiptNumber}</strong><br>
+                    <strong>Date:</strong> ${receiptDate.toLocaleDateString('en-GB')} ${receiptDate.toLocaleTimeString('en-US', { timeZone: 'Africa/Nairobi', hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}
+                  </div>
                 </div>
-                <div class="signature-box">
-                  <div class="signature-line"></div>
-                  <div style="font-size: 8px;">For: Heriwadi Christian Schools</div>
-                </div>
-              </div>
 
-              <div class="refund-policy">
-                School Fees Once Paid is not Refundable
+                <div class="student-info">
+                  <div><strong>Student:</strong> <span>${receipt.name}</span></div>
+                  <div><strong>Class:</strong> <span>${receipt.class}</span></div>
+                  <div><strong>Term:</strong> <span>${currentTerm}</span></div>
+                  <div><strong>Academic Year:</strong> <span>${currentYear}</span></div>
+                  ${receipt.notes ? `<div><strong>Notes:</strong> <span>${receipt.notes}</span></div>` : ''}
+                </div>
+
+                <div class="payment-section">Mode of Payment: ${receipt.mode}</div>
+                <div class="payment-section">Date: ${receiptDate.toLocaleDateString('en-GB')} ${receiptDate.toLocaleTimeString('en-US', { timeZone: 'Africa/Nairobi', hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}</div>
+
+                <table class="fees-table">
+                  <thead>
+                    <tr>
+                      <th><strong>Fee Item</strong></th>
+                      <th><strong>Fee Charged</strong></th>
+                      <th><strong>Fee Paid</strong></th>
+                      <th><strong>Receipt Balance</strong></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${(() => {
+                      // Calculate total outstanding balance including carried forward
+                      const totalOutstandingBalance = student.balance + balanceCarriedForward;
+                      let initialBalance = totalOutstandingBalance;
+                      let remainingPaid = receipt.paid;
+                      const fees = [
+                        { name: 'Tuition', amount: student.tuition || 0 },
+                        { name: 'Adm Fee', amount: student.adm || 0 },
+                        { name: 'Lunch', amount: student.lunch || 0 },
+                        { name: 'Uniform', amount: student.uniform || 0 },
+                        { name: 'Book Fund', amount: student.books || 0 },
+                        { name: 'Stationery', amount: student.stationery || 0 },
+                        { name: 'Transport', amount: student.transport || 0 },
+                        { name: 'Trip', amount: student.trip || 0 },
+                        { name: 'Graduation', amount: student.graduation || 0 }
+                      ];
+                      let rows = '';
+
+                      fees.forEach(fee => {
+                        const feeCharged = Math.min(initialBalance, fee.amount);
+                        initialBalance -= feeCharged;
+                        const feePaid = Math.min(remainingPaid, feeCharged);
+                        remainingPaid -= feePaid;
+                        const feeBalance = feeCharged - feePaid;
+
+                        rows += `
+                          <tr class="fees-row">
+                            <td>${fee.name}</td>
+                            <td>${feeCharged > 0 ? feeCharged.toLocaleString() : '0'}</td>
+                            <td>${feePaid > 0 ? feePaid.toLocaleString() : '0'}</td>
+                            <td>${feeBalance > 0 ? feeBalance.toLocaleString() : '0'}</td>
+                          </tr>
+                        `;
+                      });
+
+                      // Show carried forward balance if applicable
+                      if (balanceCarriedForward > 0) {
+                        rows += `
+                          <tr class="total-row">
+                            <td colspan="3" style="text-align: right; padding-right: 8px;"><strong>Balance Carried Forward</strong></td>
+                            <td><strong>${balanceCarriedForward.toLocaleString()}</strong></td>
+                          </tr>
+                        `;
+                      }
+
+                      rows += `
+                        <tr class="total-row">
+                          <td colspan="3" style="text-align: right; padding-right: 8px;"><strong>Total Receipt Balance</strong></td>
+                          <td><strong>${totalOutstandingBalance.toLocaleString()}</strong></td>
+                        </tr>
+                      `;
+
+                      return rows;
+                    })()}
+                  </tbody>
+                </table>
+
+                <div class="payment-details">
+                  <div class="payment-left">
+                    <div><strong>Amount Paid:</strong> ${Number(receipt.paid).toLocaleString()}</div>
+                    <div><strong>Term:</strong> ${currentTerm}</div>
+                  </div>
+                  <div class="payment-right" style="text-align: right;">
+                    <div><strong>For Heriwadi Christian Schools Ltd</strong></div>
+                  </div>
+                </div>
+
+                <div class="signatures">
+                  <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <div style="font-size: 8px;">Accountant/Cashier</div>
+                  </div>
+                  <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <div style="font-size: 8px;">For: Heriwadi Christian Schools</div>
+                  </div>
+                </div>
+
+                <div class="refund-policy">
+                  School Fees Once Paid is not Refundable
+                </div>
               </div>
             </body>
           </html>
         `);
-        
         printWindow.document.close();
+        
+        // Wait for the content to load before printing
         setTimeout(() => {
           printWindow.print();
           printWindow.close();
@@ -1527,15 +1981,393 @@
       }
     }
 
-    // Export functions would be similar - using the centralized balance calculation
     async function exportByClassPDF() {
-      showStatus("Export functionality would use centralized balance calculations", "info");
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        const receiptsCollection = getReceiptsCollection();
+        const snapshot = await receiptsCollection.orderBy('date', 'desc').get();
+        let isFirstClass = true;
+
+        const classes = [
+          "Play Group", "PP1", "PP2",
+          "Grade 1", "Grade 2", "Grade 3",
+          "Grade 4", "Grade 5", "Grade 6"
+        ];
+
+        for (const cls of classes) {
+          const classReceipts = snapshot.docs.filter(doc => doc.data().class === cls).map(doc => ({ id: doc.id, ...doc.data() }));
+          if (classReceipts.length === 0) continue;
+
+          if (!isFirstClass) {
+            doc.addPage();
+          }
+          isFirstClass = false;
+
+          doc.setFontSize(18);
+          doc.setFont(undefined, 'bold');
+          doc.text("HERIWADI CHRISTIAN SCHOOLS LTD", 105, 35, { align: 'center' });
+
+          doc.setFontSize(14);
+          doc.text(`Class: ${cls} - Term ${currentTerm} (${currentYear})`, 105, 50, { align: 'center' });
+
+          doc.setFontSize(10);
+          doc.text("P.O. Box 62503 - 00200 Ongata Rongai", 105, 57, { align: 'center' });
+          doc.text("Contact: 0723 322449", 105, 62, { align: 'center' });
+          doc.text("Email: heriwadics@gmail.com", 105, 67, { align: 'center' });
+
+          doc.line(20, 73, 190, 73);
+
+          doc.setFontSize(16);
+          doc.text("RECEIPT SUMMARY", 20, 85);
+
+          if (typeof doc.autoTable === 'function') {
+            const studentsCollection = getStudentsCollection();
+            const tableData = await Promise.all(classReceipts.map(async r => {
+              const studentSnapshot = await studentsCollection.where('name', '==', r.name).get();
+              if (!studentSnapshot.empty) {
+                const student = studentSnapshot.docs[0].data();
+                
+                // Calculate balance carried forward from previous terms
+                const balanceCarriedForward = await getBalanceCarriedForward(r.name, currentTerm, currentYear);
+                
+                // Calculate total outstanding balance (term balance + carried forward)
+                const totalOutstandingBalance = student.balance + balanceCarriedForward;
+                
+                return [
+                  r.name,
+                  student.tuition || 0,
+                  student.adm || 0,
+                  student.lunch || 0,
+                  student.uniform || 0,
+                  student.books || 0,
+                  student.stationery || 0,
+                  student.transport || 0,
+                  student.trip || 0,
+                  student.graduation || 0,
+                  r.paid,
+                  totalOutstandingBalance
+                ];
+              }
+              return [];
+            }));
+
+            doc.autoTable({
+              startY: 95,
+              head: [['Student', 'Tuition', 'Adm Fee', 'Lunch', 'Uniform', 'Book Fund', 'Stationery', 'Transport', 'Trip', 'Graduation', 'Paid', 'Balance']],
+              body: tableData.filter(row => row.length > 0),
+              theme: 'grid',
+              styles: { fontSize: 8, cellPadding: 2 },
+              headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] }
+            });
+          }
+        }
+
+        doc.save(`heriwadi_receipts_by_class_term_${currentTerm}_${currentYear}.pdf`);
+        showStatus(`Export by class to PDF completed for Term ${currentTerm}!`, "success");
+      } catch (error) {
+        console.error('Error exporting by class to PDF:', error);
+        showStatus("Error exporting by class to PDF: " + error.message, "error");
+      }
     }
 
     async function exportConsolidatedPDF() {
-      showStatus("Export functionality would use centralized balance calculations", "info");
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        const receiptsCollection = getReceiptsCollection();
+        const studentsCollection = getStudentsCollection();
+        const snapshot = await receiptsCollection.orderBy('date', 'desc').get();
+        let isFirstReceipt = true;
+
+        for (const docSnapshot of snapshot.docs) {
+          const receipt = { id: docSnapshot.id, ...docSnapshot.data() };
+          const studentSnapshot = await studentsCollection.where('name', '==', receipt.name).get();
+          if (studentSnapshot.empty) continue;
+          const student = studentSnapshot.docs[0].data();
+          const currentDate = new Date(receipt.date).toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
+          const receiptDate = new Date(currentDate);
+
+          const receiptNumber = receipt.receiptNumber || `T${currentTerm}-001`;
+
+          if (!isFirstReceipt) {
+            doc.addPage();
+          }
+          isFirstReceipt = false;
+
+          doc.setFontSize(18);
+          doc.setFont(undefined, 'bold');
+          doc.text("HERIWADI CHRISTIAN SCHOOLS", 105, 35, { align: 'center' });
+
+          doc.setFontSize(12);
+          doc.text(`TERM ${currentTerm} - ACADEMIC YEAR ${currentYear}`, 105, 45, { align: 'center' });
+
+          doc.setFontSize(10);
+          doc.setFont(undefined, 'normal');
+          doc.text("P.O. Box 62503 - 00200 Ongata Rongai", 105, 52, { align: 'center' });
+          doc.text("Contact: 0723 322449", 105, 57, { align: 'center' });
+          doc.text("Email: heriwadics@gmail.com", 105, 62, { align: 'center' });
+
+          doc.line(20, 68, 190, 68);
+
+          doc.setFontSize(16);
+          doc.setFont(undefined, 'bold');
+          doc.text("OFFICIAL RECEIPT", 20, 80);
+
+          doc.setFontSize(10);
+          doc.setFont(undefined, 'normal');
+          doc.text("Paybill No. 8713144", 20, 88);
+
+          doc.text("A/c: Name of learner & Grade", 130, 75);
+          doc.text(`No. ${receiptNumber}, Date: ${receiptDate.toLocaleDateString('en-GB')}`, 130, 82);
+
+          doc.text(`Received from (Student Name): ${receipt.name}`, 20, 105);
+          doc.text(`Grade: ${receipt.class}`, 20, 113);
+          doc.text(`Term: ${currentTerm}`, 100, 113);
+          doc.text("Admission No.: ________________", 20, 121);
+
+          doc.setFont(undefined, 'bold');
+          doc.text("BEING PAYMENT OF:-", 20, 135);
+
+          if (typeof doc.autoTable === 'function') {
+            const tableData = [[
+              student?.tuition > 0 ? student.tuition.toString() : '',
+              student?.adm > 0 ? student.adm.toString() : '',
+              '', '', '',
+              student?.lunch > 0 ? student.lunch.toString() : '',
+              '',
+              student?.uniform > 0 ? student.uniform.toString() : '',
+              student?.books > 0 ? student.books.toString() : '',
+              '',
+              student?.stationery > 0 ? student.stationery.toString() : '',
+              student?.transport > 0 ? student.transport.toString() : '',
+              student?.trip > 0 ? student.trip.toString() : '',
+              student?.graduation > 0 ? student.graduation.toString() : '',
+              '',
+              receipt.paid.toString()
+            ]];
+
+            doc.autoTable({
+              startY: 145,
+              head: [['School fees', 'Admission fees', 'Caution fees', 'Interview', 'Tuition',
+                     'Lunch', 'Swimming', 'Uniform', 'Book fund', 'Medical',
+                     'Stationery', 'Transport', 'Trip', 'Graduation', 'School Activities', 'AMOUNT (KSHS)']],
+              body: tableData,
+              foot: [['', '', '', '', '', '', '', '', '', '', '', '', '', '', 'TOTAL', receipt.paid.toString()]],
+              theme: 'grid',
+              styles: { fontSize: 8, cellPadding: 2 },
+              headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] },
+              footStyles: { fillColor: [240, 240, 240], fontStyle: 'bold' }
+            });
+          }
+
+          let detailsY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 20 : 210;
+          doc.setFontSize(10);
+          doc.setFont(undefined, 'normal');
+
+          // Calculate balance carried forward from previous terms
+          const balanceCarriedForward = await getBalanceCarriedForward(receipt.name, currentTerm, currentYear);
+          
+          // Calculate total outstanding balance (term balance + carried forward)
+          const totalOutstandingBalance = student.balance + balanceCarriedForward;
+
+          doc.text(`Cash/Paybill: ${receipt.mode}`, 20, detailsY);
+          doc.text(`Fee Balance: ${Number(totalOutstandingBalance).toLocaleString()}`, 20, detailsY + 8);
+          doc.text(`Term: ${currentTerm}`, 20, detailsY + 16);
+
+          doc.text("For: Heriwadi Christian Schools", 130, detailsY);
+
+          doc.line(20, detailsY + 35, 80, detailsY + 35);
+          doc.line(130, detailsY + 35, 190, detailsY + 35);
+
+          doc.setFontSize(8);
+          doc.text("Accountant/Cashier", 50, detailsY + 45, { align: 'center' });
+          doc.text("For: Heriwadi Christian Schools", 160, detailsY + 45, { align: 'center' });
+
+          doc.setFont(undefined, 'bold');
+          doc.text("School Fees Once Paid is not Refundable", 105, detailsY + 60, { align: 'center' });
+        }
+
+        doc.save(`heriwadi_consolidated_receipts_term_${currentTerm}_${currentYear}.pdf`);
+        showStatus(`Consolidated receipts PDF exported successfully for Term ${currentTerm}!`, "success");
+      } catch (error) {
+        console.error('Error exporting consolidated PDF:', error);
+        showStatus("Error exporting consolidated PDF: " + error.message, "error");
+      }
     }
 
     async function exportToExcel() {
-      showStatus("Export functionality would use centralized balance calculations", "info");
+      try {
+        const receiptsCollection = getReceiptsCollection();
+        const studentsCollection = getStudentsCollection();
+        const snapshot = await receiptsCollection.get();
+        const data = [];
+        const feeItems = ['tuition', 'adm', 'lunch', 'uniform', 'books', 'stationery', 'transport', 'trip', 'graduation'];
+        const totals = { tuition: 0, adm: 0, lunch: 0, uniform: 0, books: 0, stationery: 0, transport: 0, trip: 0, graduation: 0 };
+
+        await Promise.all(snapshot.docs.map(async doc => {
+          const receipt = doc.data();
+          const studentSnapshot = await studentsCollection.where('name', '==', receipt.name).get();
+          if (!studentSnapshot.empty) {
+            const student = studentSnapshot.docs[0].data();
+            
+            // Calculate balance carried forward from previous terms
+            const balanceCarriedForward = await getBalanceCarriedForward(receipt.name, currentTerm, currentYear);
+            
+            const remainingPaid = receipt.paid;
+            const fees = [
+              { name: 'Tuition', amount: student.tuition || 0 },
+              { name: 'Adm Fee', amount: student.adm || 0 },
+              { name: 'Lunch', amount: student.lunch || 0 },
+              { name: 'Uniform', amount: student.uniform || 0 },
+              { name: 'Book Fund', amount: student.books || 0 },
+              { name: 'Stationery', amount: student.stationery || 0 },
+              { name: 'Transport', amount: student.transport || 0 },
+              { name: 'Trip', amount: student.trip || 0 },
+              { name: 'Graduation', amount: student.graduation || 0 }
+            ];
+
+            let paidSoFar = 0;
+            fees.forEach(fee => {
+              const feePaid = Math.min(remainingPaid - paidSoFar, fee.amount);
+              paidSoFar += feePaid;
+              if (feePaid > 0) {
+                totals[feeItems[fees.indexOf(fee)]] += feePaid;
+                data.push({
+                  Student: receipt.name,
+                  Class: receipt.class,
+                  Term: currentTerm,
+                  Year: currentYear,
+                  FeeItem: fee.name,
+                  AmountPaid: feePaid,
+                  Date: new Date(receipt.date).toLocaleDateString('en-GB'),
+                  BalanceCarriedForward: balanceCarriedForward,
+                  TotalOutstandingBalance: student.balance + balanceCarriedForward
+                });
+              }
+            });
+          }
+        }));
+
+        // Add total row
+        data.push({ Student: 'Total', Class: '', Term: '', Year: '', FeeItem: '', AmountPaid: '', Date: '', BalanceCarriedForward: '', TotalOutstandingBalance: '' });
+        feeItems.forEach(item => {
+          data.push({ Student: '', Class: '', Term: '', Year: '', FeeItem: item.charAt(0).toUpperCase() + item.slice(1), AmountPaid: totals[item], Date: '', BalanceCarriedForward: '', TotalOutstandingBalance: '' });
+        });
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(data);
+        XLSX.utils.book_append_sheet(wb, ws, `Term ${currentTerm} Fee Income`);
+        XLSX.writeFile(wb, `fee_income_term_${currentTerm}_${currentYear}.xlsx`);
+        showStatus(`Export to Excel completed for Term ${currentTerm}!`, "success");
+      } catch (error) {
+        console.error('Error exporting to Excel:', error);
+        showStatus("Error exporting to Excel: " + error.message, "error");
+      }
     }
+
+    // Additional utility functions for term management
+
+    async function copyStudentsToNewTerm(fromTerm, toTerm) {
+      try {
+        const fromStudentsCollection = getStudentsCollection(fromTerm, currentYear);
+        const toStudentsCollection = getStudentsCollection(toTerm, currentYear);
+        
+        const snapshot = await fromStudentsCollection.get();
+        if (snapshot.empty) {
+          showStatus(`No students found in Term ${fromTerm} to copy`, "info");
+          return;
+        }
+
+        const batch = db.batch();
+        snapshot.forEach(doc => {
+          const studentData = {
+            ...doc.data(),
+            term: toTerm,
+            paid: 0, // Reset paid amount for new term
+            balance: doc.data().total, // Reset balance to full amount
+            copiedFrom: fromTerm
+          };
+          const newDocRef = toStudentsCollection.doc();
+          batch.set(newDocRef, studentData);
+        });
+
+        await batch.commit();
+        showStatus(`Successfully copied ${snapshot.size} students from Term ${fromTerm} to Term ${toTerm}`, "success");
+        
+        if (toTerm === currentTerm) {
+          populateStudents();
+        }
+      } catch (error) {
+        console.error('Error copying students:', error);
+        showStatus("Error copying students: " + error.message, "error");
+      }
+    }
+
+    // Add keyboard shortcuts for term switching
+    document.addEventListener('keydown', function(e) {
+      if (e.altKey) {
+        switch(e.key) {
+          case '1':
+            e.preventDefault();
+            switchTerm(1);
+            break;
+          case '2':
+            e.preventDefault();
+            switchTerm(2);
+            break;
+          case '3':
+            e.preventDefault();
+            switchTerm(3);
+            break;
+        }
+      }
+    });
+
+    // Function to clear term selection (useful for debugging)
+    function clearTermSelection() {
+      sessionStorage.removeItem('heriwadi_current_term');
+      showStatus("Term selection cleared. Page will reload with default Term 2.", "info");
+      setTimeout(() => location.reload(), 1500);
+    }
+
+    // Function to get current term for other scripts/pages to use
+    function getCurrentTerm() {
+      return currentTerm;
+    }
+
+    // Function to set term programmatically
+    function setCurrentTerm(term) {
+      if (term >= 1 && term <= 3) {
+        switchTerm(term);
+      } else {
+        showStatus("Invalid term. Please use 1, 2, or 3.", "error");
+      }
+    }
+
+    // Clean up listeners when leaving the page
+    window.addEventListener('beforeunload', function() {
+      if (studentListener) {
+        studentListener();
+      }
+      if (receiptListener) {
+        receiptListener();
+      }
+    });
+
+    // Make functions available globally for debugging
+    window.heriwadi = {
+      getCurrentTerm,
+      setCurrentTerm,
+      clearTermSelection,
+      switchTerm
+    };
+
+    console.log("Heriwadi School Management System initialized with persistent term selection");
+    console.log("Use window.heriwadi.getCurrentTerm() to check current term");
+    console.log("Use window.heriwadi.setCurrentTerm(1|2|3) to change term programmatically");
+  </script>
+</body>
+</html>
