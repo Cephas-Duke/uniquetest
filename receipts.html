@@ -1893,7 +1893,6 @@
                     ${(() => {
                       // Calculate total outstanding balance including carried forward
                       const totalOutstandingBalance = student.balance + balanceCarriedForward;
-                      let initialBalance = totalOutstandingBalance;
                       let remainingPaid = receipt.paid;
                       const fees = [
                         { name: 'Tuition', amount: student.tuition || 0 },
@@ -1908,36 +1907,41 @@
                       ];
                       let rows = '';
 
-                      fees.forEach(fee => {
-                        const feeCharged = Math.min(initialBalance, fee.amount);
-                        initialBalance -= feeCharged;
-                        const feePaid = Math.min(remainingPaid, feeCharged);
-                        remainingPaid -= feePaid;
-                        const feeBalance = feeCharged - feePaid;
-
-                        rows += `
-                          <tr class="fees-row">
-                            <td>${fee.name}</td>
-                            <td>${feeCharged > 0 ? feeCharged.toLocaleString() : '0'}</td>
-                            <td>${feePaid > 0 ? feePaid.toLocaleString() : '0'}</td>
-                            <td>${feeBalance > 0 ? feeBalance.toLocaleString() : '0'}</td>
-                          </tr>
-                        `;
-                      });
-
-                      // Show carried forward balance if applicable
+                      // First show carried forward balance if applicable
                       if (balanceCarriedForward > 0) {
                         rows += `
-                          <tr class="total-row">
-                            <td colspan="3" style="text-align: right; padding-right: 8px;"><strong>Balance Carried Forward</strong></td>
-                            <td><strong>${balanceCarriedForward.toLocaleString()}</strong></td>
+                          <tr class="fees-row">
+                            <td>Balance Carried Forward</td>
+                            <td>${balanceCarriedForward.toLocaleString()}</td>
+                            <td>0</td>
+                            <td>${balanceCarriedForward.toLocaleString()}</td>
                           </tr>
                         `;
                       }
 
+                      // Process each fee item
+                      fees.forEach(fee => {
+                        if (fee.amount > 0) {
+                          const feePaid = Math.min(remainingPaid, fee.amount);
+                          remainingPaid -= feePaid;
+                          const feeBalance = fee.amount - feePaid;
+
+                          rows += `
+                            <tr class="fees-row">
+                              <td>${fee.name}</td>
+                              <td>${fee.amount.toLocaleString()}</td>
+                              <td>${feePaid.toLocaleString()}</td>
+                              <td>${feeBalance.toLocaleString()}</td>
+                            </tr>
+                          `;
+                        }
+                      });
+
+                      // Add total row
                       rows += `
                         <tr class="total-row">
-                          <td colspan="3" style="text-align: right; padding-right: 8px;"><strong>Total Receipt Balance</strong></td>
+                          <td colspan="2" style="text-align: right; padding-right: 8px;"><strong>Total</strong></td>
+                          <td><strong>${receipt.paid.toLocaleString()}</strong></td>
                           <td><strong>${totalOutstandingBalance.toLocaleString()}</strong></td>
                         </tr>
                       `;
@@ -1987,6 +1991,8 @@
         showStatus("Error printing receipt: " + error.message, "error");
       }
     }
+
+    // ... (the rest of your JavaScript remains exactly the same) ...
 
     async function exportByClassPDF() {
       try {
