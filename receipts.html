@@ -1630,7 +1630,8 @@
       }
     }
 
-    async function calculateFeeItemBalances(studentName, currentTerm, currentYear) {
+
+    async function calculateFeeItemBalances(studentName, currentTerm, currentYear, currentReceiptId = null) {
       const feeItems = [
         'tuition', 'adm', 'lunch', 'uniform', 'books', 
         'stationery', 'transport', 'trip', 'graduation'
@@ -1651,21 +1652,26 @@
         balances[item] = student[item] || 0;
       });
       
-      // Get all receipts for this student in current term
+      // Get all receipts for this student in current term (without ordering to avoid index issues)
       const receiptsCollection = getReceiptsCollection(currentTerm, currentYear);
-      const receiptsSnapshot = await receiptsCollection
-        .where('name', '==', studentName)
-        .orderBy('date', 'asc')
-        .get();
+      const receiptsSnapshot = await receiptsCollection.where('name', '==', studentName).get();
       
       if (receiptsSnapshot.empty) {
         return balances;
       }
       
-      // Process all receipts to calculate remaining balances
+      // Convert to array and sort manually to avoid Firestore index requirements
+      const receipts = [];
       receiptsSnapshot.docs.forEach(doc => {
-        const receipt = doc.data();
-        if (receipt.id === currentReceiptId) {
+        receipts.push({ id: doc.id, ...doc.data() });
+      });
+      
+      // Sort by date manually
+      receipts.sort((a, b) => new Date(a.date) - new Date(b.date));
+      
+      // Process all receipts to calculate remaining balances
+      receipts.forEach(receipt => {
+        if (currentReceiptId && receipt.id === currentReceiptId) {
           // Skip the current receipt being printed
           return;
         }
@@ -1698,7 +1704,7 @@
           return;
         }
         
-        const receipt = receiptDoc.data();
+        const receipt = { id: receiptDoc.id, ...receiptDoc.data() };
         const studentSnapshot = await studentsCollection.where('name', '==', receipt.name).get();
         
         if (studentSnapshot.empty) {
@@ -1715,11 +1721,8 @@
         const balanceCarriedForward = await getBalanceCarriedForward(receipt.name, currentTerm, currentYear);
         
         // Calculate remaining balances for each fee item considering previous payments
-        const feeItemBalances = await calculateFeeItemBalances(receipt.name, currentTerm, currentYear);
+        const feeItemBalances = await calculateFeeItemBalances(receipt.name, currentTerm, currentYear, receipt.id);
         
-        // Store current receipt ID to skip it in calculations
-        window.currentReceiptId = id;
-
         // Get logo data URL
         const logoDataUrl = await getLogoDataUrl();
 
@@ -1731,7 +1734,173 @@
             <head>
               <title>Official Receipt - ${receipt.name} - Term ${currentTerm}</title>
               <style>
-                /* ... (your existing CSS styles) ... */
+                @page { 
+                  size: A4; 
+                  margin: 10mm;
+                }
+                body { 
+                  font-family: Arial, sans-serif; 
+                  margin: 0; 
+                  padding: 10mm; 
+                  font-size: 11px; 
+                  line-height: 1.2;
+                  background: white;
+                  max-height: 277mm; /* A4 height minus margins */
+                  overflow: hidden;
+                }
+                .header { 
+                  text-align: center; 
+                  margin-bottom: 15px; 
+                  border-bottom: 2px solid #000;
+                  padding-bottom: 10px;
+                }
+                .school-logo {
+                  width: 70px;
+                  height: 70px;
+                  margin: 0 auto 8px;
+                  display: block;
+                  object-fit: contain;
+                }
+                .logo-fallback {
+                  width: 70px;
+                  height: 70px;
+                  margin: 0 auto 8px;
+                  display: block;
+                  border: 2px solid #000;
+                  background: #f0f0f0;
+                  line-height: 66px;
+                  text-align: center;
+                  font-weight: bold;
+                  font-size: 12px;
+                  color: #333;
+                }
+                .school-motto {
+                  font-size: 11px;
+                  font-weight: bold;
+                  margin: 4px 0;
+                }
+                .school-name { 
+                  font-size: 16px; 
+                  font-weight: bold; 
+                  color: #000; 
+                  margin: 6px 0 4px 0; 
+                  letter-spacing: 1px;
+                }
+                .contact-info { 
+                  font-size: 9px; 
+                  margin: 1px 0;
+                  color: #333;
+                }
+                .receipt-title { 
+                  font-size: 14px; 
+                  font-weight: bold; 
+                  margin: 15px 0 10px 0; 
+                  text-decoration: underline;
+                }
+                .receipt-header {
+                  display: flex;
+                  justify-content: space-between;
+                  margin-bottom: 15px;
+                  align-items: flex-end;
+                }
+                .receipt-number {
+                  font-size: 11px;
+                  font-weight: bold;
+                }
+                .paybill-info {
+                  font-size: 9px;
+                  text-align: right;
+                }
+                .student-info { 
+                  margin-bottom: 12px; 
+                  line-height: 1.4;
+                }
+                .student-info div {
+                  margin-bottom: 6px;
+                  display: flex;
+                }
+                .student-info strong {
+                  min-width: 150px;
+                  display: inline-block;
+                }
+                .term-info {
+                  background-color: #f0f0f0;
+                  padding: 8px;
+                  margin: 12px 0;
+                  border: 1px solid #ddd;
+                  text-align: center;
+                  font-weight: bold;
+                  font-size: 11px;
+                }
+                .payment-section {
+                  margin: 15px 0 12px 0;
+                  font-weight: bold;
+                  font-size: 11px;
+                }
+                .fees-table { 
+                  width: 100%; 
+                  border-collapse: collapse; 
+                  margin: 12px 0; 
+                  font-size: 8px;
+                }
+                .fees-table th, .fees-table td { 
+                  border: 1px solid #000; 
+                  padding: 5px 3px; 
+                  text-align: center;
+                  vertical-align: middle;
+                }
+                .fees-table th { 
+                  background-color: #f8f8f8; 
+                  font-weight: bold; 
+                  font-size: 8px;
+                }
+                .fees-row td {
+                  font-size: 8px;
+                  height: 25px;
+                }
+                .total-row { 
+                  font-weight: bold; 
+                  background-color: #f0f0f0;
+                }
+                .total-row td {
+                  font-size: 9px;
+                }
+                .payment-details {
+                  margin: 15px 0;
+                  display: flex;
+                  justify-content: space-between;
+                  font-size: 10px;
+                  page-break-inside: avoid;
+                }
+                .signatures { 
+                  margin-top: 30px;
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: flex-end;
+                  page-break-inside: avoid;
+                }
+                .signature-box { 
+                  text-align: center; 
+                  width: 180px; 
+                }
+                .signature-line { 
+                  border-bottom: 1px solid #000; 
+                  margin-bottom: 4px; 
+                  height: 25px; 
+                }
+                .refund-policy {
+                  text-align: center;
+                  margin-top: 20px;
+                  font-size: 9px;
+                  font-weight: bold;
+                  border-top: 1px solid #000;
+                  padding-top: 8px;
+                  page-break-inside: avoid;
+                }
+                .content-container {
+                  max-height: 240mm;
+                  overflow: hidden;
+                }
               </style>
             </head>
             <body>
@@ -1875,9 +2044,6 @@
         `);
         printWindow.document.close();
         
-        // Clean up global variable
-        window.currentReceiptId = null;
-        
         // Wait for the content to load before printing
         setTimeout(() => {
           printWindow.print();
@@ -1886,12 +2052,8 @@
       } catch (error) {
         console.error('Error printing receipt:', error);
         showStatus("Error printing receipt: " + error.message, "error");
-        
-        // Clean up global variable in case of error
-        window.currentReceiptId = null;
       }
     }
-
 
     async function exportByClassPDF() {
       try {
