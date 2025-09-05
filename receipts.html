@@ -1157,124 +1157,186 @@
     }
 
     async function updateReceiptTable() {
-      try {
-        const groupedReceipts = document.getElementById('groupedReceipts');
-        groupedReceipts.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading receipts...</div>';
+  try {
+    const groupedReceipts = document.getElementById('groupedReceipts');
+    groupedReceipts.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading receipts...</div>';
+    
+    const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+    const receiptsCollection = getReceiptsCollection();
+    const snapshot = await receiptsCollection.orderBy('date', 'desc').get();
+    
+    if (snapshot.empty) {
+      groupedReceipts.innerHTML = `<div class="status-message info">No receipts found for Term ${currentTerm}.</div>`;
+      return;
+    }
+
+    const receipts = [];
+    snapshot.forEach(doc => {
+      receipts.push({ id: doc.id, ...doc.data() });
+    });
+
+    const filteredReceipts = searchQuery
+      ? receipts.filter(r => r.name.toLowerCase().includes(searchQuery))
+      : receipts;
+
+    if (filteredReceipts.length === 0) {
+      groupedReceipts.innerHTML = '<div class="status-message info">No receipts match your search.</div>';
+      return;
+    }
+
+    groupedReceipts.innerHTML = '';
+    
+    const classes = [
+      "Play Group", "PP1", "PP2",
+      "Grade 1", "Grade 2", "Grade 3",
+      "Grade 4", "Grade 5", "Grade 6"
+    ];
+
+    for (const cls of classes) {
+      const classReceipts = filteredReceipts.filter(r => r.class === cls);
+      if (classReceipts.length === 0) continue;
+
+      const section = document.createElement('div');
+      section.className = 'class-section';
+
+      const header = document.createElement('div');
+      header.className = 'class-header';
+      header.innerHTML = `
+        <h3>${cls} - Term ${currentTerm}</h3>
+        <span class="badge">${classReceipts.length} receipt${classReceipts.length !== 1 ? 's' : ''}</span>
+      `;
+      header.onclick = () => {
+        const content = section.querySelector('.class-content');
+        content.style.display = content.style.display === 'none' ? 'block' : 'none';
+      };
+      section.appendChild(header);
+
+      const content = document.createElement('div');
+      content.className = 'class-content';
+      content.style.display = 'none';
+      
+      const table = document.createElement('table');
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Amount Paid</th>
+            <th>Balance After Payment</th>
+            <th>Payment Mode</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      `;
+      const tbody = table.querySelector('tbody');
+
+      // FIXED: Calculate historical balance for each receipt
+      await Promise.all(classReceipts.map(async r => {
+        // Calculate what the balance was immediately after this specific payment
+        const balanceAfterPayment = await calculateHistoricalBalance(r.name, r.id, currentTerm, currentYear);
         
-        const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-        const receiptsCollection = getReceiptsCollection();
-        const snapshot = await receiptsCollection.orderBy('date', 'desc').get();
-        
-        if (snapshot.empty) {
-          groupedReceipts.innerHTML = `<div class="status-message info">No receipts found for Term ${currentTerm}.</div>`;
-          return;
-        }
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>
+            <strong>${r.name}</strong><br>
+            <small>${r.class} - Term ${currentTerm}</small>
+          </td>
+          <td>${r.paid.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
+          <td>${balanceAfterPayment.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
+          <td>${r.mode}</td>
+          <td>${new Date(r.date).toLocaleDateString('en-GB')}</td>
+          <td>
+            <button class="btn btn-sm btn-info" onclick="printReceipt('${r.id}')">
+              <i class="fas fa-print"></i> Print
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="deleteReceipt('${r.id}')">
+              <i class="fas fa-trash"></i> Delete
+            </button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      }));
 
-        const receipts = [];
-        snapshot.forEach(doc => {
-          receipts.push({ id: doc.id, ...doc.data() });
-        });
-
-        const filteredReceipts = searchQuery
-          ? receipts.filter(r => r.name.toLowerCase().includes(searchQuery))
-          : receipts;
-
-        if (filteredReceipts.length === 0) {
-          groupedReceipts.innerHTML = '<div class="status-message info>No receipts match your search.</div>';
-          return;
-        }
-
-        groupedReceipts.innerHTML = '';
-        
-        const classes = [
-          "Play Group", "PP1", "PP2",
-          "Grade 1", "Grade 2", "Grade 3",
-          "Grade 4", "Grade 5", "Grade 6"
-        ];
-
-        for (const cls of classes) {
-          const classReceipts = filteredReceipts.filter(r => r.class === cls);
-          if (classReceipts.length === 0) continue;
-
-          const section = document.createElement('div');
-          section.className = 'class-section';
-
-          const header = document.createElement('div');
-          header.className = 'class-header';
-          header.innerHTML = `
-            <h3>${cls} - Term ${currentTerm}</h3>
-            <span class="badge">${classReceipts.length} receipt${classReceipts.length !== 1 ? 's' : ''}</span>
-          `;
-          header.onclick = () => {
-            const content = section.querySelector('.class-content');
-            content.style.display = content.style.display === 'none' ? 'block' : 'none';
-          };
-          section.appendChild(header);
-
-          const content = document.createElement('div');
-          content.className = 'class-content';
-          content.style.display = 'none';
-          
-          const table = document.createElement('table');
-          table.innerHTML = `
-            <thead>
-              <tr>
-                <th>Student</th>
-                <th>Amount Paid</th>
-                <th>Balance</th>
-                <th>Payment Mode</th>
-                <th>Date</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          `;
-          const tbody = table.querySelector('tbody');
-
-          await Promise.all(classReceipts.map(async r => {
-            const studentsCollection = getStudentsCollection();
-            const studentSnapshot = await studentsCollection.where('name', '==', r.name).get();
-            if (!studentSnapshot.empty) {
-              const student = studentSnapshot.docs[0].data();
-              
-              // Calculate balance carried forward from previous terms
-              const balanceCarriedForward = await getBalanceCarriedForward(r.name, currentTerm, currentYear);
-              
-              // Calculate total outstanding balance (term balance + carried forward)
-              const totalOutstandingBalance = student.balance + balanceCarriedForward;
-              
-              const row = document.createElement('tr');
-              row.innerHTML = `
-                <td>
-                  <strong>${r.name}</strong><br>
-                  <small>${r.class} - Term ${currentTerm}</small>
-                </td>
-                <td>${r.paid.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
-                <td>${totalOutstandingBalance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
-                <td>${r.mode}</td>
-                <td>${new Date(r.date).toLocaleDateString('en-GB')}</td>
-                <td>
-                  <button class="btn btn-sm btn-info" onclick="printReceipt('${r.id}')">
-                    <i class="fas fa-print"></i> Print
-                  </button>
-                  <button class="btn btn-sm btn-danger" onclick="deleteReceipt('${r.id}')">
-                    <i class="fas fa-trash"></i> Delete
-                  </button>
-                </td>
-              `;
-              tbody.appendChild(row);
-            }
-          }));
-
-          content.appendChild(table);
-          section.appendChild(content);
-          groupedReceipts.appendChild(section);
-        }
-      } catch (error) {
-        console.error('Error updating receipt table:', error);
-        showStatus(`Error loading receipts: ${error.message}. Check Firebase rules or network.`, "error");
+      content.appendChild(table);
+      section.appendChild(content);
+      groupedReceipts.appendChild(section);
+    }
+  } catch (error) {
+    console.error('Error updating receipt table:', error);
+    showStatus(`Error loading receipts: ${error.message}. Check Firebase rules or network.`, "error");
+  }
+}
+    async function calculateHistoricalBalance(studentName, targetReceiptId, term, year) {
+  try {
+    const receiptsCollection = getReceiptsCollection(term, year);
+    const studentsCollection = getStudentsCollection(term, year);
+    
+    // Get the target receipt
+    const targetReceiptDoc = await receiptsCollection.doc(targetReceiptId).get();
+    if (!targetReceiptDoc.exists) return 0;
+    
+    const targetReceipt = targetReceiptDoc.data();
+    const targetReceiptDate = new Date(targetReceipt.date);
+    
+    // Get student's fee structure (use stored fee structure in receipt if available)
+    let totalFees = 0;
+    if (targetReceipt.feeStructure) {
+      // Use the fee structure stored with the receipt
+      const feeStructure = targetReceipt.feeStructure;
+      totalFees = Object.values(feeStructure).reduce((sum, amount) => sum + (amount || 0), 0);
+    } else {
+      // Fallback: get student's current fee structure
+      const studentSnapshot = await studentsCollection.where('name', '==', studentName).get();
+      if (!studentSnapshot.empty) {
+        const student = studentSnapshot.docs[0].data();
+        totalFees = (student.tuition || 0) + (student.adm || 0) + (student.books || 0) + 
+                   (student.stationery || 0) + (student.uniform || 0) + (student.lunch || 0) + 
+                   (student.transport || 0) + (student.trip || 0) + (student.graduation || 0);
       }
     }
+    
+    // Calculate balance carried forward from previous terms
+    const balanceCarriedForward = await getBalanceCarriedForward(studentName, term, year);
+    
+    // Get all receipts for this student up to and including the target receipt
+    const allReceiptsSnapshot = await receiptsCollection.where('name', '==', studentName).get();
+    const allReceipts = [];
+    
+    allReceiptsSnapshot.docs.forEach(doc => {
+      const receiptData = { id: doc.id, ...doc.data() };
+      const receiptDate = new Date(receiptData.date);
+      
+      // Include receipts up to and including the target receipt date
+      if (receiptDate <= targetReceiptDate) {
+        allReceipts.push(receiptData);
+      }
+    });
+    
+    // Sort receipts by date
+    allReceipts.sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    // Calculate total paid up to and including this receipt
+    let totalPaid = 0;
+    for (const receipt of allReceipts) {
+      totalPaid += receipt.paid;
+      // If this is our target receipt, stop here
+      if (receipt.id === targetReceiptId) {
+        break;
+      }
+    }
+    
+    // Calculate balance after this payment
+    const totalOwed = totalFees + balanceCarriedForward;
+    const balanceAfterPayment = totalOwed - totalPaid;
+    
+    return Math.max(0, balanceAfterPayment); // Don't show negative balances
+    
+  } catch (error) {
+    console.error('Error calculating historical balance:', error);
+    return 0;
+  }
+}
 
     async function handleReceiptSubmit(e) {
   e.preventDefault();
@@ -1582,52 +1644,44 @@
     }
 
     async function deleteReceipt(id) {
-      if (confirm("Are you sure you want to delete this receipt?")) {
-        try {
-          const receiptsCollection = getReceiptsCollection();
-          const studentsCollection = getStudentsCollection();
+  if (confirm("Are you sure you want to delete this receipt?")) {
+    try {
+      const receiptsCollection = getReceiptsCollection();
+      const studentsCollection = getStudentsCollection();
+      
+      const receiptRef = receiptsCollection.doc(id);
+      const receiptDoc = await receiptRef.get();
+      
+      if (receiptDoc.exists) {
+        const receipt = receiptDoc.data();
+        const studentQuery = await studentsCollection.where('name', '==', receipt.name).get();
+        
+        if (!studentQuery.empty) {
+          const studentDoc = studentQuery.docs[0];
+          const studentData = studentDoc.data();
           
-          const receiptRef = receiptsCollection.doc(id);
-          const receiptDoc = await receiptRef.get();
+          // FIXED: Properly update student balance when deleting receipt
+          const updatedStudent = {
+            ...studentData,
+            paid: Math.max(0, studentData.paid - receipt.paid), // Don't go negative
+            balance: studentData.balance + receipt.paid // Add back the deleted payment
+          };
           
-          if (receiptDoc.exists) {
-            const receipt = receiptDoc.data();
-            const studentQuery = await studentsCollection.where('name', '==', receipt.name).get();
-            
-            if (!studentQuery.empty) {
-              const studentDoc = studentQuery.docs[0];
-              const studentData = studentDoc.data();
-              
-              // Calculate balance carried forward from previous terms
-              const balanceCarriedForward = await getBalanceCarriedForward(receipt.name, currentTerm, currentYear);
-              
-              // Calculate total outstanding balance (term balance + carried forward)
-              const totalOutstandingBalance = studentData.balance + balanceCarriedForward;
-              
-              // Add the paid amount back to the total outstanding balance
-              const updatedStudent = {
-                ...studentData,
-                paid: studentData.paid - receipt.paid,
-                balance: totalOutstandingBalance + receipt.paid
-              };
-              
-              await db.runTransaction(async transaction => {
-                transaction.update(studentDoc.ref, updatedStudent);
-                transaction.delete(receiptRef);
-              });
-              
-              showStatus(`Receipt deleted and student balance updated successfully for Term ${currentTerm}`, "success");
-              updateReceiptTable();
-            }
-          }
-        } catch (error) {
-          console.error('Error deleting receipt:', error);
-          showStatus("Error deleting receipt: " + error.message, "error");
+          await db.runTransaction(async transaction => {
+            transaction.update(studentDoc.ref, updatedStudent);
+            transaction.delete(receiptRef);
+          });
+          
+          showStatus(`Receipt deleted and student balance updated successfully for Term ${currentTerm}`, "success");
+          updateReceiptTable();
         }
       }
+    } catch (error) {
+      console.error('Error deleting receipt:', error);
+      showStatus("Error deleting receipt: " + error.message, "error");
     }
-
-
+  }
+}
     async function calculateFeeItemBalancesAtReceiptTime(studentName, currentTerm, currentYear, targetReceiptId) {
   const feeItems = [
     'tuition', 'adm', 'lunch', 'uniform', 'books', 
