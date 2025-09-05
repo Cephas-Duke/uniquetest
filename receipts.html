@@ -1231,10 +1231,20 @@
       `;
       const tbody = table.querySelector('tbody');
 
-      // FIXED: Calculate historical balance for each receipt
+      // FIXED: Get current student balance for each receipt
       await Promise.all(classReceipts.map(async r => {
-        // Calculate what the balance was immediately after this specific payment
-        const balanceAfterPayment = await calculateHistoricalBalance(r.name, r.id, currentTerm, currentYear);
+        // Get current student data to show current balance
+        const studentsCollection = getStudentsCollection();
+        const studentSnapshot = await studentsCollection.where('name', '==', r.name).get();
+        let currentBalance = 0;
+        
+        if (!studentSnapshot.empty) {
+          const student = studentSnapshot.docs[0].data();
+          // Calculate balance carried forward from previous terms
+          const balanceCarriedForward = await getBalanceCarriedForward(r.name, currentTerm, currentYear);
+          // Show current total outstanding balance (current term balance + carried forward)
+          currentBalance = student.balance + balanceCarriedForward;
+        }
         
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -1243,7 +1253,7 @@
             <small>${r.class} - Term ${currentTerm}</small>
           </td>
           <td>${r.paid.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
-          <td>${balanceAfterPayment.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
+          <td>${currentBalance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
           <td>${r.mode}</td>
           <td>${new Date(r.date).toLocaleDateString('en-GB')}</td>
           <td>
@@ -1267,7 +1277,10 @@
     showStatus(`Error loading receipts: ${error.message}. Check Firebase rules or network.`, "error");
   }
 }
-    async function calculateHistoricalBalance(studentName, targetReceiptId, term, year) {
+
+// FIXED: Replace the existing calculateHistoricalBalance function with this simplified version
+// (This function is still used by printReceipt but not by the main table anymore)
+async function calculateHistoricalBalance(studentName, targetReceiptId, term, year) {
   try {
     const receiptsCollection = getReceiptsCollection(term, year);
     const studentsCollection = getStudentsCollection(term, year);
@@ -1337,7 +1350,6 @@
     return 0;
   }
 }
-
     async function handleReceiptSubmit(e) {
   e.preventDefault();
   
