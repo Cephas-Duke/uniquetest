@@ -990,6 +990,30 @@
       
       showStatus(`Switched to Term ${term} - This selection will persist across pages`, "success");
     }
+    document.addEventListener('DOMContentLoaded', function() {
+  updateCurrentYearDisplay();
+  // Initialize UI with saved term on page load
+  initializeTermFromStorage();
+  initializeMigration().then(() => {
+    populateStudents();
+    updateReceiptTable();
+    // Set up real-time listeners after migration
+    setupRealTimeListeners();
+  });
+  
+  // Add event listeners for form validation
+  document.getElementById('amountPaid').addEventListener('input', validateAmount);
+  document.getElementById('receiptForm').addEventListener('submit', handleReceiptSubmit);
+  document.getElementById('studentForm').addEventListener('submit', handleStudentSubmit);
+  
+  // Initialize modals - UPDATE THIS SECTION
+  const modal = document.getElementById('studentManagerModal');
+  if (modal) {
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) closeStudentManager();
+    });
+  }
+});
 
     // Migration function to move existing data to Term 2
     async function initializeMigration() {
@@ -2521,6 +2545,53 @@ async function printReceipt(id) {
       clearTermSelection,
       switchTerm
     };
+    // ADD these missing functions to your receipts.html file after the existing JavaScript functions
+
+// Function to open the student manager modal
+function openStudentManager() {
+  const modal = document.getElementById('studentManagerModal');
+  modal.classList.add('show');
+  renderStudentList();
+  updateTermDisplays(); // Make sure term displays are updated in the modal
+}
+
+// Function to close the student manager modal
+function closeStudentManager() {
+  const modal = document.getElementById('studentManagerModal');
+  modal.classList.remove('show');
+  
+  // Reset the student form
+  document.getElementById('studentForm').reset();
+}
+
+// Function to handle modal clicks (close when clicking outside)
+function handleModalClick(event) {
+  const modal = document.getElementById('studentManagerModal');
+  if (event.target === modal) {
+    closeStudentManager();
+  }
+}
+
+// Add event listener for ESC key to close modal
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('studentManagerModal');
+    if (modal.classList.contains('show')) {
+      closeStudentManager();
+    }
+  }
+});
+
+// Make sure the modal click event is properly attached
+document.addEventListener('DOMContentLoaded', function() {
+  // ... your existing DOMContentLoaded code ...
+  
+  // Add modal event listener
+  const modal = document.getElementById('studentManagerModal');
+  if (modal) {
+    modal.addEventListener('click', handleModalClick);
+  }
+});
 
     console.log("Heriwadi School Management System initialized with persistent term selection");
     console.log("Use window.heriwadi.getCurrentTerm() to check current term");
