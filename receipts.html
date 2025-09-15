@@ -1292,8 +1292,7 @@ async function updateReceiptTable() {
   }
 }
 
-// FIXED: Replace the existing calculateHistoricalBalance function with this simplified version
-// (This function is still used by printReceipt but not by the main table anymore)
+// CORRECTED: Calculate the exact balance that existed immediately after a specific receipt was processed
 async function calculateHistoricalBalance(studentName, targetReceiptId, term, year) {
   try {
     const receiptsCollection = getReceiptsCollection(term, year);
@@ -1326,38 +1325,40 @@ async function calculateHistoricalBalance(studentName, targetReceiptId, term, ye
     // Calculate balance carried forward from previous terms
     const balanceCarriedForward = await getBalanceCarriedForward(studentName, term, year);
     
-    // Get all receipts for this student up to and including the target receipt
+    // Get ALL receipts for this student in this term
     const allReceiptsSnapshot = await receiptsCollection.where('name', '==', studentName).get();
     const allReceipts = [];
     
     allReceiptsSnapshot.docs.forEach(doc => {
       const receiptData = { id: doc.id, ...doc.data() };
-      const receiptDate = new Date(receiptData.date);
-      
-      // Include receipts up to and including the target receipt date
-      if (receiptDate <= targetReceiptDate) {
-        allReceipts.push(receiptData);
-      }
+      allReceipts.push(receiptData);
     });
     
-    // Sort receipts by date
+    // Sort receipts by date (oldest first)
     allReceipts.sort((a, b) => new Date(a.date) - new Date(b.date));
     
-    // Calculate total paid up to and including this receipt
-    let totalPaid = 0;
+    // Calculate total paid UP TO AND INCLUDING the target receipt
+    let totalPaidUpToTarget = 0;
     for (const receipt of allReceipts) {
-      totalPaid += receipt.paid;
-      // If this is our target receipt, stop here
-      if (receipt.id === targetReceiptId) {
-        break;
+      const receiptDate = new Date(receipt.date);
+      
+      // Include payments up to and including the target receipt
+      if (receiptDate <= targetReceiptDate) {
+        totalPaidUpToTarget += receipt.paid;
+        
+        // If this is our target receipt, we've found our stopping point
+        if (receipt.id === targetReceiptId) {
+          break;
+        }
       }
     }
     
-    // Calculate balance after this payment
+    // Calculate the balance that existed immediately AFTER this specific payment
     const totalOwed = totalFees + balanceCarriedForward;
-    const balanceAfterPayment = totalOwed - totalPaid;
+    const balanceAfterThisPayment = totalOwed - totalPaidUpToTarget;
     
-    return Math.max(0, balanceAfterPayment); // Don't show negative balances
+    // Return the balance (don't allow negative balances in display)
+    return Math.max(0, balanceAfterThisPayment);
     
   } catch (error) {
     console.error('Error calculating historical balance:', error);
