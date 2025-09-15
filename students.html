@@ -1345,47 +1345,58 @@
       }
     }
 
-    // Load students from Firestore
-    async function loadStudents() {
-      const groupedTables = document.getElementById('groupedTables');
-      const statsContainer = document.getElementById('statsContainer');
-      
-      groupedTables.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading students...</div>';
-      
-      const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-      const classFilter = document.getElementById('classFilter').value;
+    // Replace the existing loadStudents function with this corrected version
+async function loadStudents() {
+  const groupedTables = document.getElementById('groupedTables');
+  const statsContainer = document.getElementById('statsContainer');
+  
+  groupedTables.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading students...</div>';
+  
+  const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+  const classFilter = document.getElementById('classFilter').value;
 
-      try {
-        const studentsCollection = getStudentsCollection();
-        let query = studentsCollection;
-        if (classFilter) {
-          query = query.where('class', '==', classFilter);
-        }
-
-        const snapshot = await query.orderBy('name').get();
-        const students = [];
-        snapshot.forEach(doc => {
-          students.push({ id: doc.id, ...doc.data() });
-        });
-
-        const filteredStudents = searchQuery
-          ? students.filter(s => s.name.toLowerCase().includes(searchQuery))
-          : students;
-
-        if (filteredStudents.length === 0) {
-          groupedTables.innerHTML = `<div class="status-message info">No students found for Term ${currentTerm} matching your criteria.</div>`;
-          statsContainer.innerHTML = '';
-          return;
-        }
-
-        renderStudents(filteredStudents);
-        updateSummaryStats(filteredStudents);
-      } catch (error) {
-        console.error("Error loading students:", error);
-        showStatus(`Error loading students: ${error.message}`, "error");
-        groupedTables.innerHTML = `<div class="status-message error">Error loading students: ${error.message}</div>`;
-      }
+  try {
+    const studentsCollection = getStudentsCollection();
+    let snapshot;
+    
+    // Modified query logic to avoid the composite index requirement
+    if (classFilter) {
+      // Use simple query for class filtering
+      snapshot = await studentsCollection.where('class', '==', classFilter).get();
+    } else {
+      // Use orderBy only when not filtering by class
+      snapshot = await studentsCollection.orderBy('name').get();
     }
+
+    const students = [];
+    snapshot.forEach(doc => {
+      students.push({ id: doc.id, ...doc.data() });
+    });
+
+    // Apply search filter in JavaScript instead of Firestore
+    const filteredStudents = searchQuery
+      ? students.filter(s => s.name.toLowerCase().includes(searchQuery))
+      : students;
+
+    // Sort the results in JavaScript if class filter was applied
+    if (classFilter) {
+      filteredStudents.sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    if (filteredStudents.length === 0) {
+      groupedTables.innerHTML = `<div class="status-message info">No students found for Term ${currentTerm} matching your criteria.</div>`;
+      statsContainer.innerHTML = '';
+      return;
+    }
+
+    renderStudents(filteredStudents);
+    updateSummaryStats(filteredStudents);
+  } catch (error) {
+    console.error("Error loading students:", error);
+    showStatus(`Error loading students: ${error.message}`, "error");
+    groupedTables.innerHTML = `<div class="status-message error">Error loading students: ${error.message}</div>`;
+  }
+}
 
     // Enhanced rendering with proper overpayment display
     function renderStudents(students) {
