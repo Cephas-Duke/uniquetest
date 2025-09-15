@@ -1180,7 +1180,7 @@
       return balanceCarriedForward;
     }
 
-    async function updateReceiptTable() {
+async function updateReceiptTable() {
   try {
     const groupedReceipts = document.getElementById('groupedReceipts');
     groupedReceipts.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading receipts...</div>';
@@ -1255,20 +1255,10 @@
       `;
       const tbody = table.querySelector('tbody');
 
-      // FIXED: Get current student balance for each receipt
+      // FIXED: Calculate historical balance for each receipt at the time it was issued
       await Promise.all(classReceipts.map(async r => {
-        // Get current student data to show current balance
-        const studentsCollection = getStudentsCollection();
-        const studentSnapshot = await studentsCollection.where('name', '==', r.name).get();
-        let currentBalance = 0;
-        
-        if (!studentSnapshot.empty) {
-          const student = studentSnapshot.docs[0].data();
-          // Calculate balance carried forward from previous terms
-          const balanceCarriedForward = await getBalanceCarriedForward(r.name, currentTerm, currentYear);
-          // Show current total outstanding balance (current term balance + carried forward)
-          currentBalance = student.balance + balanceCarriedForward;
-        }
+        // Calculate the historical balance that existed when this specific receipt was issued
+        const historicalBalance = await calculateHistoricalBalance(r.name, r.id, currentTerm, currentYear);
         
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -1277,7 +1267,7 @@
             <small>${r.class} - Term ${currentTerm}</small>
           </td>
           <td>${r.paid.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
-          <td>${currentBalance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
+          <td>${historicalBalance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
           <td>${r.mode}</td>
           <td>${new Date(r.date).toLocaleDateString('en-GB')}</td>
           <td>
