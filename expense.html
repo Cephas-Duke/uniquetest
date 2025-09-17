@@ -295,7 +295,6 @@
       box-shadow: var(--box-shadow);
       padding: 1.5rem;
       margin-bottom: 1.5rem;
-      text-align: center;
     }
 
     .term-tabs {
@@ -660,28 +659,43 @@
             <label for="category"><i class="fas fa-tags"></i> Category</label>
             <select id="category" required>
               <option value="">-- Select Category --</option>
-              <option>Food</option>
-              <option>Stationary</option>
-              <option>Uniform Purchase</option>
-              <option>Salaries</option>
-              <option>Fuel & Gas</option>
-              <option>Security</option>
-              <option>Rent</option>
-              <option>NSSF</option>
-              <option>NHIF/CHA</option>
+              <option>Admin Expenses</option>
               <option>Airtime</option>
-              <option>Electricity</option>
-              <option>Water</option>
-              <option>Internet</option>
-              <option>Insurance</option>
-              <option>Permit</option>
-              <option>Loan</option>
-              <option>Trip</option>
-              <option>Welfare</option>
+              <option>Amortization</option>
+              <option>Audit Fees</option>
+              <option>Bank charges</option>
+              <option>Cleaning expense</option>
+              <option>Depreciation</option>
               <option>Donations/Token</option>
+              <option>Electricity</option>
               <option>Exhaust Services</option>
-              <option>Repairs and Maintenance</option>
+              <option>Food</option>
+              <option>Fuel & Gas</option>
+              <option>ICT Related</option>
+              <option>Insurance</option>
+              <option>Internet</option>
+              <option>Loan</option>
+              <option>Loan interest</option>
+              <option>Motor vehicle expenses</option>
+              <option>NHIF/CHA</option>
+              <option>NITA</option>
+              <option>NSSF</option>
+              <option>Office Expenses</option>
+              <option>Permit</option>
               <option>Purchase of Assets</option>
+              <option>Repairs and Maintenance</option>
+              <option>Rent</option>
+              <option>Salaries</option>
+              <option>Security</option>
+              <option>Sponsorship Expenses</option>
+              <option>Staff Training</option>
+              <option>Staff Uniforms</option>
+              <option>Stationary</option>
+              <option>Travel</option>
+              <option>Trip</option>
+              <option>Uniform Purchase</option>
+              <option>Water</option>
+              <option>Welfare</option>
             </select>
           </div>
           
@@ -728,28 +742,43 @@
         </div>
         <select id="categoryFilter" class="filter-select" onchange="loadExpenses()">
           <option value="">Filter by Category</option>
-          <option>Food</option>
-          <option>Stationary</option>
-          <option>Uniform Purchase</option>
-          <option>Salaries</option>
-          <option>Fuel & Gas</option>
-          <option>Security</option>
-          <option>Rent</option>
-          <option>NSSF</option>
-          <option>NHIF/CHA</option>
+          <option>Admin Expenses</option>
           <option>Airtime</option>
-          <option>Electricity</option>
-          <option>Water</option>
-          <option>Internet</option>
-          <option>Insurance</option>
-          <option>Permit</option>
-          <option>Loan</option>
-          <option>Trip</option>
-          <option>Welfare</option>
+          <option>Amortization</option>
+          <option>Audit Fees</option>
+          <option>Bank charges</option>
+          <option>Cleaning expense</option>
+          <option>Depreciation</option>
           <option>Donations/Token</option>
+          <option>Electricity</option>
           <option>Exhaust Services</option>
-          <option>Repairs and Maintenance</option>
+          <option>Food</option>
+          <option>Fuel & Gas</option>
+          <option>ICT Related</option>
+          <option>Insurance</option>
+          <option>Internet</option>
+          <option>Loan</option>
+          <option>Loan interest</option>
+          <option>Motor vehicle expenses</option>
+          <option>NHIF/CHA</option>
+          <option>NITA</option>
+          <option>NSSF</option>
+          <option>Office Expenses</option>
+          <option>Permit</option>
           <option>Purchase of Assets</option>
+          <option>Repairs and Maintenance</option>
+          <option>Rent</option>
+          <option>Salaries</option>
+          <option>Security</option>
+          <option>Sponsorship Expenses</option>
+          <option>Staff Training</option>
+          <option>Staff Uniforms</option>
+          <option>Stationary</option>
+          <option>Travel</option>
+          <option>Trip</option>
+          <option>Uniform Purchase</option>
+          <option>Water</option>
+          <option>Welfare</option>
         </select>
         <select id="monthFilter" class="filter-select" onchange="loadExpenses()">
           <option value="">Filter by Month</option>
@@ -1520,7 +1549,7 @@
       });
       
       // Show welcome message
-      showStatus("Expense management system loaded successfully. Index issues resolved!", "success");
+      showStatus("Expense management system loaded successfully with updated categories!", "success");
     });
   </script>
 </body>
