@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Financial Dashboard | Heriwadi Christian Schools</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --primary-color: #005fa3;
+      --secondary-color: #004080;
+      --accent-color: #00a8e8;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --warning-color: #ffc107;
+      --info-color: #17a2b8;
+      --light-color: #f8f9fa;
+      --dark-color: #343a40;
+      --border-radius: 8px;
+      --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f5f7fa;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 1.5rem;
+      text-align: center;
+      box-shadow: var(--box-shadow);
+      position: relative;
+      z-index: 10;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      font-size: 1rem;
+      opacity: 0.9;
+    }
+
+    nav {
+      background: var(--secondary-color);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      box-shadow: var(--box-shadow);
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: var(--border-radius);
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    nav a:hover {
+      background: var(--accent-color);
+      transform: translateY(-2px);
+    }
+
+    nav a.active {
+      background: var(--accent-color);
+      font-weight: bold;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .dashboard-header {
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .dashboard-title {
+      color: var(--primary-color);
+      font-size: 1.5rem;
+      margin: 0;
+    }
+
+    .refresh-controls {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .btn-primary {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--secondary-color);
+    }
+
+    .btn-success {
+      background: var(--success-color);
+      color: white;
+    }
+
+    .btn-info {
+      background: var(--info-color);
+      color: white;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      padding: 1.5rem;
+      transition: var(--transition);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .stat-title {
+      font-size: 1rem;
+      color: var(--dark-color);
+      font-weight: 500;
+    }
+
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .bank-icon {
+      background: rgba(0, 95, 163, 0.1);
+      color: var(--primary-color);
+    }
+
+    .transport-icon {
+      background: rgba(255, 193, 7, 0.1);
+      color: var(--warning-color);
+    }
+
+    .food-icon {
+      background: rgba(40, 167, 69, 0.1);
+      color: var(--success-color);
+    }
+
+    .uniform-icon {
+      background: rgba(23, 162, 184, 0.1);
+      color: var(--info-color);
+    }
+
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+
+    .positive {
+      color: var(--success-color);
+    }
+
+    .negative {
+      color: var(--danger-color);
+    }
+
+    .neutral {
+      color: var(--dark-color);
+    }
+
+    .stat-change {
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .department-section {
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+
+    .department-header {
+      padding: 1rem 1.5rem;
+      background: var(--primary-color);
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .department-header:hover {
+      background: var(--secondary-color);
+    }
+
+    .department-title {
+      font-size: 1.2rem;
+      font-weight: 500;
+      margin: 0;
+    }
+
+    .department-summary {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .department-content {
+      padding: 1.5rem;
+      display: none;
+    }
+
+    .department-content.active {
+      display: block;
+    }
+
+    .department-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .mini-stat {
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: var(--border-radius);
+      text-align: center;
+    }
+
+    .mini-stat-label {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 0.5rem;
+    }
+
+    .mini-stat-value {
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
+    .transactions-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    .transactions-table th,
+    .transactions-table td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+
+    .transactions-table th {
+      background: #f8f9fa;
+      font-weight: 600;
+      color: var(--dark-color);
+    }
+
+    .transactions-table tr:hover {
+      background: rgba(0, 95, 163, 0.05);
+    }
+
+    .transaction-type {
+      padding: 0.25rem 0.5rem;
+      border-radius: 15px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .income {
+      background: rgba(40, 167, 69, 0.1);
+      color: var(--success-color);
+    }
+
+    .expense {
+      background: rgba(220, 53, 69, 0.1);
+      color: var(--danger-color);
+    }
+
+    .status-message {
+      padding: 0.75rem 1rem;
+      border-radius: var(--border-radius);
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+
+    .status-message.success {
+      background-color: rgba(40, 167, 69, 0.1);
+      color: var(--success-color);
+      border-left: 4px solid var(--success-color);
+    }
+
+    .status-message.error {
+      background-color: rgba(220, 53, 69, 0.1);
+      color: var(--danger-color);
+      border-left: 4px solid var(--danger-color);
+    }
+
+    .status-message.loading {
+      background-color: rgba(23, 162, 184, 0.1);
+      color: var(--info-color);
+      border-left: 4px solid var(--info-color);
+    }
+
+    .chart-container {
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .chart-title {
+      font-size: 1.2rem;
+      color: var(--primary-color);
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .chart-wrapper {
+      position: relative;
+      height: 300px;
+    }
+
+    .loading-spinner {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+    }
+
+    .loading-spinner i {
+      animation: spin 1s linear infinite;
+      margin-right: 0.5rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.5s ease forwards;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 0 1rem;
+      }
+
+      .dashboard-header {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .department-stats {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .transactions-table {
+        font-size: 0.85rem;
+      }
+
+      .transactions-table th,
+      .transactions-table td {
+        padding: 0.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Heriwadi Christian Schools Ltd</h1>
+    <p>Financial Management Dashboard</p>
+  </header>
+
+  <nav>
+    <a href="index.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+    <a href="receipts.html"><i class="fas fa-receipt"></i> Receipts</a>
+    <a href="students.html"><i class="fas fa-users"></i> Students</a>
+    <a href="expenses.html"><i class="fas fa-money-bill-wave"></i> Expenses</a>
+    <a href="assets.html"><i class="fas fa-laptop-house"></i> Assets</a>
+    <a href="staff.html"><i class="fas fa-user-tie"></i> Staff</a>
+    <a href="payroll.html"><i class="fas fa-money-check-alt"></i> Payroll</a>
+    <a href="financial.html" class="active"><i class="fas fa-chart-line"></i> Financial</a>
+  </nav>
+
+  <div class="container">
+    <div class="dashboard-header fade-in">
+      <h2 class="dashboard-title">
+        <i class="fas fa-chart-line"></i> Financial Management Dashboard
+      </h2>
+      <div class="refresh-controls">
+        <span id="lastUpdated" style="color: #666; font-size: 0.9rem; margin-right: 1rem;"></span>
+        <button class="btn btn-primary" onclick="refreshAllData()">
+          <i class="fas fa-sync-alt"></i> Refresh Data
+        </button>
+        <button class="btn btn-success" onclick="exportFinancialReport()">
+          <i class="fas fa-file-excel"></i> Export Report
+        </button>
+      </div>
+    </div>
+
+    <div id="statusMessage" class="status-message"></div>
+
+    <!-- Overview Statistics -->
+    <div class="stats-grid fade-in">
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-title">Bank Balance</span>
+          <div class="stat-icon bank-icon">
+            <i class="fas fa-university"></i>
+          </div>
+        </div>
+        <div class="stat-value neutral" id="bankBalance">KES 0</div>
+        <div class="stat-change" id="bankChange">
+          <i class="fas fa-equals"></i> No change today
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-title">Transport P&L</span>
+          <div class="stat-icon transport-icon">
+            <i class="fas fa-bus"></i>
+          </div>
+        </div>
+        <div class="stat-value neutral" id="transportPL">KES 0</div>
+        <div class="stat-change" id="transportChange">
+          <i class="fas fa-equals"></i> No activity
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-title">Food P&L</span>
+          <div class="stat-icon food-icon">
+            <i class="fas fa-utensils"></i>
+          </div>
+        </div>
+        <div class="stat-value neutral" id="foodPL">KES 0</div>
+        <div class="stat-change" id="foodChange">
+          <i class="fas fa-equals"></i> No activity
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-title">Uniform P&L</span>
+          <div class="stat-icon uniform-icon">
+            <i class="fas fa-tshirt"></i>
+          </div>
+        </div>
+        <div class="stat-value neutral" id="uniformPL">KES 0</div>
+        <div class="stat-change" id="uniformChange">
+          <i class="fas fa-equals"></i> No activity
+        </div>
+      </div>
+    </div>
+
+    <!-- Bank Account Section -->
+    <div class="department-section fade-in">
+      <div class="department-header" onclick="toggleSection('bank')">
+        <h3 class="department-title">
+          <i class="fas fa-university"></i> Bank Account Management
+        </h3>
+        <div class="department-summary">
+          <span id="bankTransactions">0 transactions</span>
+          <i class="fas fa-chevron-down" id="bankChevron"></i>
+        </div>
+      </div>
+      <div class="department-content active" id="bankContent">
+        <div class="department-stats">
+          <div class="mini-stat">
+            <div class="mini-stat-label">Total Income</div>
+            <div class="mini-stat-value positive" id="bankIncome">KES 0</div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-stat-label">Total Expenses</div>
+            <div class="mini-stat-value negative" id="bankExpenses">KES 0</div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-stat-label">Net Flow</div>
+            <div class="mini-stat-value neutral" id="bankNetFlow">KES 0</div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-stat-label">This Month</div>
+            <div class="mini-stat-value neutral" id="bankThisMonth">KES 0</div>
+          </div>
+        </div>
+
+        <table class="transactions-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Balance</th>
+              <th>Source</th>
+            </tr>
+          </thead>
+          <tbody id="bankTransactionsTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Transport Department Section -->
+    <div class="department-section fade-in">
+      <div class="department-header" onclick="toggleSection('transport')">
+        <h3 class="department-title">
+          <i class="fas fa-bus"></i> Transport Department
+        </h3>
+        <div class="department-summary">
+          <span id="transportStatus">Calculating...</span>
+          <i class="fas fa-chevron-down" id="transportChevron"></i>
+        </div>
+      </div>
+      <div class="department-content" id="transportContent">
+        <div class="department-stats">
+          <div class="mini-stat">
+            <div class="mini-stat-label">Students Using Transport</div>
+            <div class="mini-stat-value neutral" id="transportStudents">0</div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-stat-label">Total Revenue</div>
+            <div class="mini-stat-value positive" id="transportRevenue">KES 0</div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-stat-label">Total Expenses</div>
+            <div class="mini-stat-value negative" id="transportExpenses">KES 0</div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-stat-label">Net Profit/Loss</div>
+            <div class="mini-stat-value neutral" id="transportNet">KES 0</div>
+          </div>
+        </div>
+
+        <table class="transactions-table">
+          <thead>
+            <tr>
+              <th>Student Name</th>
+              <th>Total Transport Fee</th>
+              <th>Amount Paid</th>
+              <th>Balance</th>
+              <th>Status</th>
+              <th>Last Payment</th>
+            </tr>
+          </thead>
+          <tbody id="transportStudentsTable"></tbody>
+        </table>
+
+        <h4 style="margin: 2rem 0 1rem; color: var(--primary-color);">Transport Expenses</h4>
+        <table class="transactions-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Category</th>
+              <th>Amount</th>
+              <th>Term</th>
+            </tr>
+          </thead>
+          <tbody id="transportExpensesTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Food Department Section -->
+    <div class="department-section fade-in">
+      <div class="department-header" onclick="toggleSection('food')">
+        <h3 class="department-title">
+          <i class="fas fa-utensils"></i> Food Department
+        </h3>
+        <div class="department-summary">
+          <span id="foodStatus">Calculating...</span>
+          <i class="fas fa-chevron-down" id="foodChevron"></i>
+        </div>
+      </div>
+      <div class="department-content" id="foodContent">
+        <div class="department-stats">
+          <div class="mini-stat">
+            <div class="mini-stat-label">Students Taking Lunch</div>
+            <div class="mini-stat-value neutral" id="foodStudents">0</div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-stat-label">Total Revenue</div>
+            <div class="mini-stat-value positive" id="foodRevenue">KES 0</div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-stat-label">Total Expenses</div>
+            <div class="mini-stat-value negative" id="foodExpenses">KES 0</div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-stat-label">Net Profit/Loss</div>
+            <div class="mini-stat-value neutral" id="foodNet">KES 0</div>
+          </div>
+        </div>
+
+        <table class="transactions-table">
+          <thead>
+            <tr>
+              <th>Student Name</th>
+              <th>Total Lunch Fee</th>
+              <th>Amount Paid</th>
+              <th>Balance</th>
+              <th>Status</th>
+              <th>Last Payment</th>
+            </tr>
+          </thead>
+          <tbody id="foodStudentsTable"></tbody>
+        </table>
+
+        <h4 style="margin: 2rem 0 1rem; color: var(--primary-color);">Food Expenses</h4>
+        <table class="transactions-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Category</th>
+              <th>Amount</th>
+              <th>Term</th>
+            </tr>
+          </thead>
+          <tbody id="foodExpensesTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Uniform Department Section -->
+    <div class="department-section fade-in">
+      <div class="department-header" onclick="toggleSection('uniform')">
+        <h3 class="department-title">
+          <i class="fas fa-tshirt"></i> Uniform Department
+        </h3>
+        <div class="department-summary">
+          <span id="uniformStatus">Calculating...</span>
+          <i class="fas fa-chevron-down" id="uniformChevron"></i>
+        </div>
+      </div>
+      <div class="department-content" id="uniformContent">
+        <div class="department-stats">
+          <div class="mini-stat">
+            <div class="mini-stat-label">Students Buying Uniforms</div>
+            <div class="mini-stat-value neutral" id="uniformStudents">0</div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-stat-label">Total Revenue</div>
+            <div class="mini-stat-value positive" id="uniformRevenue">KES 0</div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-stat-label">Total Expenses</div>
+            <div class="mini-stat-value negative" id="uniformExpenses">KES 0</div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-stat-label">Net Profit/Loss</div>
+            <div class="mini-stat-value neutral" id="uniformNet">KES 0</div>
+          </div>
+        </div>
+
+        <table class="transactions-table">
+          <thead>
+            <tr>
+              <th>Student Name</th>
+              <th>Total Uniform Fee</th>
+              <th>Amount Paid</th>
+              <th>Balance</th>
+              <th>Status</th>
+              <th>Last Payment</th>
+            </tr>
+          </thead>
+          <tbody id="uniformStudentsTable"></tbody>
+        </table>
+
+        <h4 style="margin: 2rem 0 1rem; color: var(--primary-color);">Uniform Expenses</h4>
+        <table class="transactions-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Category</th>
+              <th>Amount</th>
+              <th>Term</th>
+            </tr>
+          </thead>
+          <tbody id="uniformExpensesTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="chart-container fade-in">
+      <h3 class="chart-title">Departmental Profit/Loss Comparison</h3>
+      <div class="chart-wrapper">
+        <canvas id="profitLossChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBAA6zY40EwbTmWUx1op1cx52C3y0RK3m0",
+      authDomain: "heriwadi-manager.firebaseapp.com",
+      projectId: "heriwadi-manager",
+      storageBucket: "heriwadi-manager.appspot.com",
+      messagingSenderId: "654632910809",
+      appId: "1:654632910809:web:7c65613d2510402a6663c8",
+      measurementId: "G-LLHS6GLB6E"
+    };
+
+    // Initialize Firebase
+    let app, db;
+    try {
+      if (!firebase.apps.length) {
+        app = firebase.initializeApp(firebaseConfig);
+      } else {
+        app = firebase.app();
+      }
+      db = firebase.firestore();
+      console.log("Firebase initialized successfully");
+    } catch (error) {
+      console.error('Firebase initialization error:', error);
+      showStatus("Failed to initialize Firebase. Check your configuration.", "error");
+      throw error;
+    }
+
+    // Global data storage
+    let financialData = {
+      students: [],
+      receipts: [],
+      expenses: [],
+      bankTransactions: [],
+      lastUpdated: null
+    };
+
+    // Current year and terms
+    const currentYear = new Date().getFullYear();
+    const terms = [1, 2, 3];
+
+    // Collection references
+    const getCollection = (name, term = null, year = currentYear) => {
+      if (term !== null) {
+        return db.collection(`${name}_${year}_term_${term}`);
+      }
+      return db.collection(name);
+    };
+
+    // Status message function
+    function showStatus(message, type = 'info') {
+      const statusMessage = document.getElementById("statusMessage");
+      statusMessage.textContent = message;
+      statusMessage.className = `status-message ${type} fade-in`;
+      
+      setTimeout(() => {
+        statusMessage.classList.remove('fade-in');
+        setTimeout(() => {
+          statusMessage.textContent = '';
+          statusMessage.className = 'status-message';
+        }, 300);
+      }, 5000);
+    }
+
+    // Toggle section function
+    function toggleSection(section) {
+      const content = document.getElementById(`${section}Content`);
+      const chevron = document.getElementById(`${section}Chevron`);
+      
+      if (content.classList.contains('active')) {
+        content.classList.remove('active');
+        chevron.style.transform = 'rotate(0deg)';
+      } else {
+        content.classList.add('active');
+        chevron.style.transform = 'rotate(180deg)';
+      }
+    }
+
+    // Load all financial data
+    async function loadAllFinancialData() {
+      showStatus("Loading financial data from all modules...", "loading");
+      
+      try {
+        // Load students from all terms
+        financialData.students = [];
+        for (let term of terms) {
+          const studentsSnapshot = await getCollection('students', term).get();
+          studentsSnapshot.forEach(doc => {
+            financialData.students.push({
+              id: doc.id,
+              term: term,
+              ...doc.data()
+            });
+          });
+        }
+
+        // Load receipts from all terms
+        financialData.receipts = [];
+        for (let term of terms) {
+          const receiptsSnapshot = await getCollection('receipts', term).get();
+          receiptsSnapshot.forEach(doc => {
+            financialData.receipts.push({
+              id: doc.id,
+              term: term,
+              ...doc.data()
+            });
+          });
+        }
+
+        // Load expenses
+        const expensesSnapshot = await getCollection('expenses').get();
+        financialData.expenses = [];
+        expensesSnapshot.forEach(doc => {
+          financialData.expenses.push({
+            id: doc.id,
+            ...doc.data()
+          });
+        });
+
+        // Generate bank transactions from receipts and expenses
+        generateBankTransactions();
+
+        // Update all displays
+        updateOverviewStats();
+        updateBankSection();
+        updateTransportSection();
+        updateFoodSection();
+        updateUniformSection();
+        updateChart();
+
+        financialData.lastUpdated = new Date();
+        document.getElementById('lastUpdated').textContent = 
+          `Last updated: ${financialData.lastUpdated.toLocaleTimeString()}`;
+
+        showStatus("Financial data loaded successfully", "success");
+      } catch (error) {
+        console.error('Error loading financial data:', error);
+        showStatus(`Error loading data: ${error.message}`, "error");
+      }
+    }
+
+    // Generate bank transactions from receipts and expenses
+    function generateBankTransactions() {
+      financialData.bankTransactions = [];
+      let runningBalance = 0;
+
+      // Add all receipts as income
+      financialData.receipts.forEach(receipt => {
+        runningBalance += receipt.paid || 0;
+        financialData.bankTransactions.push({
+          date: receipt.date,
+          description: `Receipt from ${receipt.name} (${receipt.class})`,
+          type: 'income',
+          amount: receipt.paid || 0,
+          balance: runningBalance,
+          source: 'receipts',
+          term: receipt.term
+        });
+      });
+
+      // Add all expenses as outgoing
+      financialData.expenses.forEach(expense => {
+        runningBalance -= expense.amount || 0;
+        financialData.bankTransactions.push({
+          date: expense.date,
+          description: expense.description,
+          type: 'expense',
+          amount: expense.amount || 0,
+          balance: runningBalance,
+          source: 'expenses',
+          category: expense.category,
+          term: expense.term
+        });
+      });
+
+      // Sort by date
+      financialData.bankTransactions.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      // Recalculate running balance
+      runningBalance = 0;
+      financialData.bankTransactions.forEach(transaction => {
+        if (transaction.type === 'income') {
+          runningBalance += transaction.amount;
+        } else {
+          runningBalance -= transaction.amount;
+        }
+        transaction.balance = runningBalance;
+      });
+    }
+
+    // Update overview statistics
+    function updateOverviewStats() {
+      // Calculate bank balance
+      const bankBalance = financialData.bankTransactions.length > 0 
+        ? financialData.bankTransactions[financialData.bankTransactions.length - 1].balance 
+        : 0;
+
+      document.getElementById('bankBalance').textContent = `KES ${bankBalance.toLocaleString('en-KE')}`;
+      document.getElementById('bankBalance').className = `stat-value ${bankBalance >= 0 ? 'positive' : 'negative'}`;
+
+      // Calculate departmental P&L
+      const transportPL = calculateDepartmentPL('transport');
+      const foodPL = calculateDepartmentPL('lunch');
+      const uniformPL = calculateDepartmentPL('uniform');
+
+      updateStatCard('transport', transportPL);
+      updateStatCard('food', foodPL);
+      updateStatCard('uniform', uniformPL);
+    }
+
+    // Calculate department profit/loss
+    function calculateDepartmentPL(feeType) {
+      let revenue = 0;
+      let expenses = 0;
+
+      // Calculate revenue from students
+      financialData.students.forEach(student => {
+        if (student[feeType] && student[feeType] > 0) {
+          // Calculate how much has been paid for this specific fee type
+          const studentReceipts = financialData.receipts.filter(r => r.name === student.name);
+          const totalPaid = studentReceipts.reduce((sum, receipt) => sum + (receipt.paid || 0), 0);
+          
+          // Allocate payment proportionally to fee types
+          const totalFees = (student.tuition || 0) + (student.adm || 0) + (student.books || 0) + 
+                           (student.stationery || 0) + (student.uniform || 0) + (student.lunch || 0) + 
+                           (student.transport || 0) + (student.trip || 0) + (student.graduation || 0);
+          
+          if (totalFees > 0) {
+            const feeShare = student[feeType] / totalFees;
+            revenue += totalPaid * feeShare;
+          }
+        }
+      });
+
+      // Calculate expenses
+      const expenseCategories = getExpenseCategoriesFor(feeType);
+      financialData.expenses.forEach(expense => {
+        if (expenseCategories.includes(expense.category)) {
+          expenses += expense.amount || 0;
+        }
+      });
+
+      return {
+        revenue: revenue,
+        expenses: expenses,
+        profit: revenue - expenses
+      };
+    }
+
+    // Get expense categories for each department
+    function getExpenseCategoriesFor(feeType) {
+      const categories = {
+        transport: ['Motor vehicle expenses', 'Fuel & Gas', 'Transport'],
+        lunch: ['Food'],
+        uniform: ['Uniform Purchase', 'Staff Uniforms']
+      };
+      return categories[feeType] || [];
+    }
+
+    // Update stat card display
+    function updateStatCard(type, data) {
+      const element = document.getElementById(`${type}PL`);
+      const changeElement = document.getElementById(`${type}Change`);
+      
+      element.textContent = `KES ${data.profit.toLocaleString('en-KE')}`;
+      element.className = `stat-value ${data.profit >= 0 ? 'positive' : 'negative'}`;
+      
+      const changeIcon = data.profit >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+      const changeText = data.profit >= 0 ? 'Profit' : 'Loss';
+      changeElement.innerHTML = `<i class="fas ${changeIcon}"></i> ${changeText}`;
+    }
+
+    // Update bank section
+    function updateBankSection() {
+      const totalIncome = financialData.bankTransactions
+        .filter(t => t.type === 'income')
+        .reduce((sum, t) => sum + t.amount, 0);
+      
+      const totalExpenses = financialData.bankTransactions
+        .filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + t.amount, 0);
+      
+      const netFlow = totalIncome - totalExpenses;
+      const currentBalance = financialData.bankTransactions.length > 0 
+        ? financialData.bankTransactions[financialData.bankTransactions.length - 1].balance 
+        : 0;
+
+      // Current month transactions
+      const currentMonth = new Date().toISOString().substr(0, 7);
+      const thisMonthTransactions = financialData.bankTransactions
+        .filter(t => t.date.startsWith(currentMonth));
+      const thisMonthFlow = thisMonthTransactions
+        .reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0);
+
+      // Update mini stats
+      document.getElementById('bankIncome').textContent = `KES ${totalIncome.toLocaleString('en-KE')}`;
+      document.getElementById('bankExpenses').textContent = `KES ${totalExpenses.toLocaleString('en-KE')}`;
+      document.getElementById('bankNetFlow').textContent = `KES ${netFlow.toLocaleString('en-KE')}`;
+      document.getElementById('bankNetFlow').className = `mini-stat-value ${netFlow >= 0 ? 'positive' : 'negative'}`;
+      document.getElementById('bankThisMonth').textContent = `KES ${thisMonthFlow.toLocaleString('en-KE')}`;
+      document.getElementById('bankThisMonth').className = `mini-stat-value ${thisMonthFlow >= 0 ? 'positive' : 'negative'}`;
+
+      // Update transactions count
+      document.getElementById('bankTransactions').textContent = 
+        `${financialData.bankTransactions.length} transactions`;
+
+      // Update transactions table
+      const tableBody = document.getElementById('bankTransactionsTable');
+      tableBody.innerHTML = '';
+      
+      // Show latest 20 transactions
+      const recentTransactions = financialData.bankTransactions.slice(-20).reverse();
+      
+      recentTransactions.forEach(transaction => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${new Date(transaction.date).toLocaleDateString('en-GB')}</td>
+          <td>${transaction.description}</td>
+          <td><span class="transaction-type ${transaction.type}">${transaction.type}</span></td>
+          <td class="${transaction.type === 'income' ? 'positive' : 'negative'}">
+            ${transaction.type === 'income' ? '+' : '-'}KES ${transaction.amount.toLocaleString('en-KE')}
+          </td>
+          <td class="${transaction.balance >= 0 ? 'positive' : 'negative'}">
+            KES ${transaction.balance.toLocaleString('en-KE')}
+          </td>
+          <td><small>${transaction.source}</small></td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    // Update transport section
+    function updateTransportSection() {
+      const transportData = calculateDepartmentDetails('transport');
+      
+      // Update mini stats
+      document.getElementById('transportStudents').textContent = transportData.studentCount;
+      document.getElementById('transportRevenue').textContent = `KES ${transportData.revenue.toLocaleString('en-KE')}`;
+      document.getElementById('transportExpenses').textContent = `KES ${transportData.expenses.toLocaleString('en-KE')}`;
+      document.getElementById('transportNet').textContent = `KES ${transportData.profit.toLocaleString('en-KE')}`;
+      document.getElementById('transportNet').className = `mini-stat-value ${transportData.profit >= 0 ? 'positive' : 'negative'}`;
+      
+      // Update status
+      const status = transportData.profit >= 0 ? `Profit: KES ${transportData.profit.toLocaleString('en-KE')}` : 
+                     `Loss: KES ${Math.abs(transportData.profit).toLocaleString('en-KE')}`;
+      document.getElementById('transportStatus').textContent = status;
+
+      // Update students table
+      updateDepartmentStudentsTable('transport', transportData.students);
+      
+      // Update expenses table
+      updateDepartmentExpensesTable('transport', transportData.expensesList);
+    }
+
+    // Update food section
+    function updateFoodSection() {
+      const foodData = calculateDepartmentDetails('lunch');
+      
+      // Update mini stats
+      document.getElementById('foodStudents').textContent = foodData.studentCount;
+      document.getElementById('foodRevenue').textContent = `KES ${foodData.revenue.toLocaleString('en-KE')}`;
+      document.getElementById('foodExpenses').textContent = `KES ${foodData.expenses.toLocaleString('en-KE')}`;
+      document.getElementById('foodNet').textContent = `KES ${foodData.profit.toLocaleString('en-KE')}`;
+      document.getElementById('foodNet').className = `mini-stat-value ${foodData.profit >= 0 ? 'positive' : 'negative'}`;
+      
+      // Update status
+      const status = foodData.profit >= 0 ? `Profit: KES ${foodData.profit.toLocaleString('en-KE')}` : 
+                     `Loss: KES ${Math.abs(foodData.profit).toLocaleString('en-KE')}`;
+      document.getElementById('foodStatus').textContent = status;
+
+      // Update students table
+      updateDepartmentStudentsTable('lunch', foodData.students);
+      
+      // Update expenses table
+      updateDepartmentExpensesTable('food', foodData.expensesList);
+    }
+
+    // Update uniform section
+    function updateUniformSection() {
+      const uniformData = calculateDepartmentDetails('uniform');
+      
+      // Update mini stats
+      document.getElementById('uniformStudents').textContent = uniformData.studentCount;
+      document.getElementById('uniformRevenue').textContent = `KES ${uniformData.revenue.toLocaleString('en-KE')}`;
+      document.getElementById('uniformExpenses').textContent = `KES ${uniformData.expenses.toLocaleString('en-KE')}`;
+      document.getElementById('uniformNet').textContent = `KES ${uniformData.profit.toLocaleString('en-KE')}`;
+      document.getElementById('uniformNet').className = `mini-stat-value ${uniformData.profit >= 0 ? 'positive' : 'negative'}`;
+      
+      // Update status
+      const status = uniformData.profit >= 0 ? `Profit: KES ${uniformData.profit.toLocaleString('en-KE')}` : 
+                     `Loss: KES ${Math.abs(uniformData.profit).toLocaleString('en-KE')}`;
+      document.getElementById('uniformStatus').textContent = status;
+
+      // Update students table
+      updateDepartmentStudentsTable('uniform', uniformData.students);
+      
+      // Update expenses table
+      updateDepartmentExpensesTable('uniform', uniformData.expensesList);
+    }
+
+    // Calculate detailed department data
+    function calculateDepartmentDetails(feeType) {
+      let revenue = 0;
+      let expenses = 0;
+      const students = [];
+      const expensesList = [];
+      let studentCount = 0;
+
+      // Process students
+      financialData.students.forEach(student => {
+        if (student[feeType] && student[feeType] > 0) {
+          studentCount++;
+          
+          // Calculate payments for this student
+          const studentReceipts = financialData.receipts.filter(r => r.name === student.name);
+          const totalPaid = studentReceipts.reduce((sum, receipt) => sum + (receipt.paid || 0), 0);
+          
+          // Allocate payment proportionally to fee types
+          const totalFees = (student.tuition || 0) + (student.adm || 0) + (student.books || 0) + 
+                           (student.stationery || 0) + (student.uniform || 0) + (student.lunch || 0) + 
+                           (student.transport || 0) + (student.trip || 0) + (student.graduation || 0);
+          
+          let feeTypePaid = 0;
+          if (totalFees > 0) {
+            const feeShare = student[feeType] / totalFees;
+            feeTypePaid = totalPaid * feeShare;
+            revenue += feeTypePaid;
+          }
+
+          const balance = student[feeType] - feeTypePaid;
+          const lastPayment = studentReceipts.length > 0 ? 
+            new Date(Math.max(...studentReceipts.map(r => new Date(r.date)))).toLocaleDateString('en-GB') : 
+            'No payments';
+
+          students.push({
+            name: student.name,
+            totalFee: student[feeType],
+            paid: feeTypePaid,
+            balance: balance,
+            status: balance <= 0 ? 'Paid' : 'Outstanding',
+            lastPayment: lastPayment
+          });
+        }
+      });
+
+      // Process expenses
+      const expenseCategories = getExpenseCategoriesFor(feeType);
+      financialData.expenses.forEach(expense => {
+        if (expenseCategories.includes(expense.category)) {
+          expenses += expense.amount || 0;
+          expensesList.push(expense);
+        }
+      });
+
+      return {
+        revenue,
+        expenses,
+        profit: revenue - expenses,
+        studentCount,
+        students,
+        expensesList
+      };
+    }
+
+    // Update department students table
+    function updateDepartmentStudentsTable(feeType, students) {
+      const tableId = feeType === 'lunch' ? 'foodStudentsTable' : `${feeType}StudentsTable`;
+      const tableBody = document.getElementById(tableId);
+      tableBody.innerHTML = '';
+      
+      students.forEach(student => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${student.name}</td>
+          <td>KES ${student.totalFee.toLocaleString('en-KE')}</td>
+          <td class="positive">KES ${student.paid.toFixed(2)}</td>
+          <td class="${student.balance <= 0 ? 'positive' : 'negative'}">
+            KES ${Math.abs(student.balance).toFixed(2)}
+          </td>
+          <td>
+            <span class="transaction-type ${student.status === 'Paid' ? 'income' : 'expense'}">
+              ${student.status}
+            </span>
+          </td>
+          <td><small>${student.lastPayment}</small></td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    // Update department expenses table
+    function updateDepartmentExpensesTable(department, expenses) {
+      const tableId = department === 'lunch' ? 'foodExpensesTable' : `${department}ExpensesTable`;
+      const tableBody = document.getElementById(tableId);
+      tableBody.innerHTML = '';
+      
+      expenses.forEach(expense => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${new Date(expense.date).toLocaleDateString('en-GB')}</td>
+          <td>${expense.description}</td>
+          <td><small>${expense.category}</small></td>
+          <td class="negative">KES ${expense.amount.toLocaleString('en-KE')}</td>
+          <td><small>${expense.term || 'N/A'}</small></td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    // Update chart
+    function updateChart() {
+      const ctx = document.getElementById('profitLossChart').getContext('2d');
+      
+      const transportPL = calculateDepartmentPL('transport');
+      const foodPL = calculateDepartmentPL('lunch');
+      const uniformPL = calculateDepartmentPL('uniform');
+
+      if (window.profitChart) {
+        window.profitChart.destroy();
+      }
+
+      window.profitChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Transport', 'Food', 'Uniform'],
+          datasets: [
+            {
+              label: 'Revenue',
+              data: [transportPL.revenue, foodPL.revenue, uniformPL.revenue],
+              backgroundColor: 'rgba(40, 167, 69, 0.7)',
+              borderColor: 'rgba(40, 167, 69, 1)',
+              borderWidth: 2
+            },
+            {
+              label: 'Expenses',
+              data: [transportPL.expenses, foodPL.expenses, uniformPL.expenses],
+              backgroundColor: 'rgba(220, 53, 69, 0.7)',
+              borderColor: 'rgba(220, 53, 69, 1)',
+              borderWidth: 2
+            },
+            {
+              label: 'Net Profit/Loss',
+              data: [transportPL.profit, foodPL.profit, uniformPL.profit],
+              backgroundColor: 'rgba(0, 95, 163, 0.7)',
+              borderColor: 'rgba(0, 95, 163, 1)',
+              borderWidth: 2,
+              type: 'line'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return 'KES ' + value.toLocaleString('en-KE');
+                }
+              }
+            }
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return context.dataset.label + ': KES ' + context.raw.toLocaleString('en-KE');
+                }
+              }
+            },
+            legend: {
+              position: 'top'
+            }
+          }
+        }
+      });
+    }
+
+    // Refresh all data
+    async function refreshAllData() {
+      await loadAllFinancialData();
+    }
+
+    // Export financial report
+    async function exportFinancialReport() {
+      try {
+        const data = [];
+        
+        // Bank summary
+        const bankBalance = financialData.bankTransactions.length > 0 
+          ? financialData.bankTransactions[financialData.bankTransactions.length - 1].balance 
+          : 0;
+        
+        data.push(['FINANCIAL SUMMARY REPORT']);
+        data.push(['Generated:', new Date().toLocaleString()]);
+        data.push([]);
+        data.push(['BANK ACCOUNT SUMMARY']);
+        data.push(['Current Balance:', `KES ${bankBalance.toLocaleString('en-KE')}`]);
+        data.push([]);
+
+        // Department summaries
+        const departments = [
+          { name: 'Transport', type: 'transport' },
+          { name: 'Food', type: 'lunch' },
+          { name: 'Uniform', type: 'uniform' }
+        ];
+
+        departments.forEach(dept => {
+          const pl = calculateDepartmentPL(dept.type);
+          data.push([`${dept.name.toUpperCase()} DEPARTMENT`]);
+          data.push(['Revenue:', `KES ${pl.revenue.toLocaleString('en-KE')}`]);
+          data.push(['Expenses:', `KES ${pl.expenses.toLocaleString('en-KE')}`]);
+          data.push(['Net P&L:', `KES ${pl.profit.toLocaleString('en-KE')}`]);
+          data.push([]);
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Financial Report');
+        
+        XLSX.writeFile(wb, `Financial_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+        showStatus("Financial report exported successfully", "success");
+      } catch (error) {
+        showStatus("Error exporting report: " + error.message, "error");
+      }
+    }
+
+    // Initialize the dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+      loadAllFinancialData();
+      
+      // Auto-refresh every 5 minutes
+      setInterval(refreshAllData, 5 * 60 * 1000);
+    });
+  </script>
+</body>
+</html>
