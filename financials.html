@@ -94,6 +94,59 @@
       padding: 0 1.5rem;
     }
 
+    .term-selector {
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      padding: 1rem 1.5rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .term-selector h3 {
+      color: var(--primary-color);
+      margin: 0;
+    }
+
+    .term-buttons {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .term-btn {
+      padding: 0.5rem 1rem;
+      border: 2px solid var(--primary-color);
+      background: transparent;
+      color: var(--primary-color);
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: var(--transition);
+      font-weight: 500;
+    }
+
+    .term-btn.active {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .term-btn:hover {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .current-term-info {
+      background: var(--info-color);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: var(--border-radius);
+      font-weight: 500;
+    }
+
     .dashboard-header {
       background: white;
       border-radius: var(--border-radius);
@@ -464,9 +517,24 @@
   </nav>
 
   <div class="container">
+    <!-- Term Selector -->
+    <div class="term-selector fade-in">
+      <div>
+        <h3><i class="fas fa-calendar-alt"></i> Academic Term</h3>
+        <div class="current-term-info">
+          Current Academic Year: <span id="currentYear">2024</span>
+        </div>
+      </div>
+      <div class="term-buttons">
+        <button class="term-btn" data-term="1" onclick="switchTerm(1)">Term 1</button>
+        <button class="term-btn active" data-term="2" onclick="switchTerm(2)">Term 2</button>
+        <button class="term-btn" data-term="3" onclick="switchTerm(3)">Term 3</button>
+      </div>
+    </div>
+
     <div class="dashboard-header fade-in">
       <h2 class="dashboard-title">
-        <i class="fas fa-chart-line"></i> Financial Management Dashboard
+        <i class="fas fa-chart-line"></i> Financial Management Dashboard - <span id="currentTermDisplay">Term 2</span>
       </h2>
       <div class="refresh-controls">
         <span id="lastUpdated" style="color: #666; font-size: 0.9rem; margin-right: 1rem;"></span>
@@ -816,9 +884,9 @@
       lastUpdated: null
     };
 
-    // Current year and terms
-    const currentYear = new Date().getFullYear();
-    const terms = [1, 2, 3];
+    // Current year and term management with persistent storage
+    let currentTerm = parseInt(sessionStorage.getItem('heriwadi_current_term')) || 2;
+    let currentYear = new Date().getFullYear();
 
     // Collection references
     const getCollection = (name, term = null, year = currentYear) => {
@@ -827,6 +895,46 @@
       }
       return db.collection(name);
     };
+
+    // Initialize term from storage and update UI
+    function initializeTermFromStorage() {
+      // Update UI to show the correct term
+      document.querySelectorAll('.term-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.term) === currentTerm);
+      });
+      
+      // Update all term displays
+      updateTermDisplays();
+      
+      console.log(`Initialized with Term ${currentTerm} from storage`);
+    }
+
+    // Update all term displays in the UI
+    function updateTermDisplays() {
+      document.getElementById('currentTermDisplay').textContent = `Term ${currentTerm}`;
+      document.getElementById('currentYear').textContent = currentYear;
+    }
+
+    // Switch term function with persistent storage
+    function switchTerm(term) {
+      currentTerm = term;
+      
+      // SAVE term to sessionStorage for persistence across page navigation
+      sessionStorage.setItem('heriwadi_current_term', term.toString());
+      
+      // Update UI to show active term
+      document.querySelectorAll('.term-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.term) === term);
+      });
+      
+      // Update all term displays
+      updateTermDisplays();
+      
+      // Refresh data for the new term
+      loadAllFinancialData();
+      
+      showStatus(`Switched to Term ${term} - Financial data updated for current term`, "success");
+    }
 
     // Status message function
     function showStatus(message, type = 'info') {
@@ -857,45 +965,53 @@
       }
     }
 
-    // Load all financial data
+    // Load all financial data for current term only
     async function loadAllFinancialData() {
-      showStatus("Loading financial data from all modules...", "loading");
+      showStatus(`Loading financial data for Term ${currentTerm}...`, "loading");
       
       try {
-        // Load students from all terms
+        // Load students for current term only
         financialData.students = [];
-        for (let term of terms) {
-          const studentsSnapshot = await getCollection('students', term).get();
-          studentsSnapshot.forEach(doc => {
-            financialData.students.push({
-              id: doc.id,
-              term: term,
-              ...doc.data()
-            });
+        const studentsSnapshot = await getCollection('students', currentTerm).get();
+        studentsSnapshot.forEach(doc => {
+          financialData.students.push({
+            id: doc.id,
+            term: currentTerm,
+            ...doc.data()
           });
-        }
+        });
 
-        // Load receipts from all terms
+        // Load receipts for current term only
         financialData.receipts = [];
-        for (let term of terms) {
-          const receiptsSnapshot = await getCollection('receipts', term).get();
-          receiptsSnapshot.forEach(doc => {
-            financialData.receipts.push({
-              id: doc.id,
-              term: term,
-              ...doc.data()
-            });
+        const receiptsSnapshot = await getCollection('receipts', currentTerm).get();
+        receiptsSnapshot.forEach(doc => {
+          financialData.receipts.push({
+            id: doc.id,
+            term: currentTerm,
+            ...doc.data()
           });
-        }
+        });
 
-        // Load expenses
+        // Load expenses - filter by term if term field exists
         const expensesSnapshot = await getCollection('expenses').get();
         financialData.expenses = [];
         expensesSnapshot.forEach(doc => {
-          financialData.expenses.push({
-            id: doc.id,
-            ...doc.data()
-          });
+          const expenseData = doc.data();
+          // Only include expenses for current term (if term field exists) or expenses without term field
+          const expenseTerm = getTermFromName(expenseData.term);
+          if (expenseTerm === currentTerm || !expenseData.term) {
+            financialData.expenses.push({
+              id: doc.id,
+              term: expenseTerm,
+              ...expenseData
+            });
+          }
+        });
+
+        console.log(`Loaded data for Term ${currentTerm}:`, {
+          students: financialData.students.length,
+          receipts: financialData.receipts.length,
+          expenses: financialData.expenses.length
         });
 
         // Generate bank transactions from receipts and expenses
@@ -913,44 +1029,60 @@
         document.getElementById('lastUpdated').textContent = 
           `Last updated: ${financialData.lastUpdated.toLocaleTimeString()}`;
 
-        showStatus("Financial data loaded successfully", "success");
+        showStatus(`Financial data loaded successfully for Term ${currentTerm}`, "success");
       } catch (error) {
         console.error('Error loading financial data:', error);
         showStatus(`Error loading data: ${error.message}`, "error");
       }
     }
 
-    // Generate bank transactions from receipts and expenses
+    // Convert term name to number
+    function getTermFromName(termName) {
+      if (!termName) return null;
+      
+      const termMap = {
+        'First Term': 1,
+        'Second Term': 2,
+        'Third Term': 3,
+        'Term 1': 1,
+        'Term 2': 2,
+        'Term 3': 3
+      };
+      
+      return termMap[termName] || null;
+    }
+
+    // Generate bank transactions from receipts and expenses for current term
     function generateBankTransactions() {
       financialData.bankTransactions = [];
       let runningBalance = 0;
 
-      // Add all receipts as income
+      // Add all receipts as income (current term only)
       financialData.receipts.forEach(receipt => {
         runningBalance += receipt.paid || 0;
         financialData.bankTransactions.push({
           date: receipt.date,
-          description: `Receipt from ${receipt.name} (${receipt.class})`,
+          description: `Receipt from ${receipt.name} (${receipt.class}) - Term ${currentTerm}`,
           type: 'income',
           amount: receipt.paid || 0,
           balance: runningBalance,
           source: 'receipts',
-          term: receipt.term
+          term: currentTerm
         });
       });
 
-      // Add all expenses as outgoing
+      // Add all expenses as outgoing (current term only)
       financialData.expenses.forEach(expense => {
         runningBalance -= expense.amount || 0;
         financialData.bankTransactions.push({
           date: expense.date,
-          description: expense.description,
+          description: `${expense.description} - Term ${currentTerm}`,
           type: 'expense',
           amount: expense.amount || 0,
           balance: runningBalance,
           source: 'expenses',
           category: expense.category,
-          term: expense.term
+          term: currentTerm
         });
       });
 
@@ -1409,10 +1541,34 @@
 
     // Initialize the dashboard
     document.addEventListener('DOMContentLoaded', function() {
+      // Initialize term from storage
+      initializeTermFromStorage();
+      
+      // Load data for current term
       loadAllFinancialData();
       
       // Auto-refresh every 5 minutes
       setInterval(refreshAllData, 5 * 60 * 1000);
+      
+      // Add keyboard shortcuts for term switching
+      document.addEventListener('keydown', function(e) {
+        if (e.altKey) {
+          switch(e.key) {
+            case '1':
+              e.preventDefault();
+              switchTerm(1);
+              break;
+            case '2':
+              e.preventDefault();
+              switchTerm(2);
+              break;
+            case '3':
+              e.preventDefault();
+              switchTerm(3);
+              break;
+          }
+        }
+      });
     });
   </script>
 </body>
