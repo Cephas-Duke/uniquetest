@@ -1289,7 +1289,7 @@ async function updateReceiptTable() {
     showStatus(`Error loading receipts: ${error.message}. Check Firebase rules or network.`, "error");
   }
 }
-    async function handleReceiptSubmit(e) {
+ async function handleReceiptSubmit(e) {
   e.preventDefault();
   
   const studentInput = document.getElementById("studentInput").value;
@@ -1328,44 +1328,33 @@ async function updateReceiptTable() {
       studentClass = "Unknown";
     }
 
-    // FIXED: Always get fresh student data before processing payment
+    // Get fresh student data before processing payment
     const studentsCollection = getStudentsCollection();
     const studentSnapshot = await studentsCollection.where('name', '==', studentName).get();
     let student;
     
     if (!studentSnapshot.empty) {
-      // Get the CURRENT student data (including any recent changes)
       student = studentSnapshot.docs[0].data();
-      studentId = studentSnapshot.docs[0].id;
+      studentId = studentSnapshot.docs[0].id; // IMPORTANT: Capture the student ID
     } else {
       // Create new student if not found
       const newStudent = {
         name: studentName,
         class: studentClass,
         phone: "+254000000000",
-        tuition: 0,
-        adm: 0,
-        books: 0,
-        stationery: 0,
-        uniform: 0,
-        lunch: 0,
-        transport: 0,
-        trip: 0,
-        graduation: 0,
-        total: 0,
-        paid: 0,
-        balance: 0,
-        term: currentTerm,
-        year: currentYear
+        tuition: 0, adm: 0, books: 0, stationery: 0, uniform: 0,
+        lunch: 0, transport: 0, trip: 0, graduation: 0,
+        total: 0, paid: 0, balance: 0,
+        term: currentTerm, year: currentYear
       };
       const docRef = await studentsCollection.add(newStudent);
-      studentId = docRef.id;
+      studentId = docRef.id; // IMPORTANT: Capture the new student ID
       student = newStudent;
     }
 
-    // FIXED: Calculate balance using CURRENT total (not cached values)
+    // Calculate balances
     const balanceCarriedForward = await getBalanceCarriedForward(studentName, currentTerm, currentYear);
-    const currentTotal = student.total || 0; // Use current total from database
+    const currentTotal = student.total || 0;
     const totalOutstandingBalance = currentTotal + balanceCarriedForward;
     const newPaid = (student.paid || 0) + amount;
     const newBalance = totalOutstandingBalance - newPaid;
@@ -1385,6 +1374,7 @@ async function updateReceiptTable() {
     const receipt = {
       name: studentName,
       class: studentClass,
+      studentId: studentId, // ENHANCED: Store student ID for reliable linking
       paid: amount,
       balance: newBalance,
       mode: mode,
@@ -1393,7 +1383,6 @@ async function updateReceiptTable() {
       receiptNumber: receiptNumber,
       term: currentTerm,
       year: currentYear,
-      // FIXED: Store the student's current fee structure for this specific receipt
       feeStructure: {
         tuition: student.tuition || 0,
         adm: student.adm || 0,
@@ -1417,7 +1406,7 @@ async function updateReceiptTable() {
       receipt.id = receiptRef.id;
     });
 
-    // Send SMS with current balance
+    // Send SMS and show success
     const timeString = receiptDate.toLocaleTimeString('en-US', {
       timeZone: 'Africa/Nairobi',
       hour: '2-digit',
@@ -1430,7 +1419,7 @@ async function updateReceiptTable() {
     
     showStatus(`Receipt saved${smsSent ? ' and SMS sent' : ''} successfully for Term ${currentTerm}!`, "success");
     
-    // Show receipt preview with current balance
+    // Show receipt preview
     const preview = document.getElementById('receiptPreview');
     const previewContent = document.getElementById('previewContent');
     previewContent.innerHTML = `
@@ -1562,39 +1551,47 @@ async function updateReceiptTable() {
       }
     }
 
-    async function deleteStudent(id) {
-      if (confirm(`Are you sure you want to delete this student from Term ${currentTerm}? All associated receipts will also be deleted.`)) {
-        try {
-          const studentsCollection = getStudentsCollection();
-          const receiptsCollection = getReceiptsCollection();
-          
-          const studentRef = studentsCollection.doc(id);
-          const studentDoc = await studentRef.get();
-          
-          if (studentDoc.exists) {
-            const studentName = studentDoc.data().name;
-            const receiptsQuery = await receiptsCollection.where('name', '==', studentName).get();
-            
-            const batch = db.batch();
-            receiptsQuery.forEach(doc => {
-              batch.delete(doc.ref);
-            });
-            batch.delete(studentRef);
-            
-            await batch.commit();
-            showStatus(`Student and all associated receipts deleted successfully from Term ${currentTerm}`, "success");
-            renderStudentList();
-            populateStudents();
-            updateReceiptTable();
-          }
-        } catch (error) {
-          console.error('Error deleting student:', error);
-          showStatus("Error deleting student: " + error.message, "error");
-        }
+    async function deleteStudentEnhanced(id) {
+  if (confirm(`Are you sure you want to delete this student from Term ${currentTerm}? All associated receipts will also be deleted.`)) {
+    try {
+      const studentsCollection = getStudentsCollection();
+      const receiptsCollection = getReceiptsCollection();
+      
+      const studentRef = studentsCollection.doc(id);
+      const studentDoc = await studentRef.get();
+      
+      if (studentDoc.exists) {
+        const studentData = studentDoc.data();
+        const studentName = studentData.name;
+        
+        // Find receipts by BOTH name AND student ID for maximum coverage
+        const receiptsByName = await receiptsCollection.where('name', '==', studentName).get();
+        const receiptsByStudentId = await receiptsCollection.where('studentId', '==', id).get();
+        
+        // Combine results and remove duplicates
+        const allReceiptRefs = new Set();
+        receiptsByName.forEach(doc => allReceiptRefs.add(doc.ref));
+        receiptsByStudentId.forEach(doc => allReceiptRefs.add(doc.ref));
+        
+        const batch = db.batch();
+        allReceiptRefs.forEach(ref => {
+          batch.delete(ref);
+        });
+        batch.delete(studentRef);
+        
+        await batch.commit();
+        showStatus(`Student and ${allReceiptRefs.size} associated receipts deleted successfully from Term ${currentTerm}`, "success");
+        renderStudentList();
+        populateStudents();
+        updateReceiptTable();
       }
+    } catch (error) {
+      console.error('Error deleting student:', error);
+      showStatus("Error deleting student: " + error.message, "error");
     }
-
-    async function deleteReceipt(id) {
+  }
+}
+async function deleteReceiptEnhanced(id) {
   if (confirm("Are you sure you want to delete this receipt?")) {
     try {
       const receiptsCollection = getReceiptsCollection();
@@ -1605,17 +1602,40 @@ async function updateReceiptTable() {
       
       if (receiptDoc.exists) {
         const receipt = receiptDoc.data();
-        const studentQuery = await studentsCollection.where('name', '==', receipt.name).get();
+        let studentFound = false;
+        let studentDoc = null;
         
-        if (!studentQuery.empty) {
-          const studentDoc = studentQuery.docs[0];
+        // METHOD 1: Try to find student by ID (most reliable)
+        if (receipt.studentId) {
+          try {
+            const studentDocById = await studentsCollection.doc(receipt.studentId).get();
+            if (studentDocById.exists) {
+              studentDoc = studentDocById;
+              studentFound = true;
+              console.log("Student found by ID");
+            }
+          } catch (error) {
+            console.log("Student ID lookup failed, trying name lookup");
+          }
+        }
+        
+        // METHOD 2: Fallback to finding by name
+        if (!studentFound) {
+          const studentQuery = await studentsCollection.where('name', '==', receipt.name).get();
+          if (!studentQuery.empty) {
+            studentDoc = studentQuery.docs[0];
+            studentFound = true;
+            console.log("Student found by name");
+          }
+        }
+        
+        if (studentFound) {
+          // Update student balance
           const studentData = studentDoc.data();
-          
-          // FIXED: Properly update student balance when deleting receipt
           const updatedStudent = {
             ...studentData,
-            paid: Math.max(0, studentData.paid - receipt.paid), // Don't go negative
-            balance: studentData.balance + receipt.paid // Add back the deleted payment
+            paid: Math.max(0, studentData.paid - receipt.paid),
+            balance: studentData.balance + receipt.paid
           };
           
           await db.runTransaction(async transaction => {
@@ -1624,13 +1644,44 @@ async function updateReceiptTable() {
           });
           
           showStatus(`Receipt deleted and student balance updated successfully for Term ${currentTerm}`, "success");
-          updateReceiptTable();
+        } else {
+          // Student not found - still allow receipt deletion
+          await receiptRef.delete();
+          showStatus(`Receipt deleted successfully. Note: Associated student '${receipt.name}' was not found (may have been renamed or deleted) for Term ${currentTerm}`, "success");
         }
+        
+        updateReceiptTable();
+      } else {
+        showStatus("Receipt not found", "error");
       }
     } catch (error) {
       console.error('Error deleting receipt:', error);
       showStatus("Error deleting receipt: " + error.message, "error");
     }
+  }
+}
+
+// ENHANCEMENT 3: Batch update receipts when student name changes
+async function updateReceiptsAfterStudentNameChange(oldName, newName, studentId) {
+  try {
+    const receiptsCollection = getReceiptsCollection();
+    const receiptsQuery = await receiptsCollection.where('name', '==', oldName).get();
+    
+    if (!receiptsQuery.empty) {
+      const batch = db.batch();
+      receiptsQuery.forEach(doc => {
+        batch.update(doc.ref, {
+          name: newName,
+          studentId: studentId, // Ensure student ID is stored
+          nameUpdated: new Date().toISOString()
+        });
+      });
+      
+      await batch.commit();
+      console.log(`Updated ${receiptsQuery.size} receipts with new student name`);
+    }
+  } catch (error) {
+    console.error('Error updating receipts after name change:', error);
   }
 }
     async function calculateFeeItemBalancesAtReceiptTime(studentName, currentTerm, currentYear, targetReceiptId) {
