@@ -1551,7 +1551,7 @@ async function updateReceiptTable() {
       }
     }
 
-    async function deleteStudentEnhanced(id) {
+    async function deleteStudent(id) {
   if (confirm(`Are you sure you want to delete this student from Term ${currentTerm}? All associated receipts will also be deleted.`)) {
     try {
       const studentsCollection = getStudentsCollection();
@@ -1591,7 +1591,7 @@ async function updateReceiptTable() {
     }
   }
 }
-async function deleteReceiptEnhanced(id) {
+async function deleteReceipt(id) {
   if (confirm("Are you sure you want to delete this receipt?")) {
     try {
       const receiptsCollection = getReceiptsCollection();
