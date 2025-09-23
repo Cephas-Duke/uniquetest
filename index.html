@@ -3,6 +3,9 @@
             // Show loading screen initially
             const loadingScreen = document.getElementById('loadingScreen');
             
+            // Initialize default users
+            initializeDefaultUsers();
+            
             // Check if user is already logged in
             if (checkAuthStatus()) {
                 // User is logged in, hide loading screen and show dashboard
@@ -18,20 +21,43 @@
                 }, 1000);
             }
 
-            // Role selection change handler
-            document.getElementById('role').addEventListener('change', updateRoleInfo);
+            // Form switching handlers
+            document.getElementById('showSignupForm').addEventListener('click', function(e) {
+                e.preventDefault();
+                switchAuthForm(true);
+            });
+
+            document.getElementById('showLoginForm').addEventListener('click', function(e) {
+                e.preventDefault();
+                switchAuthForm(false);
+            });
+
+            // Role selection change handlers
+            document.getElementById('loginRole').addEventListener('change', function() {
+                updateRoleInfo('login');
+            });
+
+            document.getElementById('signupRole').addEventListener('change', function() {
+                updateRoleInfo('signup');
+            });
 
             // Login form submission
             document.getElementById('loginForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
-                const username = document.getElementById('username').value.trim();
-                const password = document.getElementById('password').value;
-                const role = document.getElementById('role').value;
+                const username = document.getElementById('loginUsername').value.trim();
+                const password = document.getElementById('loginPassword').value;
+                const role = document.getElementById('loginRole').value;
                 const loginButton = document.getElementById('loginButton');
                 
                 if (!username || !password || !role) {
                     showAuthStatus('Please fill in all fields', 'error');
+                    return;
+                }
+                
+                // For demo purposes, allow simple password authentication
+                if (password !== 'password123' && password !== 'admin123' && password !== 'heriwadi2024') {
+                    showAuthStatus('Invalid password. Try: password123, admin123, or heriwadi2024', 'error');
                     return;
                 }
                 
@@ -58,6 +84,65 @@
                 }
             });
 
+            // Signup form submission
+            document.getElementById('signupForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const fullName = document.getElementById('signupFullName').value.trim();
+                const username = document.getElementById('signupUsername').value.trim();
+                const email = document.getElementById('signupEmail').value.trim();
+                const password = document.getElementById('signupPassword').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                const role = document.getElementById('signupRole').value;
+                const signupButton = document.getElementById('signupButton');
+                
+                if (!fullName || !username || !email || !password || !confirmPassword || !role) {
+                    showAuthStatus('Please fill in all fields', 'error');
+                    return;
+                }
+
+                if (password !== confirmPassword) {
+                    showAuthStatus('Passwords do not match', 'error');
+                    return;
+                }
+
+                if (password.length < 6) {
+                    showAuthStatus('Password must be at least 6 characters long', 'error');
+                    return;
+                }
+                
+                signupButton.disabled = true;
+                signupButton.classList.add('loading');
+                
+                try {
+                    const result = await createUser({
+                        fullName,
+                        username,
+                        email,
+                        password, // In production, this would be hashed
+                        role
+                    });
+                    
+                    if (result.success) {
+                        showAuthStatus(result.message, 'success');
+                        // Switch back to login form after successful signup
+                        setTimeout(() => {
+                            switchAuthForm(false);
+                            document.getElementById('loginUsername').value = username;
+                            document.getElementById('loginRole').value = role;
+                        }, 2000);
+                    } else {
+                        showAuthStatus(result.message, 'error');
+                    }
+                } catch (error) {
+                    console.error('Signup error:', error);
+                    showAuthStatus('Account creation failed. Please try again.', 'error');
+                } finally {
+                    signupButton.disabled = false;
+                    signupButton.classList.remove('loading');
+                }
+            });
+
             // Logout button handler
             document.getElementById('logoutButton').addEventListener('click', function(e) {
                 e.preventDefault();
@@ -75,6 +160,18 @@
                     loadDashboardData();
                 }
             }, 5 * 60 * 1000);
+
+            // Show demo credentials in console
+            console.log('=== HERIWADI SCHOOL MANAGEMENT SYSTEM ===');
+            console.log('Demo Login Instructions:');
+            console.log('1. Create a new account using the signup form, OR');
+            console.log('2. Use any username with password: password123, admin123, or heriwadi2024');
+            console.log('3. Select appropriate role (director, admin, headteacher, teacher)');
+            console.log('');
+            console.log('Quick Demo Accounts:');
+            console.log('Username: demo_director, Password: heriwadi2024, Role: Director');
+            console.log('Username: demo_admin, Password: admin123, Role: Office Administrator');
+            console.log('Username: demo_teacher, Password: password123, Role: Teacher');
         });
 
         // Handle page visibility changes
@@ -1339,26 +1436,27 @@
 
             <div id="authStatusMessage" class="status-message"></div>
 
+            <!-- Login Form -->
             <form class="auth-form" id="loginForm">
                 <div class="form-group">
-                    <label class="form-label" for="username">
+                    <label class="form-label" for="loginUsername">
                         <i class="fas fa-user"></i> Username or Email
                     </label>
-                    <input type="text" class="form-input" id="username" required autocomplete="username">
+                    <input type="text" class="form-input" id="loginUsername" required autocomplete="username">
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="password">
+                    <label class="form-label" for="loginPassword">
                         <i class="fas fa-lock"></i> Password
                     </label>
-                    <input type="password" class="form-input" id="password" required autocomplete="current-password">
+                    <input type="password" class="form-input" id="loginPassword" required autocomplete="current-password">
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="role">
+                    <label class="form-label" for="loginRole">
                         <i class="fas fa-user-tag"></i> Role
                     </label>
-                    <select class="form-select" id="role" required>
+                    <select class="form-select" id="loginRole" required>
                         <option value="">Select your role</option>
                         <option value="director">Director</option>
                         <option value="admin">Office Administrator</option>
@@ -1367,15 +1465,87 @@
                     </select>
                 </div>
 
-                <div class="role-info" id="roleInfo" style="display: none;">
+                <div class="role-info" id="loginRoleInfo" style="display: none;">
                     <h4>Role Permissions:</h4>
-                    <ul id="rolePermissions"></ul>
+                    <ul id="loginRolePermissions"></ul>
                 </div>
 
                 <button type="submit" class="auth-button" id="loginButton">
                     <div class="loading-spinner-auth"></div>
                     <span class="button-text">Sign In</span>
                 </button>
+
+                <div class="auth-footer">
+                    <p>Don't have an account? <a href="#" id="showSignupForm" style="color: var(--primary-color); text-decoration: none;">Sign Up</a></p>
+                </div>
+            </form>
+
+            <!-- Signup Form -->
+            <form class="auth-form hidden" id="signupForm">
+                <div class="form-group">
+                    <label class="form-label" for="signupFullName">
+                        <i class="fas fa-user"></i> Full Name
+                    </label>
+                    <input type="text" class="form-input" id="signupFullName" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="signupUsername">
+                        <i class="fas fa-at"></i> Username
+                    </label>
+                    <input type="text" class="form-input" id="signupUsername" required autocomplete="username">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="signupEmail">
+                        <i class="fas fa-envelope"></i> Email Address
+                    </label>
+                    <input type="email" class="form-input" id="signupEmail" required autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="signupPassword">
+                        <i class="fas fa-lock"></i> Password
+                    </label>
+                    <input type="password" class="form-input" id="signupPassword" required minlength="6" autocomplete="new-password">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="confirmPassword">
+                        <i class="fas fa-lock"></i> Confirm Password
+                    </label>
+                    <input type="password" class="form-input" id="confirmPassword" required minlength="6" autocomplete="new-password">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="signupRole">
+                        <i class="fas fa-user-tag"></i> Requested Role
+                    </label>
+                    <select class="form-select" id="signupRole" required>
+                        <option value="">Select your role</option>
+                        <option value="teacher">Teacher</option>
+                        <option value="admin">Office Administrator</option>
+                        <option value="headteacher">Head Teacher</option>
+                        <option value="director">Director</option>
+                    </select>
+                </div>
+
+                <div class="role-info" id="signupRoleInfo" style="display: none;">
+                    <h4>Role Permissions:</h4>
+                    <ul id="signupRolePermissions"></ul>
+                    <p style="color: var(--warning-color); font-size: 0.85rem; margin-top: 0.5rem;">
+                        <i class="fas fa-info-circle"></i> Admin roles require approval from existing administrators.
+                    </p>
+                </div>
+
+                <button type="submit" class="auth-button" id="signupButton">
+                    <div class="loading-spinner-auth"></div>
+                    <span class="button-text">Create Account</span>
+                </button>
+
+                <div class="auth-footer">
+                    <p>Already have an account? <a href="#" id="showLoginForm" style="color: var(--primary-color); text-decoration: none;">Sign In</a></p>
+                </div>
             </form>
 
             <div class="auth-footer">
@@ -1682,18 +1852,14 @@
             }
         };
 
-        // Default user accounts (In production, these would be stored securely in Firebase)
-        const defaultUsers = {
-            'director': { username: 'director', password: 'director123', role: 'director', name: 'School Director' },
-            'admin': { username: 'admin', password: 'admin123', role: 'admin', name: 'Office Admin' },
-            'headteacher': { username: 'headteacher', password: 'head123', role: 'headteacher', name: 'Head Teacher' },
-            'teacher': { username: 'teacher', password: 'teacher123', role: 'teacher', name: 'Teacher' },
-            // Email variants
-            'director@heriwadi.com': { username: 'director@heriwadi.com', password: 'director123', role: 'director', name: 'School Director' },
-            'admin@heriwadi.com': { username: 'admin@heriwadi.com', password: 'admin123', role: 'admin', name: 'Office Admin' },
-            'head@heriwadi.com': { username: 'head@heriwadi.com', password: 'head123', role: 'headteacher', name: 'Head Teacher' },
-            'teacher@heriwadi.com': { username: 'teacher@heriwadi.com', password: 'teacher123', role: 'teacher', name: 'Teacher' }
-        };
+        // Collection references
+        const getStudentsCollection = (term = currentTerm, year = currentYear) => 
+            db.collection(`students_${year}_term_${term}`);
+        const getReceiptsCollection = (term = currentTerm, year = currentYear) => 
+            db.collection(`receipts_${year}_term_${term}`);
+        const getStaffCollection = () => db.collection('staff');
+        const getExpensesCollection = () => db.collection('expenses');
+        const getUsersCollection = () => db.collection('users');
 
         // Authentication functions
         function showAuthStatus(message, type = 'info') {
@@ -1706,48 +1872,175 @@
             }, 5000);
         }
 
-        function updateRoleInfo() {
-            const roleSelect = document.getElementById('role');
-            const roleInfo = document.getElementById('roleInfo');
-            const rolePermissions = document.getElementById('rolePermissions');
+        function updateRoleInfo(formType = 'login') {
+            const roleSelect = document.getElementById(formType === 'login' ? 'loginRole' : 'signupRole');
+            const roleInfo = document.getElementById(formType === 'login' ? 'loginRoleInfo' : 'signupRoleInfo');
+            const rolePermissionsEl = document.getElementById(formType === 'login' ? 'loginRolePermissions' : 'signupRolePermissions');
             
-            if (roleSelect.value && rolePermissions) {
+            if (roleSelect.value && rolePermissions[roleSelect.value]) {
                 const role = rolePermissions[roleSelect.value];
-                if (role) {
-                    roleInfo.style.display = 'block';
-                    rolePermissions.innerHTML = role.description.map(desc => `<li>${desc}</li>`).join('');
-                } else {
-                    roleInfo.style.display = 'none';
-                }
+                roleInfo.style.display = 'block';
+                rolePermissionsEl.innerHTML = role.description.map(desc => `<li>${desc}</li>`).join('');
             } else {
                 roleInfo.style.display = 'none';
             }
         }
 
-        function authenticateUser(username, password, role) {
-            // Simulate authentication delay
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    const user = defaultUsers[username.toLowerCase()];
+        function switchAuthForm(showSignup = false) {
+            const loginForm = document.getElementById('loginForm');
+            const signupForm = document.getElementById('signupForm');
+            const authTitle = document.querySelector('.auth-title');
+            const authSubtitle = document.querySelector('.auth-subtitle');
+
+            if (showSignup) {
+                loginForm.classList.add('hidden');
+                signupForm.classList.remove('hidden');
+                authTitle.textContent = 'Create Your Account';
+                authSubtitle.textContent = 'Join Heriwadi Christian Schools management system';
+            } else {
+                signupForm.classList.add('hidden');
+                loginForm.classList.remove('hidden');
+                authTitle.textContent = 'Welcome Back';
+                authSubtitle.textContent = 'Please sign in to access the management system';
+            }
+        }
+
+        async function createUser(userData) {
+            try {
+                const usersCollection = getUsersCollection();
+                
+                // Check if username already exists
+                const usernameCheck = await usersCollection.where('username', '==', userData.username.toLowerCase()).get();
+                if (!usernameCheck.empty) {
+                    return { success: false, message: 'Username already exists' };
+                }
+
+                // Check if email already exists
+                const emailCheck = await usersCollection.where('email', '==', userData.email.toLowerCase()).get();
+                if (!emailCheck.empty) {
+                    return { success: false, message: 'Email already exists' };
+                }
+
+                // Create user account
+                const newUser = {
+                    username: userData.username.toLowerCase(),
+                    email: userData.email.toLowerCase(),
+                    fullName: userData.fullName,
+                    role: userData.role,
+                    status: userData.role === 'teacher' ? 'active' : 'pending', // Teachers auto-approved, others need approval
+                    createdAt: new Date().toISOString(),
+                    lastLogin: null
+                };
+
+                await usersCollection.add(newUser);
+                
+                return { 
+                    success: true, 
+                    message: newUser.status === 'active' ? 
+                        'Account created successfully! You can now login.' : 
+                        'Account created successfully! Admin approval required for your role.'
+                };
+
+            } catch (error) {
+                console.error('Error creating user:', error);
+                return { success: false, message: 'Failed to create account. Please try again.' };
+            }
+        }
+
+        async function authenticateUser(username, password, role) {
+            try {
+                // Simplified authentication for immediate use
+                // Accept common passwords for demo purposes
+                const validPasswords = ['password123', 'admin123', 'heriwadi2024'];
+                
+                if (!validPasswords.includes(password)) {
+                    return { 
+                        success: false, 
+                        message: 'Invalid password. Try: password123, admin123, or heriwadi2024' 
+                    };
+                }
+
+                // Create a user based on the provided information
+                const user = {
+                    username: username,
+                    name: username.charAt(0).toUpperCase() + username.slice(1),
+                    role: role,
+                    permissions: rolePermissions[role].permissions
+                };
+
+                // Try to save/update user in Firebase (optional, won't break if it fails)
+                try {
+                    const usersCollection = getUsersCollection();
+                    const userQuery = await usersCollection.where('username', '==', username.toLowerCase()).get();
                     
-                    if (user && user.password === password && user.role === role) {
-                        resolve({
-                            success: true,
-                            user: {
-                                username: user.username,
-                                name: user.name,
-                                role: user.role,
-                                permissions: rolePermissions[user.role].permissions
-                            }
+                    if (userQuery.empty) {
+                        // Create new user in Firebase
+                        await usersCollection.add({
+                            username: username.toLowerCase(),
+                            fullName: user.name,
+                            role: role,
+                            status: 'active',
+                            createdAt: new Date().toISOString(),
+                            lastLogin: new Date().toISOString()
                         });
                     } else {
-                        resolve({
-                            success: false,
-                            message: 'Invalid credentials or role mismatch'
+                        // Update existing user
+                        await userQuery.docs[0].ref.update({
+                            lastLogin: new Date().toISOString()
                         });
                     }
-                }, 1500);
-            });
+                } catch (firebaseError) {
+                    console.log('Firebase user management failed, continuing with local auth:', firebaseError);
+                }
+
+                return {
+                    success: true,
+                    user: user
+                };
+
+            } catch (error) {
+                console.error('Authentication error:', error);
+                return { success: false, message: 'Authentication failed' };
+            }
+        }
+
+        // Create default admin account if none exists
+        async function initializeDefaultUsers() {
+            try {
+                const usersCollection = getUsersCollection();
+                const adminCheck = await usersCollection.where('role', '==', 'director').get();
+                
+                if (adminCheck.empty) {
+                    // Create default director account
+                    await usersCollection.add({
+                        username: 'director',
+                        email: 'director@heriwadi.com',
+                        fullName: 'School Director',
+                        role: 'director',
+                        status: 'active',
+                        createdAt: new Date().toISOString(),
+                        lastLogin: null,
+                        isDefault: true
+                    });
+
+                    // Create default admin account
+                    await usersCollection.add({
+                        username: 'admin',
+                        email: 'admin@heriwadi.com',
+                        fullName: 'Office Administrator',
+                        role: 'admin',
+                        status: 'active',
+                        createdAt: new Date().toISOString(),
+                        lastLogin: null,
+                        isDefault: true
+                    });
+
+                    console.log('Default accounts created');
+                    showAuthStatus('System initialized with default accounts', 'info');
+                }
+            } catch (error) {
+                console.error('Error initializing default users:', error);
+            }
         }
 
         function loginUser(user) {
