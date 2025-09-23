@@ -8,11 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* Hide dashboard initially */
-        .dashboard-content {
-            display: none;
-        }
-
         :root {
             --primary-color: #005fa3;
             --secondary-color: #004080;
@@ -43,8 +38,8 @@
             min-height: 100vh;
         }
 
-        /* Authentication Section Styles */
-        .auth-overlay {
+        /* Loading Screen */
+        .loading-screen {
             position: fixed;
             top: 0;
             left: 0;
@@ -52,155 +47,96 @@
             height: 100%;
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             display: flex;
-            align-items: center;
+            flex-direction: column;
             justify-content: center;
-            z-index: 10000;
+            align-items: center;
+            z-index: 9999;
+            color: white;
+            transition: opacity 0.5s ease;
         }
 
-        .auth-card {
-            background: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow-hover);
-            padding: 2.5rem;
-            width: 100%;
-            max-width: 450px;
-            margin: 1rem;
-            position: relative;
-            overflow: hidden;
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
         }
 
-        .auth-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .auth-logo {
-            width: 70px;
-            height: 70px;
+        .loading-logo {
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            background: rgba(255, 255, 255, 0.2);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 1rem;
-            color: white;
-            font-size: 1.8rem;
-        }
-
-        .auth-title {
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: var(--dark-color);
-            margin-bottom: 0.5rem;
-        }
-
-        .auth-subtitle {
-            color: #666;
-            font-size: 0.95rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            color: var(--dark-color);
-        }
-
-        .form-input, .form-select {
-            width: 100%;
-            padding: 0.875rem 1rem;
-            border: 2px solid #e0e0e0;
-            border-radius: var(--border-radius);
-            font-size: 1rem;
-            transition: var(--transition);
-            outline: none;
-        }
-
-        .form-input:focus, .form-select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(0, 95, 163, 0.1);
-        }
-
-        .auth-button {
-            width: 100%;
-            padding: 1rem;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            border: none;
-            border-radius: var(--border-radius);
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .auth-button:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: var(--box-shadow-hover);
-        }
-
-        .auth-button:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-
-        .status-message {
-            padding: 1rem;
-            border-radius: var(--border-radius);
+            font-size: 2rem;
             margin-bottom: 1rem;
+            animation: pulse 2s infinite;
+        }
+
+        .loading-text {
+            font-size: 1.2rem;
             font-weight: 500;
-            display: none;
+            margin-bottom: 2rem;
         }
 
-        .status-message.show {
-            display: block;
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
         }
 
-        .status-message.success {
-            background: rgba(40, 167, 69, 0.1);
-            color: var(--success-color);
-            border-left: 4px solid var(--success-color);
-        }
-
-        .status-message.error {
-            background: rgba(220, 53, 69, 0.1);
-            color: var(--danger-color);
-            border-left: 4px solid var(--danger-color);
-        }
-
-        /* Dashboard Styles */
+        /* Header */
         header {
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
             padding: 2rem;
             text-align: center;
             box-shadow: var(--box-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shimmer 3s infinite;
         }
 
         header h1 {
             font-size: 2.5rem;
             margin-bottom: 0.5rem;
             font-weight: 700;
+            position: relative;
+            z-index: 1;
         }
 
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Navigation */
         nav {
             background: var(--secondary-color);
             padding: 0.75rem 1.5rem;
             display: flex;
             gap: 1rem;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 1rem;
             flex-wrap: wrap;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         nav a {
@@ -214,39 +150,120 @@
             gap: 0.5rem;
             font-size: 0.95rem;
             font-weight: 500;
+            position: relative;
+            overflow: hidden;
+        }
+
+        nav a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        nav a:hover::before {
+            left: 100%;
         }
 
         nav a:hover, nav a.active {
             background: var(--accent-color);
             color: white;
             transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 168, 232, 0.4);
         }
 
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            color: white;
-            cursor: pointer;
+        nav a.active {
+            font-weight: 600;
         }
 
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-
+        /* Container */
         .container {
             max-width: 1400px;
             margin: 0 auto;
             padding: 2rem 1.5rem;
         }
 
+        /* Term Selector */
+        .term-selector {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            animation: slideInDown 0.6s ease-out;
+        }
+
+        .term-selector h3 {
+            color: var(--primary-color);
+            margin: 0;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .term-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .term-btn {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid var(--primary-color);
+            background: transparent;
+            color: var(--primary-color);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .term-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--primary-color);
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+
+        .term-btn:hover::before,
+        .term-btn.active::before {
+            left: 0;
+        }
+
+        .term-btn:hover,
+        .term-btn.active {
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 95, 163, 0.3);
+        }
+
+        .current-term-info {
+            background: linear-gradient(135deg, var(--info-color), #138496);
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);
+        }
+
+        /* Dashboard Grid */
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -254,17 +271,41 @@
             margin-bottom: 2rem;
         }
 
+        /* Metric Cards */
         .metric-card {
             background: white;
             border-radius: var(--border-radius);
             box-shadow: var(--box-shadow);
             padding: 2rem;
             transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            animation: slideInUp 0.6s ease-out;
+            animation-fill-mode: backwards;
+        }
+
+        .metric-card:nth-child(1) { animation-delay: 0.1s; }
+        .metric-card:nth-child(2) { animation-delay: 0.2s; }
+        .metric-card:nth-child(3) { animation-delay: 0.3s; }
+        .metric-card:nth-child(4) { animation-delay: 0.4s; }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
         }
 
         .metric-card:hover {
             transform: translateY(-8px);
             box-shadow: var(--box-shadow-hover);
+        }
+
+        .metric-card:hover .metric-icon {
+            transform: scale(1.1) rotate(5deg);
         }
 
         .metric-header {
@@ -288,6 +329,15 @@
             font-weight: 700;
             color: var(--primary-color);
             line-height: 1;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: baseline;
+            gap: 0.25rem;
+        }
+
+        .metric-value .loading {
+            font-size: 1rem;
+            color: #666;
         }
 
         .metric-icon {
@@ -299,6 +349,7 @@
             justify-content: center;
             font-size: 1.5rem;
             color: white;
+            transition: var(--transition);
         }
 
         .students-icon { background: linear-gradient(135deg, var(--success-color), #20c997); }
@@ -306,341 +357,982 @@
         .revenue-icon { background: linear-gradient(135deg, var(--info-color), #138496); }
         .expense-icon { background: linear-gradient(135deg, var(--danger-color), #c82333); }
 
-        .welcome-message {
+        .metric-trend {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .trend-up { color: var(--success-color); }
+        .trend-down { color: var(--danger-color); }
+
+        /* Charts Section */
+        .charts-section {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
             background: white;
             border-radius: var(--border-radius);
             box-shadow: var(--box-shadow);
             padding: 2rem;
-            margin-bottom: 2rem;
-            text-align: center;
+            animation: slideInLeft 0.6s ease-out;
         }
 
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(0, 95, 163, 0.3);
+        .chart-card:nth-child(2) {
+            animation-name: slideInRight;
+        }
+
+        .chart-title {
+            font-size: 1.3rem;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+        }
+
+        .mini-chart-container {
+            position: relative;
+            height: 200px;
+        }
+
+        /* Recent Activity */
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            margin-bottom: 0.5rem;
+        }
+
+        .activity-item:hover {
+            background: #f8f9fa;
+            transform: translateX(5px);
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
-            border-top-color: var(--primary-color);
-            animation: spin 1s ease-in-out infinite;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: var(--dark-color);
+        }
+
+        .activity-time {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .action-btn {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 1.5rem;
+            text-decoration: none;
+            color: var(--dark-color);
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .action-btn:hover::before {
+            transform: scaleX(1);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--box-shadow-hover);
+            color: var(--primary-color);
+        }
+
+        .action-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            transition: var(--transition);
+        }
+
+        .action-btn:hover .action-icon {
+            transform: scale(1.1);
+        }
+
+        /* Status Messages */
+        .status-message {
+            padding: 1rem 1.5rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+            font-weight: 500;
+            display: none;
+            animation: slideInDown 0.3s ease-out;
+        }
+
+        .status-message.show {
+            display: block;
+        }
+
+        .status-message.success {
+            background: rgba(40, 167, 69, 0.1);
+            color: var(--success-color);
+            border-left: 4px solid var(--success-color);
+        }
+
+        .status-message.error {
+            background: rgba(220, 53, 69, 0.1);
+            color: var(--danger-color);
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .status-message.info {
+            background: rgba(23, 162, 184, 0.1);
+            color: var(--info-color);
+            border-left: 4px solid var(--info-color);
+        }
+
+        /* Refresh Button */
+        .refresh-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: var(--box-shadow);
+            z-index: 100;
+        }
+
+        .refresh-btn:hover {
+            transform: scale(1.1);
+            box-shadow: var(--box-shadow-hover);
+        }
+
+        .refresh-btn.loading {
+            animation: spin 1s linear infinite;
+        }
+
+        /* Animations */
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
 
+        @keyframes slideInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
         @media (max-width: 768px) {
-            .nav-links {
+            nav {
                 flex-direction: column;
                 gap: 0.5rem;
             }
-            
-            nav {
-                flex-direction: column;
-                padding: 1rem;
+
+            nav a {
+                justify-content: center;
+                padding: 0.5rem 1rem;
             }
-            
+
             .container {
                 padding: 1rem;
+            }
+
+            .term-selector {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .metric-card {
+                padding: 1.5rem;
+            }
+
+            .metric-value {
+                font-size: 2rem;
+            }
+
+            header h1 {
+                font-size: 2rem;
+            }
+
+            .chart-container {
+                height: 300px;
+            }
+
+            .quick-actions {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .metric-value {
+                font-size: 1.8rem;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Authentication Overlay -->
-    <div class="auth-overlay" id="authOverlay">
-        <div class="auth-card">
-            <div class="auth-header">
-                <div class="auth-logo">
-                    <i class="fas fa-school"></i>
-                </div>
-                <h2 class="auth-title">Welcome to Heriwadi Christian Schools</h2>
-                <p class="auth-subtitle">Please sign in to access the management system</p>
-            </div>
-
-            <div id="authStatusMessage" class="status-message"></div>
-
-            <form id="loginForm">
-                <div class="form-group">
-                    <label class="form-label" for="username">
-                        <i class="fas fa-user"></i> Username or Email
-                    </label>
-                    <input type="text" class="form-input" id="username" required>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="password">
-                        <i class="fas fa-lock"></i> Password
-                    </label>
-                    <input type="password" class="form-input" id="password" required>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="role">
-                        <i class="fas fa-user-tag"></i> Role
-                    </label>
-                    <select class="form-select" id="role" required>
-                        <option value="">Select your role</option>
-                        <option value="director">Director</option>
-                        <option value="admin">Office Administrator</option>
-                        <option value="headteacher">Head Teacher</option>
-                        <option value="teacher">Teacher</option>
-                    </select>
-                </div>
-
-                <button type="submit" class="auth-button" id="loginButton">
-                    Sign In
-                </button>
-            </form>
-
-            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e0e0e0; text-align: center; color: #666; font-size: 0.9rem;">
-                <p><strong>Demo Login:</strong></p>
-                <p>Use any username with password: <strong>heriwadi2024</strong></p>
-                <p>Then select your role and click Sign In</p>
-            </div>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-logo">
+            <i class="fas fa-school"></i>
         </div>
+        <div class="loading-text">Loading Dashboard...</div>
+        <div class="loading-spinner"></div>
     </div>
 
-    <!-- Main Dashboard Content -->
-    <div class="dashboard-content" id="dashboardContent">
-        <header>
-            <h1>Heriwadi Christian Schools Ltd</h1>
-            <p>Comprehensive School Management Dashboard</p>
-        </header>
+    <header>
+        <h1>Heriwadi Christian Schools Ltd</h1>
+        <p>Comprehensive School Management Dashboard</p>
+    </header>
 
-        <nav>
-            <div class="nav-links">
-                <a href="index.html" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-                <a href="receipts.html" id="receiptsLink"><i class="fas fa-receipt"></i> Receipts</a>
-                <a href="students.html" id="studentsLink"><i class="fas fa-users"></i> Students</a>
-                <a href="expense.html" id="expensesLink"><i class="fas fa-money-bill-wave"></i> Expenses</a>
-                <a href="assets.html" id="assetsLink"><i class="fas fa-laptop-house"></i> Assets</a>
-                <a href="staff.html" id="staffLink"><i class="fas fa-user-tie"></i> Staff</a>
-                <a href="payroll.html" id="payrollLink"><i class="fas fa-money-check-alt"></i> Payroll</a>
-                <a href="financials.html" id="financialsLink"><i class="fas fa-chart-line"></i> Financials</a>
+    <nav>
+        <a href="index.html" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="receipts.html"><i class="fas fa-receipt"></i> Receipts</a>
+        <a href="students.html"><i class="fas fa-users"></i> Students</a>
+        <a href="expense.html"><i class="fas fa-money-bill-wave"></i> Expenses</a>
+        <a href="assets.html"><i class="fas fa-laptop-house"></i> Assets</a>
+        <a href="staff.html"><i class="fas fa-user-tie"></i> Staff</a>
+        <a href="payroll.html"><i class="fas fa-money-check-alt"></i> Payroll</a>
+        <a href="financials.html"><i class="fas fa-chart-line"></i> Financials</a>
+    </nav>
+
+    <div class="container">
+        <!-- Status Messages -->
+        <div id="statusMessage" class="status-message"></div>
+
+        <!-- Term Selector -->
+        <div class="term-selector">
+            <div>
+                <h3><i class="fas fa-calendar-alt"></i> Academic Term</h3>
+                <div class="current-term-info">
+                    Current Academic Year: <span id="currentYear">2024</span>
+                </div>
             </div>
-            
-            <div class="user-profile" id="userProfile">
+            <div class="term-buttons">
+                <button class="term-btn" data-term="1" onclick="switchTerm(1)">Term 1</button>
+                <button class="term-btn active" data-term="2" onclick="switchTerm(2)">Term 2</button>
+                <button class="term-btn" data-term="3" onclick="switchTerm(3)">Term 3</button>
+            </div>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-info">
+                        <h3>Total Students</h3>
+                        <div class="metric-value" id="totalStudents">
+                            <span class="loading">Loading...</span>
+                        </div>
+                        <div class="metric-trend">
+                            <span id="studentTrend">--</span>
+                        </div>
+                    </div>
+                    <div class="metric-icon students-icon">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-info">
+                        <h3>Active Staff</h3>
+                        <div class="metric-value" id="totalStaff">
+                            <span class="loading">Loading...</span>
+                        </div>
+                        <div class="metric-trend">
+                            <span id="staffTrend">--</span>
+                        </div>
+                    </div>
+                    <div class="metric-icon staff-icon">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-info">
+                        <h3>Fee Revenue</h3>
+                        <div class="metric-value" id="totalRevenue">
+                            <span class="loading">Loading...</span>
+                        </div>
+                        <div class="metric-trend">
+                            <span id="revenueTrend">--</span>
+                        </div>
+                    </div>
+                    <div class="metric-icon revenue-icon">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-info">
+                        <h3>Total Expenses</h3>
+                        <div class="metric-value" id="totalExpenses">
+                            <span class="loading">Loading...</span>
+                        </div>
+                        <div class="metric-trend">
+                            <span id="expenseTrend">--</span>
+                        </div>
+                    </div>
+                    <div class="metric-icon expense-icon">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-section">
+            <div class="chart-card">
+                <h2 class="chart-title">
+                    <i class="fas fa-chart-line"></i> Financial Overview - <span id="chartTermDisplay">Term 2</span>
+                </h2>
+                <div class="chart-container">
+                    <canvas id="financialChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h2 class="chart-title">
+                    <i class="fas fa-history"></i> Recent Activities
+                </h2>
+                <div id="recentActivities">
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">Loading activities...</div>
+                            <div class="activity-time">Please wait</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 style="margin: 1.5rem 0 1rem; color: var(--primary-color);">
+                    <i class="fas fa-chart-pie"></i> Class Distribution
+                </h3>
+                <div class="mini-chart-container">
+                    <canvas id="classChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="students.html" class="action-btn">
+                <div class="action-icon">
+                    <i class="fas fa-user-plus"></i>
+                </div>
                 <div>
-                    <div id="userName">User Name</div>
-                    <div style="font-size: 0.8rem; opacity: 0.8;" id="userRole">Role</div>
+                    <h4>Add Student</h4>
+                    <p>Register new student</p>
                 </div>
-                <div class="user-avatar" id="userAvatar">U</div>
-                <button onclick="logout()" style="margin-left: 1rem; padding: 0.5rem 1rem; background: rgba(255,255,255,0.2); border: none; border-radius: 4px; color: white; cursor: pointer;">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </button>
-            </div>
-        </nav>
-
-        <div class="container">
-            <div class="welcome-message">
-                <h2>Welcome to Your Dashboard!</h2>
-                <p id="welcomeText">You have successfully logged in to the Heriwadi Christian Schools management system.</p>
-            </div>
-
-            <!-- Dashboard Grid -->
-            <div class="dashboard-grid">
-                <div class="metric-card">
-                    <div class="metric-header">
-                        <div class="metric-info">
-                            <h3>Total Students</h3>
-                            <div class="metric-value" id="totalStudents">
-                                <span class="loading-spinner"></span>
-                            </div>
-                        </div>
-                        <div class="metric-icon students-icon">
-                            <i class="fas fa-user-graduate"></i>
-                        </div>
-                    </div>
+            </a>
+            
+            <a href="receipts.html" class="action-btn">
+                <div class="action-icon">
+                    <i class="fas fa-receipt"></i>
                 </div>
-
-                <div class="metric-card">
-                    <div class="metric-header">
-                        <div class="metric-info">
-                            <h3>Active Staff</h3>
-                            <div class="metric-value" id="totalStaff">
-                                <span class="loading-spinner"></span>
-                            </div>
-                        </div>
-                        <div class="metric-icon staff-icon">
-                            <i class="fas fa-chalkboard-teacher"></i>
-                        </div>
-                    </div>
+                <div>
+                    <h4>Issue Receipt</h4>
+                    <p>Process fee payment</p>
                 </div>
-
-                <div class="metric-card">
-                    <div class="metric-header">
-                        <div class="metric-info">
-                            <h3>Fee Revenue</h3>
-                            <div class="metric-value" id="totalRevenue">
-                                <span class="loading-spinner"></span>
-                            </div>
-                        </div>
-                        <div class="metric-icon revenue-icon">
-                            <i class="fas fa-coins"></i>
-                        </div>
-                    </div>
+            </a>
+            
+            <a href="expense.html" class="action-btn">
+                <div class="action-icon">
+                    <i class="fas fa-money-bill-wave"></i>
                 </div>
-
-                <div class="metric-card">
-                    <div class="metric-header">
-                        <div class="metric-info">
-                            <h3>Total Expenses</h3>
-                            <div class="metric-value" id="totalExpenses">
-                                <span class="loading-spinner"></span>
-                            </div>
-                        </div>
-                        <div class="metric-icon expense-icon">
-                            <i class="fas fa-money-bill-wave"></i>
-                        </div>
-                    </div>
+                <div>
+                    <h4>Add Expense</h4>
+                    <p>Record new expense</p>
                 </div>
-            </div>
+            </a>
+            
+            <a href="staff.html" class="action-btn">
+                <div class="action-icon">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+                <div>
+                    <h4>Manage Staff</h4>
+                    <p>Staff information</p>
+                </div>
+            </a>
+            
+            <a href="financials.html" class="action-btn">
+                <div class="action-icon">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <div>
+                    <h4>View Reports</h4>
+                    <p>Financial reports</p>
+                </div>
+            </a>
         </div>
     </div>
+
+    <!-- Refresh Button -->
+    <button class="refresh-btn" id="refreshBtn" onclick="refreshAllData()" title="Refresh Data">
+        <i class="fas fa-sync-alt"></i>
+    </button>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <script>
-        // Role permissions
-        const rolePermissions = {
-            director: ['dashboard', 'students', 'receipts', 'expenses', 'assets', 'staff', 'payroll', 'financials'],
-            admin: ['dashboard', 'students', 'receipts', 'expenses', 'assets', 'financials'],
-            headteacher: ['dashboard', 'students', 'staff', 'financials'],
-            teacher: ['dashboard', 'students']
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBAA6zY40EwbTmWUx1op1cx52C3y0RK3m0",
+            authDomain: "heriwadi-manager.firebaseapp.com",
+            projectId: "heriwadi-manager",
+            storageBucket: "heriwadi-manager.appspot.com",
+            messagingSenderId: "654632910809",
+            appId: "1:654632910809:web:7c65613d2510402a6663c8",
+            measurementId: "G-LLHS6GLB6E"
         };
 
-        let currentUser = JSON.parse(sessionStorage.getItem('heriwadi_user')) || null;
+        // Initialize Firebase
+        let app, db;
+        try {
+            if (!firebase.apps.length) {
+                app = firebase.initializeApp(firebaseConfig);
+            } else {
+                app = firebase.app();
+            }
+            db = firebase.firestore();
+            console.log("Firebase initialized successfully");
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+            showStatus("Failed to initialize Firebase. Check your configuration.", "error");
+            throw error;
+        }
 
-        // Show status message
-        function showAuthStatus(message, type = 'info') {
-            const statusEl = document.getElementById('authStatusMessage');
+        // Global state
+        let currentTerm = parseInt(sessionStorage.getItem('heriwadi_current_term')) || 2;
+        let currentYear = new Date().getFullYear();
+        let dashboardData = {
+            students: [],
+            staff: [],
+            receipts: [],
+            expenses: [],
+            lastUpdated: null
+        };
+        let charts = {
+            financial: null,
+            class: null
+        };
+
+        // Collection references
+        const getStudentsCollection = (term = currentTerm, year = currentYear) => 
+            db.collection(`students_${year}_term_${term}`);
+        const getReceiptsCollection = (term = currentTerm, year = currentYear) => 
+            db.collection(`receipts_${year}_term_${term}`);
+        const getStaffCollection = () => db.collection('staff');
+        const getExpensesCollection = () => db.collection('expenses');
+
+        // Status message function
+        function showStatus(message, type = 'info') {
+            const statusEl = document.getElementById('statusMessage');
             statusEl.textContent = message;
             statusEl.className = `status-message ${type} show`;
             
             setTimeout(() => {
                 statusEl.classList.remove('show');
-            }, 4000);
+            }, 5000);
         }
 
-        // Login function
-        function loginUser(user) {
-            currentUser = user;
-            sessionStorage.setItem('heriwadi_user', JSON.stringify(user));
-            
-            // Update UI
-            document.getElementById('userName').textContent = user.name;
-            document.getElementById('userRole').textContent = user.role.charAt(0).toUpperCase() + user.role.slice(1);
-            document.getElementById('userAvatar').textContent = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
-            document.getElementById('welcomeText').textContent = `Welcome back, ${user.name}! You are logged in as ${user.role}.`;
-            
-            // Apply role permissions
-            applyRolePermissions(user.role);
-            
-            // Hide auth, show dashboard
-            document.getElementById('authOverlay').style.display = 'none';
-            document.getElementById('dashboardContent').style.display = 'block';
-            
-            // Load mock data
-            setTimeout(loadMockData, 1000);
+        // Initialize term from storage and update UI
+        function initializeTermFromStorage() {
+            document.querySelectorAll('.term-btn').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.term) === currentTerm);
+            });
+            updateTermDisplays();
+            console.log(`Initialized with Term ${currentTerm} from storage`);
         }
 
-        // Apply role-based permissions
-        function applyRolePermissions(role) {
-            const permissions = rolePermissions[role] || [];
-            
-            // Show/hide navigation links based on permissions
-            document.getElementById('receiptsLink').style.display = permissions.includes('receipts') ? 'flex' : 'none';
-            document.getElementById('studentsLink').style.display = permissions.includes('students') ? 'flex' : 'none';
-            document.getElementById('expensesLink').style.display = permissions.includes('expenses') ? 'flex' : 'none';
-            document.getElementById('assetsLink').style.display = permissions.includes('assets') ? 'flex' : 'none';
-            document.getElementById('staffLink').style.display = permissions.includes('staff') ? 'flex' : 'none';
-            document.getElementById('payrollLink').style.display = permissions.includes('payroll') ? 'flex' : 'none';
-            document.getElementById('financialsLink').style.display = permissions.includes('financials') ? 'flex' : 'none';
+        // Update all term displays
+        function updateTermDisplays() {
+            document.getElementById('currentYear').textContent = currentYear;
+            document.getElementById('chartTermDisplay').textContent = `Term ${currentTerm}`;
         }
 
-        // Load mock data
-        function loadMockData() {
-            // Mock data based on role
-            const mockData = {
-                director: { students: 1248, staff: 87, revenue: 12500000, expenses: 9800000 },
-                admin: { students: 1248, staff: 0, revenue: 12500000, expenses: 9800000 },
-                headteacher: { students: 1248, staff: 87, revenue: 0, expenses: 0 },
-                teacher: { students: 1248, staff: 0, revenue: 0, expenses: 0 }
+        // Switch term function with persistent storage
+        function switchTerm(term) {
+            currentTerm = term;
+            sessionStorage.setItem('heriwadi_current_term', term.toString());
+            
+            document.querySelectorAll('.term-btn').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.term) === term);
+            });
+            
+            updateTermDisplays();
+            loadDashboardData();
+            showStatus(`Switched to Term ${term} - Data refreshed`, "success");
+        }
+
+        // Load all dashboard data
+        async function loadDashboardData() {
+            try {
+                showStatus("Loading dashboard data...", "info");
+                
+                // Show loading states
+                document.getElementById('totalStudents').innerHTML = '<span class="loading">Loading...</span>';
+                document.getElementById('totalStaff').innerHTML = '<span class="loading">Loading...</span>';
+                document.getElementById('totalRevenue').innerHTML = '<span class="loading">Loading...</span>';
+                document.getElementById('totalExpenses').innerHTML = '<span class="loading">Loading...</span>';
+
+                // Load data concurrently for better performance
+                const [studentsSnapshot, staffSnapshot, receiptsSnapshot, expensesSnapshot] = await Promise.all([
+                    getStudentsCollection().get(),
+                    getStaffCollection().get(),
+                    getReceiptsCollection().get(),
+                    getExpensesCollection().get()
+                ]);
+
+                // Process students data
+                dashboardData.students = [];
+                studentsSnapshot.forEach(doc => {
+                    dashboardData.students.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Process staff data
+                dashboardData.staff = [];
+                staffSnapshot.forEach(doc => {
+                    dashboardData.staff.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Process receipts data
+                dashboardData.receipts = [];
+                receiptsSnapshot.forEach(doc => {
+                    dashboardData.receipts.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Process expenses data - filter by current term
+                dashboardData.expenses = [];
+                expensesSnapshot.forEach(doc => {
+                    const expense = doc.data();
+                    const expenseTerm = getTermFromName(expense.term);
+                    if (expenseTerm === currentTerm || !expense.term) {
+                        dashboardData.expenses.push({ id: doc.id, ...expense });
+                    }
+                });
+
+                // Update UI with loaded data
+                updateMetricCards();
+                updateCharts();
+                updateRecentActivities();
+                
+                dashboardData.lastUpdated = new Date();
+                showStatus("Dashboard data loaded successfully", "success");
+                
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                showStatus(`Error loading data: ${error.message}`, "error");
+            }
+        }
+
+        // Convert term name to number
+        function getTermFromName(termName) {
+            if (!termName) return null;
+            const termMap = {
+                'First Term': 1, 'Second Term': 2, 'Third Term': 3,
+                'Term 1': 1, 'Term 2': 2, 'Term 3': 3
             };
+            return termMap[termName] || null;
+        }
 
-            const data = mockData[currentUser.role] || mockData.teacher;
+        // Update metric cards with real data
+        function updateMetricCards() {
+            // Students metrics
+            const totalStudents = dashboardData.students.length;
+            document.getElementById('totalStudents').textContent = totalStudents.toLocaleString();
+            document.getElementById('studentTrend').innerHTML = `<i class="fas fa-users"></i> Current term enrollment`;
+            document.getElementById('studentTrend').className = 'trend-up';
+
+            // Staff metrics
+            const totalStaff = dashboardData.staff.length;
+            document.getElementById('totalStaff').textContent = totalStaff.toLocaleString();
+            document.getElementById('staffTrend').innerHTML = `<i class="fas fa-user-tie"></i> Active staff members`;
+            document.getElementById('staffTrend').className = 'trend-up';
+
+            // Revenue metrics (from receipts)
+            const totalRevenue = dashboardData.receipts.reduce((sum, receipt) => sum + (receipt.paid || 0), 0);
+            document.getElementById('totalRevenue').textContent = `KES ${totalRevenue.toLocaleString('en-KE')}`;
+            document.getElementById('revenueTrend').innerHTML = `<i class="fas fa-arrow-up"></i> Fee collections`;
+            document.getElementById('revenueTrend').className = 'trend-up';
+
+            // Expenses metrics
+            const totalExpenses = dashboardData.expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
+            document.getElementById('totalExpenses').textContent = `KES ${totalExpenses.toLocaleString('en-KE')}`;
+            document.getElementById('expenseTrend').innerHTML = `<i class="fas fa-money-bill-wave"></i> Total spent`;
+            document.getElementById('expenseTrend').className = 'trend-down';
+        }
+
+        // Update charts with real data
+        function updateCharts() {
+            updateFinancialChart();
+            updateClassDistributionChart();
+        }
+
+        // Update financial overview chart
+        function updateFinancialChart() {
+            const ctx = document.getElementById('financialChart').getContext('2d');
             
-            document.getElementById('totalStudents').textContent = data.students.toLocaleString();
-            document.getElementById('totalStaff').textContent = data.staff > 0 ? data.staff.toString() : '--';
-            document.getElementById('totalRevenue').textContent = data.revenue > 0 ? `KES ${(data.revenue/1000000).toFixed(1)}M` : '--';
-            document.getElementById('totalExpenses').textContent = data.expenses > 0 ? `KES ${(data.expenses/1000000).toFixed(1)}M` : '--';
-        }
-
-        // Check if already logged in
-        function checkAuth() {
-            if (currentUser) {
-                loginUser(currentUser);
-            }
-        }
-
-        // Logout function
-        function logout() {
-            if (confirm('Are you sure you want to log out?')) {
-                sessionStorage.removeItem('heriwadi_user');
-                currentUser = null;
-                document.getElementById('authOverlay').style.display = 'flex';
-                document.getElementById('dashboardContent').style.display = 'none';
-                document.getElementById('loginForm').reset();
-                showAuthStatus('Logged out successfully', 'success');
-            }
-        }
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check if already logged in
-            checkAuth();
+            // Group receipts and expenses by date
+            const dailyData = {};
             
-            // Login form handler
-            document.getElementById('loginForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const username = document.getElementById('username').value.trim();
-                const password = document.getElementById('password').value;
-                const role = document.getElementById('role').value;
-                const loginButton = document.getElementById('loginButton');
-                
-                if (!username || !password || !role) {
-                    showAuthStatus('Please fill in all fields', 'error');
-                    return;
+            // Process receipts
+            dashboardData.receipts.forEach(receipt => {
+                const date = receipt.date;
+                if (!dailyData[date]) {
+                    dailyData[date] = { revenue: 0, expenses: 0 };
                 }
-                
-                // Simple authentication check
-                if (password === 'heriwadi2024' || password === 'admin123' || password === 'password123') {
-                    loginButton.textContent = 'Signing in...';
-                    loginButton.disabled = true;
-                    
-                    showAuthStatus('Login successful! Loading dashboard...', 'success');
-                    
-                    setTimeout(() => {
-                        const user = {
-                            username: username,
-                            name: username.charAt(0).toUpperCase() + username.slice(1).replace(/[0-9@.]/g, ''),
-                            role: role
-                        };
-                        
-                        loginUser(user);
-                        loginButton.textContent = 'Sign In';
-                        loginButton.disabled = false;
-                    }, 1500);
-                    
-                } else {
-                    showAuthStatus('Invalid password. Try: heriwadi2024, admin123, or password123', 'error');
+                dailyData[date].revenue += receipt.paid || 0;
+            });
+
+            // Process expenses
+            dashboardData.expenses.forEach(expense => {
+                const date = expense.date;
+                if (!dailyData[date]) {
+                    dailyData[date] = { revenue: 0, expenses: 0 };
+                }
+                dailyData[date].expenses += expense.amount || 0;
+            });
+
+            // Sort dates and prepare data for chart
+            const sortedDates = Object.keys(dailyData).sort();
+            const last30Days = sortedDates.slice(-30); // Show last 30 days with data
+            
+            const labels = last30Days.map(date => new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' }));
+            const revenueData = last30Days.map(date => dailyData[date].revenue);
+            const expenseData = last30Days.map(date => dailyData[date].expenses);
+
+            if (charts.financial) {
+                charts.financial.destroy();
+            }
+
+            charts.financial = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Fee Revenue',
+                        data: revenueData,
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'Expenses',
+                        data: expenseData,
+                        borderColor: '#dc3545',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': KES ' + context.parsed.y.toLocaleString('en-KE');
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'KES ' + value.toLocaleString('en-KE');
+                                }
+                            }
+                        }
+                    }
                 }
             });
+        }
+
+        // Update class distribution chart
+        function updateClassDistributionChart() {
+            const ctx = document.getElementById('classChart').getContext('2d');
+            
+            // Count students by class
+            const classCounts = {};
+            dashboardData.students.forEach(student => {
+                const className = student.class || 'Unassigned';
+                classCounts[className] = (classCounts[className] || 0) + 1;
+            });
+
+            const classes = Object.keys(classCounts);
+            const counts = Object.values(classCounts);
+            const colors = [
+                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+                '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0'
+            ];
+
+            if (charts.class) {
+                charts.class.destroy();
+            }
+
+            charts.class = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: classes,
+                    datasets: [{
+                        data: counts,
+                        backgroundColor: colors.slice(0, classes.length),
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 10
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.parsed + ' students';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update recent activities
+        function updateRecentActivities() {
+            const activitiesEl = document.getElementById('recentActivities');
+            const activities = [];
+
+            // Get recent receipts
+            const recentReceipts = dashboardData.receipts
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, 3);
+
+            recentReceipts.forEach(receipt => {
+                activities.push({
+                    icon: 'receipt',
+                    title: `Payment received from ${receipt.name}`,
+                    time: getRelativeTime(new Date(receipt.date)),
+                    amount: `KES ${receipt.paid.toLocaleString('en-KE')}`
+                });
+            });
+
+            // Get recent expenses
+            const recentExpenses = dashboardData.expenses
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, 2);
+
+            recentExpenses.forEach(expense => {
+                activities.push({
+                    icon: 'money-bill-wave',
+                    title: expense.description,
+                    time: getRelativeTime(new Date(expense.date)),
+                    amount: `KES ${expense.amount.toLocaleString('en-KE')}`
+                });
+            });
+
+            // Sort all activities by date and take the most recent 5
+            const sortedActivities = activities.slice(0, 5);
+
+            activitiesEl.innerHTML = sortedActivities.length > 0 ? 
+                sortedActivities.map(activity => `
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-${activity.icon}"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">${activity.title}</div>
+                            <div class="activity-time">${activity.time}${activity.amount ? ' • ' + activity.amount : ''}</div>
+                        </div>
+                    </div>
+                `).join('') : 
+                '<div class="activity-item"><div class="activity-icon"><i class="fas fa-info-circle"></i></div><div class="activity-content"><div class="activity-title">No recent activities</div><div class="activity-time">Start by adding students or recording transactions</div></div></div>';
+        }
+
+        // Get relative time string
+        function getRelativeTime(date) {
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
+
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+            if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+            if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+            return date.toLocaleDateString('en-GB');
+        }
+
+        // Refresh all data
+        function refreshAllData() {
+            const refreshBtn = document.getElementById('refreshBtn');
+            refreshBtn.classList.add('loading');
+            
+            loadDashboardData().finally(() => {
+                refreshBtn.classList.remove('loading');
+            });
+        }
+
+        // Initialize the dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show loading screen initially
+            const loadingScreen = document.getElementById('loadingScreen');
+            
+            // Initialize term from storage
+            initializeTermFromStorage();
+            
+            // Load dashboard data
+            loadDashboardData().then(() => {
+                // Hide loading screen after data is loaded
+                setTimeout(() => {
+                    loadingScreen.classList.add('hidden');
+                }, 1000);
+            });
+
+            // Auto-refresh every 5 minutes
+            setInterval(() => {
+                if (!document.hidden) {
+                    loadDashboardData();
+                }
+            }, 5 * 60 * 1000);
         });
 
-        console.log('=== HERIWADI SCHOOL MANAGEMENT SYSTEM ===');
-        console.log('Quick Login: Use any username with password "heriwadi2024"');
-        console.log('Then select your role and click Sign In');
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                // Refresh data when page becomes visible
+                setTimeout(loadDashboardData, 1000);
+            }
+        });
+
+        console.log('Heriwadi School Management Dashboard loaded successfully');
     </script>
 </body>
 </html>
