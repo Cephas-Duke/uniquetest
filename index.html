@@ -1,4 +1,313 @@
-<!DOCTYPE html>
+// Initialize the dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show loading screen initially
+            const loadingScreen = document.getElementById('loadingScreen');
+            
+            // Check if user is already logged in
+            if (checkAuthStatus()) {
+                // User is logged in, hide loading screen and show dashboard
+                setTimeout(() => {
+                    loadingScreen.classList.add('hidden');
+                }, 1000);
+            } else {
+                // No user logged in, show auth screen
+                document.getElementById('authOverlay').style.display = 'flex';
+                document.getElementById('dashboardContent').style.display = 'none';
+                setTimeout(() => {
+                    loadingScreen.classList.add('hidden');
+                }, 1000);
+            }
+
+            // Role selection change handler
+            document.getElementById('role').addEventListener('change', updateRoleInfo);
+
+            // Login form submission
+            document.getElementById('loginForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const username = document.getElementById('username').value.trim();
+                const password = document.getElementById('password').value;
+                const role = document.getElementById('role').value;
+                const loginButton = document.getElementById('loginButton');
+                
+                if (!username || !password || !role) {
+                    showAuthStatus('Please fill in all fields', 'error');
+                    return;
+                }
+                
+                loginButton.disabled = true;
+                loginButton.classList.add('loading');
+                
+                try {
+                    const result = await authenticateUser(username, password, role);
+                    
+                    if (result.success) {
+                        showAuthStatus('Login successful! Loading dashboard...', 'success');
+                        setTimeout(() => {
+                            loginUser(result.user);
+                        }, 1000);
+                    } else {
+                        showAuthStatus(result.message, 'error');
+                    }
+                } catch (error) {
+                    console.error('Authentication error:', error);
+                    showAuthStatus('Authentication failed. Please try again.', 'error');
+                } finally {
+                    loginButton.disabled = false;
+                    loginButton.classList.remove('loading');
+                }
+            });
+
+            // Logout button handler
+            document.getElementById('logoutButton').addEventListener('click', function(e) {
+                e.preventDefault();
+                if (confirm('Are you sure you want to log out?')) {
+                    logoutUser();
+                }
+            });
+
+            // Initialize term from storage
+            initializeTermFromStorage();
+
+            // Auto-refresh every 5 minutes for authenticated users
+            setInterval(() => {
+                if (!document.hidden && currentUser) {
+                    loadDashboardData();
+                }
+            }, 5 * 60 * 1000);
+        });
+
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden && currentUser) {
+                // Refresh data when page becomes visible
+                setTimeout(loadDashboardData, 1000);
+            }
+        });
+
+        // Enhanced load dashboard data with role-based filtering
+        async function loadDashboardData() {
+            if (!currentUser) {
+                console.log('No user logged in, skipping data load');
+                return;
+            }
+
+            try {
+                showStatus("Loading dashboard data...", "info");
+                
+                // Show loading states
+                document.getElementById('totalStudents').innerHTML = '<span class="loading">Loading...</span>';
+                document.getElementById('totalStaff').innerHTML = '<span class="loading">Loading...</span>';
+                document.getElementById('totalRevenue').innerHTML = '<span class="loading">Loading...</span>';
+                document.getElementById('totalExpenses').innerHTML = '<span class="loading">Loading...</span>';
+
+                // Load data based on user permissions
+                const dataPromises = [];
+
+                if (currentUser.permissions.includes('students')) {
+                    dataPromises.push(getStudentsCollection().get());
+                } else {
+                    dataPromises.push(Promise.resolve({ empty: true, forEach: () => {} }));
+                }
+
+                if (currentUser.permissions.includes('staff')) {
+                    dataPromises.push(getStaffCollection().get());
+                } else {
+                    dataPromises.push(Promise.resolve({ empty: true, forEach: () => {} }));
+                }
+
+                if (currentUser.permissions.includes('receipts')) {
+                    dataPromises.push(getReceiptsCollection().get());
+                } else {
+                    dataPromises.push(Promise.resolve({ empty: true, forEach: () => {} }));
+                }
+
+                if (currentUser.permissions.includes('expenses')) {
+                    dataPromises.push(getExpensesCollection().get());
+                } else {
+                    dataPromises.push(Promise.resolve({ empty: true, forEach: () => {} }));
+                }
+
+                const [studentsSnapshot, staffSnapshot, receiptsSnapshot, expensesSnapshot] = await Promise.all(dataPromises);
+
+                // Process students data
+                dashboardData.students = [];
+                if (!studentsSnapshot.empty) {
+                    studentsSnapshot.forEach(doc => {
+                        dashboardData.students.push({ id: doc.id, ...doc.data() });
+                    });
+                }
+
+                // Process staff data
+                dashboardData.staff = [];
+                if (!staffSnapshot.empty) {
+                    staffSnapshot.forEach(doc => {
+                        dashboardData.staff.push({ id: doc.id, ...doc.data() });
+                    });
+                }
+
+                // Process receipts data
+                dashboardData.receipts = [];
+                if (!receiptsSnapshot.empty) {
+                    receiptsSnapshot.forEach(doc => {
+                        dashboardData.receipts.push({ id: doc.id, ...doc.data() });
+                    });
+                }
+
+                // Process expenses data - filter by current term
+                dashboardData.expenses = [];
+                if (!expensesSnapshot.empty) {
+                    expensesSnapshot.forEach(doc => {
+                        const expense = doc.data();
+                        const expenseTerm = getTermFromName(expense.term);
+                        if (expenseTerm === currentTerm || !expense.term) {
+                            dashboardData.expenses.push({ id: doc.id, ...expense });
+                        }
+                    });
+                }
+
+                // Update UI with loaded data
+                updateMetricCards();
+                updateCharts();
+                updateRecentActivities();
+                
+                dashboardData.lastUpdated = new Date();
+                showStatus("Dashboard data loaded successfully", "success");
+                
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                showStatus(`Error loading data: ${error.message}`, "error");
+                
+                // Show permission denied message if user lacks access
+                if (error.code === 'permission-denied') {
+                    showStatus("Access denied. Please contact administrator.", "error");
+                }
+            }
+        }
+
+        // Update metric cards with role-based data
+        function updateMetricCards() {
+            // Students metrics
+            if (currentUser.permissions.includes('students')) {
+                const totalStudents = dashboardData.students.length;
+                document.getElementById('totalStudents').textContent = totalStudents.toLocaleString();
+                document.getElementById('studentTrend').innerHTML = `<i class="fas fa-users"></i> Current term enrollment`;
+                document.getElementById('studentTrend').className = 'trend-up';
+            } else {
+                document.getElementById('totalStudents').textContent = '--';
+                document.getElementById('studentTrend').innerHTML = `<i class="fas fa-lock"></i> Access restricted`;
+                document.getElementById('studentTrend').className = 'trend-down';
+            }
+
+            // Staff metrics
+            if (currentUser.permissions.includes('staff')) {
+                const totalStaff = dashboardData.staff.length;
+                document.getElementById('totalStaff').textContent = totalStaff.toLocaleString();
+                document.getElementById('staffTrend').innerHTML = `<i class="fas fa-user-tie"></i> Active staff members`;
+                document.getElementById('staffTrend').className = 'trend-up';
+            } else {
+                document.getElementById('totalStaff').textContent = '--';
+                document.getElementById('staffTrend').innerHTML = `<i class="fas fa-lock"></i> Access restricted`;
+                document.getElementById('staffTrend').className = 'trend-down';
+            }
+
+            // Revenue metrics (from receipts)
+            if (currentUser.permissions.includes('receipts') || currentUser.permissions.includes('financials')) {
+                const totalRevenue = dashboardData.receipts.reduce((sum, receipt) => sum + (receipt.paid || 0), 0);
+                document.getElementById('totalRevenue').textContent = `KES ${totalRevenue.toLocaleString('en-KE')}`;
+                document.getElementById('revenueTrend').innerHTML = `<i class="fas fa-arrow-up"></i> Fee collections`;
+                document.getElementById('revenueTrend').className = 'trend-up';
+            } else {
+                document.getElementById('totalRevenue').textContent = '--';
+                document.getElementById('revenueTrend').innerHTML = `<i class="fas fa-lock"></i> Access restricted`;
+                document.getElementById('revenueTrend').className = 'trend-down';
+            }
+
+            // Expenses metrics
+            if (currentUser.permissions.includes('expenses') || currentUser.permissions.includes('financials')) {
+                const totalExpenses = dashboardData.expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
+                document.getElementById('totalExpenses').textContent = `KES ${totalExpenses.toLocaleString('en-KE')}`;
+                document.getElementById('expenseTrend').innerHTML = `<i class="fas fa-money-bill-wave"></i> Total spent`;
+                document.getElementById('expenseTrend').className = 'trend-down';
+            } else {
+                document.getElementById('totalExpenses').textContent = '--';
+                document.getElementById('expenseTrend').innerHTML = `<i class="fas fa-lock"></i> Access restricted`;
+                document.getElementById('expenseTrend').className = 'trend-down';
+            }
+        }
+
+        // Enhanced recent activities with role-based filtering
+        function updateRecentActivities() {
+            const activitiesEl = document.getElementById('recentActivities');
+            const activities = [];
+
+            // Get recent receipts (if user has permission)
+            if (currentUser.permissions.includes('receipts')) {
+                const recentReceipts = dashboardData.receipts
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                    .slice(0, 3);
+
+                recentReceipts.forEach(receipt => {
+                    activities.push({
+                        icon: 'receipt',
+                        title: `Payment received from ${receipt.name}`,
+                        time: getRelativeTime(new Date(receipt.date)),
+                        amount: `KES ${receipt.paid.toLocaleString('en-KE')}`
+                    });
+                });
+            }
+
+            // Get recent expenses (if user has permission)
+            if (currentUser.permissions.includes('expenses')) {
+                const recentExpenses = dashboardData.expenses
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                    .slice(0, 2);
+
+                recentExpenses.forEach(expense => {
+                    activities.push({
+                        icon: 'money-bill-wave',
+                        title: expense.description,
+                        time: getRelativeTime(new Date(expense.date)),
+                        amount: `KES ${expense.amount.toLocaleString('en-KE')}`
+                    });
+                });
+            }
+
+            // Add role-specific activities
+            activities.push({
+                icon: 'user-shield',
+                title: `Logged in as ${rolePermissions[currentUser.role].name}`,
+                time: 'Current session',
+                amount: ''
+            });
+
+            // Sort all activities and take the most recent 5
+            const sortedActivities = activities.slice(0, 5);
+
+            activitiesEl.innerHTML = sortedActivities.length > 1 ? 
+                sortedActivities.map(activity => `
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-${activity.icon}"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">${activity.title}</div>
+                            <div class="activity-time">${activity.time}${activity.amount ? ' • ' + activity.amount : ''}</div>
+                        </div>
+                    </div>
+                `).join('') : 
+                '<div class="activity-item"><div class="activity-icon"><i class="fas fa-info-circle"></i></div><div class="activity-content"><div class="activity-title">No recent activities</div><div class="activity-time">Start by navigating to available modules</div></div></div>';
+        }
+
+        console.log('Heriwadi School Management Dashboard with Authentication loaded successfully');
+        console.log('Demo accounts:');
+        console.log('Director: director/director123');
+        console.log('Admin: admin/admin123'); 
+        console.log('Head Teacher: headteacher/head123');
+        console.log('Teacher: teacher/teacher123');
+    </script>
+</body>
+</html><!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -8,6 +317,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        /* Hide dashboard initially */
+        .dashboard-content {
+            display: none;
+        }
+
         :root {
             --primary-color: #005fa3;
             --secondary-color: #004080;
@@ -609,7 +923,337 @@
             to { opacity: 1; transform: translateX(0); }
         }
 
-        /* Responsive Design */
+        /* Authentication Section Styles */
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-hover);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 450px;
+            margin: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-card::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            border-radius: 50%;
+            opacity: 0.1;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .auth-logo {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            color: white;
+            font-size: 1.8rem;
+        }
+
+        .auth-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .auth-subtitle {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .auth-form {
+            display: block;
+        }
+
+        .auth-form.hidden {
+            display: none;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 95, 163, 0.1);
+        }
+
+        .form-input.error {
+            border-color: var(--danger-color);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            background-color: white;
+            cursor: pointer;
+            transition: var(--transition);
+            outline: none;
+        }
+
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 95, 163, 0.1);
+        }
+
+        .auth-button {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--box-shadow-hover);
+        }
+
+        .auth-button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .auth-button .loading-spinner-auth {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+        }
+
+        .auth-button.loading .loading-spinner-auth {
+            display: inline-block;
+        }
+
+        .auth-button.loading .button-text {
+            opacity: 0.7;
+        }
+
+        .role-info {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        .role-info h4 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .role-info ul {
+            margin: 0.5rem 0 0 1rem;
+            color: #666;
+        }
+
+        .role-info li {
+            margin-bottom: 0.25rem;
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e0e0e0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* User Profile in Navigation */
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            position: relative;
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+
+        .user-profile:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .user-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .user-role {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            line-height: 1.2;
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-hover);
+            width: 220px;
+            padding: 0.5rem 0;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: var(--transition);
+            z-index: 1000;
+        }
+
+        .user-profile:hover .user-dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            padding: 0.75rem 1rem;
+            color: var(--dark-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: var(--transition);
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        .dropdown-item:hover {
+            background: var(--light-color);
+            color: var(--primary-color);
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 0.25rem 0;
+        }
+
+        /* Role-based content visibility */
+        .role-restricted {
+            display: none;
+        }
+
+        .role-restricted.visible {
+            display: block;
+        }
+
+        /* Permission denied message */
+        .permission-denied {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+
+        .permission-denied i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--warning-color);
+        }
+
+        /* Navigation adjustments for authentication */
+        nav.with-user {
+            justify-content: space-between;
+        }
+
+        nav .nav-links {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            flex: 1;
+        }
         @media (max-width: 1200px) {
             .charts-section {
                 grid-template-columns: 1fr;
@@ -682,21 +1326,104 @@
         <div class="loading-spinner"></div>
     </div>
 
-    <header>
-        <h1>Heriwadi Christian Schools Ltd</h1>
-        <p>Comprehensive School Management Dashboard</p>
-    </header>
+    <!-- Authentication Overlay -->
+    <div class="auth-overlay" id="authOverlay">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <i class="fas fa-school"></i>
+                </div>
+                <h2 class="auth-title">Welcome to Heriwadi Christian Schools</h2>
+                <p class="auth-subtitle">Please sign in to access the management system</p>
+            </div>
 
-    <nav>
-        <a href="index.html" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-        <a href="receipts.html"><i class="fas fa-receipt"></i> Receipts</a>
-        <a href="students.html"><i class="fas fa-users"></i> Students</a>
-        <a href="expense.html"><i class="fas fa-money-bill-wave"></i> Expenses</a>
-        <a href="assets.html"><i class="fas fa-laptop-house"></i> Assets</a>
-        <a href="staff.html"><i class="fas fa-user-tie"></i> Staff</a>
-        <a href="payroll.html"><i class="fas fa-money-check-alt"></i> Payroll</a>
-        <a href="financials.html"><i class="fas fa-chart-line"></i> Financials</a>
-    </nav>
+            <div id="authStatusMessage" class="status-message"></div>
+
+            <form class="auth-form" id="loginForm">
+                <div class="form-group">
+                    <label class="form-label" for="username">
+                        <i class="fas fa-user"></i> Username or Email
+                    </label>
+                    <input type="text" class="form-input" id="username" required autocomplete="username">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">
+                        <i class="fas fa-lock"></i> Password
+                    </label>
+                    <input type="password" class="form-input" id="password" required autocomplete="current-password">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="role">
+                        <i class="fas fa-user-tag"></i> Role
+                    </label>
+                    <select class="form-select" id="role" required>
+                        <option value="">Select your role</option>
+                        <option value="director">Director</option>
+                        <option value="admin">Office Administrator</option>
+                        <option value="headteacher">Head Teacher</option>
+                        <option value="teacher">Teacher</option>
+                    </select>
+                </div>
+
+                <div class="role-info" id="roleInfo" style="display: none;">
+                    <h4>Role Permissions:</h4>
+                    <ul id="rolePermissions"></ul>
+                </div>
+
+                <button type="submit" class="auth-button" id="loginButton">
+                    <div class="loading-spinner-auth"></div>
+                    <span class="button-text">Sign In</span>
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Heriwadi Christian Schools Ltd &copy; 2024</p>
+                <p>Secure Management System</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Content -->
+    <div class="dashboard-content" id="dashboardContent">
+        <header>
+            <h1>Heriwadi Christian Schools Ltd</h1>
+            <p>Comprehensive School Management Dashboard</p>
+        </header>
+
+        <nav class="with-user">
+            <div class="nav-links">
+                <a href="index.html" class="active" data-permission="dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="receipts.html" data-permission="receipts"><i class="fas fa-receipt"></i> Receipts</a>
+                <a href="students.html" data-permission="students"><i class="fas fa-users"></i> Students</a>
+                <a href="expense.html" data-permission="expenses"><i class="fas fa-money-bill-wave"></i> Expenses</a>
+                <a href="assets.html" data-permission="assets"><i class="fas fa-laptop-house"></i> Assets</a>
+                <a href="staff.html" data-permission="staff"><i class="fas fa-user-tie"></i> Staff</a>
+                <a href="payroll.html" data-permission="payroll"><i class="fas fa-money-check-alt"></i> Payroll</a>
+                <a href="financials.html" data-permission="financials"><i class="fas fa-chart-line"></i> Financials</a>
+            </div>
+            
+            <div class="user-profile" id="userProfile" style="display: none;">
+                <div class="user-info">
+                    <div class="user-name" id="userName">User Name</div>
+                    <div class="user-role" id="userRole">Role</div>
+                </div>
+                <div class="user-avatar" id="userAvatar">U</div>
+                <div class="user-dropdown">
+                    <div class="dropdown-item">
+                        <i class="fas fa-user-circle"></i> Profile
+                    </div>
+                    <div class="dropdown-item">
+                        <i class="fas fa-cog"></i> Settings
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-item" id="logoutButton">
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
+                    </div>
+                </div>
+            </div>
+        </nav>
 
     <div class="container">
         <!-- Status Messages -->
@@ -918,6 +1645,7 @@
         // Global state
         let currentTerm = parseInt(sessionStorage.getItem('heriwadi_current_term')) || 2;
         let currentYear = new Date().getFullYear();
+        let currentUser = JSON.parse(sessionStorage.getItem('heriwadi_user')) || null;
         let dashboardData = {
             students: [],
             staff: [],
@@ -930,7 +1658,182 @@
             class: null
         };
 
-        // Collection references
+        // User roles and permissions
+        const rolePermissions = {
+            director: {
+                name: 'Director',
+                permissions: ['dashboard', 'students', 'receipts', 'expenses', 'assets', 'staff', 'payroll', 'financials'],
+                description: ['Full system access', 'All financial reports', 'Staff management', 'System settings']
+            },
+            admin: {
+                name: 'Office Administrator',
+                permissions: ['dashboard', 'students', 'receipts', 'expenses', 'assets', 'financials'],
+                description: ['Student management', 'Fee collection', 'Expense tracking', 'Asset management']
+            },
+            headteacher: {
+                name: 'Head Teacher',
+                permissions: ['dashboard', 'students', 'staff', 'financials'],
+                description: ['Academic oversight', 'Student records', 'Staff coordination', 'Performance reports']
+            },
+            teacher: {
+                name: 'Teacher',
+                permissions: ['dashboard', 'students'],
+                description: ['View dashboard', 'Student information', 'Basic reporting']
+            }
+        };
+
+        // Default user accounts (In production, these would be stored securely in Firebase)
+        const defaultUsers = {
+            'director': { username: 'director', password: 'director123', role: 'director', name: 'School Director' },
+            'admin': { username: 'admin', password: 'admin123', role: 'admin', name: 'Office Admin' },
+            'headteacher': { username: 'headteacher', password: 'head123', role: 'headteacher', name: 'Head Teacher' },
+            'teacher': { username: 'teacher', password: 'teacher123', role: 'teacher', name: 'Teacher' },
+            // Email variants
+            'director@heriwadi.com': { username: 'director@heriwadi.com', password: 'director123', role: 'director', name: 'School Director' },
+            'admin@heriwadi.com': { username: 'admin@heriwadi.com', password: 'admin123', role: 'admin', name: 'Office Admin' },
+            'head@heriwadi.com': { username: 'head@heriwadi.com', password: 'head123', role: 'headteacher', name: 'Head Teacher' },
+            'teacher@heriwadi.com': { username: 'teacher@heriwadi.com', password: 'teacher123', role: 'teacher', name: 'Teacher' }
+        };
+
+        // Authentication functions
+        function showAuthStatus(message, type = 'info') {
+            const statusEl = document.getElementById('authStatusMessage');
+            statusEl.textContent = message;
+            statusEl.className = `status-message ${type} show`;
+            
+            setTimeout(() => {
+                statusEl.classList.remove('show');
+            }, 5000);
+        }
+
+        function updateRoleInfo() {
+            const roleSelect = document.getElementById('role');
+            const roleInfo = document.getElementById('roleInfo');
+            const rolePermissions = document.getElementById('rolePermissions');
+            
+            if (roleSelect.value && rolePermissions) {
+                const role = rolePermissions[roleSelect.value];
+                if (role) {
+                    roleInfo.style.display = 'block';
+                    rolePermissions.innerHTML = role.description.map(desc => `<li>${desc}</li>`).join('');
+                } else {
+                    roleInfo.style.display = 'none';
+                }
+            } else {
+                roleInfo.style.display = 'none';
+            }
+        }
+
+        function authenticateUser(username, password, role) {
+            // Simulate authentication delay
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    const user = defaultUsers[username.toLowerCase()];
+                    
+                    if (user && user.password === password && user.role === role) {
+                        resolve({
+                            success: true,
+                            user: {
+                                username: user.username,
+                                name: user.name,
+                                role: user.role,
+                                permissions: rolePermissions[user.role].permissions
+                            }
+                        });
+                    } else {
+                        resolve({
+                            success: false,
+                            message: 'Invalid credentials or role mismatch'
+                        });
+                    }
+                }, 1500);
+            });
+        }
+
+        function loginUser(user) {
+            currentUser = user;
+            sessionStorage.setItem('heriwadi_user', JSON.stringify(user));
+            
+            // Update UI with user info
+            const userName = document.getElementById('userName');
+            const userRole = document.getElementById('userRole');
+            const userAvatar = document.getElementById('userAvatar');
+            const userProfile = document.getElementById('userProfile');
+            
+            if (userName) userName.textContent = user.name;
+            if (userRole) userRole.textContent = rolePermissions[user.role].name;
+            if (userAvatar) userAvatar.textContent = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
+            if (userProfile) userProfile.style.display = 'flex';
+            
+            // Apply role-based permissions
+            applyRolePermissions();
+            
+            // Hide auth overlay and show dashboard
+            document.getElementById('authOverlay').style.display = 'none';
+            document.getElementById('dashboardContent').style.display = 'block';
+            
+            // Load dashboard data
+            loadDashboardData();
+        }
+
+        function applyRolePermissions() {
+            if (!currentUser) return;
+            
+            const navLinks = document.querySelectorAll('nav a[data-permission]');
+            navLinks.forEach(link => {
+                const permission = link.dataset.permission;
+                if (currentUser.permissions.includes(permission)) {
+                    link.style.display = 'flex';
+                } else {
+                    link.style.display = 'none';
+                }
+            });
+            
+            // Apply content restrictions based on role
+            const restrictedElements = document.querySelectorAll('.role-restricted');
+            restrictedElements.forEach(element => {
+                const requiredRole = element.dataset.role;
+                if (!requiredRole || currentUser.permissions.includes(requiredRole)) {
+                    element.classList.add('visible');
+                } else {
+                    element.classList.remove('visible');
+                }
+            });
+        }
+
+        function logoutUser() {
+            currentUser = null;
+            sessionStorage.removeItem('heriwadi_user');
+            
+            // Reset UI
+            document.getElementById('authOverlay').style.display = 'flex';
+            document.getElementById('dashboardContent').style.display = 'none';
+            document.getElementById('userProfile').style.display = 'none';
+            
+            // Reset form
+            document.getElementById('loginForm').reset();
+            document.getElementById('roleInfo').style.display = 'none';
+            
+            showAuthStatus('Logged out successfully', 'success');
+        }
+
+        function checkAuthStatus() {
+            const storedUser = sessionStorage.getItem('heriwadi_user');
+            if (storedUser) {
+                try {
+                    const user = JSON.parse(storedUser);
+                    if (user && user.username && user.role) {
+                        currentUser = user;
+                        loginUser(user);
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Error parsing stored user data:', error);
+                    sessionStorage.removeItem('heriwadi_user');
+                }
+            }
+            return false;
+        }
         const getStudentsCollection = (term = currentTerm, year = currentYear) => 
             db.collection(`students_${year}_term_${term}`);
         const getReceiptsCollection = (term = currentTerm, year = currentYear) => 
