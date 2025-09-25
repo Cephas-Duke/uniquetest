@@ -1112,19 +1112,38 @@
     }
 
     async function sendSMS(phone, message) {
-      try {
+    try {
+        // Parse the original message to extract components
+        // This is a simplified approach - you might need to adjust based on your message format
+        const lines = message.split('\n');
+        const studentMatch = message.match(/parent to (.+?),/);
+        const amountMatch = message.match(/KES (\d+)/);
+        const receiptMatch = message.match(/Receipt No\. (.+?) was/);
+        
+        let formattedMessage = message; // fallback to original
+        
+        if (studentMatch && amountMatch && receiptMatch) {
+            const studentName = studentMatch[1].toUpperCase();
+            const amount = amountMatch[1];
+            const receiptNumber = receiptMatch[1];
+            
+            // Format like DTB Bank
+            formattedMessage = `Dear ${studentName}, you have successfully paid KES. ${parseFloat(amount).toFixed(2)} to HERIWADI CHRISTIAN SCHOOLS - 8713144. Ref: ${receiptNumber}.  
+DTB`;
+        }
+
         const response = await fetch("/send-sms", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone, message })
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ phone, message: formattedMessage })
         });
         const result = await response.json();
         return result.success;
-      } catch (error) {
+    } catch (error) {
         console.error('SMS Error:', error);
         return false;
-      }
     }
+}
 
     async function populateStudents() {
       try {
