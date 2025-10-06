@@ -1445,67 +1445,65 @@ async function updateReceiptTable() {
   }
 }
 
-    async function handleReceiptSubmit(e) {
-  e.preventDefault();
-  
-  const studentInput = document.getElementById("studentInput").value;
-  const amount = parseFloat(document.getElementById("amountPaid").value);
-  const mode = document.getElementById("paymentMode").value;
-  const notes = document.getElementById("receiptNotes").value;
-  const submitBtn = document.getElementById("submitBtn");
+    async function handleStudentSubmit(e) {
+      e.preventDefault();
+      
+      const name = document.getElementById("studentName").value.trim();
+      const sclass = document.getElementById("studentClass").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const tuition = +document.getElementById("tuition").value || 0;
+      const adm = +document.getElementById("adm").value || 0;
+      const books = +document.getElementById("books").value || 0;
+      const stationery = +document.getElementById("stationery").value || 0;
+      const uniform = +document.getElementById("uniform").value || 0;
+      const lunch = +document.getElementById("lunch").value || 0;
+      const transport = +document.getElementById("transport").value || 0;
+      const trip = +document.getElementById("trip").value || 0;
+      const graduation = +document.getElementById("graduation").value || 0;
+      
+      if (!name || !sclass || !phone) {
+        showStatus("Please fill in all required fields (Name, Class, Phone)", "error");
+        return;
+      }
 
-  if (!studentInput) {
-    showStatus("Please enter or select a student name", "error");
-    return;
-  }
+      const phoneRegex = /^\+?[1-9]\d{9,14}$/;
+      if (!phoneRegex.test(phone)) {
+        showStatus("Please enter a valid phone number (e.g., +254712345678)", "error");
+        return;
+      }
 
-  if (amount <= 0) {
-    showStatus("Amount must be greater than 0", "error");
-    return;
-  }
-
-  submitBtn.disabled = true;
-  submitBtn.innerHTML = '<span class="spinner"></span> Processing...';
-  showStatus("Processing payment and sending SMS...", "loading");
-
-  try {
-    const currentDate = new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
-    const receiptDate = new Date(currentDate);
-
-    // Extract name and class from input
-    const match = studentInput.match(/^(.+?)\s*\((.+?)\)$/);
-    let studentName, studentClass, studentId = null;
-    
-    if (match) {
-      studentName = match[1].trim();
-      studentClass = match[2].trim();
-    } else {
-      studentName = studentInput.trim();
-      studentClass = "Unknown";
-    }
-
-    // Get fresh student data before processing payment
-    const studentsCollection = getStudentsCollection();
-    const studentSnapshot = await studentsCollection.where('name', '==', studentName).get();
-    let student;
-    
-    if (!studentSnapshot.empty) {
-      student = studentSnapshot.docs[0].data();
-      studentId = studentSnapshot.docs[0].id; // IMPORTANT: Capture the student ID
-    } else {
-      // Create new student if not found
-      const newStudent = {
-        name: studentName,
-        class: studentClass,
-        phone: "+254000000000",
-        tuition: 0, adm: 0, books: 0, stationery: 0, uniform: 0,
-        lunch: 0, transport: 0, trip: 0, graduation: 0,
-        total: 0, paid: 0, balance: 0,
-        term: currentTerm, year: currentYear
+      const total = tuition + adm + books + stationery + uniform + lunch + transport + trip + graduation;
+      const newStudent = { 
+        name, 
+        class: sclass, 
+        phone, 
+        tuition, 
+        adm, 
+        books, 
+        stationery, 
+        uniform, 
+        lunch, 
+        transport, 
+        trip,
+        graduation,
+        total, 
+        paid: 0, 
+        balance: total,
+        term: currentTerm,
+        year: currentYear
       };
-      const docRef = await studentsCollection.add(newStudent);
-      studentId = docRef.id; // IMPORTANT: Capture the new student ID
-      student = newStudent;
+
+      try {
+        const studentsCollection = getStudentsCollection();
+        const docRef = await studentsCollection.add(newStudent);
+        showStatus(`Student ${name} added successfully to Term ${currentTerm}!`, "success");
+        document.getElementById("studentForm").reset();
+        renderStudentList();
+        populateStudents();
+      } catch (error) {
+        console.error('Error adding student:', error);
+        showStatus(`Error adding student: ${error.message}. Check Firebase rules or network.`, "error");
+      }
     }
 
     async function renderStudentList() {
