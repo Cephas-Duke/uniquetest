@@ -1180,14 +1180,14 @@
       
       return balanceCarriedForward;
     }
-
-async function updateReceiptTable() {
+ async function updateReceiptTable() {
   try {
     const groupedReceipts = document.getElementById('groupedReceipts');
     groupedReceipts.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading receipts...</div>';
     
     const searchQuery = document.getElementById('searchInput').value.toLowerCase();
     const receiptsCollection = getReceiptsCollection();
+    const studentsCollection = getStudentsCollection();
     const snapshot = await receiptsCollection.orderBy('date', 'desc').get();
     
     if (snapshot.empty) {
@@ -1256,8 +1256,18 @@ async function updateReceiptTable() {
       `;
       const tbody = table.querySelector('tbody');
 
-      // FIXED: Simply use the balance stored with each receipt
-      classReceipts.forEach(r => {
+      // FIXED: Calculate real-time balance using CURRENT student fee structure
+      for (const r of classReceipts) {
+        // Get current student data to calculate accurate balance
+        const studentSnapshot = await studentsCollection.where('name', '==', r.name).get();
+        let displayBalance = r.balance || 0; // Fallback to stored balance
+        
+        if (!studentSnapshot.empty) {
+          const currentStudent = studentSnapshot.docs[0].data();
+          // Use the CURRENT balance from student record (which reflects all fee changes)
+          displayBalance = currentStudent.balance || 0;
+        }
+        
         const row = document.createElement('tr');
         row.innerHTML = `
           <td>
@@ -1265,7 +1275,7 @@ async function updateReceiptTable() {
             <small>${r.class} - Term ${currentTerm}</small>
           </td>
           <td>${r.paid.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
-          <td>${(r.balance || 0).toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
+          <td>${displayBalance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
           <td>${r.mode}</td>
           <td>${new Date(r.date).toLocaleDateString('en-GB')}</td>
           <td>
@@ -1278,7 +1288,7 @@ async function updateReceiptTable() {
           </td>
         `;
         tbody.appendChild(row);
-      });
+      }
 
       content.appendChild(table);
       section.appendChild(content);
@@ -1289,6 +1299,7 @@ async function updateReceiptTable() {
     showStatus(`Error loading receipts: ${error.message}. Check Firebase rules or network.`, "error");
   }
 }
+
  async function handleReceiptSubmit(e) {
   e.preventDefault();
   
