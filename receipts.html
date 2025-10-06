@@ -991,30 +991,6 @@
       
       showStatus(`Switched to Term ${term} - This selection will persist across pages`, "success");
     }
-    document.addEventListener('DOMContentLoaded', function() {
-  updateCurrentYearDisplay();
-  // Initialize UI with saved term on page load
-  initializeTermFromStorage();
-  initializeMigration().then(() => {
-    populateStudents();
-    updateReceiptTable();
-    // Set up real-time listeners after migration
-    setupRealTimeListeners();
-  });
-  
-  // Add event listeners for form validation
-  document.getElementById('amountPaid').addEventListener('input', validateAmount);
-  document.getElementById('receiptForm').addEventListener('submit', handleReceiptSubmit);
-  document.getElementById('studentForm').addEventListener('submit', handleStudentSubmit);
-  
-  // Initialize modals - UPDATE THIS SECTION
-  const modal = document.getElementById('studentManagerModal');
-  if (modal) {
-    modal.addEventListener('click', function(e) {
-      if (e.target === modal) closeStudentManager();
-    });
-  }
-});
 
     // Migration function to move existing data to Term 2
     async function initializeMigration() {
@@ -1181,269 +1157,314 @@
       return balanceCarriedForward;
     }
 
-async function updateReceiptTable() {
-  try {
-    const groupedReceipts = document.getElementById('groupedReceipts');
-    groupedReceipts.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading receipts...</div>';
-    
-    const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-    const receiptsCollection = getReceiptsCollection();
-    const snapshot = await receiptsCollection.orderBy('date', 'desc').get();
-    
-    if (snapshot.empty) {
-      groupedReceipts.innerHTML = `<div class="status-message info">No receipts found for Term ${currentTerm}.</div>`;
-      return;
-    }
-
-    const receipts = [];
-    snapshot.forEach(doc => {
-      receipts.push({ id: doc.id, ...doc.data() });
-    });
-
-    const filteredReceipts = searchQuery
-      ? receipts.filter(r => r.name.toLowerCase().includes(searchQuery))
-      : receipts;
-
-    if (filteredReceipts.length === 0) {
-      groupedReceipts.innerHTML = '<div class="status-message info">No receipts match your search.</div>';
-      return;
-    }
-
-    groupedReceipts.innerHTML = '';
-    
-    const classes = [
-      "Play Group", "PP1", "PP2",
-      "Grade 1", "Grade 2", "Grade 3",
-      "Grade 4", "Grade 5", "Grade 6"
-    ];
-
-    for (const cls of classes) {
-      const classReceipts = filteredReceipts.filter(r => r.class === cls);
-      if (classReceipts.length === 0) continue;
-
-      const section = document.createElement('div');
-      section.className = 'class-section';
-
-      const header = document.createElement('div');
-      header.className = 'class-header';
-      header.innerHTML = `
-        <h3>${cls} - Term ${currentTerm}</h3>
-        <span class="badge">${classReceipts.length} receipt${classReceipts.length !== 1 ? 's' : ''}</span>
-      `;
-      header.onclick = () => {
-        const content = section.querySelector('.class-content');
-        content.style.display = content.style.display === 'none' ? 'block' : 'none';
-      };
-      section.appendChild(header);
-
-      const content = document.createElement('div');
-      content.className = 'class-content';
-      content.style.display = 'none';
-      
-      const table = document.createElement('table');
-      table.innerHTML = `
-        <thead>
-          <tr>
-            <th>Student</th>
-            <th>Amount Paid</th>
-            <th>Balance After Payment</th>
-            <th>Payment Mode</th>
-            <th>Date</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      `;
-      const tbody = table.querySelector('tbody');
-
-      // FIXED: Simply use the balance stored with each receipt
-      classReceipts.forEach(r => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>
-            <strong>${r.name}</strong><br>
-            <small>${r.class} - Term ${currentTerm}</small>
-          </td>
-          <td>${r.paid.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
-          <td>${(r.balance || 0).toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
-          <td>${r.mode}</td>
-          <td>${new Date(r.date).toLocaleDateString('en-GB')}</td>
-          <td>
-            <button class="btn btn-sm btn-info" onclick="printReceipt('${r.id}')">
-              <i class="fas fa-print"></i> Print
-            </button>
-            <button class="btn btn-sm btn-danger" onclick="deleteReceipt('${r.id}')">
-              <i class="fas fa-trash"></i> Delete
-            </button>
-          </td>
-        `;
-        tbody.appendChild(row);
-      });
-
-      content.appendChild(table);
-      section.appendChild(content);
-      groupedReceipts.appendChild(section);
-    }
-  } catch (error) {
-    console.error('Error updating receipt table:', error);
-    showStatus(`Error loading receipts: ${error.message}. Check Firebase rules or network.`, "error");
-  }
-}
- async function handleReceiptSubmit(e) {
-  e.preventDefault();
-  
-  const studentInput = document.getElementById("studentInput").value;
-  const amount = parseFloat(document.getElementById("amountPaid").value);
-  const mode = document.getElementById("paymentMode").value;
-  const notes = document.getElementById("receiptNotes").value;
-  const submitBtn = document.getElementById("submitBtn");
-
-  if (!studentInput) {
-    showStatus("Please enter or select a student name", "error");
-    return;
-  }
-
-  if (amount <= 0) {
-    showStatus("Amount must be greater than 0", "error");
-    return;
-  }
-
-  submitBtn.disabled = true;
-  submitBtn.innerHTML = '<span class="spinner"></span> Processing...';
-  showStatus("Processing payment and sending SMS...", "loading");
-
-  try {
-    const currentDate = new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
-    const receiptDate = new Date(currentDate);
-
-    // Extract name and class from input
-    const match = studentInput.match(/^(.+?)\s*\((.+?)\)$/);
-    let studentName, studentClass, studentId = null;
-    
-    if (match) {
-      studentName = match[1].trim();
-      studentClass = match[2].trim();
-    } else {
-      studentName = studentInput.trim();
-      studentClass = "Unknown";
-    }
-
-    // Get fresh student data before processing payment
-    const studentsCollection = getStudentsCollection();
-    const studentSnapshot = await studentsCollection.where('name', '==', studentName).get();
-    let student;
-    
-    if (!studentSnapshot.empty) {
-      student = studentSnapshot.docs[0].data();
-      studentId = studentSnapshot.docs[0].id; // IMPORTANT: Capture the student ID
-    } else {
-      // Create new student if not found
-      const newStudent = {
-        name: studentName,
-        class: studentClass,
-        phone: "+254000000000",
-        tuition: 0, adm: 0, books: 0, stationery: 0, uniform: 0,
-        lunch: 0, transport: 0, trip: 0, graduation: 0,
-        total: 0, paid: 0, balance: 0,
-        term: currentTerm, year: currentYear
-      };
-      const docRef = await studentsCollection.add(newStudent);
-      studentId = docRef.id; // IMPORTANT: Capture the new student ID
-      student = newStudent;
-    }
-
-    // Calculate balances
-    const balanceCarriedForward = await getBalanceCarriedForward(studentName, currentTerm, currentYear);
-    const currentTotal = student.total || 0;
-    const totalOutstandingBalance = currentTotal + balanceCarriedForward;
-    const newPaid = (student.paid || 0) + amount;
-    const newBalance = totalOutstandingBalance - newPaid;
-
-    const updatedStudent = {
-      ...student,
-      paid: newPaid,
-      balance: newBalance
-    };
-
-    // Get receipt count for receipt number
-    const receiptsCollection = getReceiptsCollection();
-    const snapshot = await receiptsCollection.get();
-    const receiptCount = snapshot.size + 1;
-    const receiptNumber = `T${currentTerm}-${String(receiptCount).padStart(3, '0')}`;
-
-    const receipt = {
-      name: studentName,
-      class: studentClass,
-      studentId: studentId, // ENHANCED: Store student ID for reliable linking
-      paid: amount,
-      balance: newBalance,
-      mode: mode,
-      notes: notes || null,
-      date: receiptDate.toISOString(),
-      receiptNumber: receiptNumber,
-      term: currentTerm,
-      year: currentYear,
-      feeStructure: {
-        tuition: student.tuition || 0,
-        adm: student.adm || 0,
-        books: student.books || 0,
-        stationery: student.stationery || 0,
-        uniform: student.uniform || 0,
-        lunch: student.lunch || 0,
-        transport: student.transport || 0,
-        trip: student.trip || 0,
-        graduation: student.graduation || 0,
-        total: student.total || 0
+    // NEW FUNCTION: Calculate total outstanding balance including fee changes
+    async function calculateTotalOutstandingBalance(studentName, studentClass, currentTerm, currentYear) {
+      try {
+        // Get current student data
+        const studentsCollection = getStudentsCollection(currentTerm, currentYear);
+        const studentSnapshot = await studentsCollection.where('name', '==', studentName).get();
+        
+        if (studentSnapshot.empty) {
+          return 0;
+        }
+        
+        const student = studentSnapshot.docs[0].data();
+        
+        // Get balance carried forward from previous terms
+        const balanceCarriedForward = await getBalanceCarriedForward(studentName, currentTerm, currentYear);
+        
+        // Calculate total fees for current term (including any changes made in students.html)
+        const totalFees = student.total || 0;
+        
+        // Get total paid in current term
+        const receiptsCollection = getReceiptsCollection(currentTerm, currentYear);
+        const receiptsSnapshot = await receiptsCollection.where('name', '==', studentName).get();
+        
+        let totalPaidThisTerm = 0;
+        receiptsSnapshot.forEach(doc => {
+          totalPaidThisTerm += doc.data().paid || 0;
+        });
+        
+        // Calculate total outstanding balance
+        const totalOutstandingBalance = (totalFees + balanceCarriedForward) - totalPaidThisTerm;
+        
+        return Math.max(0, totalOutstandingBalance);
+      } catch (error) {
+        console.error('Error calculating total outstanding balance:', error);
+        return 0;
       }
-    };
+    }
 
-    // Update both student and receipt in a transaction
-    await db.runTransaction(async transaction => {
-      const studentDocRef = studentsCollection.doc(studentId);
-      const receiptRef = receiptsCollection.doc();
-      transaction.update(studentDocRef, updatedStudent);
-      transaction.set(receiptRef, receipt);
-      receipt.id = receiptRef.id;
-    });
+    async function updateReceiptTable() {
+      try {
+        const groupedReceipts = document.getElementById('groupedReceipts');
+        groupedReceipts.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading receipts...</div>';
+        
+        const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+        const receiptsCollection = getReceiptsCollection();
+        const snapshot = await receiptsCollection.orderBy('date', 'desc').get();
+        
+        if (snapshot.empty) {
+          groupedReceipts.innerHTML = `<div class="status-message info">No receipts found for Term ${currentTerm}.</div>`;
+          return;
+        }
 
-    // Send SMS and show success
-    const timeString = receiptDate.toLocaleTimeString('en-US', {
-      timeZone: 'Africa/Nairobi',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    }).toUpperCase();
-    
-    const smsMessage = `Dear parent to ${studentName}, ${studentClass}, Amount of KES ${amount} Receipt No. ${receiptNumber} was received on ${receiptDate.toLocaleDateString('en-GB')} at ${timeString}. Balance: ${newBalance}. Term ${currentTerm}.`;
-    const smsSent = await sendSMS(student.phone, smsMessage);
-    
-    showStatus(`Receipt saved${smsSent ? ' and SMS sent' : ''} successfully for Term ${currentTerm}!`, "success");
-    
-    // Show receipt preview
-    const preview = document.getElementById('receiptPreview');
-    const previewContent = document.getElementById('previewContent');
-    previewContent.innerHTML = `
-      <p><strong>Student:</strong> ${studentName} (${studentClass})</p>
-      <p><strong>Term:</strong> ${currentTerm}</p>
-      <p><strong>Amount Paid:</strong> ${amount.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</p>
-      <p><strong>Payment Mode:</strong> ${mode}</p>
-      <p><strong>Date:</strong> ${receiptDate.toLocaleDateString('en-GB')} ${timeString}</p>
-      <p><strong>Balance:</strong> ${newBalance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</p>
-      ${notes ? `<p><strong>Notes:</strong> ${notes}</p>` : ''}
-      <p><strong>Receipt No:</strong> ${receiptNumber}</p>
-    `;
-    preview.style.display = 'block';
-    
-    // Reset form
-    document.getElementById("receiptForm").reset();
-  } catch (error) {
-    console.error('Error processing receipt:', error);
-    showStatus(`Error: ${error.message}. Receipt may not have been saved.`, "error");
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.innerHTML = '<i class="fas fa-save"></i> Save Receipt & Send SMS';
-  }
-}
+        const receipts = [];
+        snapshot.forEach(doc => {
+          receipts.push({ id: doc.id, ...doc.data() });
+        });
+
+        const filteredReceipts = searchQuery
+          ? receipts.filter(r => r.name.toLowerCase().includes(searchQuery))
+          : receipts;
+
+        if (filteredReceipts.length === 0) {
+          groupedReceipts.innerHTML = '<div class="status-message info">No receipts match your search.</div>';
+          return;
+        }
+
+        groupedReceipts.innerHTML = '';
+        
+        const classes = [
+          "Play Group", "PP1", "PP2",
+          "Grade 1", "Grade 2", "Grade 3",
+          "Grade 4", "Grade 5", "Grade 6"
+        ];
+
+        for (const cls of classes) {
+          const classReceipts = filteredReceipts.filter(r => r.class === cls);
+          if (classReceipts.length === 0) continue;
+
+          const section = document.createElement('div');
+          section.className = 'class-section';
+
+          const header = document.createElement('div');
+          header.className = 'class-header';
+          header.innerHTML = `
+            <h3>${cls} - Term ${currentTerm}</h3>
+            <span class="badge">${classReceipts.length} receipt${classReceipts.length !== 1 ? 's' : ''}</span>
+          `;
+          header.onclick = () => {
+            const content = section.querySelector('.class-content');
+            content.style.display = content.style.display === 'none' ? 'block' : 'none';
+          };
+          section.appendChild(header);
+
+          const content = document.createElement('div');
+          content.className = 'class-content';
+          content.style.display = 'none';
+          
+          const table = document.createElement('table');
+          table.innerHTML = `
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Amount Paid</th>
+                <th>Balance After Payment</th>
+                <th>Payment Mode</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          `;
+          const tbody = table.querySelector('tbody');
+
+          // FIXED: Simply use the balance stored with each receipt
+          classReceipts.forEach(r => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>
+                <strong>${r.name}</strong><br>
+                <small>${r.class} - Term ${currentTerm}</small>
+              </td>
+              <td>${r.paid.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
+              <td>${(r.balance || 0).toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
+              <td>${r.mode}</td>
+              <td>${new Date(r.date).toLocaleDateString('en-GB')}</td>
+              <td>
+                <button class="btn btn-sm btn-info" onclick="printReceipt('${r.id}')">
+                  <i class="fas fa-print"></i> Print
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="deleteReceipt('${r.id}')">
+                  <i class="fas fa-trash"></i> Delete
+                </button>
+              </td>
+            `;
+            tbody.appendChild(row);
+          });
+
+          content.appendChild(table);
+          section.appendChild(content);
+          groupedReceipts.appendChild(section);
+        }
+      } catch (error) {
+        console.error('Error updating receipt table:', error);
+        showStatus(`Error loading receipts: ${error.message}. Check Firebase rules or network.`, "error");
+      }
+    }
+
+    // FIXED: Main receipt submission function with proper balance calculation
+    async function handleReceiptSubmit(e) {
+      e.preventDefault();
+      
+      const studentInput = document.getElementById("studentInput").value;
+      const amount = parseFloat(document.getElementById("amountPaid").value);
+      const mode = document.getElementById("paymentMode").value;
+      const notes = document.getElementById("receiptNotes").value;
+      const submitBtn = document.getElementById("submitBtn");
+
+      if (!studentInput) {
+        showStatus("Please enter or select a student name", "error");
+        return;
+      }
+
+      if (amount <= 0) {
+        showStatus("Amount must be greater than 0", "error");
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner"></span> Processing...';
+      showStatus("Processing payment and sending SMS...", "loading");
+
+      try {
+        const currentDate = new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
+        const receiptDate = new Date(currentDate);
+
+        // Extract name and class from input
+        const match = studentInput.match(/^(.+?)\s*\((.+?)\)$/);
+        let studentName, studentClass, studentId = null;
+        
+        if (match) {
+          studentName = match[1].trim();
+          studentClass = match[2].trim();
+        } else {
+          studentName = studentInput.trim();
+          studentClass = "Unknown";
+        }
+
+        // Get fresh student data before processing payment
+        const studentsCollection = getStudentsCollection();
+        const studentSnapshot = await studentsCollection.where('name', '==', studentName).get();
+        let student;
+        
+        if (!studentSnapshot.empty) {
+          student = studentSnapshot.docs[0].data();
+          studentId = studentSnapshot.docs[0].id;
+        } else {
+          // Create new student if not found
+          const newStudent = {
+            name: studentName,
+            class: studentClass,
+            phone: "+254000000000",
+            tuition: 0, adm: 0, books: 0, stationery: 0, uniform: 0,
+            lunch: 0, transport: 0, trip: 0, graduation: 0,
+            total: 0, paid: 0, balance: 0,
+            term: currentTerm, year: currentYear
+          };
+          const docRef = await studentsCollection.add(newStudent);
+          studentId = docRef.id;
+          student = newStudent;
+        }
+
+        // FIXED: Calculate total outstanding balance including fee changes and carried forward balances
+        const totalOutstandingBalance = await calculateTotalOutstandingBalance(studentName, studentClass, currentTerm, currentYear);
+        
+        // Calculate new balance after this payment
+        const newBalance = totalOutstandingBalance - amount;
+
+        if (newBalance < 0) {
+          showStatus(`Warning: This payment exceeds the outstanding balance by ${Math.abs(newBalance).toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}`, "warning");
+          // Continue anyway, but show warning
+        }
+
+        // Update student record with new paid amount and balance
+        const updatedStudent = {
+          ...student,
+          paid: (student.paid || 0) + amount,
+          balance: Math.max(0, newBalance) // Ensure balance doesn't go negative
+        };
+
+        // Get receipt count for receipt number
+        const receiptsCollection = getReceiptsCollection();
+        const snapshot = await receiptsCollection.get();
+        const receiptCount = snapshot.size + 1;
+        const receiptNumber = `T${currentTerm}-${String(receiptCount).padStart(3, '0')}`;
+
+        const receipt = {
+          name: studentName,
+          class: studentClass,
+          studentId: studentId,
+          paid: amount,
+          balance: newBalance, // Store the calculated balance
+          mode: mode,
+          notes: notes || null,
+          date: receiptDate.toISOString(),
+          receiptNumber: receiptNumber,
+          term: currentTerm,
+          year: currentYear,
+          feeStructure: {
+            tuition: student.tuition || 0,
+            adm: student.adm || 0,
+            books: student.books || 0,
+            stationery: student.stationery || 0,
+            uniform: student.uniform || 0,
+            lunch: student.lunch || 0,
+            transport: student.transport || 0,
+            trip: student.trip || 0,
+            graduation: student.graduation || 0,
+            total: student.total || 0
+          }
+        };
+
+        // Update both student and receipt in a transaction
+        await db.runTransaction(async transaction => {
+          const studentDocRef = studentsCollection.doc(studentId);
+          const receiptRef = receiptsCollection.doc();
+          transaction.update(studentDocRef, updatedStudent);
+          transaction.set(receiptRef, receipt);
+          receipt.id = receiptRef.id;
+        });
+
+        // Send SMS and show success
+        const timeString = receiptDate.toLocaleTimeString('en-US', {
+          timeZone: 'Africa/Nairobi',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        }).toUpperCase();
+        
+        const smsMessage = `Dear parent to ${studentName}, ${studentClass}, Amount of KES ${amount} Receipt No. ${receiptNumber} was received on ${receiptDate.toLocaleDateString('en-GB')} at ${timeString}. Balance: ${Math.max(0, newBalance)}. Term ${currentTerm}.`;
+        const smsSent = await sendSMS(student.phone, smsMessage);
+        
+        showStatus(`Receipt saved${smsSent ? ' and SMS sent' : ''} successfully for Term ${currentTerm}!`, "success");
+        
+        // Show receipt preview
+        const preview = document.getElementById('receiptPreview');
+        const previewContent = document.getElementById('previewContent');
+        previewContent.innerHTML = `
+          <p><strong>Student:</strong> ${studentName} (${studentClass})</p>
+          <p><strong>Term:</strong> ${currentTerm}</p>
+          <p><strong>Amount Paid:</strong> ${amount.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</p>
+          <p><strong>Payment Mode:</strong> ${mode}</p>
+          <p><strong>Date:</strong> ${receiptDate.toLocaleDateString('en-GB')} ${timeString}</p>
+          <p><strong>Balance:</strong> ${Math.max(0, newBalance).toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</p>
+          ${notes ? `<p><strong>Notes:</strong> ${notes}</p>` : ''}
+          <p><strong>Receipt No:</strong> ${receiptNumber}</p>
+        `;
+        preview.style.display = 'block';
+        
+        // Reset form
+        document.getElementById("receiptForm").reset();
+      } catch (error) {
+        console.error('Error processing receipt:', error);
+        showStatus(`Error: ${error.message}. Receipt may not have been saved.`, "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> Save Receipt & Send SMS';
+      }
+    }
 
     async function handleStudentSubmit(e) {
       e.preventDefault();
@@ -1552,581 +1573,583 @@ async function updateReceiptTable() {
     }
 
     async function deleteStudent(id) {
-  if (confirm(`Are you sure you want to delete this student from Term ${currentTerm}? All associated receipts will also be deleted.`)) {
-    try {
-      const studentsCollection = getStudentsCollection();
-      const receiptsCollection = getReceiptsCollection();
-      
-      const studentRef = studentsCollection.doc(id);
-      const studentDoc = await studentRef.get();
-      
-      if (studentDoc.exists) {
-        const studentData = studentDoc.data();
-        const studentName = studentData.name;
-        
-        // Find receipts by BOTH name AND student ID for maximum coverage
-        const receiptsByName = await receiptsCollection.where('name', '==', studentName).get();
-        const receiptsByStudentId = await receiptsCollection.where('studentId', '==', id).get();
-        
-        // Combine results and remove duplicates
-        const allReceiptRefs = new Set();
-        receiptsByName.forEach(doc => allReceiptRefs.add(doc.ref));
-        receiptsByStudentId.forEach(doc => allReceiptRefs.add(doc.ref));
-        
-        const batch = db.batch();
-        allReceiptRefs.forEach(ref => {
-          batch.delete(ref);
-        });
-        batch.delete(studentRef);
-        
-        await batch.commit();
-        showStatus(`Student and ${allReceiptRefs.size} associated receipts deleted successfully from Term ${currentTerm}`, "success");
-        renderStudentList();
-        populateStudents();
-        updateReceiptTable();
-      }
-    } catch (error) {
-      console.error('Error deleting student:', error);
-      showStatus("Error deleting student: " + error.message, "error");
-    }
-  }
-}
-async function deleteReceipt(id) {
-  if (confirm("Are you sure you want to delete this receipt?")) {
-    try {
-      const receiptsCollection = getReceiptsCollection();
-      const studentsCollection = getStudentsCollection();
-      
-      const receiptRef = receiptsCollection.doc(id);
-      const receiptDoc = await receiptRef.get();
-      
-      if (receiptDoc.exists) {
-        const receipt = receiptDoc.data();
-        let studentFound = false;
-        let studentDoc = null;
-        
-        // METHOD 1: Try to find student by ID (most reliable)
-        if (receipt.studentId) {
-          try {
-            const studentDocById = await studentsCollection.doc(receipt.studentId).get();
-            if (studentDocById.exists) {
-              studentDoc = studentDocById;
-              studentFound = true;
-              console.log("Student found by ID");
-            }
-          } catch (error) {
-            console.log("Student ID lookup failed, trying name lookup");
-          }
-        }
-        
-        // METHOD 2: Fallback to finding by name
-        if (!studentFound) {
-          const studentQuery = await studentsCollection.where('name', '==', receipt.name).get();
-          if (!studentQuery.empty) {
-            studentDoc = studentQuery.docs[0];
-            studentFound = true;
-            console.log("Student found by name");
-          }
-        }
-        
-        if (studentFound) {
-          // Update student balance
-          const studentData = studentDoc.data();
-          const updatedStudent = {
-            ...studentData,
-            paid: Math.max(0, studentData.paid - receipt.paid),
-            balance: studentData.balance + receipt.paid
-          };
+      if (confirm(`Are you sure you want to delete this student from Term ${currentTerm}? All associated receipts will also be deleted.`)) {
+        try {
+          const studentsCollection = getStudentsCollection();
+          const receiptsCollection = getReceiptsCollection();
           
-          await db.runTransaction(async transaction => {
-            transaction.update(studentDoc.ref, updatedStudent);
-            transaction.delete(receiptRef);
+          const studentRef = studentsCollection.doc(id);
+          const studentDoc = await studentRef.get();
+          
+          if (studentDoc.exists) {
+            const studentData = studentDoc.data();
+            const studentName = studentData.name;
+            
+            // Find receipts by BOTH name AND student ID for maximum coverage
+            const receiptsByName = await receiptsCollection.where('name', '==', studentName).get();
+            const receiptsByStudentId = await receiptsCollection.where('studentId', '==', id).get();
+            
+            // Combine results and remove duplicates
+            const allReceiptRefs = new Set();
+            receiptsByName.forEach(doc => allReceiptRefs.add(doc.ref));
+            receiptsByStudentId.forEach(doc => allReceiptRefs.add(doc.ref));
+            
+            const batch = db.batch();
+            allReceiptRefs.forEach(ref => {
+              batch.delete(ref);
+            });
+            batch.delete(studentRef);
+            
+            await batch.commit();
+            showStatus(`Student and ${allReceiptRefs.size} associated receipts deleted successfully from Term ${currentTerm}`, "success");
+            renderStudentList();
+            populateStudents();
+            updateReceiptTable();
+          }
+        } catch (error) {
+          console.error('Error deleting student:', error);
+          showStatus("Error deleting student: " + error.message, "error");
+        }
+      }
+    }
+
+    async function deleteReceipt(id) {
+      if (confirm("Are you sure you want to delete this receipt?")) {
+        try {
+          const receiptsCollection = getReceiptsCollection();
+          const studentsCollection = getStudentsCollection();
+          
+          const receiptRef = receiptsCollection.doc(id);
+          const receiptDoc = await receiptRef.get();
+          
+          if (receiptDoc.exists) {
+            const receipt = receiptDoc.data();
+            let studentFound = false;
+            let studentDoc = null;
+            
+            // METHOD 1: Try to find student by ID (most reliable)
+            if (receipt.studentId) {
+              try {
+                const studentDocById = await studentsCollection.doc(receipt.studentId).get();
+                if (studentDocById.exists) {
+                  studentDoc = studentDocById;
+                  studentFound = true;
+                  console.log("Student found by ID");
+                }
+              } catch (error) {
+                console.log("Student ID lookup failed, trying name lookup");
+              }
+            }
+            
+            // METHOD 2: Fallback to finding by name
+            if (!studentFound) {
+              const studentQuery = await studentsCollection.where('name', '==', receipt.name).get();
+              if (!studentQuery.empty) {
+                studentDoc = studentQuery.docs[0];
+                studentFound = true;
+                console.log("Student found by name");
+              }
+            }
+            
+            if (studentFound) {
+              // Update student balance
+              const studentData = studentDoc.data();
+              const updatedStudent = {
+                ...studentData,
+                paid: Math.max(0, studentData.paid - receipt.paid),
+                balance: studentData.balance + receipt.paid
+              };
+              
+              await db.runTransaction(async transaction => {
+                transaction.update(studentDoc.ref, updatedStudent);
+                transaction.delete(receiptRef);
+              });
+              
+              showStatus(`Receipt deleted and student balance updated successfully for Term ${currentTerm}`, "success");
+            } else {
+              // Student not found - still allow receipt deletion
+              await receiptRef.delete();
+              showStatus(`Receipt deleted successfully. Note: Associated student '${receipt.name}' was not found (may have been renamed or deleted) for Term ${currentTerm}`, "success");
+            }
+            
+            updateReceiptTable();
+          } else {
+            showStatus("Receipt not found", "error");
+          }
+        } catch (error) {
+          console.error('Error deleting receipt:', error);
+          showStatus("Error deleting receipt: " + error.message, "error");
+        }
+      }
+    }
+
+    // ENHANCEMENT: Batch update receipts when student name changes
+    async function updateReceiptsAfterStudentNameChange(oldName, newName, studentId) {
+      try {
+        const receiptsCollection = getReceiptsCollection();
+        const receiptsQuery = await receiptsCollection.where('name', '==', oldName).get();
+        
+        if (!receiptsQuery.empty) {
+          const batch = db.batch();
+          receiptsQuery.forEach(doc => {
+            batch.update(doc.ref, {
+              name: newName,
+              studentId: studentId, // Ensure student ID is stored
+              nameUpdated: new Date().toISOString()
+            });
           });
           
-          showStatus(`Receipt deleted and student balance updated successfully for Term ${currentTerm}`, "success");
-        } else {
-          // Student not found - still allow receipt deletion
-          await receiptRef.delete();
-          showStatus(`Receipt deleted successfully. Note: Associated student '${receipt.name}' was not found (may have been renamed or deleted) for Term ${currentTerm}`, "success");
+          await batch.commit();
+          console.log(`Updated ${receiptsQuery.size} receipts with new student name`);
         }
-        
-        updateReceiptTable();
-      } else {
-        showStatus("Receipt not found", "error");
+      } catch (error) {
+        console.error('Error updating receipts after name change:', error);
       }
-    } catch (error) {
-      console.error('Error deleting receipt:', error);
-      showStatus("Error deleting receipt: " + error.message, "error");
     }
-  }
-}
 
-// ENHANCEMENT 3: Batch update receipts when student name changes
-async function updateReceiptsAfterStudentNameChange(oldName, newName, studentId) {
-  try {
-    const receiptsCollection = getReceiptsCollection();
-    const receiptsQuery = await receiptsCollection.where('name', '==', oldName).get();
-    
-    if (!receiptsQuery.empty) {
-      const batch = db.batch();
-      receiptsQuery.forEach(doc => {
-        batch.update(doc.ref, {
-          name: newName,
-          studentId: studentId, // Ensure student ID is stored
-          nameUpdated: new Date().toISOString()
-        });
+    async function calculateFeeItemBalancesAtReceiptTime(studentName, currentTerm, currentYear, targetReceiptId) {
+      const feeItems = [
+        'tuition', 'adm', 'lunch', 'uniform', 'books', 
+        'stationery', 'transport', 'trip', 'graduation'
+      ];
+      
+      // Get the target receipt to get its fee structure
+      const receiptsCollection = getReceiptsCollection(currentTerm, currentYear);
+      const targetReceiptDoc = await receiptsCollection.doc(targetReceiptId).get();
+      
+      if (!targetReceiptDoc.exists) {
+        return null;
+      }
+      
+      const targetReceipt = targetReceiptDoc.data();
+      
+      // Use the fee structure stored with the receipt (or fall back to current student data)
+      let feeStructure = targetReceipt.feeStructure;
+      if (!feeStructure) {
+        // Fallback: get current student data
+        const studentsCollection = getStudentsCollection(currentTerm, currentYear);
+        const studentSnapshot = await studentsCollection.where('name', '==', studentName).get();
+        if (studentSnapshot.empty) return null;
+        
+        const student = studentSnapshot.docs[0].data();
+        feeStructure = {
+          tuition: student.tuition || 0,
+          adm: student.adm || 0,
+          books: student.books || 0,
+          stationery: student.stationery || 0,
+          uniform: student.uniform || 0,
+          lunch: student.lunch || 0,
+          transport: student.transport || 0,
+          trip: student.trip || 0,
+          graduation: student.graduation || 0
+        };
+      }
+      
+      // Initialize balances with fee amounts at the time of this receipt
+      const balances = {};
+      feeItems.forEach(item => {
+        balances[item] = feeStructure[item] || 0;
       });
       
-      await batch.commit();
-      console.log(`Updated ${receiptsQuery.size} receipts with new student name`);
-    }
-  } catch (error) {
-    console.error('Error updating receipts after name change:', error);
-  }
-}
-    async function calculateFeeItemBalancesAtReceiptTime(studentName, currentTerm, currentYear, targetReceiptId) {
-  const feeItems = [
-    'tuition', 'adm', 'lunch', 'uniform', 'books', 
-    'stationery', 'transport', 'trip', 'graduation'
-  ];
-  
-  // Get the target receipt to get its fee structure
-  const receiptsCollection = getReceiptsCollection(currentTerm, currentYear);
-  const targetReceiptDoc = await receiptsCollection.doc(targetReceiptId).get();
-  
-  if (!targetReceiptDoc.exists) {
-    return null;
-  }
-  
-  const targetReceipt = targetReceiptDoc.data();
-  
-  // Use the fee structure stored with the receipt (or fall back to current student data)
-  let feeStructure = targetReceipt.feeStructure;
-  if (!feeStructure) {
-    // Fallback: get current student data
-    const studentsCollection = getStudentsCollection(currentTerm, currentYear);
-    const studentSnapshot = await studentsCollection.where('name', '==', studentName).get();
-    if (studentSnapshot.empty) return null;
-    
-    const student = studentSnapshot.docs[0].data();
-    feeStructure = {
-      tuition: student.tuition || 0,
-      adm: student.adm || 0,
-      books: student.books || 0,
-      stationery: student.stationery || 0,
-      uniform: student.uniform || 0,
-      lunch: student.lunch || 0,
-      transport: student.transport || 0,
-      trip: student.trip || 0,
-      graduation: student.graduation || 0
-    };
-  }
-  
-  // Initialize balances with fee amounts at the time of this receipt
-  const balances = {};
-  feeItems.forEach(item => {
-    balances[item] = feeStructure[item] || 0;
-  });
-  
-  // Get all receipts for this student up to (but not including) the target receipt
-  const allReceiptsSnapshot = await receiptsCollection.where('name', '==', studentName).get();
-  const allReceipts = [];
-  allReceiptsSnapshot.docs.forEach(doc => {
-    if (doc.id !== targetReceiptId) { // Exclude the target receipt
-      allReceipts.push({ id: doc.id, ...doc.data() });
-    }
-  });
-  
-  // Sort by date to process payments in order
-  allReceipts.sort((a, b) => new Date(a.date) - new Date(b.date));
-  
-  // Stop processing when we reach the target receipt date
-  const targetReceiptDate = new Date(targetReceipt.date);
-  const relevantReceipts = allReceipts.filter(receipt => new Date(receipt.date) < targetReceiptDate);
-  
-  // Process payments in chronological order
-  relevantReceipts.forEach(receipt => {
-    let remainingPaid = receipt.paid;
-    
-    // Apply payment to fee items in priority order
-    for (const item of feeItems) {
-      if (remainingPaid <= 0) break;
+      // Get all receipts for this student up to (but not including) the target receipt
+      const allReceiptsSnapshot = await receiptsCollection.where('name', '==', studentName).get();
+      const allReceipts = [];
+      allReceiptsSnapshot.docs.forEach(doc => {
+        if (doc.id !== targetReceiptId) { // Exclude the target receipt
+          allReceipts.push({ id: doc.id, ...doc.data() });
+        }
+      });
       
-      if (balances[item] > 0) {
-        const paymentApplied = Math.min(remainingPaid, balances[item]);
-        balances[item] -= paymentApplied;
-        remainingPaid -= paymentApplied;
+      // Sort by date to process payments in order
+      allReceipts.sort((a, b) => new Date(a.date) - new Date(b.date));
+      
+      // Stop processing when we reach the target receipt date
+      const targetReceiptDate = new Date(targetReceipt.date);
+      const relevantReceipts = allReceipts.filter(receipt => new Date(receipt.date) < targetReceiptDate);
+      
+      // Process payments in chronological order
+      relevantReceipts.forEach(receipt => {
+        let remainingPaid = receipt.paid;
+        
+        // Apply payment to fee items in priority order
+        for (const item of feeItems) {
+          if (remainingPaid <= 0) break;
+          
+          if (balances[item] > 0) {
+            const paymentApplied = Math.min(remainingPaid, balances[item]);
+            balances[item] -= paymentApplied;
+            remainingPaid -= paymentApplied;
+          }
+        }
+      });
+      
+      return balances;
+    }
+
+    // FIXED: Print receipt with accurate balance calculation for that specific receipt
+    async function printReceipt(id) {
+      try {
+        const receiptsCollection = getReceiptsCollection();
+        const studentsCollection = getStudentsCollection();
+        
+        const receiptDoc = await receiptsCollection.doc(id).get();
+        if (!receiptDoc.exists) {
+          showStatus("Receipt not found", "error");
+          return;
+        }
+        
+        const receipt = { id: receiptDoc.id, ...receiptDoc.data() };
+        const currentDate = new Date(receipt.date).toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
+        const receiptDate = new Date(currentDate);
+        const receiptNumber = receipt.receiptNumber || `T${currentTerm}-001`;
+
+        // FIXED: Calculate balances at the time this specific receipt was issued
+        const feeItemBalances = await calculateFeeItemBalancesAtReceiptTime(receipt.name, currentTerm, currentYear, receipt.id);
+        
+        if (!feeItemBalances) {
+          showStatus("Could not calculate fee balances for this receipt", "error");
+          return;
+        }
+
+        // Calculate balance carried forward from previous terms
+        const balanceCarriedForward = await getBalanceCarriedForward(receipt.name, currentTerm, currentYear);
+        
+        // Get logo data URL
+        const logoDataUrl = await getLogoDataUrl();
+
+        const printWindow = window.open('', '', 'height=800,width=900');
+        
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Official Receipt - ${receipt.name} - Term ${currentTerm}</title>
+              <style>
+                @page { 
+                  size: A4; 
+                  margin: 10mm;
+                }
+                body { 
+                  font-family: Arial, sans-serif; 
+                  margin: 0; 
+                  padding: 10mm; 
+                  font-size: 11px; 
+                  line-height: 1.2;
+                  background: white;
+                  max-height: 277mm;
+                  overflow: hidden;
+                }
+                .header { 
+                  text-align: center; 
+                  margin-bottom: 15px; 
+                  border-bottom: 2px solid #000;
+                  padding-bottom: 10px;
+                }
+                .school-logo {
+                  width: 70px;
+                  height: 70px;
+                  margin: 0 auto 8px;
+                  display: block;
+                  object-fit: contain;
+                }
+                .logo-fallback {
+                  width: 70px;
+                  height: 70px;
+                  margin: 0 auto 8px;
+                  display: block;
+                  border: 2px solid #000;
+                  background: #f0f0f0;
+                  line-height: 66px;
+                  text-align: center;
+                  font-weight: bold;
+                  font-size: 12px;
+                  color: #333;
+                }
+                .school-motto {
+                  font-size: 11px;
+                  font-weight: bold;
+                  margin: 4px 0;
+                }
+                .school-name { 
+                  font-size: 16px; 
+                  font-weight: bold; 
+                  color: #000; 
+                  margin: 6px 0 4px 0; 
+                  letter-spacing: 1px;
+                }
+                .contact-info { 
+                  font-size: 9px; 
+                  margin: 1px 0;
+                  color: #333;
+                }
+                .receipt-title { 
+                  font-size: 14px; 
+                  font-weight: bold; 
+                  margin: 15px 0 10px 0; 
+                  text-decoration: underline;
+                }
+                .receipt-header {
+                  display: flex;
+                  justify-content: space-between;
+                  margin-bottom: 15px;
+                  align-items: flex-end;
+                }
+                .receipt-number {
+                  font-size: 11px;
+                  font-weight: bold;
+                }
+                .paybill-info {
+                  font-size: 9px;
+                  text-align: right;
+                }
+                .student-info { 
+                  margin-bottom: 12px; 
+                  line-height: 1.4;
+                }
+                .student-info div {
+                  margin-bottom: 6px;
+                  display: flex;
+                }
+                .student-info strong {
+                  min-width: 150px;
+                  display: inline-block;
+                }
+                .term-info {
+                  background-color: #f0f0f0;
+                  padding: 8px;
+                  margin: 12px 0;
+                  border: 1px solid #ddd;
+                  text-align: center;
+                  font-weight: bold;
+                  font-size: 11px;
+                }
+                .payment-section {
+                  margin: 15px 0 12px 0;
+                  font-weight: bold;
+                  font-size: 11px;
+                }
+                .fees-table { 
+                  width: 100%; 
+                  border-collapse: collapse; 
+                  margin: 12px 0; 
+                  font-size: 8px;
+                }
+                .fees-table th, .fees-table td { 
+                  border: 1px solid #000; 
+                  padding: 5px 3px; 
+                  text-align: center;
+                  vertical-align: middle;
+                }
+                .fees-table th { 
+                  background-color: #f8f8f8; 
+                  font-weight: bold; 
+                  font-size: 8px;
+                }
+                .fees-row td {
+                  font-size: 8px;
+                  height: 25px;
+                }
+                .total-row { 
+                  font-weight: bold; 
+                  background-color: #f0f0f0;
+                }
+                .total-row td {
+                  font-size: 9px;
+                }
+                .payment-details {
+                  margin: 15px 0;
+                  display: flex;
+                  justify-content: space-between;
+                  font-size: 10px;
+                  page-break-inside: avoid;
+                }
+                .signatures { 
+                  margin-top: 30px;
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: flex-end;
+                  page-break-inside: avoid;
+                }
+                .signature-box { 
+                  text-align: center; 
+                  width: 180px; 
+                }
+                .signature-line { 
+                  border-bottom: 1px solid #000; 
+                  margin-bottom: 4px; 
+                  height: 25px; 
+                }
+                .refund-policy {
+                  text-align: center;
+                  margin-top: 20px;
+                  font-size: 9px;
+                  font-weight: bold;
+                  border-top: 1px solid #000;
+                  padding-top: 8px;
+                  page-break-inside: avoid;
+                }
+                .content-container {
+                  max-height: 240mm;
+                  overflow: hidden;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="content-container">
+                <div class="header">
+                  ${logoDataUrl ? 
+                    `<img src="${logoDataUrl}" alt="School Logo" class="school-logo" />` : 
+                    `<div class="logo-fallback">HCS</div>`
+                  }
+                  <div class="school-motto">LEARN, LEAD, ACHIEVE</div>
+                  <div class="school-name">HERIWADI CHRISTIAN SCHOOLS LTD</div>
+                  <div class="contact-info">Physical Address: Ongata Rongai</div>
+                  <div class="contact-info">Postal Address: P.O. Box 62503 - 00200, Ongata Rongai, Kenya</div>
+                  <div class="contact-info">Mobile: 0723 322449</div>
+                  <div class="contact-info">Email: heriwadics@gmail.com</div>
+                </div>
+
+                <div class="term-info">
+                  ACADEMIC YEAR ${currentYear} - TERM ${currentTerm}
+                </div>
+
+                <div class="receipt-header">
+                  <div>
+                    <div class="receipt-title">RECEIPT</div>
+                  </div>
+                  <div class="paybill-info">
+                    <strong>No. ${receiptNumber}</strong><br>
+                    <strong>Date:</strong> ${receiptDate.toLocaleDateString('en-GB')} ${receiptDate.toLocaleTimeString('en-US', { timeZone: 'Africa/Nairobi', hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}
+                  </div>
+                </div>
+
+                <div class="student-info">
+                  <div><strong>Student:</strong> <span>${receipt.name}</span></div>
+                  <div><strong>Class:</strong> <span>${receipt.class}</span></div>
+                  <div><strong>Term:</strong> <span>${currentTerm}</span></div>
+                  <div><strong>Academic Year:</strong> <span>${currentYear}</span></div>
+                  ${receipt.notes ? `<div><strong>Notes:</strong> <span>${receipt.notes}</span></div>` : ''}
+                </div>
+
+                <div class="payment-section">Mode of Payment: ${receipt.mode}</div>
+                <div class="payment-section">Date: ${receiptDate.toLocaleDateString('en-GB')} ${receiptDate.toLocaleTimeString('en-US', { timeZone: 'Africa/Nairobi', hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}</div>
+
+                <table class="fees-table">
+                  <thead>
+                    <tr>
+                      <th><strong>Fee Item</strong></th>
+                      <th><strong>Fee Charged</strong></th>
+                      <th><strong>Fee Paid</strong></th>
+                      <th><strong>Receipt Balance</strong></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${(() => {
+                      let remainingPaid = receipt.paid;
+                      const fees = [
+                        { name: 'Tuition', amount: feeItemBalances.tuition || 0, balance: feeItemBalances.tuition || 0 },
+                        { name: 'Adm Fee', amount: feeItemBalances.adm || 0, balance: feeItemBalances.adm || 0 },
+                        { name: 'Lunch', amount: feeItemBalances.lunch || 0, balance: feeItemBalances.lunch || 0 },
+                        { name: 'Uniform', amount: feeItemBalances.uniform || 0, balance: feeItemBalances.uniform || 0 },
+                        { name: 'Book Fund', amount: feeItemBalances.books || 0, balance: feeItemBalances.books || 0 },
+                        { name: 'Stationery', amount: feeItemBalances.stationery || 0, balance: feeItemBalances.stationery || 0 },
+                        { name: 'Transport', amount: feeItemBalances.transport || 0, balance: feeItemBalances.transport || 0 },
+                        { name: 'Trip', amount: feeItemBalances.trip || 0, balance: feeItemBalances.trip || 0 },
+                        { name: 'Graduation', amount: feeItemBalances.graduation || 0, balance: feeItemBalances.graduation || 0 }
+                      ];
+                      let rows = '';
+                      let totalPaidThisReceipt = 0;
+
+                      // First show carried forward balance if applicable
+                      if (balanceCarriedForward > 0) {
+                        const carriedForwardPaid = Math.min(remainingPaid, balanceCarriedForward);
+                        remainingPaid -= carriedForwardPaid;
+                        totalPaidThisReceipt += carriedForwardPaid;
+                        
+                        rows += `
+                          <tr class="fees-row">
+                            <td>Balance Carried Forward</td>
+                            <td>${balanceCarriedForward.toLocaleString()}</td>
+                            <td>${carriedForwardPaid.toLocaleString()}</td>
+                            <td>${(balanceCarriedForward - carriedForwardPaid).toLocaleString()}</td>
+                          </tr>
+                        `;
+                      }
+
+                      // Process each fee item with THIS receipt's payment
+                      fees.forEach(fee => {
+                        const feePaid = Math.min(remainingPaid, fee.balance);
+                        remainingPaid -= feePaid;
+                        totalPaidThisReceipt += feePaid;
+                        const feeBalance = fee.balance - feePaid;
+
+                        rows += `
+                          <tr class="fees-row">
+                            <td>${fee.name}</td>
+                            <td>${fee.amount.toLocaleString()}</td>
+                            <td>${feePaid.toLocaleString()}</td>
+                            <td>${feeBalance.toLocaleString()}</td>
+                          </tr>
+                        `;
+                      });
+
+                      // Calculate total outstanding balance for this receipt
+                      const totalCharges = fees.reduce((sum, fee) => sum + fee.amount, 0) + balanceCarriedForward;
+                      const totalOutstanding = totalCharges - totalPaidThisReceipt;
+
+                      // Add total row
+                      rows += `
+                        <tr class="total-row">
+                          <td colspan="2" style="text-align: right; padding-right: 8px;"><strong>Total</strong></td>
+                          <td><strong>${totalPaidThisReceipt.toLocaleString()}</strong></td>
+                          <td><strong>${totalOutstanding.toLocaleString()}</strong></td>
+                        </tr>
+                      `;
+
+                      return rows;
+                    })()}
+                  </tbody>
+                </table>
+
+                <div class="payment-details">
+                  <div class="payment-left">
+                    <div><strong>Amount Paid:</strong> ${Number(receipt.paid).toLocaleString()}</div>
+                    <div><strong>Term:</strong> ${currentTerm}</div>
+                  </div>
+                  <div class="payment-right" style="text-align: right;">
+                    <div><strong>For Heriwadi Christian Schools Ltd</strong></div>
+                  </div>
+                </div>
+
+                <div class="signatures">
+                  <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <div style="font-size: 8px;">Accountant/Cashier</div>
+                  </div>
+                  <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <div style="font-size: 8px;">For: Heriwadi Christian Schools</div>
+                  </div>
+                </div>
+
+                <div class="refund-policy">
+                  School Fees Once Paid is not Refundable
+                </div>
+              </div>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        
+        // Wait for the content to load before printing
+        setTimeout(() => {
+          printWindow.print();
+          printWindow.close();
+        }, 1000);
+      } catch (error) {
+        console.error('Error printing receipt:', error);
+        showStatus("Error printing receipt: " + error.message, "error");
       }
     }
-  });
-  
-  return balances;
-}
-
-// 3. FIXED: Print receipt with accurate balance calculation for that specific receipt
-async function printReceipt(id) {
-  try {
-    const receiptsCollection = getReceiptsCollection();
-    const studentsCollection = getStudentsCollection();
-    
-    const receiptDoc = await receiptsCollection.doc(id).get();
-    if (!receiptDoc.exists) {
-      showStatus("Receipt not found", "error");
-      return;
-    }
-    
-    const receipt = { id: receiptDoc.id, ...receiptDoc.data() };
-    const currentDate = new Date(receipt.date).toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
-    const receiptDate = new Date(currentDate);
-    const receiptNumber = receipt.receiptNumber || `T${currentTerm}-001`;
-
-    // FIXED: Calculate balances at the time this specific receipt was issued
-    const feeItemBalances = await calculateFeeItemBalancesAtReceiptTime(receipt.name, currentTerm, currentYear, receipt.id);
-    
-    if (!feeItemBalances) {
-      showStatus("Could not calculate fee balances for this receipt", "error");
-      return;
-    }
-
-    // Calculate balance carried forward from previous terms
-    const balanceCarriedForward = await getBalanceCarriedForward(receipt.name, currentTerm, currentYear);
-    
-    // Get logo data URL
-    const logoDataUrl = await getLogoDataUrl();
-
-    const printWindow = window.open('', '', 'height=800,width=900');
-    
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Official Receipt - ${receipt.name} - Term ${currentTerm}</title>
-          <style>
-            @page { 
-              size: A4; 
-              margin: 10mm;
-            }
-            body { 
-              font-family: Arial, sans-serif; 
-              margin: 0; 
-              padding: 10mm; 
-              font-size: 11px; 
-              line-height: 1.2;
-              background: white;
-              max-height: 277mm;
-              overflow: hidden;
-            }
-            .header { 
-              text-align: center; 
-              margin-bottom: 15px; 
-              border-bottom: 2px solid #000;
-              padding-bottom: 10px;
-            }
-            .school-logo {
-              width: 70px;
-              height: 70px;
-              margin: 0 auto 8px;
-              display: block;
-              object-fit: contain;
-            }
-            .logo-fallback {
-              width: 70px;
-              height: 70px;
-              margin: 0 auto 8px;
-              display: block;
-              border: 2px solid #000;
-              background: #f0f0f0;
-              line-height: 66px;
-              text-align: center;
-              font-weight: bold;
-              font-size: 12px;
-              color: #333;
-            }
-            .school-motto {
-              font-size: 11px;
-              font-weight: bold;
-              margin: 4px 0;
-            }
-            .school-name { 
-              font-size: 16px; 
-              font-weight: bold; 
-              color: #000; 
-              margin: 6px 0 4px 0; 
-              letter-spacing: 1px;
-            }
-            .contact-info { 
-              font-size: 9px; 
-              margin: 1px 0;
-              color: #333;
-            }
-            .receipt-title { 
-              font-size: 14px; 
-              font-weight: bold; 
-              margin: 15px 0 10px 0; 
-              text-decoration: underline;
-            }
-            .receipt-header {
-              display: flex;
-              justify-content: space-between;
-              margin-bottom: 15px;
-              align-items: flex-end;
-            }
-            .receipt-number {
-              font-size: 11px;
-              font-weight: bold;
-            }
-            .paybill-info {
-              font-size: 9px;
-              text-align: right;
-            }
-            .student-info { 
-              margin-bottom: 12px; 
-              line-height: 1.4;
-            }
-            .student-info div {
-              margin-bottom: 6px;
-              display: flex;
-            }
-            .student-info strong {
-              min-width: 150px;
-              display: inline-block;
-            }
-            .term-info {
-              background-color: #f0f0f0;
-              padding: 8px;
-              margin: 12px 0;
-              border: 1px solid #ddd;
-              text-align: center;
-              font-weight: bold;
-              font-size: 11px;
-            }
-            .payment-section {
-              margin: 15px 0 12px 0;
-              font-weight: bold;
-              font-size: 11px;
-            }
-            .fees-table { 
-              width: 100%; 
-              border-collapse: collapse; 
-              margin: 12px 0; 
-              font-size: 8px;
-            }
-            .fees-table th, .fees-table td { 
-              border: 1px solid #000; 
-              padding: 5px 3px; 
-              text-align: center;
-              vertical-align: middle;
-            }
-            .fees-table th { 
-              background-color: #f8f8f8; 
-              font-weight: bold; 
-              font-size: 8px;
-            }
-            .fees-row td {
-              font-size: 8px;
-              height: 25px;
-            }
-            .total-row { 
-              font-weight: bold; 
-              background-color: #f0f0f0;
-            }
-            .total-row td {
-              font-size: 9px;
-            }
-            .payment-details {
-              margin: 15px 0;
-              display: flex;
-              justify-content: space-between;
-              font-size: 10px;
-              page-break-inside: avoid;
-            }
-            .signatures { 
-              margin-top: 30px;
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-end;
-              page-break-inside: avoid;
-            }
-            .signature-box { 
-              text-align: center; 
-              width: 180px; 
-            }
-            .signature-line { 
-              border-bottom: 1px solid #000; 
-              margin-bottom: 4px; 
-              height: 25px; 
-            }
-            .refund-policy {
-              text-align: center;
-              margin-top: 20px;
-              font-size: 9px;
-              font-weight: bold;
-              border-top: 1px solid #000;
-              padding-top: 8px;
-              page-break-inside: avoid;
-            }
-            .content-container {
-              max-height: 240mm;
-              overflow: hidden;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="content-container">
-            <div class="header">
-              ${logoDataUrl ? 
-                `<img src="${logoDataUrl}" alt="School Logo" class="school-logo" />` : 
-                `<div class="logo-fallback">HCS</div>`
-              }
-              <div class="school-motto">LEARN, LEAD, ACHIEVE</div>
-              <div class="school-name">HERIWADI CHRISTIAN SCHOOLS LTD</div>
-              <div class="contact-info">Physical Address: Ongata Rongai</div>
-              <div class="contact-info">Postal Address: P.O. Box 62503 - 00200, Ongata Rongai, Kenya</div>
-              <div class="contact-info">Mobile: 0723 322449</div>
-              <div class="contact-info">Email: heriwadics@gmail.com</div>
-            </div>
-
-            <div class="term-info">
-              ACADEMIC YEAR ${currentYear} - TERM ${currentTerm}
-            </div>
-
-            <div class="receipt-header">
-              <div>
-                <div class="receipt-title">RECEIPT</div>
-              </div>
-              <div class="paybill-info">
-                <strong>No. ${receiptNumber}</strong><br>
-                <strong>Date:</strong> ${receiptDate.toLocaleDateString('en-GB')} ${receiptDate.toLocaleTimeString('en-US', { timeZone: 'Africa/Nairobi', hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}
-              </div>
-            </div>
-
-            <div class="student-info">
-              <div><strong>Student:</strong> <span>${receipt.name}</span></div>
-              <div><strong>Class:</strong> <span>${receipt.class}</span></div>
-              <div><strong>Term:</strong> <span>${currentTerm}</span></div>
-              <div><strong>Academic Year:</strong> <span>${currentYear}</span></div>
-              ${receipt.notes ? `<div><strong>Notes:</strong> <span>${receipt.notes}</span></div>` : ''}
-            </div>
-
-            <div class="payment-section">Mode of Payment: ${receipt.mode}</div>
-            <div class="payment-section">Date: ${receiptDate.toLocaleDateString('en-GB')} ${receiptDate.toLocaleTimeString('en-US', { timeZone: 'Africa/Nairobi', hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}</div>
-
-            <table class="fees-table">
-              <thead>
-                <tr>
-                  <th><strong>Fee Item</strong></th>
-                  <th><strong>Fee Charged</strong></th>
-                  <th><strong>Fee Paid</strong></th>
-                  <th><strong>Receipt Balance</strong></th>
-                </tr>
-              </thead>
-              <tbody>
-                ${(() => {
-                  let remainingPaid = receipt.paid;
-                  const fees = [
-                    { name: 'Tuition', amount: feeItemBalances.tuition || 0, balance: feeItemBalances.tuition || 0 },
-                    { name: 'Adm Fee', amount: feeItemBalances.adm || 0, balance: feeItemBalances.adm || 0 },
-                    { name: 'Lunch', amount: feeItemBalances.lunch || 0, balance: feeItemBalances.lunch || 0 },
-                    { name: 'Uniform', amount: feeItemBalances.uniform || 0, balance: feeItemBalances.uniform || 0 },
-                    { name: 'Book Fund', amount: feeItemBalances.books || 0, balance: feeItemBalances.books || 0 },
-                    { name: 'Stationery', amount: feeItemBalances.stationery || 0, balance: feeItemBalances.stationery || 0 },
-                    { name: 'Transport', amount: feeItemBalances.transport || 0, balance: feeItemBalances.transport || 0 },
-                    { name: 'Trip', amount: feeItemBalances.trip || 0, balance: feeItemBalances.trip || 0 },
-                    { name: 'Graduation', amount: feeItemBalances.graduation || 0, balance: feeItemBalances.graduation || 0 }
-                  ];
-                  let rows = '';
-                  let totalPaidThisReceipt = 0;
-
-                  // First show carried forward balance if applicable
-                  if (balanceCarriedForward > 0) {
-                    const carriedForwardPaid = Math.min(remainingPaid, balanceCarriedForward);
-                    remainingPaid -= carriedForwardPaid;
-                    totalPaidThisReceipt += carriedForwardPaid;
-                    
-                    rows += `
-                      <tr class="fees-row">
-                        <td>Balance Carried Forward</td>
-                        <td>${balanceCarriedForward.toLocaleString()}</td>
-                        <td>${carriedForwardPaid.toLocaleString()}</td>
-                        <td>${(balanceCarriedForward - carriedForwardPaid).toLocaleString()}</td>
-                      </tr>
-                    `;
-                  }
-
-                  // Process each fee item with THIS receipt's payment
-                  fees.forEach(fee => {
-                    const feePaid = Math.min(remainingPaid, fee.balance);
-                    remainingPaid -= feePaid;
-                    totalPaidThisReceipt += feePaid;
-                    const feeBalance = fee.balance - feePaid;
-
-                    rows += `
-                      <tr class="fees-row">
-                        <td>${fee.name}</td>
-                        <td>${fee.amount.toLocaleString()}</td>
-                        <td>${feePaid.toLocaleString()}</td>
-                        <td>${feeBalance.toLocaleString()}</td>
-                      </tr>
-                    `;
-                  });
-
-                  // Calculate total outstanding balance for this receipt
-                  const totalCharges = fees.reduce((sum, fee) => sum + fee.amount, 0) + balanceCarriedForward;
-                  const totalOutstanding = totalCharges - totalPaidThisReceipt;
-
-                  // Add total row
-                  rows += `
-                    <tr class="total-row">
-                      <td colspan="2" style="text-align: right; padding-right: 8px;"><strong>Total</strong></td>
-                      <td><strong>${totalPaidThisReceipt.toLocaleString()}</strong></td>
-                      <td><strong>${totalOutstanding.toLocaleString()}</strong></td>
-                    </tr>
-                  `;
-
-                  return rows;
-                })()}
-              </tbody>
-            </table>
-
-            <div class="payment-details">
-              <div class="payment-left">
-                <div><strong>Amount Paid:</strong> ${Number(receipt.paid).toLocaleString()}</div>
-                <div><strong>Term:</strong> ${currentTerm}</div>
-              </div>
-              <div class="payment-right" style="text-align: right;">
-                <div><strong>For Heriwadi Christian Schools Ltd</strong></div>
-              </div>
-            </div>
-
-            <div class="signatures">
-              <div class="signature-box">
-                <div class="signature-line"></div>
-                <div style="font-size: 8px;">Accountant/Cashier</div>
-              </div>
-              <div class="signature-box">
-                <div class="signature-line"></div>
-                <div style="font-size: 8px;">For: Heriwadi Christian Schools</div>
-              </div>
-            </div>
-
-            <div class="refund-policy">
-              School Fees Once Paid is not Refundable
-            </div>
-          </div>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    
-    // Wait for the content to load before printing
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 1000);
-  } catch (error) {
-    console.error('Error printing receipt:', error);
-    showStatus("Error printing receipt: " + error.message, "error");
-  }
-}
 
     async function exportByClassPDF() {
       try {
@@ -2511,53 +2534,54 @@ async function printReceipt(id) {
       clearTermSelection,
       switchTerm
     };
+
     // ADD these missing functions to your receipts.html file after the existing JavaScript functions
 
-// Function to open the student manager modal
-function openStudentManager() {
-  const modal = document.getElementById('studentManagerModal');
-  modal.classList.add('show');
-  renderStudentList();
-  updateTermDisplays(); // Make sure term displays are updated in the modal
-}
-
-// Function to close the student manager modal
-function closeStudentManager() {
-  const modal = document.getElementById('studentManagerModal');
-  modal.classList.remove('show');
-  
-  // Reset the student form
-  document.getElementById('studentForm').reset();
-}
-
-// Function to handle modal clicks (close when clicking outside)
-function handleModalClick(event) {
-  const modal = document.getElementById('studentManagerModal');
-  if (event.target === modal) {
-    closeStudentManager();
-  }
-}
-
-// Add event listener for ESC key to close modal
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {
-    const modal = document.getElementById('studentManagerModal');
-    if (modal.classList.contains('show')) {
-      closeStudentManager();
+    // Function to open the student manager modal
+    function openStudentManager() {
+      const modal = document.getElementById('studentManagerModal');
+      modal.classList.add('show');
+      renderStudentList();
+      updateTermDisplays(); // Make sure term displays are updated in the modal
     }
-  }
-});
 
-// Make sure the modal click event is properly attached
-document.addEventListener('DOMContentLoaded', function() {
-  // ... your existing DOMContentLoaded code ...
-  
-  // Add modal event listener
-  const modal = document.getElementById('studentManagerModal');
-  if (modal) {
-    modal.addEventListener('click', handleModalClick);
-  }
-});
+    // Function to close the student manager modal
+    function closeStudentManager() {
+      const modal = document.getElementById('studentManagerModal');
+      modal.classList.remove('show');
+      
+      // Reset the student form
+      document.getElementById('studentForm').reset();
+    }
+
+    // Function to handle modal clicks (close when clicking outside)
+    function handleModalClick(event) {
+      const modal = document.getElementById('studentManagerModal');
+      if (event.target === modal) {
+        closeStudentManager();
+      }
+    }
+
+    // Add event listener for ESC key to close modal
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        const modal = document.getElementById('studentManagerModal');
+        if (modal.classList.contains('show')) {
+          closeStudentManager();
+        }
+      }
+    });
+
+    // Make sure the modal click event is properly attached
+    document.addEventListener('DOMContentLoaded', function() {
+      // ... your existing DOMContentLoaded code ...
+      
+      // Add modal event listener
+      const modal = document.getElementById('studentManagerModal');
+      if (modal) {
+        modal.addEventListener('click', handleModalClick);
+      }
+    });
 
     console.log("Heriwadi School Management System initialized with persistent term selection");
     console.log("Use window.heriwadi.getCurrentTerm() to check current term");
