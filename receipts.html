@@ -500,6 +500,16 @@
       display: none;
     }
 
+    .loading-spinner {
+      text-align: center;
+      padding: 2rem;
+      color: var(--info-color);
+    }
+
+    .student-item {
+      list-style: none;
+    }
+
     @media print {
       body * {
         visibility: hidden;
@@ -553,7 +563,6 @@
       }
     }
 
-    /* Animation classes */
     @keyframes fadeIn {
       from { opacity: 0; }
       to { opacity: 1; }
@@ -572,7 +581,6 @@
       animation: slideIn 0.5s ease forwards;
     }
 
-    /* Loading spinner */
     .spinner {
       display: inline-block;
       width: 1rem;
@@ -602,7 +610,7 @@
     <a href="assets.html"><i class="fas fa-laptop-house"></i> Assets</a>
     <a href="staff.html"><i class="fas fa-user-tie"></i> Staff</a>
     <a href="payroll.html"><i class="fas fa-money-check-alt"></i> Payroll</a>
-     <a href="financials.html"><i class="fas fa-money-check-alt"></i> financials</a>
+    <a href="financials.html"><i class="fas fa-money-check-alt"></i> Financials</a>
   </nav>
 
   <div class="container">
@@ -799,7 +807,7 @@
 
         <h4>Existing Students - <span id="existingStudentsTermDisplay">Term 2</span></h4>
         <div id="studentListContainer" style="max-height: 300px; overflow-y: auto;">
-          <ul id="studentListDisplay" class="student-list"></ul>
+          <ul id="studentListDisplay" class="student-list" style="list-style: none; padding: 0;"></ul>
         </div>
       </div>
     </div>
@@ -861,40 +869,27 @@
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
           
-          // Set canvas size to match desired logo size
           canvas.width = 70;
           canvas.height = 70;
-          
-          // Draw image to canvas
           ctx.drawImage(img, 0, 0, 70, 70);
-          
-          // Get base64 data URL
           const dataUrl = canvas.toDataURL('image/png');
           resolve(dataUrl);
         };
         
         img.onerror = function() {
           console.log('Logo image not found, using fallback');
-          // Return a simple fallback (empty data URL)
           resolve('');
         };
         
-        // Try to load the logo image
         img.src = 'photos/school-logo.jpg';
       });
     }
 
     // Setup real-time listeners for student and receipt changes
     function setupRealTimeListeners() {
-      // Remove any existing listeners
-      if (studentListener) {
-        studentListener();
-      }
-      if (receiptListener) {
-        receiptListener();
-      }
+      if (studentListener) studentListener();
+      if (receiptListener) receiptListener();
       
-      // Set up real-time listener for students
       const studentsCollection = getStudentsCollection();
       studentListener = studentsCollection.onSnapshot(
         (snapshot) => {
@@ -902,61 +897,42 @@
           populateStudents();
           updateReceiptTable();
         },
-        (error) => {
-          console.error("Error in student listener:", error);
-        }
-      );
-      
-      // Set up real-time listener for receipts
-      const receiptsCollection = getReceiptsCollection();
-      receiptListener = receiptsCollection.onSnapshot(
-        (snapshot) => {
-          console.log("Receipt data changed - refreshing UI");
-          updateReceiptTable();
-        },
-        (error) => {
-          console.error("Error in receipt listener:", error);
-        }
+        (error) => console.error("Error in receipt listener:", error)
       );
     }
 
     document.addEventListener('DOMContentLoaded', function() {
       updateCurrentYearDisplay();
-      // Initialize UI with saved term on page load
       initializeTermFromStorage();
       initializeMigration().then(() => {
-        populateStudents();
-        updateReceiptTable();
-        // Set up real-time listeners after migration
-        setupRealTimeListeners();
+        // CRITICAL: Recalculate all student balances on page load
+        recalculateAllStudentBalances().then(() => {
+          populateStudents();
+          updateReceiptTable();
+          setupRealTimeListeners();
+        });
       });
       
-      // Add event listeners for form validation
       document.getElementById('amountPaid').addEventListener('input', validateAmount);
       document.getElementById('receiptForm').addEventListener('submit', handleReceiptSubmit);
       document.getElementById('studentForm').addEventListener('submit', handleStudentSubmit);
       
-      // Initialize modals
       const modal = document.getElementById('studentManagerModal');
-      modal.addEventListener('click', function(e) {
-        if (e.target === modal) closeStudentManager();
-      });
+      if (modal) {
+        modal.addEventListener('click', function(e) {
+          if (e.target === modal) closeStudentManager();
+        });
+      }
     });
 
-    // Initialize term from storage and update UI
     function initializeTermFromStorage() {
-      // Update UI to show the correct term
       document.querySelectorAll('.term-btn').forEach(btn => {
         btn.classList.toggle('active', parseInt(btn.dataset.term) === currentTerm);
       });
-      
-      // Update all term displays
       updateTermDisplays();
-      
       console.log(`Initialized with Term ${currentTerm} from storage`);
     }
 
-    // Update all term displays in the UI
     function updateTermDisplays() {
       document.getElementById('currentTermDisplay').textContent = `Term ${currentTerm}`;
       document.getElementById('currentTermRecords').textContent = `Term ${currentTerm}`;
@@ -969,33 +945,24 @@
       document.getElementById('currentYear').textContent = currentYear;
     }
 
-    // Updated switchTerm function with persistent storage and listener refresh
     function switchTerm(term) {
       currentTerm = term;
-      
-      // SAVE term to sessionStorage for persistence across page navigation
       sessionStorage.setItem('heriwadi_current_term', term.toString());
       
-      // Update UI to show active term
       document.querySelectorAll('.term-btn').forEach(btn => {
         btn.classList.toggle('active', parseInt(btn.dataset.term) === term);
       });
       
-      // Update all term displays
       updateTermDisplays();
-      
-      // Refresh data for the new term AND refresh listeners
       populateStudents();
       updateReceiptTable();
-      setupRealTimeListeners(); // Refresh listeners for the new term
+      setupRealTimeListeners();
       
       showStatus(`Switched to Term ${term} - This selection will persist across pages`, "success");
     }
 
-    // Migration function to move existing data to Term 2
     async function initializeMigration() {
       try {
-        // Check if migration has already been done
         const migrationDoc = await db.collection('system_settings').doc('migration_status').get();
         
         if (migrationDoc.exists && migrationDoc.data().term_migration_completed) {
@@ -1006,7 +973,6 @@
 
         showStatus("Initializing term-based data structure...", "loading");
 
-        // Migrate existing students to Term 2
         const oldStudents = await db.collection('students').get();
         const newStudentsCollection = getStudentsCollection(2, currentYear);
         
@@ -1026,7 +992,6 @@
           console.log(`Migrated ${oldStudents.size} students to Term 2`);
         }
 
-        // Migrate existing receipts to Term 2
         const oldReceipts = await db.collection('receipts').get();
         const newReceiptsCollection = getReceiptsCollection(2, currentYear);
         
@@ -1046,7 +1011,6 @@
           console.log(`Migrated ${oldReceipts.size} receipts to Term 2`);
         }
 
-        // Mark migration as completed
         await db.collection('system_settings').doc('migration_status').set({
           term_migration_completed: true,
           migration_date: new Date().toISOString(),
@@ -1061,6 +1025,71 @@
         console.error('Migration error:', error);
         showStatus("Migration completed with some errors. System should still work.", "warning");
         migrationCompleted = true;
+      }
+    }
+
+    // CRITICAL NEW FUNCTION: Recalculate all student balances based on current fee structure and payments
+    async function recalculateAllStudentBalances() {
+      try {
+        console.log("Recalculating all student balances...");
+        const studentsCollection = getStudentsCollection();
+        const receiptsCollection = getReceiptsCollection();
+        
+        const studentsSnapshot = await studentsCollection.get();
+        
+        if (studentsSnapshot.empty) {
+          console.log("No students to recalculate");
+          return;
+        }
+
+        const batch = db.batch();
+        let updatedCount = 0;
+
+        for (const studentDoc of studentsSnapshot.docs) {
+          const student = studentDoc.data();
+          const studentRef = studentDoc.ref;
+          
+          // Recalculate total based on CURRENT fee structure
+          const currentTotal = (student.tuition || 0) + (student.adm || 0) + (student.books || 0) + 
+                              (student.stationery || 0) + (student.uniform || 0) + (student.lunch || 0) + 
+                              (student.transport || 0) + (student.trip || 0) + (student.graduation || 0);
+          
+          // Get all payments made by this student
+          const receiptsSnapshot = await receiptsCollection
+            .where('name', '==', student.name)
+            .get();
+          
+          let totalPaid = 0;
+          receiptsSnapshot.forEach(receiptDoc => {
+            totalPaid += receiptDoc.data().paid || 0;
+          });
+          
+          // Calculate balance carried forward from previous terms
+          const balanceCarriedForward = await getBalanceCarriedForward(student.name, currentTerm, currentYear);
+          
+          // Calculate new balance: (current term total + carried forward) - total paid
+          const newBalance = (currentTotal + balanceCarriedForward) - totalPaid;
+          
+          // Only update if values have changed
+          if (student.total !== currentTotal || student.paid !== totalPaid || student.balance !== newBalance) {
+            batch.update(studentRef, {
+              total: currentTotal,
+              paid: totalPaid,
+              balance: newBalance
+            });
+            updatedCount++;
+          }
+        }
+
+        if (updatedCount > 0) {
+          await batch.commit();
+          console.log(`Successfully recalculated balances for ${updatedCount} students`);
+        } else {
+          console.log("All student balances are already accurate");
+        }
+        
+      } catch (error) {
+        console.error('Error recalculating student balances:', error);
       }
     }
 
@@ -1129,22 +1158,18 @@
       }
     }
 
-    // NEW FUNCTION: Calculate balance carried forward from previous terms
     async function getBalanceCarriedForward(studentName, currentTerm, currentYear) {
       let balanceCarriedForward = 0;
       
-      // If we're in Term 1, there's no previous term to carry forward from
       if (currentTerm === 1) return 0;
       
       try {
-        // Check all previous terms for outstanding balances
         for (let term = 1; term < currentTerm; term++) {
           const prevStudentsCollection = getStudentsCollection(term, currentYear);
           const prevStudentSnapshot = await prevStudentsCollection.where('name', '==', studentName).get();
           
           if (!prevStudentSnapshot.empty) {
             const prevStudent = prevStudentSnapshot.docs[0].data();
-            // Add any outstanding balance from previous term
             if (prevStudent.balance > 0) {
               balanceCarriedForward += prevStudent.balance;
             }
@@ -1157,44 +1182,6 @@
       return balanceCarriedForward;
     }
 
-    // NEW FUNCTION: Calculate total outstanding balance including fee changes
-    async function calculateTotalOutstandingBalance(studentName, studentClass, currentTerm, currentYear) {
-      try {
-        // Get current student data
-        const studentsCollection = getStudentsCollection(currentTerm, currentYear);
-        const studentSnapshot = await studentsCollection.where('name', '==', studentName).get();
-        
-        if (studentSnapshot.empty) {
-          return 0;
-        }
-        
-        const student = studentSnapshot.docs[0].data();
-        
-        // Get balance carried forward from previous terms
-        const balanceCarriedForward = await getBalanceCarriedForward(studentName, currentTerm, currentYear);
-        
-        // Calculate total fees for current term (including any changes made in students.html)
-        const totalFees = student.total || 0;
-        
-        // Get total paid in current term
-        const receiptsCollection = getReceiptsCollection(currentTerm, currentYear);
-        const receiptsSnapshot = await receiptsCollection.where('name', '==', studentName).get();
-        
-        let totalPaidThisTerm = 0;
-        receiptsSnapshot.forEach(doc => {
-          totalPaidThisTerm += doc.data().paid || 0;
-        });
-        
-        // Calculate total outstanding balance
-        const totalOutstandingBalance = (totalFees + balanceCarriedForward) - totalPaidThisTerm;
-        
-        return Math.max(0, totalOutstandingBalance);
-      } catch (error) {
-        console.error('Error calculating total outstanding balance:', error);
-        return 0;
-      }
-    }
-
     async function updateReceiptTable() {
       try {
         const groupedReceipts = document.getElementById('groupedReceipts');
@@ -1202,6 +1189,7 @@
         
         const searchQuery = document.getElementById('searchInput').value.toLowerCase();
         const receiptsCollection = getReceiptsCollection();
+        const studentsCollection = getStudentsCollection();
         const snapshot = await receiptsCollection.orderBy('date', 'desc').get();
         
         if (snapshot.empty) {
@@ -1260,7 +1248,7 @@
               <tr>
                 <th>Student</th>
                 <th>Amount Paid</th>
-                <th>Balance After Payment</th>
+                <th>Current Balance</th>
                 <th>Payment Mode</th>
                 <th>Date</th>
                 <th>Actions</th>
@@ -1270,8 +1258,16 @@
           `;
           const tbody = table.querySelector('tbody');
 
-          // FIXED: Simply use the balance stored with each receipt
-          classReceipts.forEach(r => {
+          // FIXED: Calculate real-time balance using CURRENT student fee structure
+          for (const r of classReceipts) {
+            const studentSnapshot = await studentsCollection.where('name', '==', r.name).get();
+            let displayBalance = r.balance || 0;
+            
+            if (!studentSnapshot.empty) {
+              const currentStudent = studentSnapshot.docs[0].data();
+              displayBalance = currentStudent.balance || 0;
+            }
+            
             const row = document.createElement('tr');
             row.innerHTML = `
               <td>
@@ -1279,7 +1275,7 @@
                 <small>${r.class} - Term ${currentTerm}</small>
               </td>
               <td>${r.paid.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
-              <td>${(r.balance || 0).toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
+              <td>${displayBalance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
               <td>${r.mode}</td>
               <td>${new Date(r.date).toLocaleDateString('en-GB')}</td>
               <td>
@@ -1292,7 +1288,7 @@
               </td>
             `;
             tbody.appendChild(row);
-          });
+          }
 
           content.appendChild(table);
           section.appendChild(content);
@@ -1304,7 +1300,6 @@
       }
     }
 
-    // FIXED: Main receipt submission function with proper balance calculation
     async function handleReceiptSubmit(e) {
       e.preventDefault();
       
@@ -1332,7 +1327,6 @@
         const currentDate = new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
         const receiptDate = new Date(currentDate);
 
-        // Extract name and class from input
         const match = studentInput.match(/^(.+?)\s*\((.+?)\)$/);
         let studentName, studentClass, studentId = null;
         
@@ -1344,16 +1338,27 @@
           studentClass = "Unknown";
         }
 
-        // Get fresh student data before processing payment
         const studentsCollection = getStudentsCollection();
         const studentSnapshot = await studentsCollection.where('name', '==', studentName).get();
         let student;
         
         if (!studentSnapshot.empty) {
-          student = studentSnapshot.docs[0].data();
-          studentId = studentSnapshot.docs[0].id;
+          const studentDocRef = studentSnapshot.docs[0].ref;
+          const freshStudentDoc = await studentDocRef.get();
+          student = freshStudentDoc.data();
+          studentId = freshStudentDoc.id;
+          
+          // Recalculate total based on current fee items
+          const currentTotal = (student.tuition || 0) + (student.adm || 0) + (student.books || 0) + 
+                              (student.stationery || 0) + (student.uniform || 0) + (student.lunch || 0) + 
+                              (student.transport || 0) + (student.trip || 0) + (student.graduation || 0);
+          
+          if (student.total !== currentTotal) {
+            console.log(`Updating student total from ${student.total} to ${currentTotal}`);
+            await studentDocRef.update({ total: currentTotal });
+            student.total = currentTotal;
+          }
         } else {
-          // Create new student if not found
           const newStudent = {
             name: studentName,
             class: studentClass,
@@ -1368,25 +1373,18 @@
           student = newStudent;
         }
 
-        // FIXED: Calculate total outstanding balance including fee changes and carried forward balances
-        const totalOutstandingBalance = await calculateTotalOutstandingBalance(studentName, studentClass, currentTerm, currentYear);
-        
-        // Calculate new balance after this payment
-        const newBalance = totalOutstandingBalance - amount;
+        const balanceCarriedForward = await getBalanceCarriedForward(studentName, currentTerm, currentYear);
+        const currentTotal = student.total || 0;
+        const totalOutstandingBalance = currentTotal + balanceCarriedForward;
+        const newPaid = (student.paid || 0) + amount;
+        const newBalance = totalOutstandingBalance - newPaid;
 
-        if (newBalance < 0) {
-          showStatus(`Warning: This payment exceeds the outstanding balance by ${Math.abs(newBalance).toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}`, "warning");
-          // Continue anyway, but show warning
-        }
-
-        // Update student record with new paid amount and balance
         const updatedStudent = {
           ...student,
-          paid: (student.paid || 0) + amount,
-          balance: Math.max(0, newBalance) // Ensure balance doesn't go negative
+          paid: newPaid,
+          balance: newBalance
         };
 
-        // Get receipt count for receipt number
         const receiptsCollection = getReceiptsCollection();
         const snapshot = await receiptsCollection.get();
         const receiptCount = snapshot.size + 1;
@@ -1397,7 +1395,7 @@
           class: studentClass,
           studentId: studentId,
           paid: amount,
-          balance: newBalance, // Store the calculated balance
+          balance: newBalance,
           mode: mode,
           notes: notes || null,
           date: receiptDate.toISOString(),
@@ -1418,7 +1416,6 @@
           }
         };
 
-        // Update both student and receipt in a transaction
         await db.runTransaction(async transaction => {
           const studentDocRef = studentsCollection.doc(studentId);
           const receiptRef = receiptsCollection.doc();
@@ -1427,7 +1424,6 @@
           receipt.id = receiptRef.id;
         });
 
-        // Send SMS and show success
         const timeString = receiptDate.toLocaleTimeString('en-US', {
           timeZone: 'Africa/Nairobi',
           hour: '2-digit',
@@ -1435,12 +1431,11 @@
           hour12: true
         }).toUpperCase();
         
-        const smsMessage = `Dear parent to ${studentName}, ${studentClass}, Amount of KES ${amount} Receipt No. ${receiptNumber} was received on ${receiptDate.toLocaleDateString('en-GB')} at ${timeString}. Balance: ${Math.max(0, newBalance)}. Term ${currentTerm}.`;
+        const smsMessage = `Dear parent to ${studentName}, ${studentClass}, Amount of KES ${amount} Receipt No. ${receiptNumber} was received on ${receiptDate.toLocaleDateString('en-GB')} at ${timeString}. Balance: ${newBalance}. Term ${currentTerm}.`;
         const smsSent = await sendSMS(student.phone, smsMessage);
         
         showStatus(`Receipt saved${smsSent ? ' and SMS sent' : ''} successfully for Term ${currentTerm}!`, "success");
         
-        // Show receipt preview
         const preview = document.getElementById('receiptPreview');
         const previewContent = document.getElementById('previewContent');
         previewContent.innerHTML = `
@@ -1449,13 +1444,12 @@
           <p><strong>Amount Paid:</strong> ${amount.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</p>
           <p><strong>Payment Mode:</strong> ${mode}</p>
           <p><strong>Date:</strong> ${receiptDate.toLocaleDateString('en-GB')} ${timeString}</p>
-          <p><strong>Balance:</strong> ${Math.max(0, newBalance).toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</p>
+          <p><strong>Current Balance:</strong> ${newBalance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</p>
           ${notes ? `<p><strong>Notes:</strong> ${notes}</p>` : ''}
           <p><strong>Receipt No:</strong> ${receiptNumber}</p>
         `;
         preview.style.display = 'block';
         
-        // Reset form
         document.getElementById("receiptForm").reset();
       } catch (error) {
         console.error('Error processing receipt:', error);
@@ -1585,11 +1579,9 @@
             const studentData = studentDoc.data();
             const studentName = studentData.name;
             
-            // Find receipts by BOTH name AND student ID for maximum coverage
             const receiptsByName = await receiptsCollection.where('name', '==', studentName).get();
             const receiptsByStudentId = await receiptsCollection.where('studentId', '==', id).get();
             
-            // Combine results and remove duplicates
             const allReceiptRefs = new Set();
             receiptsByName.forEach(doc => allReceiptRefs.add(doc.ref));
             receiptsByStudentId.forEach(doc => allReceiptRefs.add(doc.ref));
@@ -1627,7 +1619,6 @@
             let studentFound = false;
             let studentDoc = null;
             
-            // METHOD 1: Try to find student by ID (most reliable)
             if (receipt.studentId) {
               try {
                 const studentDocById = await studentsCollection.doc(receipt.studentId).get();
@@ -1641,7 +1632,6 @@
               }
             }
             
-            // METHOD 2: Fallback to finding by name
             if (!studentFound) {
               const studentQuery = await studentsCollection.where('name', '==', receipt.name).get();
               if (!studentQuery.empty) {
@@ -1652,7 +1642,6 @@
             }
             
             if (studentFound) {
-              // Update student balance
               const studentData = studentDoc.data();
               const updatedStudent = {
                 ...studentData,
@@ -1667,7 +1656,6 @@
               
               showStatus(`Receipt deleted and student balance updated successfully for Term ${currentTerm}`, "success");
             } else {
-              // Student not found - still allow receipt deletion
               await receiptRef.delete();
               showStatus(`Receipt deleted successfully. Note: Associated student '${receipt.name}' was not found (may have been renamed or deleted) for Term ${currentTerm}`, "success");
             }
@@ -1683,95 +1671,56 @@
       }
     }
 
-    // ENHANCEMENT: Batch update receipts when student name changes
-    async function updateReceiptsAfterStudentNameChange(oldName, newName, studentId) {
-      try {
-        const receiptsCollection = getReceiptsCollection();
-        const receiptsQuery = await receiptsCollection.where('name', '==', oldName).get();
-        
-        if (!receiptsQuery.empty) {
-          const batch = db.batch();
-          receiptsQuery.forEach(doc => {
-            batch.update(doc.ref, {
-              name: newName,
-              studentId: studentId, // Ensure student ID is stored
-              nameUpdated: new Date().toISOString()
-            });
-          });
-          
-          await batch.commit();
-          console.log(`Updated ${receiptsQuery.size} receipts with new student name`);
-        }
-      } catch (error) {
-        console.error('Error updating receipts after name change:', error);
-      }
-    }
-
-    async function calculateFeeItemBalancesAtReceiptTime(studentName, currentTerm, currentYear, targetReceiptId) {
+    // ENHANCED: Calculate fee item balances using CURRENT student fee structure
+    async function calculateFeeItemBalancesForPrint(studentName, currentTerm, currentYear, receiptId) {
       const feeItems = [
         'tuition', 'adm', 'lunch', 'uniform', 'books', 
         'stationery', 'transport', 'trip', 'graduation'
       ];
       
-      // Get the target receipt to get its fee structure
-      const receiptsCollection = getReceiptsCollection(currentTerm, currentYear);
-      const targetReceiptDoc = await receiptsCollection.doc(targetReceiptId).get();
+      const studentsCollection = getStudentsCollection(currentTerm, currentYear);
+      const studentSnapshot = await studentsCollection.where('name', '==', studentName).get();
       
-      if (!targetReceiptDoc.exists) {
+      if (studentSnapshot.empty) {
         return null;
       }
       
-      const targetReceipt = targetReceiptDoc.data();
+      const currentStudent = studentSnapshot.docs[0].data();
       
-      // Use the fee structure stored with the receipt (or fall back to current student data)
-      let feeStructure = targetReceipt.feeStructure;
-      if (!feeStructure) {
-        // Fallback: get current student data
-        const studentsCollection = getStudentsCollection(currentTerm, currentYear);
-        const studentSnapshot = await studentsCollection.where('name', '==', studentName).get();
-        if (studentSnapshot.empty) return null;
-        
-        const student = studentSnapshot.docs[0].data();
-        feeStructure = {
-          tuition: student.tuition || 0,
-          adm: student.adm || 0,
-          books: student.books || 0,
-          stationery: student.stationery || 0,
-          uniform: student.uniform || 0,
-          lunch: student.lunch || 0,
-          transport: student.transport || 0,
-          trip: student.trip || 0,
-          graduation: student.graduation || 0
-        };
-      }
+      const feeStructure = {
+        tuition: currentStudent.tuition || 0,
+        adm: currentStudent.adm || 0,
+        books: currentStudent.books || 0,
+        stationery: currentStudent.stationery || 0,
+        uniform: currentStudent.uniform || 0,
+        lunch: currentStudent.lunch || 0,
+        transport: currentStudent.transport || 0,
+        trip: currentStudent.trip || 0,
+        graduation: currentStudent.graduation || 0
+      };
       
-      // Initialize balances with fee amounts at the time of this receipt
       const balances = {};
       feeItems.forEach(item => {
         balances[item] = feeStructure[item] || 0;
       });
       
-      // Get all receipts for this student up to (but not including) the target receipt
+      const receiptsCollection = getReceiptsCollection(currentTerm, currentYear);
       const allReceiptsSnapshot = await receiptsCollection.where('name', '==', studentName).get();
       const allReceipts = [];
       allReceiptsSnapshot.docs.forEach(doc => {
-        if (doc.id !== targetReceiptId) { // Exclude the target receipt
-          allReceipts.push({ id: doc.id, ...doc.data() });
-        }
+        allReceipts.push({ id: doc.id, ...doc.data() });
       });
       
-      // Sort by date to process payments in order
       allReceipts.sort((a, b) => new Date(a.date) - new Date(b.date));
       
-      // Stop processing when we reach the target receipt date
-      const targetReceiptDate = new Date(targetReceipt.date);
-      const relevantReceipts = allReceipts.filter(receipt => new Date(receipt.date) < targetReceiptDate);
+      const targetReceiptIndex = allReceipts.findIndex(r => r.id === receiptId);
+      if (targetReceiptIndex === -1) return balances;
       
-      // Process payments in chronological order
+      const relevantReceipts = allReceipts.slice(0, targetReceiptIndex + 1);
+      
       relevantReceipts.forEach(receipt => {
         let remainingPaid = receipt.paid;
         
-        // Apply payment to fee items in priority order
         for (const item of feeItems) {
           if (remainingPaid <= 0) break;
           
@@ -1786,7 +1735,7 @@
       return balances;
     }
 
-    // FIXED: Print receipt with accurate balance calculation for that specific receipt
+    // FIXED: Print receipt with CURRENT fee structure and accurate balance calculation
     async function printReceipt(id) {
       try {
         const receiptsCollection = getReceiptsCollection();
@@ -1803,18 +1752,22 @@
         const receiptDate = new Date(currentDate);
         const receiptNumber = receipt.receiptNumber || `T${currentTerm}-001`;
 
-        // FIXED: Calculate balances at the time this specific receipt was issued
-        const feeItemBalances = await calculateFeeItemBalancesAtReceiptTime(receipt.name, currentTerm, currentYear, receipt.id);
+        const feeItemBalances = await calculateFeeItemBalancesForPrint(receipt.name, currentTerm, currentYear, receipt.id);
         
         if (!feeItemBalances) {
           showStatus("Could not calculate fee balances for this receipt", "error");
           return;
         }
 
-        // Calculate balance carried forward from previous terms
-        const balanceCarriedForward = await getBalanceCarriedForward(receipt.name, currentTerm, currentYear);
+        const studentSnapshot = await studentsCollection.where('name', '==', receipt.name).get();
+        let currentStudentBalance = receipt.balance || 0;
         
-        // Get logo data URL
+        if (!studentSnapshot.empty) {
+          const currentStudent = studentSnapshot.docs[0].data();
+          currentStudentBalance = currentStudent.balance || 0;
+        }
+
+        const balanceCarriedForward = await getBalanceCarriedForward(receipt.name, currentTerm, currentYear);
         const logoDataUrl = await getLogoDataUrl();
 
         const printWindow = window.open('', '', 'height=800,width=900');
@@ -2059,7 +2012,6 @@
                       let rows = '';
                       let totalPaidThisReceipt = 0;
 
-                      // First show carried forward balance if applicable
                       if (balanceCarriedForward > 0) {
                         const carriedForwardPaid = Math.min(remainingPaid, balanceCarriedForward);
                         remainingPaid -= carriedForwardPaid;
@@ -2075,7 +2027,6 @@
                         `;
                       }
 
-                      // Process each fee item with THIS receipt's payment
                       fees.forEach(fee => {
                         const feePaid = Math.min(remainingPaid, fee.balance);
                         remainingPaid -= feePaid;
@@ -2092,16 +2043,11 @@
                         `;
                       });
 
-                      // Calculate total outstanding balance for this receipt
-                      const totalCharges = fees.reduce((sum, fee) => sum + fee.amount, 0) + balanceCarriedForward;
-                      const totalOutstanding = totalCharges - totalPaidThisReceipt;
-
-                      // Add total row
                       rows += `
                         <tr class="total-row">
                           <td colspan="2" style="text-align: right; padding-right: 8px;"><strong>Total</strong></td>
                           <td><strong>${totalPaidThisReceipt.toLocaleString()}</strong></td>
-                          <td><strong>${totalOutstanding.toLocaleString()}</strong></td>
+                          <td><strong>${currentStudentBalance.toLocaleString()}</strong></td>
                         </tr>
                       `;
 
@@ -2140,7 +2086,6 @@
         `);
         printWindow.document.close();
         
-        // Wait for the content to load before printing
         setTimeout(() => {
           printWindow.print();
           printWindow.close();
@@ -2198,11 +2143,7 @@
               const studentSnapshot = await studentsCollection.where('name', '==', r.name).get();
               if (!studentSnapshot.empty) {
                 const student = studentSnapshot.docs[0].data();
-                
-                // Calculate balance carried forward from previous terms
                 const balanceCarriedForward = await getBalanceCarriedForward(r.name, currentTerm, currentYear);
-                
-                // Calculate total outstanding balance (term balance + carried forward)
                 const totalOutstandingBalance = student.balance + balanceCarriedForward;
                 
                 return [
@@ -2217,7 +2158,7 @@
                   student.trip || 0,
                   student.graduation || 0,
                   r.paid,
-                  totalOutstandingBalance
+                  student.balance
                 ];
               }
               return [];
@@ -2337,14 +2278,11 @@
           doc.setFontSize(10);
           doc.setFont(undefined, 'normal');
 
-          // Calculate balance carried forward from previous terms
           const balanceCarriedForward = await getBalanceCarriedForward(receipt.name, currentTerm, currentYear);
-          
-          // Calculate total outstanding balance (term balance + carried forward)
           const totalOutstandingBalance = student.balance + balanceCarriedForward;
 
           doc.text(`Cash/Paybill: ${receipt.mode}`, 20, detailsY);
-          doc.text(`Fee Balance: ${Number(totalOutstandingBalance).toLocaleString()}`, 20, detailsY + 8);
+          doc.text(`Fee Balance: ${Number(student.balance).toLocaleString()}`, 20, detailsY + 8);
           doc.text(`Term: ${currentTerm}`, 20, detailsY + 16);
 
           doc.text("For: Heriwadi Christian Schools", 130, detailsY);
@@ -2382,8 +2320,6 @@
           const studentSnapshot = await studentsCollection.where('name', '==', receipt.name).get();
           if (!studentSnapshot.empty) {
             const student = studentSnapshot.docs[0].data();
-            
-            // Calculate balance carried forward from previous terms
             const balanceCarriedForward = await getBalanceCarriedForward(receipt.name, currentTerm, currentYear);
             
             const remainingPaid = receipt.paid;
@@ -2414,17 +2350,16 @@
                   AmountPaid: feePaid,
                   Date: new Date(receipt.date).toLocaleDateString('en-GB'),
                   BalanceCarriedForward: balanceCarriedForward,
-                  TotalOutstandingBalance: student.balance + balanceCarriedForward
+                  CurrentBalance: student.balance
                 });
               }
             });
           }
         }));
 
-        // Add total row
-        data.push({ Student: 'Total', Class: '', Term: '', Year: '', FeeItem: '', AmountPaid: '', Date: '', BalanceCarriedForward: '', TotalOutstandingBalance: '' });
+        data.push({ Student: 'Total', Class: '', Term: '', Year: '', FeeItem: '', AmountPaid: '', Date: '', BalanceCarriedForward: '', CurrentBalance: '' });
         feeItems.forEach(item => {
-          data.push({ Student: '', Class: '', Term: '', Year: '', FeeItem: item.charAt(0).toUpperCase() + item.slice(1), AmountPaid: totals[item], Date: '', BalanceCarriedForward: '', TotalOutstandingBalance: '' });
+          data.push({ Student: '', Class: '', Term: '', Year: '', FeeItem: item.charAt(0).toUpperCase() + item.slice(1), AmountPaid: totals[item], Date: '', BalanceCarriedForward: '', CurrentBalance: '' });
         });
 
         const wb = XLSX.utils.book_new();
@@ -2438,46 +2373,34 @@
       }
     }
 
-    // Additional utility functions for term management
+    function openStudentManager() {
+      const modal = document.getElementById('studentManagerModal');
+      modal.classList.add('show');
+      renderStudentList();
+      updateTermDisplays();
+    }
 
-    async function copyStudentsToNewTerm(fromTerm, toTerm) {
-      try {
-        const fromStudentsCollection = getStudentsCollection(fromTerm, currentYear);
-        const toStudentsCollection = getStudentsCollection(toTerm, currentYear);
-        
-        const snapshot = await fromStudentsCollection.get();
-        if (snapshot.empty) {
-          showStatus(`No students found in Term ${fromTerm} to copy`, "info");
-          return;
-        }
+    function closeStudentManager() {
+      const modal = document.getElementById('studentManagerModal');
+      modal.classList.remove('show');
+      document.getElementById('studentForm').reset();
+    }
 
-        const batch = db.batch();
-        snapshot.forEach(doc => {
-          const studentData = {
-            ...doc.data(),
-            term: toTerm,
-            paid: 0, // Reset paid amount for new term
-            balance: doc.data().total, // Reset balance to full amount
-            copiedFrom: fromTerm
-          };
-          const newDocRef = toStudentsCollection.doc();
-          batch.set(newDocRef, studentData);
-        });
-
-        await batch.commit();
-        showStatus(`Successfully copied ${snapshot.size} students from Term ${fromTerm} to Term ${toTerm}`, "success");
-        
-        if (toTerm === currentTerm) {
-          populateStudents();
-        }
-      } catch (error) {
-        console.error('Error copying students:', error);
-        showStatus("Error copying students: " + error.message, "error");
+    function handleModalClick(event) {
+      const modal = document.getElementById('studentManagerModal');
+      if (event.target === modal) {
+        closeStudentManager();
       }
     }
 
-    // Add keyboard shortcuts for term switching
     document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        const modal = document.getElementById('studentManagerModal');
+        if (modal.classList.contains('show')) {
+          closeStudentManager();
+        }
+      }
+      
       if (e.altKey) {
         switch(e.key) {
           case '1':
@@ -2496,19 +2419,16 @@
       }
     });
 
-    // Function to clear term selection (useful for debugging)
     function clearTermSelection() {
       sessionStorage.removeItem('heriwadi_current_term');
       showStatus("Term selection cleared. Page will reload with default Term 2.", "info");
       setTimeout(() => location.reload(), 1500);
     }
 
-    // Function to get current term for other scripts/pages to use
     function getCurrentTerm() {
       return currentTerm;
     }
 
-    // Function to set term programmatically
     function setCurrentTerm(term) {
       if (term >= 1 && term <= 3) {
         switchTerm(term);
@@ -2517,7 +2437,6 @@
       }
     }
 
-    // Clean up listeners when leaving the page
     window.addEventListener('beforeunload', function() {
       if (studentListener) {
         studentListener();
@@ -2527,7 +2446,6 @@
       }
     });
 
-    // Make functions available globally for debugging
     window.heriwadi = {
       getCurrentTerm,
       setCurrentTerm,
@@ -2535,57 +2453,10 @@
       switchTerm
     };
 
-    // ADD these missing functions to your receipts.html file after the existing JavaScript functions
-
-    // Function to open the student manager modal
-    function openStudentManager() {
-      const modal = document.getElementById('studentManagerModal');
-      modal.classList.add('show');
-      renderStudentList();
-      updateTermDisplays(); // Make sure term displays are updated in the modal
-    }
-
-    // Function to close the student manager modal
-    function closeStudentManager() {
-      const modal = document.getElementById('studentManagerModal');
-      modal.classList.remove('show');
-      
-      // Reset the student form
-      document.getElementById('studentForm').reset();
-    }
-
-    // Function to handle modal clicks (close when clicking outside)
-    function handleModalClick(event) {
-      const modal = document.getElementById('studentManagerModal');
-      if (event.target === modal) {
-        closeStudentManager();
-      }
-    }
-
-    // Add event listener for ESC key to close modal
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') {
-        const modal = document.getElementById('studentManagerModal');
-        if (modal.classList.contains('show')) {
-          closeStudentManager();
-        }
-      }
-    });
-
-    // Make sure the modal click event is properly attached
-    document.addEventListener('DOMContentLoaded', function() {
-      // ... your existing DOMContentLoaded code ...
-      
-      // Add modal event listener
-      const modal = document.getElementById('studentManagerModal');
-      if (modal) {
-        modal.addEventListener('click', handleModalClick);
-      }
-    });
-
     console.log("Heriwadi School Management System initialized with persistent term selection");
     console.log("Use window.heriwadi.getCurrentTerm() to check current term");
     console.log("Use window.heriwadi.setCurrentTerm(1|2|3) to change term programmatically");
   </script>
 </body>
 </html>
+     
