@@ -1,243 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | Heriwadi Christian Schools Ltd</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root {
-            --primary-color: #005fa3;
-            --secondary-color: #004080;
-            --accent-color: #00a8e8;
-            --success-color: #28a745;
-            --danger-color: #dc3545;
-            --warning-color: #ffc107;
-            --info-color: #17a2b8;
-            --light-color: #f8f9fa;
-            --dark-color: #343a40;
-            --border-radius: 12px;
-            --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            --box-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.15);
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            color: #333;
-            line-height: 1.6;
-            min-height: 100vh;
-        }
-
-        /* Loading Screen */
-        .loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            color: white;
-            transition: opacity 0.5s ease;
-        }
-
-        .loading-screen.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .loading-logo {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            animation: pulse 2s infinite;
-        }
-
-        .loading-text {
-            font-size: 1.2rem;
-            font-weight: 500;
-            margin-bottom: 2rem;
-        }
-
-        .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s linear infinite;
-        }
-
-        /* Header */
-        header {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            padding: 1.5rem 2rem;
-            box-shadow: var(--box-shadow);
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
-            animation: shimmer 3s infinite;
-        }
-
-        .header-content {
-            position: relative;
-            z-index: 1;
-        }
-
-        header h1 {
-            font-size: 2rem;
-            margin-bottom: 0.25rem;
-            font-weight: 700;
-        }
-
-        header p {
-            font-size: 0.95rem;
-            opacity: 0.9;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        .user-details {
-            text-align: right;
-        }
-
-        .user-name {
-            font-weight: 600;
-            font-size: 1rem;
-        }
-
-        .user-role {
-            font-size: 0.85rem;
-            opacity: 0.9;
-            text-transform: capitalize;
-        }
-
-        .user-avatar {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background: white;
-            color: var(--primary-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.2rem;
-        }
-
-        .logout-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid white;
-            color: white;
-            padding: 0.5rem 1.25rem;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .logout-btn:hover {
-            background: white;
-            color: var(--primary-color);
-        }
-
-        /* Navigation */
-        nav {
-            background: var(--secondary-color);
-            padding: 0.75rem 1.5rem;
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            justify-content: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        nav a {
-            color: rgba(255, 255, 255, 0.9);
-            text-decoration: none;
-            padding: 0.75rem 1.25rem;
-            border-radius: var(--border-radius);
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.95rem;
-            font-weight: 500;
-            position: relative;
-            overflow: hidden;
-        }
-
-        nav a.hidden {
-            display: none;
-        }
-
-        nav a::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        nav a:hover::before {
-            left: 100%;
-        }
-
-        nav a:hover, nav a.active {
-            background: var(--accent-color);
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 168, 232, 0.4);
+hadow: 0 4px 15px rgba(0, 168, 232, 0.4);
         }
 
         nav a.active {
@@ -540,10 +301,6 @@
             overflow: hidden;
         }
 
-        .action-btn.hidden {
-            display: none;
-        }
-
         .action-btn::before {
             content: '';
             position: absolute;
@@ -685,20 +442,6 @@
         }
 
         @media (max-width: 768px) {
-            header {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .user-info {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .user-details {
-                text-align: center;
-            }
-
             nav {
                 flex-direction: column;
                 gap: 0.5rem;
@@ -727,7 +470,7 @@
             }
 
             header h1 {
-                font-size: 1.5rem;
+                font-size: 2rem;
             }
 
             .chart-container {
@@ -765,32 +508,19 @@
     </div>
 
     <header>
-        <div class="header-content">
-            <h1>Heriwadi Christian Schools Ltd</h1>
-            <p>Comprehensive School Management Dashboard</p>
-        </div>
-        <div class="user-info">
-            <div class="user-details">
-                <div class="user-name" id="userName">Loading...</div>
-                <div class="user-role" id="userRole">Loading...</div>
-            </div>
-            <div class="user-avatar" id="userAvatar">?</div>
-            <button class="logout-btn" onclick="handleLogout()">
-                <i class="fas fa-sign-out-alt"></i>
-                Logout
-            </button>
-        </div>
+        <h1>Heriwadi Christian Schools Ltd</h1>
+        <p>Comprehensive School Management Dashboard</p>
     </header>
 
-    <nav id="mainNav">
-        <a href="index.html" class="active" data-access="all"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-        <a href="receipts.html" data-access="director,admin"><i class="fas fa-receipt"></i> Receipts</a>
-        <a href="students.html" data-access="director,admin,staff"><i class="fas fa-users"></i> Students</a>
-        <a href="expense.html" data-access="director,admin"><i class="fas fa-money-bill-wave"></i> Expenses</a>
-        <a href="assets.html" data-access="director,admin"><i class="fas fa-laptop-house"></i> Assets</a>
-        <a href="staff.html" data-access="director"><i class="fas fa-user-tie"></i> Staff</a>
-        <a href="payroll.html" data-access="director"><i class="fas fa-money-check-alt"></i> Payroll</a>
-        <a href="financials.html" data-access="director"><i class="fas fa-chart-line"></i> Financials</a>
+    <nav>
+        <a href="index.html" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="receipts.html"><i class="fas fa-receipt"></i> Receipts</a>
+        <a href="students.html"><i class="fas fa-users"></i> Students</a>
+        <a href="expense.html"><i class="fas fa-money-bill-wave"></i> Expenses</a>
+        <a href="assets.html"><i class="fas fa-laptop-house"></i> Assets</a>
+        <a href="staff.html"><i class="fas fa-user-tie"></i> Staff</a>
+        <a href="payroll.html"><i class="fas fa-money-check-alt"></i> Payroll</a>
+        <a href="financials.html"><i class="fas fa-chart-line"></i> Financials</a>
     </nav>
 
     <div class="container">
@@ -921,7 +651,7 @@
 
         <!-- Quick Actions -->
         <div class="quick-actions">
-            <a href="students.html" class="action-btn" data-access="director,admin,staff">
+            <a href="students.html" class="action-btn">
                 <div class="action-icon">
                     <i class="fas fa-user-plus"></i>
                 </div>
@@ -931,7 +661,7 @@
                 </div>
             </a>
             
-            <a href="receipts.html" class="action-btn" data-access="director,admin">
+            <a href="receipts.html" class="action-btn">
                 <div class="action-icon">
                     <i class="fas fa-receipt"></i>
                 </div>
@@ -941,7 +671,7 @@
                 </div>
             </a>
             
-            <a href="expense.html" class="action-btn" data-access="director,admin">
+            <a href="expense.html" class="action-btn">
                 <div class="action-icon">
                     <i class="fas fa-money-bill-wave"></i>
                 </div>
@@ -951,7 +681,7 @@
                 </div>
             </a>
             
-            <a href="staff.html" class="action-btn" data-access="director">
+            <a href="staff.html" class="action-btn">
                 <div class="action-icon">
                     <i class="fas fa-user-tie"></i>
                 </div>
@@ -961,7 +691,7 @@
                 </div>
             </a>
             
-            <a href="financials.html" class="action-btn" data-access="director">
+            <a href="financials.html" class="action-btn">
                 <div class="action-icon">
                     <i class="fas fa-chart-bar"></i>
                 </div>
@@ -980,7 +710,6 @@
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <script>
@@ -996,7 +725,7 @@
         };
 
         // Initialize Firebase
-        let app, db, auth;
+        let app, db;
         try {
             if (!firebase.apps.length) {
                 app = firebase.initializeApp(firebaseConfig);
@@ -1004,7 +733,6 @@
                 app = firebase.app();
             }
             db = firebase.firestore();
-            auth = firebase.auth();
             console.log("Firebase initialized successfully");
         } catch (error) {
             console.error('Firebase initialization error:', error);
@@ -1013,7 +741,6 @@
         }
 
         // Global state
-        let currentUser = null;
         let currentTerm = parseInt(sessionStorage.getItem('heriwadi_current_term')) || 2;
         let currentYear = new Date().getFullYear();
         let dashboardData = {
@@ -1027,115 +754,6 @@
             financial: null,
             class: null
         };
-
-        // AUTHENTICATION CHECK - Must be logged in to access this page
-        auth.onAuthStateChanged(async (user) => {
-            if (!user) {
-                // Not logged in - redirect to login page
-                window.location.href = 'login.html';
-                return;
-            }
-
-            try {
-                // Check if user is approved
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                
-                if (!userDoc.exists) {
-                    await auth.signOut();
-                    alert('User account not found. Please contact administrator.');
-                    window.location.href = 'login.html';
-                    return;
-                }
-
-                const userData = userDoc.data();
-                
-                if (!userData.approved) {
-                    await auth.signOut();
-                    alert('Your account is pending approval. Please wait for administrator confirmation.');
-                    window.location.href = 'login.html';
-                    return;
-                }
-
-                // User is authenticated and approved
-                currentUser = {
-                    uid: user.uid,
-                    email: user.email,
-                    name: userData.name,
-                    role: userData.role,
-                    approved: true
-                };
-
-                // Update UI with user info
-                updateUserDisplay();
-                
-                // Apply role-based access control
-                applyRoleBasedAccess(userData.role);
-                
-                // Load dashboard data
-                loadDashboardData();
-
-            } catch (error) {
-                console.error('Error checking user status:', error);
-                alert('Error loading user data. Please try again.');
-                window.location.href = 'login.html';
-            }
-        });
-
-        // Update user display in header
-        function updateUserDisplay() {
-            if (!currentUser) return;
-            
-            document.getElementById('userName').textContent = currentUser.name;
-            document.getElementById('userRole').textContent = currentUser.role.replace('_', ' ');
-            
-            // Set avatar initial
-            const initial = currentUser.name.charAt(0).toUpperCase();
-            document.getElementById('userAvatar').textContent = initial;
-        }
-
-        // Apply role-based access control
-        function applyRoleBasedAccess(role) {
-            console.log('Applying access control for role:', role);
-            
-            // Get all navigation links and action buttons
-            const navLinks = document.querySelectorAll('nav a[data-access]');
-            const actionBtns = document.querySelectorAll('.action-btn[data-access]');
-            
-            // Process navigation links
-            navLinks.forEach(link => {
-                const allowedRoles = link.getAttribute('data-access');
-                if (allowedRoles === 'all' || allowedRoles.includes(role)) {
-                    link.classList.remove('hidden');
-                } else {
-                    link.classList.add('hidden');
-                }
-            });
-            
-            // Process action buttons
-            actionBtns.forEach(btn => {
-                const allowedRoles = btn.getAttribute('data-access');
-                if (allowedRoles === 'all' || allowedRoles.includes(role)) {
-                    btn.classList.remove('hidden');
-                } else {
-                    btn.classList.add('hidden');
-                }
-            });
-        }
-
-        // Handle logout
-        async function handleLogout() {
-            if (confirm('Are you sure you want to logout?')) {
-                try {
-                    await auth.signOut();
-                    sessionStorage.removeItem('heriwadi_user');
-                    sessionStorage.removeItem('heriwadi_current_term');
-                    window.location.href = 'login.html';
-                } catch (error) {
-                    console.error('Logout error:', error);
-                    alert('Error logging out. Please try again.');
-                }
-            }
-        }
 
         // Collection references
         const getStudentsCollection = (term = currentTerm, year = currentYear) => 
@@ -1316,7 +934,7 @@
 
             // Sort dates and prepare data for chart
             const sortedDates = Object.keys(dailyData).sort();
-            const last30Days = sortedDates.slice(-30);
+            const last30Days = sortedDates.slice(-30); // Show last 30 days with data
             
             const labels = last30Days.map(date => new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' }));
             const revenueData = last30Days.map(date => dailyData[date].revenue);
@@ -1471,7 +1089,7 @@
                 sortedActivities.map(activity => `
                     <div class="activity-item">
                         <div class="activity-icon">
-                            <i class="fas fa-${activity.icon}</i>
+                            <i class="fas fa-${activity.icon}"></i>
                         </div>
                         <div class="activity-content">
                             <div class="activity-title">${activity.title}</div>
@@ -1509,19 +1127,23 @@
 
         // Initialize the dashboard
         document.addEventListener('DOMContentLoaded', function() {
+            // Show loading screen initially
             const loadingScreen = document.getElementById('loadingScreen');
             
             // Initialize term from storage
             initializeTermFromStorage();
             
-            // Hide loading screen after auth check completes
-            setTimeout(() => {
-                loadingScreen.classList.add('hidden');
-            }, 2000);
+            // Load dashboard data
+            loadDashboardData().then(() => {
+                // Hide loading screen after data is loaded
+                setTimeout(() => {
+                    loadingScreen.classList.add('hidden');
+                }, 1000);
+            });
 
             // Auto-refresh every 5 minutes
             setInterval(() => {
-                if (!document.hidden && currentUser) {
+                if (!document.hidden) {
                     loadDashboardData();
                 }
             }, 5 * 60 * 1000);
@@ -1529,12 +1151,13 @@
 
         // Handle page visibility changes
         document.addEventListener('visibilitychange', function() {
-            if (!document.hidden && currentUser) {
+            if (!document.hidden) {
+                // Refresh data when page becomes visible
                 setTimeout(loadDashboardData, 1000);
             }
         });
 
-        console.log('Heriwadi School Management Dashboard - Protected Version loaded');
+        console.log('Heriwadi School Management Dashboard loaded successfully');
     </script>
 </body>
 </html>
