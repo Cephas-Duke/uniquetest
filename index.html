@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | Heriwadi Christian Schools Ltd</title>
+    <title>Login | Heriwadi Christian Schools Ltd</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --primary-color: #005fa3;
@@ -20,7 +19,6 @@
             --dark-color: #343a40;
             --border-radius: 12px;
             --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            --box-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.15);
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -32,859 +30,460 @@
 
         body {
             font-family: 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            color: #333;
-            line-height: 1.6;
+            background: linear-gradient(135deg, #005fa3 0%, #00a8e8 100%);
             min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
         }
 
-        /* Loading Screen */
-        .loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
+        .auth-container {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2);
+            max-width: 450px;
             width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            color: white;
-            transition: opacity 0.5s ease;
+            overflow: hidden;
+            animation: slideInUp 0.5s ease-out;
         }
 
-        .loading-screen.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .loading-logo {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            animation: pulse 2s infinite;
-        }
-
-        .loading-text {
-            font-size: 1.2rem;
-            font-weight: 500;
-            margin-bottom: 2rem;
-        }
-
-        .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s linear infinite;
-        }
-
-        /* Header */
-        header {
+        .auth-header {
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
             padding: 2rem;
             text-align: center;
-            box-shadow: var(--box-shadow);
-            position: relative;
-            overflow: hidden;
         }
 
-        header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
-            animation: shimmer 3s infinite;
+        .auth-header i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
         }
 
-        header h1 {
-            font-size: 2.5rem;
+        .auth-header h1 {
+            font-size: 1.8rem;
             margin-bottom: 0.5rem;
-            font-weight: 700;
-            position: relative;
-            z-index: 1;
         }
 
-        header p {
-            font-size: 1.1rem;
+        .auth-header p {
             opacity: 0.9;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Navigation */
-        nav {
-            background: var(--secondary-color);
-            padding: 0.75rem 1.5rem;
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            justify-content: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        nav a {
-            color: rgba(255, 255, 255, 0.9);
-            text-decoration: none;
-            padding: 0.75rem 1.25rem;
-            border-radius: var(--border-radius);
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
             font-size: 0.95rem;
-            font-weight: 500;
-            position: relative;
-            overflow: hidden;
         }
 
-        nav a::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
+        .auth-body {
+            padding: 2rem;
         }
 
-        nav a:hover::before {
-            left: 100%;
-        }
-
-        nav a:hover, nav a.active {
-            background: var(--accent-color);
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 168, 232, 0.4);
-        }
-
-        nav a.active {
-            font-weight: 600;
-        }
-
-        /* Container */
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 2rem 1.5rem;
-        }
-
-        /* Term Selector */
-        .term-selector {
-            background: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            padding: 1.5rem;
+        .tab-buttons {
+            display: flex;
+            gap: 0.5rem;
             margin-bottom: 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 1rem;
-            animation: slideInDown 0.6s ease-out;
+            border-bottom: 2px solid #e9ecef;
         }
 
-        .term-selector h3 {
-            color: var(--primary-color);
-            margin: 0;
-            font-size: 1.3rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .term-buttons {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        .term-btn {
-            padding: 0.75rem 1.5rem;
-            border: 2px solid var(--primary-color);
+        .tab-btn {
+            flex: 1;
+            padding: 0.75rem;
             background: transparent;
-            color: var(--primary-color);
-            border-radius: var(--border-radius);
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: #6c757d;
+            font-weight: 600;
             cursor: pointer;
             transition: var(--transition);
-            font-weight: 600;
-            position: relative;
-            overflow: hidden;
         }
 
-        .term-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: var(--primary-color);
-            transition: left 0.3s ease;
-            z-index: -1;
+        .tab-btn.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
         }
 
-        .term-btn:hover::before,
-        .term-btn.active::before {
-            left: 0;
+        .tab-content {
+            display: none;
         }
 
-        .term-btn:hover,
-        .term-btn.active {
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 95, 163, 0.3);
+        .tab-content.active {
+            display: block;
         }
 
-        .current-term-info {
-            background: linear-gradient(135deg, var(--info-color), #138496);
-            color: white;
-            padding: 0.75rem 1.25rem;
-            border-radius: var(--border-radius);
-            font-weight: 600;
-            box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);
-        }
-
-        /* Dashboard Grid */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        /* Metric Cards */
-        .metric-card {
-            background: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            padding: 2rem;
-            transition: var(--transition);
-            position: relative;
-            overflow: hidden;
-            animation: slideInUp 0.6s ease-out;
-            animation-fill-mode: backwards;
-        }
-
-        .metric-card:nth-child(1) { animation-delay: 0.1s; }
-        .metric-card:nth-child(2) { animation-delay: 0.2s; }
-        .metric-card:nth-child(3) { animation-delay: 0.3s; }
-        .metric-card:nth-child(4) { animation-delay: 0.4s; }
-
-        .metric-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-        }
-
-        .metric-card:hover {
-            transform: translateY(-8px);
-            box-shadow: var(--box-shadow-hover);
-        }
-
-        .metric-card:hover .metric-icon {
-            transform: scale(1.1) rotate(5deg);
-        }
-
-        .metric-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
+        .form-group {
             margin-bottom: 1.5rem;
         }
 
-        .metric-info h3 {
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
             color: var(--dark-color);
+            font-weight: 500;
             font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
-        .metric-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--primary-color);
-            line-height: 1;
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: baseline;
-            gap: 0.25rem;
-        }
-
-        .metric-value .loading {
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
             font-size: 1rem;
-            color: #666;
-        }
-
-        .metric-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            color: white;
             transition: var(--transition);
         }
 
-        .students-icon { background: linear-gradient(135deg, var(--success-color), #20c997); }
-        .staff-icon { background: linear-gradient(135deg, var(--warning-color), #fd7e14); }
-        .revenue-icon { background: linear-gradient(135deg, var(--info-color), #138496); }
-        .expense-icon { background: linear-gradient(135deg, var(--danger-color), #c82333); }
-
-        .metric-trend {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.85rem;
-            font-weight: 500;
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 95, 163, 0.1);
         }
 
-        .trend-up { color: var(--success-color); }
-        .trend-down { color: var(--danger-color); }
-
-        /* Charts Section */
-        .charts-section {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .chart-card {
-            background: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            padding: 2rem;
-            animation: slideInLeft 0.6s ease-out;
-        }
-
-        .chart-card:nth-child(2) {
-            animation-name: slideInRight;
-        }
-
-        .chart-title {
-            font-size: 1.3rem;
-            color: var(--primary-color);
-            margin-bottom: 1.5rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .chart-container {
+        .input-icon {
             position: relative;
-            height: 400px;
         }
 
-        .mini-chart-container {
-            position: relative;
-            height: 200px;
-        }
-
-        /* Recent Activity */
-        .activity-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 1rem;
-            border-radius: var(--border-radius);
-            transition: var(--transition);
-            margin-bottom: 0.5rem;
-        }
-
-        .activity-item:hover {
-            background: #f8f9fa;
-            transform: translateX(5px);
-        }
-
-        .activity-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            flex-shrink: 0;
-        }
-
-        .activity-content {
-            flex: 1;
-        }
-
-        .activity-title {
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-            color: var(--dark-color);
-        }
-
-        .activity-time {
-            font-size: 0.85rem;
-            color: #666;
-        }
-
-        /* Quick Actions */
-        .quick-actions {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-
-        .action-btn {
-            background: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            padding: 1.5rem;
-            text-decoration: none;
-            color: var(--dark-color);
-            transition: var(--transition);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            gap: 1rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .action-btn::before {
-            content: '';
+        .input-icon i {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-            transform: scaleX(0);
-            transition: transform 0.3s ease;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
         }
 
-        .action-btn:hover::before {
-            transform: scaleX(1);
+        .input-icon .form-control {
+            padding-left: 2.75rem;
         }
 
-        .action-btn:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--box-shadow-hover);
-            color: var(--primary-color);
+        .password-toggle {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6c757d;
         }
 
-        .action-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        .btn {
+            width: 100%;
+            padding: 0.875rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
             display: flex;
             align-items: center;
             justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
             color: white;
-            font-size: 1.2rem;
-            transition: var(--transition);
         }
 
-        .action-btn:hover .action-icon {
-            transform: scale(1.1);
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 95, 163, 0.3);
         }
 
-        /* Status Messages */
-        .status-message {
-            padding: 1rem 1.5rem;
-            border-radius: var(--border-radius);
-            margin-bottom: 1rem;
-            font-weight: 500;
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .alert {
+            padding: 0.875rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
             display: none;
             animation: slideInDown 0.3s ease-out;
         }
 
-        .status-message.show {
+        .alert.show {
             display: block;
         }
 
-        .status-message.success {
+        .alert-success {
             background: rgba(40, 167, 69, 0.1);
             color: var(--success-color);
             border-left: 4px solid var(--success-color);
         }
 
-        .status-message.error {
+        .alert-danger {
             background: rgba(220, 53, 69, 0.1);
             color: var(--danger-color);
             border-left: 4px solid var(--danger-color);
         }
 
-        .status-message.info {
+        .alert-info {
             background: rgba(23, 162, 184, 0.1);
             color: var(--info-color);
             border-left: 4px solid var(--info-color);
         }
 
-        /* Refresh Button */
-        .refresh-btn {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-            color: white;
-            border: none;
-            font-size: 1.2rem;
+        .alert-warning {
+            background: rgba(255, 193, 7, 0.1);
+            color: #856404;
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .role-selector {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .role-option {
+            padding: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
             cursor: pointer;
             transition: var(--transition);
-            box-shadow: var(--box-shadow);
-            z-index: 100;
+            text-align: center;
         }
 
-        .refresh-btn:hover {
-            transform: scale(1.1);
-            box-shadow: var(--box-shadow-hover);
+        .role-option input[type="radio"] {
+            display: none;
         }
 
-        .refresh-btn.loading {
+        .role-option i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            display: block;
+            color: var(--primary-color);
+        }
+
+        .role-option label {
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--dark-color);
+            margin: 0;
+        }
+
+        .role-option:hover {
+            border-color: var(--primary-color);
+            background: rgba(0, 95, 163, 0.05);
+        }
+
+        .role-option input[type="radio"]:checked + label {
+            color: var(--primary-color);
+        }
+
+        .role-option:has(input[type="radio"]:checked) {
+            border-color: var(--primary-color);
+            background: rgba(0, 95, 163, 0.1);
+        }
+
+        .forgot-password {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .forgot-password a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
             animation: spin 1s linear infinite;
-        }
-
-        /* Animations */
-        @keyframes shimmer {
-            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
 
-        @keyframes slideInDown {
-            from { opacity: 0; transform: translateY(-30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
         @keyframes slideInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        @keyframes slideInLeft {
-            from { opacity: 0; transform: translateX(-30px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(30px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        /* Responsive Design */
-        @media (max-width: 1200px) {
-            .charts-section {
-                grid-template-columns: 1fr;
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
 
         @media (max-width: 768px) {
-            nav {
-                flex-direction: column;
-                gap: 0.5rem;
+            .auth-container {
+                max-width: 100%;
             }
 
-            nav a {
-                justify-content: center;
-                padding: 0.5rem 1rem;
-            }
-
-            .container {
-                padding: 1rem;
-            }
-
-            .term-selector {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .metric-card {
-                padding: 1.5rem;
-            }
-
-            .metric-value {
-                font-size: 2rem;
-            }
-
-            header h1 {
-                font-size: 2rem;
-            }
-
-            .chart-container {
-                height: 300px;
-            }
-
-            .quick-actions {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 480px) {
-            .dashboard-grid {
+            .role-selector {
                 grid-template-columns: 1fr;
-            }
-
-            .quick-actions {
-                grid-template-columns: 1fr;
-            }
-
-            .metric-value {
-                font-size: 1.8rem;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Loading Screen -->
-    <div class="loading-screen" id="loadingScreen">
-        <div class="loading-logo">
+    <div class="auth-container">
+        <div class="auth-header">
             <i class="fas fa-school"></i>
-        </div>
-        <div class="loading-text">Loading Dashboard...</div>
-        <div class="loading-spinner"></div>
-    </div>
-
-    <header>
-        <h1>Heriwadi Christian Schools Ltd</h1>
-        <p>Comprehensive School Management Dashboard</p>
-    </header>
-
-    <nav>
-        <a href="index.html" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-        <a href="receipts.html"><i class="fas fa-receipt"></i> Receipts</a>
-        <a href="students.html"><i class="fas fa-users"></i> Students</a>
-        <a href="expense.html"><i class="fas fa-money-bill-wave"></i> Expenses</a>
-        <a href="assets.html"><i class="fas fa-laptop-house"></i> Assets</a>
-        <a href="staff.html"><i class="fas fa-user-tie"></i> Staff</a>
-        <a href="payroll.html"><i class="fas fa-money-check-alt"></i> Payroll</a>
-        <a href="financials.html"><i class="fas fa-chart-line"></i> Financials</a>
-    </nav>
-
-    <div class="container">
-        <!-- Status Messages -->
-        <div id="statusMessage" class="status-message"></div>
-
-        <!-- Term Selector -->
-        <div class="term-selector">
-            <div>
-                <h3><i class="fas fa-calendar-alt"></i> Academic Term</h3>
-                <div class="current-term-info">
-                    Current Academic Year: <span id="currentYear">2024</span>
-                </div>
-            </div>
-            <div class="term-buttons">
-                <button class="term-btn" data-term="1" onclick="switchTerm(1)">Term 1</button>
-                <button class="term-btn active" data-term="2" onclick="switchTerm(2)">Term 2</button>
-                <button class="term-btn" data-term="3" onclick="switchTerm(3)">Term 3</button>
-            </div>
+            <h1>Heriwadi Christian Schools</h1>
+            <p>School Management System</p>
         </div>
 
-        <!-- Dashboard Grid -->
-        <div class="dashboard-grid">
-            <div class="metric-card">
-                <div class="metric-header">
-                    <div class="metric-info">
-                        <h3>Total Students</h3>
-                        <div class="metric-value" id="totalStudents">
-                            <span class="loading">Loading...</span>
-                        </div>
-                        <div class="metric-trend">
-                            <span id="studentTrend">--</span>
-                        </div>
-                    </div>
-                    <div class="metric-icon students-icon">
-                        <i class="fas fa-user-graduate"></i>
-                    </div>
-                </div>
+        <div class="auth-body">
+            <div id="alertMessage" class="alert"></div>
+
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="switchTab('login')">Login</button>
+                <button class="tab-btn" onclick="switchTab('signup')">Sign Up</button>
             </div>
 
-            <div class="metric-card">
-                <div class="metric-header">
-                    <div class="metric-info">
-                        <h3>Active Staff</h3>
-                        <div class="metric-value" id="totalStaff">
-                            <span class="loading">Loading...</span>
-                        </div>
-                        <div class="metric-trend">
-                            <span id="staffTrend">--</span>
+            <!-- Login Form -->
+            <div id="loginTab" class="tab-content active">
+                <form id="loginForm" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="loginEmail">Email Address</label>
+                        <div class="input-icon">
+                            <i class="fas fa-envelope"></i>
+                            <input 
+                                type="email" 
+                                id="loginEmail" 
+                                class="form-control" 
+                                placeholder="Enter your email"
+                                required
+                            >
                         </div>
                     </div>
-                    <div class="metric-icon staff-icon">
-                        <i class="fas fa-chalkboard-teacher"></i>
+
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <div class="input-icon">
+                            <i class="fas fa-lock"></i>
+                            <input 
+                                type="password" 
+                                id="loginPassword" 
+                                class="form-control" 
+                                placeholder="Enter your password"
+                                required
+                            >
+                            <i class="fas fa-eye password-toggle" onclick="togglePassword('loginPassword')"></i>
+                        </div>
                     </div>
-                </div>
+
+                    <button type="submit" class="btn btn-primary" id="loginBtn">
+                        <span>Login</span>
+                    </button>
+
+                    <div class="forgot-password">
+                        <a href="#" onclick="showForgotPassword(event)">Forgot Password?</a>
+                    </div>
+                </form>
             </div>
 
-            <div class="metric-card">
-                <div class="metric-header">
-                    <div class="metric-info">
-                        <h3>Fee Revenue</h3>
-                        <div class="metric-value" id="totalRevenue">
-                            <span class="loading">Loading...</span>
-                        </div>
-                        <div class="metric-trend">
-                            <span id="revenueTrend">--</span>
+            <!-- Signup Form -->
+            <div id="signupTab" class="tab-content">
+                <form id="signupForm" onsubmit="handleSignup(event)">
+                    <div class="form-group">
+                        <label for="signupName">Full Name</label>
+                        <div class="input-icon">
+                            <i class="fas fa-user"></i>
+                            <input 
+                                type="text" 
+                                id="signupName" 
+                                class="form-control" 
+                                placeholder="Enter your full name"
+                                required
+                            >
                         </div>
                     </div>
-                    <div class="metric-icon revenue-icon">
-                        <i class="fas fa-coins"></i>
-                    </div>
-                </div>
-            </div>
 
-            <div class="metric-card">
-                <div class="metric-header">
-                    <div class="metric-info">
-                        <h3>Total Expenses</h3>
-                        <div class="metric-value" id="totalExpenses">
-                            <span class="loading">Loading...</span>
-                        </div>
-                        <div class="metric-trend">
-                            <span id="expenseTrend">--</span>
-                        </div>
-                    </div>
-                    <div class="metric-icon expense-icon">
-                        <i class="fas fa-money-bill-wave"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Charts Section -->
-        <div class="charts-section">
-            <div class="chart-card">
-                <h2 class="chart-title">
-                    <i class="fas fa-chart-line"></i> Financial Overview - <span id="chartTermDisplay">Term 2</span>
-                </h2>
-                <div class="chart-container">
-                    <canvas id="financialChart"></canvas>
-                </div>
-            </div>
-
-            <div class="chart-card">
-                <h2 class="chart-title">
-                    <i class="fas fa-history"></i> Recent Activities
-                </h2>
-                <div id="recentActivities">
-                    <div class="activity-item">
-                        <div class="activity-icon">
-                            <i class="fas fa-spinner fa-spin"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-title">Loading activities...</div>
-                            <div class="activity-time">Please wait</div>
+                    <div class="form-group">
+                        <label for="signupEmail">Email Address</label>
+                        <div class="input-icon">
+                            <i class="fas fa-envelope"></i>
+                            <input 
+                                type="email" 
+                                id="signupEmail" 
+                                class="form-control" 
+                                placeholder="Enter your email"
+                                required
+                            >
                         </div>
                     </div>
-                </div>
-                
-                <h3 style="margin: 1.5rem 0 1rem; color: var(--primary-color);">
-                    <i class="fas fa-chart-pie"></i> Class Distribution
-                </h3>
-                <div class="mini-chart-container">
-                    <canvas id="classChart"></canvas>
-                </div>
-            </div>
-        </div>
 
-        <!-- Quick Actions -->
-        <div class="quick-actions">
-            <a href="students.html" class="action-btn">
-                <div class="action-icon">
-                    <i class="fas fa-user-plus"></i>
-                </div>
-                <div>
-                    <h4>Add Student</h4>
-                    <p>Register new student</p>
-                </div>
-            </a>
-            
-            <a href="receipts.html" class="action-btn">
-                <div class="action-icon">
-                    <i class="fas fa-receipt"></i>
-                </div>
-                <div>
-                    <h4>Issue Receipt</h4>
-                    <p>Process fee payment</p>
-                </div>
-            </a>
-            
-            <a href="expense.html" class="action-btn">
-                <div class="action-icon">
-                    <i class="fas fa-money-bill-wave"></i>
-                </div>
-                <div>
-                    <h4>Add Expense</h4>
-                    <p>Record new expense</p>
-                </div>
-            </a>
-            
-            <a href="staff.html" class="action-btn">
-                <div class="action-icon">
-                    <i class="fas fa-user-tie"></i>
-                </div>
-                <div>
-                    <h4>Manage Staff</h4>
-                    <p>Staff information</p>
-                </div>
-            </a>
-            
-            <a href="financials.html" class="action-btn">
-                <div class="action-icon">
-                    <i class="fas fa-chart-bar"></i>
-                </div>
-                <div>
-                    <h4>View Reports</h4>
-                    <p>Financial reports</p>
-                </div>
-            </a>
+                    <div class="form-group">
+                        <label for="signupPassword">Password</label>
+                        <div class="input-icon">
+                            <i class="fas fa-lock"></i>
+                            <input 
+                                type="password" 
+                                id="signupPassword" 
+                                class="form-control" 
+                                placeholder="Create a password"
+                                minlength="6"
+                                required
+                            >
+                            <i class="fas fa-eye password-toggle" onclick="togglePassword('signupPassword')"></i>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Select Your Role</label>
+                        <div class="role-selector">
+                            <div class="role-option">
+                                <input type="radio" name="role" value="director" id="roleDirector" required>
+                                <label for="roleDirector">
+                                    <i class="fas fa-user-shield"></i>
+                                    <div>Director</div>
+                                </label>
+                            </div>
+                            <div class="role-option">
+                                <input type="radio" name="role" value="admin" id="roleAdmin">
+                                <label for="roleAdmin">
+                                    <i class="fas fa-user-cog"></i>
+                                    <div>Office Admin</div>
+                                </label>
+                            </div>
+                            <div class="role-option">
+                                <input type="radio" name="role" value="staff" id="roleStaff">
+                                <label for="roleStaff">
+                                    <i class="fas fa-chalkboard-teacher"></i>
+                                    <div>Staff</div>
+                                </label>
+                            </div>
+                            <div class="role-option">
+                                <input type="radio" name="role" value="visitor" id="roleVisitor">
+                                <label for="roleVisitor">
+                                    <i class="fas fa-eye"></i>
+                                    <div>Visitor</div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="signupBtn">
+                        <span>Create Account</span>
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
-
-    <!-- Refresh Button -->
-    <button class="refresh-btn" id="refreshBtn" onclick="refreshAllData()" title="Refresh Data">
-        <i class="fas fa-sync-alt"></i>
-    </button>
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <script>
@@ -900,439 +499,212 @@
         };
 
         // Initialize Firebase
-        let app, db;
-        try {
-            if (!firebase.apps.length) {
-                app = firebase.initializeApp(firebaseConfig);
-            } else {
-                app = firebase.app();
-            }
-            db = firebase.firestore();
-            console.log("Firebase initialized successfully");
-        } catch (error) {
-            console.error('Firebase initialization error:', error);
-            showStatus("Failed to initialize Firebase. Check your configuration.", "error");
-            throw error;
-        }
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-        // Global state
-        let currentTerm = parseInt(sessionStorage.getItem('heriwadi_current_term')) || 2;
-        let currentYear = new Date().getFullYear();
-        let dashboardData = {
-            students: [],
-            staff: [],
-            receipts: [],
-            expenses: [],
-            lastUpdated: null
-        };
-        let charts = {
-            financial: null,
-            class: null
-        };
-
-        // Collection references
-        const getStudentsCollection = (term = currentTerm, year = currentYear) => 
-            db.collection(`students_${year}_term_${term}`);
-        const getReceiptsCollection = (term = currentTerm, year = currentYear) => 
-            db.collection(`receipts_${year}_term_${term}`);
-        const getStaffCollection = () => db.collection('staff');
-        const getExpensesCollection = () => db.collection('expenses');
-
-        // Status message function
-        function showStatus(message, type = 'info') {
-            const statusEl = document.getElementById('statusMessage');
-            statusEl.textContent = message;
-            statusEl.className = `status-message ${type} show`;
-            
-            setTimeout(() => {
-                statusEl.classList.remove('show');
-            }, 5000);
-        }
-
-        // Initialize term from storage and update UI
-        function initializeTermFromStorage() {
-            document.querySelectorAll('.term-btn').forEach(btn => {
-                btn.classList.toggle('active', parseInt(btn.dataset.term) === currentTerm);
-            });
-            updateTermDisplays();
-            console.log(`Initialized with Term ${currentTerm} from storage`);
-        }
-
-        // Update all term displays
-        function updateTermDisplays() {
-            document.getElementById('currentYear').textContent = currentYear;
-            document.getElementById('chartTermDisplay').textContent = `Term ${currentTerm}`;
-        }
-
-        // Switch term function with persistent storage
-        function switchTerm(term) {
-            currentTerm = term;
-            sessionStorage.setItem('heriwadi_current_term', term.toString());
-            
-            document.querySelectorAll('.term-btn').forEach(btn => {
-                btn.classList.toggle('active', parseInt(btn.dataset.term) === term);
-            });
-            
-            updateTermDisplays();
-            loadDashboardData();
-            showStatus(`Switched to Term ${term} - Data refreshed`, "success");
-        }
-
-        // Load all dashboard data
-        async function loadDashboardData() {
-            try {
-                showStatus("Loading dashboard data...", "info");
-                
-                // Show loading states
-                document.getElementById('totalStudents').innerHTML = '<span class="loading">Loading...</span>';
-                document.getElementById('totalStaff').innerHTML = '<span class="loading">Loading...</span>';
-                document.getElementById('totalRevenue').innerHTML = '<span class="loading">Loading...</span>';
-                document.getElementById('totalExpenses').innerHTML = '<span class="loading">Loading...</span>';
-
-                // Load data concurrently for better performance
-                const [studentsSnapshot, staffSnapshot, receiptsSnapshot, expensesSnapshot] = await Promise.all([
-                    getStudentsCollection().get(),
-                    getStaffCollection().get(),
-                    getReceiptsCollection().get(),
-                    getExpensesCollection().get()
-                ]);
-
-                // Process students data
-                dashboardData.students = [];
-                studentsSnapshot.forEach(doc => {
-                    dashboardData.students.push({ id: doc.id, ...doc.data() });
-                });
-
-                // Process staff data
-                dashboardData.staff = [];
-                staffSnapshot.forEach(doc => {
-                    dashboardData.staff.push({ id: doc.id, ...doc.data() });
-                });
-
-                // Process receipts data
-                dashboardData.receipts = [];
-                receiptsSnapshot.forEach(doc => {
-                    dashboardData.receipts.push({ id: doc.id, ...doc.data() });
-                });
-
-                // Process expenses data - filter by current term
-                dashboardData.expenses = [];
-                expensesSnapshot.forEach(doc => {
-                    const expense = doc.data();
-                    const expenseTerm = getTermFromName(expense.term);
-                    if (expenseTerm === currentTerm || !expense.term) {
-                        dashboardData.expenses.push({ id: doc.id, ...expense });
+        // Check if user is already logged in
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                // User is signed in, check if approved
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    if (userData.approved) {
+                        // Store user data and redirect to dashboard
+                        const userInfo = {
+                            uid: user.uid,
+                            email: user.email,
+                            name: userData.name,
+                            role: userData.role,
+                            approved: true
+                        };
+                        sessionStorage.setItem('heriwadi_user', JSON.stringify(userInfo));
+                        window.location.href = 'dashboard.html';
                     }
-                });
+                }
+            }
+        });
 
-                // Update UI with loaded data
-                updateMetricCards();
-                updateCharts();
-                updateRecentActivities();
+        // Tab switching
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            if (tab === 'login') {
+                document.querySelector('.tab-btn:first-child').classList.add('active');
+                document.getElementById('loginTab').classList.add('active');
+            } else {
+                document.querySelector('.tab-btn:last-child').classList.add('active');
+                document.getElementById('signupTab').classList.add('active');
+            }
+            
+            hideAlert();
+        }
+
+        // Toggle password visibility
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const icon = input.parentElement.querySelector('.password-toggle');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // Show alert message
+        function showAlert(message, type = 'info') {
+            const alert = document.getElementById('alertMessage');
+            alert.textContent = message;
+            alert.className = `alert alert-${type} show`;
+        }
+
+        // Hide alert message
+        function hideAlert() {
+            const alert = document.getElementById('alertMessage');
+            alert.classList.remove('show');
+        }
+
+        // Handle login
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const loginBtn = document.getElementById('loginBtn');
+            
+            // Disable button and show loading
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<div class="spinner"></div><span>Logging in...</span>';
+            
+            try {
+                // Sign in with Firebase Auth
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
                 
-                dashboardData.lastUpdated = new Date();
-                showStatus("Dashboard data loaded successfully", "success");
+                // Check if user exists in Firestore and is approved
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                
+                if (!userDoc.exists) {
+                    throw new Error('User account not found. Please contact administrator.');
+                }
+                
+                const userData = userDoc.data();
+                
+                if (!userData.approved) {
+                    await auth.signOut();
+                    throw new Error('Your account is pending approval. Please wait for administrator confirmation.');
+                }
+                
+                // Store user data in session
+                const userInfo = {
+                    uid: user.uid,
+                    email: user.email,
+                    name: userData.name,
+                    role: userData.role,
+                    approved: true
+                };
+                sessionStorage.setItem('heriwadi_user', JSON.stringify(userInfo));
+                
+                showAlert('Login successful! Redirecting...', 'success');
+                
+                // Redirect to dashboard after 1 second
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1000);
                 
             } catch (error) {
-                console.error('Error loading dashboard data:', error);
-                showStatus(`Error loading data: ${error.message}`, "error");
+                console.error('Login error:', error);
+                showAlert(error.message, 'danger');
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = '<span>Login</span>';
             }
         }
 
-        // Convert term name to number
-        function getTermFromName(termName) {
-            if (!termName) return null;
-            const termMap = {
-                'First Term': 1, 'Second Term': 2, 'Third Term': 3,
-                'Term 1': 1, 'Term 2': 2, 'Term 3': 3
-            };
-            return termMap[termName] || null;
-        }
-
-        // Update metric cards with real data
-        function updateMetricCards() {
-            // Students metrics
-            const totalStudents = dashboardData.students.length;
-            document.getElementById('totalStudents').textContent = totalStudents.toLocaleString();
-            document.getElementById('studentTrend').innerHTML = `<i class="fas fa-users"></i> Current term enrollment`;
-            document.getElementById('studentTrend').className = 'trend-up';
-
-            // Staff metrics
-            const totalStaff = dashboardData.staff.length;
-            document.getElementById('totalStaff').textContent = totalStaff.toLocaleString();
-            document.getElementById('staffTrend').innerHTML = `<i class="fas fa-user-tie"></i> Active staff members`;
-            document.getElementById('staffTrend').className = 'trend-up';
-
-            // Revenue metrics (from receipts)
-            const totalRevenue = dashboardData.receipts.reduce((sum, receipt) => sum + (receipt.paid || 0), 0);
-            document.getElementById('totalRevenue').textContent = `KES ${totalRevenue.toLocaleString('en-KE')}`;
-            document.getElementById('revenueTrend').innerHTML = `<i class="fas fa-arrow-up"></i> Fee collections`;
-            document.getElementById('revenueTrend').className = 'trend-up';
-
-            // Expenses metrics
-            const totalExpenses = dashboardData.expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
-            document.getElementById('totalExpenses').textContent = `KES ${totalExpenses.toLocaleString('en-KE')}`;
-            document.getElementById('expenseTrend').innerHTML = `<i class="fas fa-money-bill-wave"></i> Total spent`;
-            document.getElementById('expenseTrend').className = 'trend-down';
-        }
-
-        // Update charts with real data
-        function updateCharts() {
-            updateFinancialChart();
-            updateClassDistributionChart();
-        }
-
-        // Update financial overview chart
-        function updateFinancialChart() {
-            const ctx = document.getElementById('financialChart').getContext('2d');
+        // Handle signup
+        async function handleSignup(event) {
+            event.preventDefault();
             
-            // Group receipts and expenses by date
-            const dailyData = {};
+            const name = document.getElementById('signupName').value.trim();
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            const role = document.querySelector('input[name="role"]:checked').value;
+            const signupBtn = document.getElementById('signupBtn');
             
-            // Process receipts
-            dashboardData.receipts.forEach(receipt => {
-                const date = receipt.date;
-                if (!dailyData[date]) {
-                    dailyData[date] = { revenue: 0, expenses: 0 };
-                }
-                dailyData[date].revenue += receipt.paid || 0;
-            });
-
-            // Process expenses
-            dashboardData.expenses.forEach(expense => {
-                const date = expense.date;
-                if (!dailyData[date]) {
-                    dailyData[date] = { revenue: 0, expenses: 0 };
-                }
-                dailyData[date].expenses += expense.amount || 0;
-            });
-
-            // Sort dates and prepare data for chart
-            const sortedDates = Object.keys(dailyData).sort();
-            const last30Days = sortedDates.slice(-30); // Show last 30 days with data
+            // Disable button and show loading
+            signupBtn.disabled = true;
+            signupBtn.innerHTML = '<div class="spinner"></div><span>Creating account...</span>';
             
-            const labels = last30Days.map(date => new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' }));
-            const revenueData = last30Days.map(date => dailyData[date].revenue);
-            const expenseData = last30Days.map(date => dailyData[date].expenses);
-
-            if (charts.financial) {
-                charts.financial.destroy();
-            }
-
-            charts.financial = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Fee Revenue',
-                        data: revenueData,
-                        borderColor: '#28a745',
-                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }, {
-                        label: 'Expenses',
-                        data: expenseData,
-                        borderColor: '#dc3545',
-                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top'
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return context.dataset.label + ': KES ' + context.parsed.y.toLocaleString('en-KE');
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return 'KES ' + value.toLocaleString('en-KE');
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Update class distribution chart
-        function updateClassDistributionChart() {
-            const ctx = document.getElementById('classChart').getContext('2d');
-            
-            // Count students by class
-            const classCounts = {};
-            dashboardData.students.forEach(student => {
-                const className = student.class || 'Unassigned';
-                classCounts[className] = (classCounts[className] || 0) + 1;
-            });
-
-            const classes = Object.keys(classCounts);
-            const counts = Object.values(classCounts);
-            const colors = [
-                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
-                '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0'
-            ];
-
-            if (charts.class) {
-                charts.class.destroy();
-            }
-
-            charts.class = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: classes,
-                    datasets: [{
-                        data: counts,
-                        backgroundColor: colors.slice(0, classes.length),
-                        borderWidth: 2,
-                        borderColor: '#fff'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                boxWidth: 12,
-                                padding: 10
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return context.label + ': ' + context.parsed + ' students';
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Update recent activities
-        function updateRecentActivities() {
-            const activitiesEl = document.getElementById('recentActivities');
-            const activities = [];
-
-            // Get recent receipts
-            const recentReceipts = dashboardData.receipts
-                .sort((a, b) => new Date(b.date) - new Date(a.date))
-                .slice(0, 3);
-
-            recentReceipts.forEach(receipt => {
-                activities.push({
-                    icon: 'receipt',
-                    title: `Payment received from ${receipt.name}`,
-                    time: getRelativeTime(new Date(receipt.date)),
-                    amount: `KES ${receipt.paid.toLocaleString('en-KE')}`
+            try {
+                // Create user with Firebase Auth
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // Update display name
+                await user.updateProfile({
+                    displayName: name
                 });
-            });
-
-            // Get recent expenses
-            const recentExpenses = dashboardData.expenses
-                .sort((a, b) => new Date(b.date) - new Date(a.date))
-                .slice(0, 2);
-
-            recentExpenses.forEach(expense => {
-                activities.push({
-                    icon: 'money-bill-wave',
-                    title: expense.description,
-                    time: getRelativeTime(new Date(expense.date)),
-                    amount: `KES ${expense.amount.toLocaleString('en-KE')}`
+                
+                // Create user document in Firestore
+                await db.collection('users').doc(user.uid).set({
+                    name: name,
+                    email: email,
+                    role: role,
+                    approved: false,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastLogin: null
                 });
-            });
-
-            // Sort all activities by date and take the most recent 5
-            const sortedActivities = activities.slice(0, 5);
-
-            activitiesEl.innerHTML = sortedActivities.length > 0 ? 
-                sortedActivities.map(activity => `
-                    <div class="activity-item">
-                        <div class="activity-icon">
-                            <i class="fas fa-${activity.icon}"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-title">${activity.title}</div>
-                            <div class="activity-time">${activity.time}${activity.amount ? ' • ' + activity.amount : ''}</div>
-                        </div>
-                    </div>
-                `).join('') : 
-                '<div class="activity-item"><div class="activity-icon"><i class="fas fa-info-circle"></i></div><div class="activity-content"><div class="activity-title">No recent activities</div><div class="activity-time">Start by adding students or recording transactions</div></div></div>';
-        }
-
-        // Get relative time string
-        function getRelativeTime(date) {
-            const now = new Date();
-            const diffMs = now - date;
-            const diffMins = Math.floor(diffMs / 60000);
-            const diffHours = Math.floor(diffMins / 60);
-            const diffDays = Math.floor(diffHours / 24);
-
-            if (diffMins < 1) return 'Just now';
-            if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
-            if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-            if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-            return date.toLocaleDateString('en-GB');
-        }
-
-        // Refresh all data
-        function refreshAllData() {
-            const refreshBtn = document.getElementById('refreshBtn');
-            refreshBtn.classList.add('loading');
-            
-            loadDashboardData().finally(() => {
-                refreshBtn.classList.remove('loading');
-            });
-        }
-
-        // Initialize the dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            // Show loading screen initially
-            const loadingScreen = document.getElementById('loadingScreen');
-            
-            // Initialize term from storage
-            initializeTermFromStorage();
-            
-            // Load dashboard data
-            loadDashboardData().then(() => {
-                // Hide loading screen after data is loaded
+                
+                // Create notification for admin
+                await db.collection('pending_approvals').add({
+                    userId: user.uid,
+                    name: name,
+                    email: email,
+                    role: role,
+                    requestedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    status: 'pending'
+                });
+                
+                // Sign out the user (they need approval first)
+                await auth.signOut();
+                
+                showAlert('Account created successfully! Awaiting administrator approval. You will receive an email once approved.', 'success');
+                
+                // Reset form and switch to login tab after 3 seconds
                 setTimeout(() => {
-                    loadingScreen.classList.add('hidden');
-                }, 1000);
-            });
-
-            // Auto-refresh every 5 minutes
-            setInterval(() => {
-                if (!document.hidden) {
-                    loadDashboardData();
+                    document.getElementById('signupForm').reset();
+                    switchTab('login');
+                }, 3000);
+                
+            } catch (error) {
+                console.error('Signup error:', error);
+                let errorMessage = error.message;
+                
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessage = 'This email is already registered. Please login instead.';
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage = 'Password should be at least 6 characters long.';
                 }
-            }, 5 * 60 * 1000);
-        });
-
-        // Handle page visibility changes
-        document.addEventListener('visibilitychange', function() {
-            if (!document.hidden) {
-                // Refresh data when page becomes visible
-                setTimeout(loadDashboardData, 1000);
+                
+                showAlert(errorMessage, 'danger');
+                signupBtn.disabled = false;
+                signupBtn.innerHTML = '<span>Create Account</span>';
             }
-        });
+        }
 
-        console.log('Heriwadi School Management Dashboard loaded successfully');
+        // Show forgot password (placeholder)
+        function showForgotPassword(event) {
+            event.preventDefault();
+            showAlert('Please contact the administrator to reset your password.', 'info');
+        }
+
+        console.log('Heriwadi School Management - Authentication System loaded');
     </script>
 </body>
 </html>
