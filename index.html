@@ -38,311 +38,6 @@
             min-height: 100vh;
         }
 
-        /* ========================================
-           LOGIN/SIGNUP SCREEN STYLES
-        ======================================== */
-        #authScreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #005fa3 0%, #004080 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-            padding: 20px;
-        }
-
-        #authScreen.hidden {
-            display: none;
-        }
-
-        .login-container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-            max-width: 450px;
-            width: 100%;
-            animation: slideIn 0.5s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .login-header {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            padding: 2.5rem 2rem;
-            text-align: center;
-        }
-
-        .login-header i {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            display: block;
-        }
-
-        .login-header h1 {
-            font-size: 1.8rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .login-header p {
-            opacity: 0.9;
-            font-size: 0.95rem;
-        }
-
-        .login-body {
-            padding: 2.5rem 2rem;
-            max-height: calc(100vh - 200px);
-            overflow-y: auto;
-        }
-
-        .login-body::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .login-body::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-
-        .login-body::-webkit-scrollbar-thumb {
-            background: var(--primary-color);
-            border-radius: 10px;
-        }
-
-        .login-body::-webkit-scrollbar-thumb:hover {
-            background: var(--secondary-color);
-        }
-
-        .tab-buttons {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 0.75rem;
-            border: 2px solid var(--primary-color);
-            background: transparent;
-            color: var(--primary-color);
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .tab-btn:hover {
-            background: rgba(0, 95, 163, 0.1);
-        }
-
-        .tab-btn.active {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .form-container {
-            display: none;
-        }
-
-        .form-container.active {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: #333;
-            font-weight: 500;
-            font-size: 0.95rem;
-        }
-
-        .form-group label i {
-            margin-right: 0.5rem;
-            color: var(--primary-color);
-        }
-
-        .input-wrapper {
-            position: relative;
-        }
-
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 0.875rem 1rem;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background: #f8f9fa;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            background: white;
-            box-shadow: 0 0 0 3px rgba(0, 95, 163, 0.1);
-        }
-
-        .password-toggle {
-            position: absolute;
-            right: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: #666;
-            transition: color 0.3s ease;
-        }
-
-        .password-toggle:hover {
-            color: var(--primary-color);
-        }
-
-        .submit-btn {
-            width: 100%;
-            padding: 1rem;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 1rem;
-        }
-
-        .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(0, 95, 163, 0.4);
-        }
-
-        .submit-btn:active {
-            transform: translateY(0);
-        }
-
-        .submit-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .auth-alert {
-            padding: 1rem;
-            border-radius: 10px;
-            margin-bottom: 1.5rem;
-            display: none;
-            animation: slideDown 0.3s ease;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .auth-alert.show {
-            display: block;
-        }
-
-        .auth-alert.success {
-            background: rgba(40, 167, 69, 0.1);
-            color: var(--success-color);
-            border-left: 4px solid var(--success-color);
-        }
-
-        .auth-alert.error {
-            background: rgba(220, 53, 69, 0.1);
-            color: var(--danger-color);
-            border-left: 4px solid var(--danger-color);
-        }
-
-        .auth-alert.info {
-            background: rgba(23, 162, 184, 0.1);
-            color: var(--info-color);
-            border-left: 4px solid var(--info-color);
-        }
-
-        .role-info {
-            background: #f8f9fa;
-            padding: 1rem;
-            border-radius: 10px;
-            margin-bottom: 1.5rem;
-            font-size: 0.9rem;
-            color: #666;
-        }
-
-        .role-info strong {
-            color: var(--primary-color);
-            display: block;
-            margin-bottom: 0.5rem;
-        }
-
-        .forgot-password {
-            text-align: center;
-            margin-top: 1rem;
-        }
-
-        .forgot-password a {
-            color: var(--primary-color);
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
-
-        .forgot-password a:hover {
-            text-decoration: underline;
-        }
-
-        .loading-spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.8s linear infinite;
-            margin-right: 0.5rem;
-        }
-
-        /* ========================================
-           MAIN DASHBOARD STYLES
-        ======================================== */
-        #dashboardScreen {
-            display: none;
-        }
-
-        #dashboardScreen.active {
-            display: block;
-        }
-
         /* Loading Screen */
         .loading-screen {
             position: fixed;
@@ -384,7 +79,7 @@
             margin-bottom: 2rem;
         }
 
-        .loading-spinner-large {
+        .loading-spinner {
             width: 40px;
             height: 40px;
             border: 4px solid rgba(255, 255, 255, 0.3);
@@ -438,7 +133,6 @@
             gap: 1rem;
             flex-wrap: wrap;
             justify-content: center;
-            align-items: center;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             position: sticky;
             top: 0;
@@ -484,48 +178,6 @@
 
         nav a.active {
             font-weight: 600;
-        }
-
-        nav a.disabled {
-            opacity: 0.4;
-            pointer-events: none;
-        }
-
-        .user-info {
-            margin-left: auto;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            color: rgba(255, 255, 255, 0.9);
-            font-weight: 500;
-        }
-
-        .user-info .user-badge {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .logout-btn {
-            background: rgba(220, 53, 69, 0.2);
-            border: 2px solid #dc3545;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: 600;
-        }
-
-        .logout-btn:hover {
-            background: #dc3545;
-            transform: translateY(-2px);
         }
 
         /* Container */
@@ -922,23 +574,6 @@
             animation: spin 1s linear infinite;
         }
 
-        /* Read-only banner for visitors */
-        .readonly-banner {
-            background: rgba(255, 193, 7, 0.9);
-            color: #856404;
-            padding: 1rem;
-            text-align: center;
-            font-weight: 600;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            display: none;
-        }
-
-        .readonly-banner.show {
-            display: block;
-        }
-
         /* Animations */
         @keyframes shimmer {
             0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
@@ -990,13 +625,6 @@
             nav a {
                 justify-content: center;
                 padding: 0.5rem 1rem;
-                width: 100%;
-            }
-
-            .user-info {
-                margin-left: 0;
-                width: 100%;
-                flex-direction: column;
             }
 
             .container {
@@ -1041,343 +669,226 @@
             .metric-value {
                 font-size: 1.8rem;
             }
-
-            .tab-buttons {
-                flex-direction: column;
-            }
         }
     </style>
 </head>
 <body>
-    <!-- Read-only banner for visitors -->
-    <div id="readonlyBanner" class="readonly-banner">
-        <i class="fas fa-eye"></i> You are in READ-ONLY mode (Visitor Access)
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-logo">
+            <i class="fas fa-school"></i>
+        </div>
+        <div class="loading-text">Loading Dashboard...</div>
+        <div class="loading-spinner"></div>
     </div>
 
-    <!-- AUTH SCREEN (Login/Signup) -->
-    <div id="authScreen">
-        <div class="login-container">
-            <div class="login-header">
-                <i class="fas fa-school"></i>
-                <h1>Heriwadi Christian Schools</h1>
-                <p>School Management System</p>
+    <header>
+        <h1>Heriwadi Christian Schools Ltd</h1>
+        <p>Comprehensive School Management Dashboard</p>
+    </header>
+
+    <nav>
+        <a href="index.html" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="receipts.html"><i class="fas fa-receipt"></i> Receipts</a>
+        <a href="students.html"><i class="fas fa-users"></i> Students</a>
+        <a href="expense.html"><i class="fas fa-money-bill-wave"></i> Expenses</a>
+        <a href="assets.html"><i class="fas fa-laptop-house"></i> Assets</a>
+        <a href="staff.html"><i class="fas fa-user-tie"></i> Staff</a>
+        <a href="payroll.html"><i class="fas fa-money-check-alt"></i> Payroll</a>
+        <a href="financials.html"><i class="fas fa-chart-line"></i> Financials</a>
+    </nav>
+
+    <div class="container">
+        <!-- Status Messages -->
+        <div id="statusMessage" class="status-message"></div>
+
+        <!-- Term Selector -->
+        <div class="term-selector">
+            <div>
+                <h3><i class="fas fa-calendar-alt"></i> Academic Term</h3>
+                <div class="current-term-info">
+                    Current Academic Year: <span id="currentYear">2024</span>
+                </div>
             </div>
-
-            <div class="login-body">
-                <div id="authAlert" class="auth-alert"></div>
-
-                <div class="tab-buttons">
-                    <button class="tab-btn active" onclick="switchAuthTab('login')">Login</button>
-                    <button class="tab-btn" onclick="switchAuthTab('signup')">Sign Up</button>
-                </div>
-
-                <!-- Login Form -->
-                <div id="loginForm" class="form-container active">
-                    <form onsubmit="handleLogin(event)">
-                        <div class="form-group">
-                            <label><i class="fas fa-envelope"></i> Email Address</label>
-                            <input type="email" id="loginEmail" required placeholder="Enter your email">
-                        </div>
-
-                        <div class="form-group">
-                            <label><i class="fas fa-lock"></i> Password</label>
-                            <div class="input-wrapper">
-                                <input type="password" id="loginPassword" required placeholder="Enter your password">
-                                <i class="fas fa-eye password-toggle" onclick="togglePassword('loginPassword', this)"></i>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="submit-btn" id="loginBtn">
-                            <i class="fas fa-sign-in-alt"></i> Login
-                        </button>
-                    </form>
-
-                    <div class="forgot-password">
-                        <a href="#" onclick="showAuthAlert('Please contact the administrator to reset your password.', 'info'); return false;">
-                            Forgot Password?
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Signup Form -->
-                <div id="signupForm" class="form-container">
-                    <form onsubmit="handleSignup(event)">
-                        <div class="form-group">
-                            <label><i class="fas fa-user"></i> Full Name</label>
-                            <input type="text" id="signupName" required placeholder="Enter your full name">
-                        </div>
-
-                        <div class="form-group">
-                            <label><i class="fas fa-envelope"></i> Email Address</label>
-                            <input type="email" id="signupEmail" required placeholder="Enter your email">
-                        </div>
-
-                        <div class="form-group">
-                            <label><i class="fas fa-lock"></i> Password</label>
-                            <div class="input-wrapper">
-                                <input type="password" id="signupPassword" required placeholder="Create a password (min 6 characters)" minlength="6">
-                                <i class="fas fa-eye password-toggle" onclick="togglePassword('signupPassword', this)"></i>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label><i class="fas fa-user-tag"></i> Role</label>
-                            <select id="signupRole" required>
-                                <option value="">Select your role</option>
-                                <option value="visitor">Visitor (Dashboard only)</option>
-                                <option value="staff">Staff (Dashboard & Students)</option>
-                                <option value="admin">Office Admin (All except Financials)</option>
-                                <option value="director">Director (Full Access)</option>
-                            </select>
-                        </div>
-
-                        <button type="submit" class="submit-btn" id="signupBtn">
-                            <i class="fas fa-user-plus"></i> Create Account
-                        </button>
-                    </form>
-
-                    <div class="role-info" style="margin-top: 1.5rem; background: rgba(255, 193, 7, 0.1); border-left: 4px solid var(--warning-color);">
-                        <i class="fas fa-info-circle" style="color: var(--warning-color);"></i>
-                        <strong style="color: #856404;">Account Approval Required</strong>
-                        Your account will be reviewed by an administrator before activation.
-                    </div>
-                </div>
+            <div class="term-buttons">
+                <button class="term-btn" data-term="1" onclick="switchTerm(1)">Term 1</button>
+                <button class="term-btn active" data-term="2" onclick="switchTerm(2)">Term 2</button>
+                <button class="term-btn" data-term="3" onclick="switchTerm(3)">Term 3</button>
             </div>
         </div>
-    </div>
 
-    <!-- DASHBOARD SCREEN -->
-    <div id="dashboardScreen">
-        <!-- Loading Screen -->
-        <div class="loading-screen" id="loadingScreen">
-            <div class="loading-logo">
-                <i class="fas fa-school"></i>
-            </div>
-            <div class="loading-text">Loading Dashboard...</div>
-            <div class="loading-spinner-large"></div>
-        </div>
-
-        <header>
-            <h1>Heriwadi Christian Schools Ltd</h1>
-            <p>Comprehensive School Management Dashboard</p>
-        </header>
-
-        <nav id="mainNav">
-            <a href="#" class="active" onclick="return false;"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-            <a href="receipts.html" id="navReceipts"><i class="fas fa-receipt"></i> Receipts</a>
-            <a href="students.html" id="navStudents"><i class="fas fa-users"></i> Students</a>
-            <a href="expense.html" id="navExpense"><i class="fas fa-money-bill-wave"></i> Expenses</a>
-            <a href="assets.html" id="navAssets"><i class="fas fa-laptop-house"></i> Assets</a>
-            <a href="staff.html" id="navStaff"><i class="fas fa-user-tie"></i> Staff</a>
-            <a href="payroll.html" id="navPayroll"><i class="fas fa-money-check-alt"></i> Payroll</a>
-            <a href="financials.html" id="navFinancials"><i class="fas fa-chart-line"></i> Financials</a>
-            
-            <div class="user-info" id="userInfo">
-                <div class="user-badge">
-                    <i class="fas fa-user"></i>
-                    <span id="userName">Loading...</span>
-                </div>
-                <button class="logout-btn" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </button>
-            </div>
-        </nav>
-
-        <div class="container">
-            <!-- Status Messages -->
-            <div id="statusMessage" class="status-message"></div>
-
-            <!-- Term Selector -->
-            <div class="term-selector">
-                <div>
-                    <h3><i class="fas fa-calendar-alt"></i> Academic Term</h3>
-                    <div class="current-term-info">
-                        Current Academic Year: <span id="currentYear">2024</span>
-                    </div>
-                </div>
-                <div class="term-buttons">
-                    <button class="term-btn" data-term="1" onclick="switchTerm(1)">Term 1</button>
-                    <button class="term-btn active" data-term="2" onclick="switchTerm(2)">Term 2</button>
-                    <button class="term-btn" data-term="3" onclick="switchTerm(3)">Term 3</button>
-                </div>
-            </div>
-
-            <!-- Dashboard Grid -->
-            <div class="dashboard-grid">
-                <div class="metric-card">
-                    <div class="metric-header">
-                        <div class="metric-info">
-                            <h3>Total Students</h3>
-                            <div class="metric-value" id="totalStudents">
-                                <span class="loading">Loading...</span>
-                            </div>
-                            <div class="metric-trend">
-                                <span id="studentTrend">--</span>
-                            </div>
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-info">
+                        <h3>Total Students</h3>
+                        <div class="metric-value" id="totalStudents">
+                            <span class="loading">Loading...</span>
                         </div>
-                        <div class="metric-icon students-icon">
-                            <i class="fas fa-user-graduate"></i>
+                        <div class="metric-trend">
+                            <span id="studentTrend">--</span>
                         </div>
                     </div>
-                </div>
-
-                <div class="metric-card">
-                    <div class="metric-header">
-                        <div class="metric-info">
-                            <h3>Active Staff</h3>
-                            <div class="metric-value" id="totalStaff">
-                                <span class="loading">Loading...</span>
-                            </div>
-                            <div class="metric-trend">
-                                <span id="staffTrend">--</span>
-                            </div>
-                        </div>
-                        <div class="metric-icon staff-icon">
-                            <i class="fas fa-chalkboard-teacher"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="metric-card">
-                    <div class="metric-header">
-                        <div class="metric-info">
-                            <h3>Fee Revenue</h3>
-                            <div class="metric-value" id="totalRevenue">
-                                <span class="loading">Loading...</span>
-                            </div>
-                            <div class="metric-trend">
-                                <span id="revenueTrend">--</span>
-                            </div>
-                        </div>
-                        <div class="metric-icon revenue-icon">
-                            <i class="fas fa-coins"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="metric-card">
-                    <div class="metric-header">
-                        <div class="metric-info">
-                            <h3>Total Expenses</h3>
-                            <div class="metric-value" id="totalExpenses">
-                                <span class="loading">Loading...</span>
-                            </div>
-                            <div class="metric-trend">
-                                <span id="expenseTrend">--</span>
-                            </div>
-                        </div>
-                        <div class="metric-icon expense-icon">
-                            <i class="fas fa-money-bill-wave"></i>
-                        </div>
+                    <div class="metric-icon students-icon">
+                        <i class="fas fa-user-graduate"></i>
                     </div>
                 </div>
             </div>
 
-            <!-- Charts Section -->
-            <div class="charts-section">
-                <div class="chart-card">
-                    <h2 class="chart-title">
-                        <i class="fas fa-chart-line"></i> Financial Overview - <span id="chartTermDisplay">Term 2</span>
-                    </h2>
-                    <div class="chart-container">
-                        <canvas id="financialChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="chart-card">
-                    <h2 class="chart-title">
-                        <i class="fas fa-history"></i> Recent Activities
-                    </h2>
-                    <div id="recentActivities">
-                        <div class="activity-item">
-                            <div class="activity-icon">
-                                <i class="fas fa-spinner fa-spin"></i>
-                            </div>
-                            <div class="activity-content">
-                                <div class="activity-title">Loading activities...</div>
-                                <div class="activity-time">Please wait</div>
-                            </div>
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-info">
+                        <h3>Active Staff</h3>
+                        <div class="metric-value" id="totalStaff">
+                            <span class="loading">Loading...</span>
+                        </div>
+                        <div class="metric-trend">
+                            <span id="staffTrend">--</span>
                         </div>
                     </div>
-                    
-                    <h3 style="margin: 1.5rem 0 1rem; color: var(--primary-color);">
-                        <i class="fas fa-chart-pie"></i> Class Distribution
-                    </h3>
-                    <div class="mini-chart-container">
-                        <canvas id="classChart"></canvas>
+                    <div class="metric-icon staff-icon">
+                        <i class="fas fa-chalkboard-teacher"></i>
                     </div>
                 </div>
             </div>
 
-            <!-- Quick Actions -->
-            <div class="quick-actions">
-                <a href="students.html" class="action-btn" id="actionAddStudent">
-                    <div class="action-icon">
-                        <i class="fas fa-user-plus"></i>
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-info">
+                        <h3>Fee Revenue</h3>
+                        <div class="metric-value" id="totalRevenue">
+                            <span class="loading">Loading...</span>
+                        </div>
+                        <div class="metric-trend">
+                            <span id="revenueTrend">--</span>
+                        </div>
                     </div>
-                    <div>
-                        <h4>Add Student</h4>
-                        <p>Register new student</p>
+                    <div class="metric-icon revenue-icon">
+                        <i class="fas fa-coins"></i>
                     </div>
-                </a>
-                
-                <a href="receipts.html" class="action-btn" id="actionIssueReceipt">
-                    <div class="action-icon">
-                        <i class="fas fa-receipt"></i>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-info">
+                        <h3>Total Expenses</h3>
+                        <div class="metric-value" id="totalExpenses">
+                            <span class="loading">Loading...</span>
+                        </div>
+                        <div class="metric-trend">
+                            <span id="expenseTrend">--</span>
+                        </div>
                     </div>
-                    <div>
-                        <h4>Issue Receipt</h4>
-                        <p>Process fee payment</p>
-                    </div>
-                </a>
-                
-                <a href="expense.html" class="action-btn" id="actionAddExpense">
-                    <div class="action-icon">
+                    <div class="metric-icon expense-icon">
                         <i class="fas fa-money-bill-wave"></i>
                     </div>
-                    <div>
-                        <h4>Add Expense</h4>
-                        <p>Record new expense</p>
-                    </div>
-                </a>
-                
-                <a href="staff.html" class="action-btn" id="actionManageStaff">
-                    <div class="action-icon">
-                        <i class="fas fa-user-tie"></i>
-                    </div>
-                    <div>
-                        <h4>Manage Staff</h4>
-                        <p>Staff information</p>
-                    </div>
-                </a>
-                
-                <a href="financials.html" class="action-btn" id="actionViewReports">
-                    <div class="action-icon">
-                        <i class="fas fa-chart-bar"></i>
-                    </div>
-                    <div>
-                        <h4>View Reports</h4>
-                        <p>Financial reports</p>
-                    </div>
-                </a>
+                </div>
             </div>
         </div>
 
-        <!-- Refresh Button -->
-        <button class="refresh-btn" id="refreshBtn" onclick="refreshAllData()" title="Refresh Data">
-            <i class="fas fa-sync-alt"></i>
-        </button>
+        <!-- Charts Section -->
+        <div class="charts-section">
+            <div class="chart-card">
+                <h2 class="chart-title">
+                    <i class="fas fa-chart-line"></i> Financial Overview - <span id="chartTermDisplay">Term 2</span>
+                </h2>
+                <div class="chart-container">
+                    <canvas id="financialChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h2 class="chart-title">
+                    <i class="fas fa-history"></i> Recent Activities
+                </h2>
+                <div id="recentActivities">
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">Loading activities...</div>
+                            <div class="activity-time">Please wait</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 style="margin: 1.5rem 0 1rem; color: var(--primary-color);">
+                    <i class="fas fa-chart-pie"></i> Class Distribution
+                </h3>
+                <div class="mini-chart-container">
+                    <canvas id="classChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="students.html" class="action-btn">
+                <div class="action-icon">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <div>
+                    <h4>Add Student</h4>
+                    <p>Register new student</p>
+                </div>
+            </a>
+            
+            <a href="receipts.html" class="action-btn">
+                <div class="action-icon">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <div>
+                    <h4>Issue Receipt</h4>
+                    <p>Process fee payment</p>
+                </div>
+            </a>
+            
+            <a href="expense.html" class="action-btn">
+                <div class="action-icon">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <div>
+                    <h4>Add Expense</h4>
+                    <p>Record new expense</p>
+                </div>
+            </a>
+            
+            <a href="staff.html" class="action-btn">
+                <div class="action-icon">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+                <div>
+                    <h4>Manage Staff</h4>
+                    <p>Staff information</p>
+                </div>
+            </a>
+            
+            <a href="financials.html" class="action-btn">
+                <div class="action-icon">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <div>
+                    <h4>View Reports</h4>
+                    <p>Financial reports</p>
+                </div>
+            </a>
+        </div>
     </div>
+
+    <!-- Refresh Button -->
+    <button class="refresh-btn" id="refreshBtn" onclick="refreshAllData()" title="Refresh Data">
+        <i class="fas fa-sync-alt"></i>
+    </button>
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <script>
-        // ============================================
-        // FIREBASE CONFIGURATION
-        // ============================================
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBAA6zY40EwbTmWUx1op1cx52C3y0RK3m0",
             authDomain: "heriwadi-manager.firebaseapp.com",
@@ -1389,7 +900,7 @@
         };
 
         // Initialize Firebase
-        let app, db, auth;
+        let app, db;
         try {
             if (!firebase.apps.length) {
                 app = firebase.initializeApp(firebaseConfig);
@@ -1397,346 +908,12 @@
                 app = firebase.app();
             }
             db = firebase.firestore();
-            auth = firebase.auth();
             console.log("Firebase initialized successfully");
         } catch (error) {
             console.error('Firebase initialization error:', error);
-            alert("Failed to initialize Firebase. Please check your internet connection.");
+            showStatus("Failed to initialize Firebase. Check your configuration.", "error");
             throw error;
         }
-
-        // ============================================
-        // AUTHENTICATION SYSTEM
-        // ============================================
-        
-        // Role-based page access configuration
-        const PAGE_ACCESS = {
-            'receipts.html': ['director', 'admin'],
-            'students.html': ['director', 'admin', 'staff'],
-            'expense.html': ['director', 'admin'],
-            'assets.html': ['director', 'admin'],
-            'staff.html': ['director', 'admin'],
-            'payroll.html': ['director'],
-            'financials.html': ['director']
-        };
-
-        let currentUser = null;
-
-        // Check authentication on page load
-        auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                try {
-                    const userDoc = await db.collection('users').doc(user.uid).get();
-                    
-                    if (!userDoc.exists) {
-                        await auth.signOut();
-                        showAuthScreen();
-                        return;
-                    }
-
-                    const userData = userDoc.data();
-                    
-                    // TEMPORARY BYPASS FOR DEVELOPMENT - REMOVE IN PRODUCTION
-                    if (userData.email === 'cephasduke64@gmail.com' && userData.status === 'pending') {
-                        await db.collection('users').doc(user.uid).update({
-                            status: 'approved'
-                        });
-                        userData.status = 'approved';
-                    }
-                    
-                    if (userData.status !== 'approved') {
-                        await auth.signOut();
-                        showAuthAlert('Your account is pending approval. Please wait for administrator verification.', 'error');
-                        showAuthScreen();
-                        return;
-                    }
-
-                    // User is authenticated and approved
-                    currentUser = {
-                        uid: user.uid,
-                        email: userData.email,
-                        name: userData.name,
-                        role: userData.role,
-                        status: userData.status
-                    };
-
-                    // Update last login
-                    await db.collection('users').doc(user.uid).update({
-                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-
-                    // Also update approval_requests if it exists
-                    const approvalQuery = await db.collection('approval_requests')
-                        .where('userId', '==', user.uid)
-                        .get();
-                    
-                    if (!approvalQuery.empty) {
-                        approvalQuery.forEach(async (doc) => {
-                            if (doc.data().status !== 'approved') {
-                                await db.collection('approval_requests').doc(doc.id).update({
-                                    status: 'approved',
-                                    approvedAt: firebase.firestore.FieldValue.serverTimestamp()
-                                });
-                            }
-                        });
-                    }
-
-                    showDashboard();
-                    updateUIForRole(userData.role);
-                    loadDashboardData();
-                    
-                } catch (error) {
-                    console.error('Error checking user status:', error);
-                    showAuthScreen();
-                }
-            } else {
-                showAuthScreen();
-            }
-        });
-
-        // Show auth screen
-        function showAuthScreen() {
-            document.getElementById('authScreen').classList.remove('hidden');
-            document.getElementById('dashboardScreen').classList.remove('active');
-        }
-
-        // Show dashboard
-        function showDashboard() {
-            document.getElementById('authScreen').classList.add('hidden');
-            document.getElementById('dashboardScreen').classList.add('active');
-        }
-
-        // Switch between login and signup tabs
-        function switchAuthTab(tab) {
-            const loginForm = document.getElementById('loginForm');
-            const signupForm = document.getElementById('signupForm');
-            const tabBtns = document.querySelectorAll('.tab-btn');
-
-            if (tab === 'login') {
-                loginForm.classList.add('active');
-                signupForm.classList.remove('active');
-                tabBtns[0].classList.add('active');
-                tabBtns[1].classList.remove('active');
-            } else {
-                loginForm.classList.remove('active');
-                signupForm.classList.add('active');
-                tabBtns[0].classList.remove('active');
-                tabBtns[1].classList.add('active');
-            }
-            hideAuthAlert();
-        }
-
-        // Toggle password visibility
-        function togglePassword(inputId, icon) {
-            const input = document.getElementById(inputId);
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
-            } else {
-                input.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
-            }
-        }
-
-        // Show auth alert
-        function showAuthAlert(message, type = 'info') {
-            const alertBox = document.getElementById('authAlert');
-            alertBox.textContent = message;
-            alertBox.className = `auth-alert ${type} show`;
-        }
-
-        // Hide auth alert
-        function hideAuthAlert() {
-            const alertBox = document.getElementById('authAlert');
-            alertBox.classList.remove('show');
-        }
-
-        // Handle login
-        async function handleLogin(event) {
-            event.preventDefault();
-            
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            const loginBtn = document.getElementById('loginBtn');
-
-            loginBtn.disabled = true;
-            loginBtn.innerHTML = '<span class="loading-spinner"></span> Logging in...';
-
-            try {
-                await auth.signInWithEmailAndPassword(email, password);
-                // Auth state change will handle the rest
-            } catch (error) {
-                console.error('Login error:', error);
-                let errorMessage = 'Login failed. Please try again.';
-
-                if (error.code === 'auth/user-not-found') {
-                    errorMessage = 'No account found with this email.';
-                } else if (error.code === 'auth/wrong-password') {
-                    errorMessage = 'Incorrect password.';
-                } else if (error.code === 'auth/invalid-email') {
-                    errorMessage = 'Invalid email address.';
-                } else if (error.code === 'auth/too-many-requests') {
-                    errorMessage = 'Too many failed attempts. Please try again later.';
-                }
-
-                showAuthAlert(errorMessage, 'error');
-                loginBtn.disabled = false;
-                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
-            }
-        }
-
-        // Handle signup
-        async function handleSignup(event) {
-            event.preventDefault();
-            
-            const name = document.getElementById('signupName').value;
-            const email = document.getElementById('signupEmail').value;
-            const password = document.getElementById('signupPassword').value;
-            const role = document.getElementById('signupRole').value;
-            const signupBtn = document.getElementById('signupBtn');
-
-            signupBtn.disabled = true;
-            signupBtn.innerHTML = '<span class="loading-spinner"></span> Creating Account...';
-
-            try {
-                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                const user = userCredential.user;
-
-                await db.collection('users').doc(user.uid).set({
-                    uid: user.uid,
-                    name: name,
-                    email: email,
-                    role: role,
-                    status: 'pending',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    lastLogin: null
-                });
-
-                await db.collection('approval_requests').add({
-                    userId: user.uid,
-                    name: name,
-                    email: email,
-                    role: role,
-                    requestedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    status: 'pending'
-                });
-
-                await auth.signOut();
-
-                showAuthAlert('Account created successfully! Please wait for administrator approval before logging in.', 'success');
-
-                setTimeout(() => {
-                    document.getElementById('signupName').value = '';
-                    document.getElementById('signupEmail').value = '';
-                    document.getElementById('signupPassword').value = '';
-                    document.getElementById('signupRole').value = '';
-                    switchAuthTab('login');
-                }, 3000);
-
-                signupBtn.disabled = false;
-                signupBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
-
-            } catch (error) {
-                console.error('Signup error:', error);
-                let errorMessage = 'Signup failed. Please try again.';
-
-                if (error.code === 'auth/email-already-in-use') {
-                    errorMessage = 'An account with this email already exists.';
-                } else if (error.code === 'auth/weak-password') {
-                    errorMessage = 'Password should be at least 6 characters.';
-                } else if (error.code === 'auth/invalid-email') {
-                    errorMessage = 'Invalid email address.';
-                }
-
-                showAuthAlert(errorMessage, 'error');
-                signupBtn.disabled = false;
-                signupBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
-            }
-        }
-
-        // Logout function
-        async function logout() {
-            if (confirm('Are you sure you want to logout?')) {
-                try {
-                    await auth.signOut();
-                    currentUser = null;
-                    showAuthScreen();
-                } catch (error) {
-                    console.error('Logout error:', error);
-                    alert('Error logging out. Please try again.');
-                }
-            }
-        }
-
-        // Update UI based on user role
-        function updateUIForRole(role) {
-            // Update user name display
-            document.getElementById('userName').textContent = `${currentUser.name} (${role})`;
-
-            // Navigation access control
-            const navItems = {
-                'navReceipts': ['director', 'admin'],
-                'navStudents': ['director', 'admin', 'staff'],
-                'navExpense': ['director', 'admin'],
-                'navAssets': ['director', 'admin'],
-                'navStaff': ['director', 'admin'],
-                'navPayroll': ['director'],
-                'navFinancials': ['director']
-            };
-
-            // Quick action access control
-            const actionItems = {
-                'actionAddStudent': ['director', 'admin', 'staff'],
-                'actionIssueReceipt': ['director', 'admin'],
-                'actionAddExpense': ['director', 'admin'],
-                'actionManageStaff': ['director', 'admin'],
-                'actionViewReports': ['director']
-            };
-
-            // Disable navigation items based on role
-            for (const [id, allowedRoles] of Object.entries(navItems)) {
-                const element = document.getElementById(id);
-                if (element && !allowedRoles.includes(role)) {
-                    element.classList.add('disabled');
-                    element.title = 'Access restricted';
-                    element.onclick = (e) => {
-                        e.preventDefault();
-                        showStatus('You do not have permission to access this page.', 'error');
-                    };
-                }
-            }
-
-            // Disable quick actions based on role
-            for (const [id, allowedRoles] of Object.entries(actionItems)) {
-                const element = document.getElementById(id);
-                if (element && !allowedRoles.includes(role)) {
-                    element.style.opacity = '0.5';
-                    element.style.pointerEvents = 'none';
-                    element.title = 'Access restricted';
-                }
-            }
-
-            // Show read-only banner for visitors
-            if (role === 'visitor') {
-                document.getElementById('readonlyBanner').classList.add('show');
-                
-                // Disable all term buttons for visitors
-                document.querySelectorAll('.term-btn').forEach(btn => {
-                    btn.disabled = true;
-                    btn.style.opacity = '0.5';
-                    btn.style.cursor = 'not-allowed';
-                });
-
-                // Disable refresh button for visitors
-                document.getElementById('refreshBtn').style.display = 'none';
-            }
-        }
-
-        // ============================================
-        // DASHBOARD FUNCTIONALITY
-        // ============================================
 
         // Global state
         let currentTerm = parseInt(sessionStorage.getItem('heriwadi_current_term')) || 2;
@@ -2125,20 +1302,23 @@
 
         // Initialize the dashboard
         document.addEventListener('DOMContentLoaded', function() {
+            // Show loading screen initially
+            const loadingScreen = document.getElementById('loadingScreen');
+            
             // Initialize term from storage
             initializeTermFromStorage();
             
-            // Loading screen will be hidden by auth state change
-            setTimeout(() => {
-                const loadingScreen = document.getElementById('loadingScreen');
-                if (loadingScreen) {
+            // Load dashboard data
+            loadDashboardData().then(() => {
+                // Hide loading screen after data is loaded
+                setTimeout(() => {
                     loadingScreen.classList.add('hidden');
-                }
-            }, 2000);
+                }, 1000);
+            });
 
-            // Auto-refresh every 5 minutes (only if user is authenticated)
+            // Auto-refresh every 5 minutes
             setInterval(() => {
-                if (!document.hidden && currentUser) {
+                if (!document.hidden) {
                     loadDashboardData();
                 }
             }, 5 * 60 * 1000);
@@ -2146,13 +1326,13 @@
 
         // Handle page visibility changes
         document.addEventListener('visibilitychange', function() {
-            if (!document.hidden && currentUser) {
+            if (!document.hidden) {
                 // Refresh data when page becomes visible
                 setTimeout(loadDashboardData, 1000);
             }
         });
 
-        console.log('Heriwadi School Management Dashboard with Authentication loaded successfully');
+        console.log('Heriwadi School Management Dashboard loaded successfully');
     </script>
 </body>
 </html>
