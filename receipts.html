@@ -2459,13 +2459,3 @@
   </script>
 </body>
 </html>
-      ("Error in student listener:", error)
-      );
-      
-      const receiptsCollection = getReceiptsCollection();
-      receiptListener = receiptsCollection.onSnapshot(
-        (snapshot) => {
-          console.log("Receipt data changed - refreshing UI");
-          updateReceiptTable();
-        },
-        (error) => console.error
