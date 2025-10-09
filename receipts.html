@@ -1436,6 +1436,14 @@
 
                     const userData = userDoc.data();
                     
+                    // TEMPORARY BYPASS FOR DEVELOPMENT - REMOVE IN PRODUCTION
+                    if (userData.email === 'cephasduke64@gmail.com' && userData.status === 'pending') {
+                        await db.collection('users').doc(user.uid).update({
+                            status: 'approved'
+                        });
+                        userData.status = 'approved';
+                    }
+                    
                     if (userData.status !== 'approved') {
                         await auth.signOut();
                         showAuthAlert('Your account is pending approval. Please wait for administrator verification.', 'error');
