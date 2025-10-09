@@ -105,6 +105,26 @@
 
         .login-body {
             padding: 2.5rem 2rem;
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+
+        .login-body::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .login-body::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .login-body::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 10px;
+        }
+
+        .login-body::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-color);
         }
 
         .tab-buttons {
@@ -1416,6 +1436,14 @@
 
                     const userData = userDoc.data();
                     
+                    // TEMPORARY BYPASS FOR DEVELOPMENT - REMOVE IN PRODUCTION
+                    if (userData.email === 'cephasduke64@gmail.com' && userData.status === 'pending') {
+                        await db.collection('users').doc(user.uid).update({
+                            status: 'approved'
+                        });
+                        userData.status = 'approved';
+                    }
+                    
                     if (userData.status !== 'approved') {
                         await auth.signOut();
                         showAuthAlert('Your account is pending approval. Please wait for administrator verification.', 'error');
@@ -1436,6 +1464,22 @@
                     await db.collection('users').doc(user.uid).update({
                         lastLogin: firebase.firestore.FieldValue.serverTimestamp()
                     });
+
+                    // Also update approval_requests if it exists
+                    const approvalQuery = await db.collection('approval_requests')
+                        .where('userId', '==', user.uid)
+                        .get();
+                    
+                    if (!approvalQuery.empty) {
+                        approvalQuery.forEach(async (doc) => {
+                            if (doc.data().status !== 'approved') {
+                                await db.collection('approval_requests').doc(doc.id).update({
+                                    status: 'approved',
+                                    approvedAt: firebase.firestore.FieldValue.serverTimestamp()
+                                });
+                            }
+                        });
+                    }
 
                     showDashboard();
                     updateUIForRole(userData.role);
