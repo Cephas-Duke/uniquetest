@@ -1,2158 +1,2471 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | Heriwadi Christian Schools Ltd</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root {
-            --primary-color: #005fa3;
-            --secondary-color: #004080;
-            --accent-color: #00a8e8;
-            --success-color: #28a745;
-            --danger-color: #dc3545;
-            --warning-color: #ffc107;
-            --info-color: #17a2b8;
-            --light-color: #f8f9fa;
-            --dark-color: #343a40;
-            --border-radius: 12px;
-            --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            --box-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.15);
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            color: #333;
-            line-height: 1.6;
-            min-height: 100vh;
-        }
-
-        /* ========================================
-           LOGIN/SIGNUP SCREEN STYLES
-        ======================================== */
-        #authScreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #005fa3 0%, #004080 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-            padding: 20px;
-        }
-
-        #authScreen.hidden {
-            display: none;
-        }
-
-        .login-container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-            max-width: 450px;
-            width: 100%;
-            animation: slideIn 0.5s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .login-header {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            padding: 2.5rem 2rem;
-            text-align: center;
-        }
-
-        .login-header i {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            display: block;
-        }
-
-        .login-header h1 {
-            font-size: 1.8rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .login-header p {
-            opacity: 0.9;
-            font-size: 0.95rem;
-        }
-
-        .login-body {
-            padding: 2.5rem 2rem;
-            max-height: calc(100vh - 200px);
-            overflow-y: auto;
-        }
-
-        .login-body::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .login-body::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-
-        .login-body::-webkit-scrollbar-thumb {
-            background: var(--primary-color);
-            border-radius: 10px;
-        }
-
-        .login-body::-webkit-scrollbar-thumb:hover {
-            background: var(--secondary-color);
-        }
-
-        .tab-buttons {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 0.75rem;
-            border: 2px solid var(--primary-color);
-            background: transparent;
-            color: var(--primary-color);
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .tab-btn:hover {
-            background: rgba(0, 95, 163, 0.1);
-        }
-
-        .tab-btn.active {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .form-container {
-            display: none;
-        }
-
-        .form-container.active {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: #333;
-            font-weight: 500;
-            font-size: 0.95rem;
-        }
-
-        .form-group label i {
-            margin-right: 0.5rem;
-            color: var(--primary-color);
-        }
-
-        .input-wrapper {
-            position: relative;
-        }
-
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 0.875rem 1rem;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background: #f8f9fa;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            background: white;
-            box-shadow: 0 0 0 3px rgba(0, 95, 163, 0.1);
-        }
-
-        .password-toggle {
-            position: absolute;
-            right: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: #666;
-            transition: color 0.3s ease;
-        }
-
-        .password-toggle:hover {
-            color: var(--primary-color);
-        }
-
-        .submit-btn {
-            width: 100%;
-            padding: 1rem;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 1rem;
-        }
-
-        .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(0, 95, 163, 0.4);
-        }
-
-        .submit-btn:active {
-            transform: translateY(0);
-        }
-
-        .submit-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .auth-alert {
-            padding: 1rem;
-            border-radius: 10px;
-            margin-bottom: 1.5rem;
-            display: none;
-            animation: slideDown 0.3s ease;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .auth-alert.show {
-            display: block;
-        }
-
-        .auth-alert.success {
-            background: rgba(40, 167, 69, 0.1);
-            color: var(--success-color);
-            border-left: 4px solid var(--success-color);
-        }
-
-        .auth-alert.error {
-            background: rgba(220, 53, 69, 0.1);
-            color: var(--danger-color);
-            border-left: 4px solid var(--danger-color);
-        }
-
-        .auth-alert.info {
-            background: rgba(23, 162, 184, 0.1);
-            color: var(--info-color);
-            border-left: 4px solid var(--info-color);
-        }
-
-        .role-info {
-            background: #f8f9fa;
-            padding: 1rem;
-            border-radius: 10px;
-            margin-bottom: 1.5rem;
-            font-size: 0.9rem;
-            color: #666;
-        }
-
-        .role-info strong {
-            color: var(--primary-color);
-            display: block;
-            margin-bottom: 0.5rem;
-        }
-
-        .forgot-password {
-            text-align: center;
-            margin-top: 1rem;
-        }
-
-        .forgot-password a {
-            color: var(--primary-color);
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
-
-        .forgot-password a:hover {
-            text-decoration: underline;
-        }
-
-        .loading-spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.8s linear infinite;
-            margin-right: 0.5rem;
-        }
-
-        /* ========================================
-           MAIN DASHBOARD STYLES
-        ======================================== */
-        #dashboardScreen {
-            display: none;
-        }
-
-        #dashboardScreen.active {
-            display: block;
-        }
-
-        /* Loading Screen */
-        .loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            color: white;
-            transition: opacity 0.5s ease;
-        }
-
-        .loading-screen.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .loading-logo {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            animation: pulse 2s infinite;
-        }
-
-        .loading-text {
-            font-size: 1.2rem;
-            font-weight: 500;
-            margin-bottom: 2rem;
-        }
-
-        .loading-spinner-large {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s linear infinite;
-        }
-
-        /* Header */
-        header {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            padding: 2rem;
-            text-align: center;
-            box-shadow: var(--box-shadow);
-            position: relative;
-            overflow: hidden;
-        }
-
-        header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
-            animation: shimmer 3s infinite;
-        }
-
-        header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-            font-weight: 700;
-            position: relative;
-            z-index: 1;
-        }
-
-        header p {
-            font-size: 1.1rem;
-            opacity: 0.9;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Navigation */
-        nav {
-            background: var(--secondary-color);
-            padding: 0.75rem 1.5rem;
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        nav a {
-            color: rgba(255, 255, 255, 0.9);
-            text-decoration: none;
-            padding: 0.75rem 1.25rem;
-            border-radius: var(--border-radius);
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.95rem;
-            font-weight: 500;
-            position: relative;
-            overflow: hidden;
-        }
-
-        nav a::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        nav a:hover::before {
-            left: 100%;
-        }
-
-        nav a:hover, nav a.active {
-            background: var(--accent-color);
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 168, 232, 0.4);
-        }
-
-        nav a.active {
-            font-weight: 600;
-        }
-
-        nav a.disabled {
-            opacity: 0.4;
-            pointer-events: none;
-        }
-
-        .user-info {
-            margin-left: auto;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            color: rgba(255, 255, 255, 0.9);
-            font-weight: 500;
-        }
-
-        .user-info .user-badge {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .logout-btn {
-            background: rgba(220, 53, 69, 0.2);
-            border: 2px solid #dc3545;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: 600;
-        }
-
-        .logout-btn:hover {
-            background: #dc3545;
-            transform: translateY(-2px);
-        }
-
-        /* Container */
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 2rem 1.5rem;
-        }
-
-        /* Term Selector */
-        .term-selector {
-            background: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 1rem;
-            animation: slideInDown 0.6s ease-out;
-        }
-
-        .term-selector h3 {
-            color: var(--primary-color);
-            margin: 0;
-            font-size: 1.3rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .term-buttons {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        .term-btn {
-            padding: 0.75rem 1.5rem;
-            border: 2px solid var(--primary-color);
-            background: transparent;
-            color: var(--primary-color);
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            transition: var(--transition);
-            font-weight: 600;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .term-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: var(--primary-color);
-            transition: left 0.3s ease;
-            z-index: -1;
-        }
-
-        .term-btn:hover::before,
-        .term-btn.active::before {
-            left: 0;
-        }
-
-        .term-btn:hover,
-        .term-btn.active {
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 95, 163, 0.3);
-        }
-
-        .current-term-info {
-            background: linear-gradient(135deg, var(--info-color), #138496);
-            color: white;
-            padding: 0.75rem 1.25rem;
-            border-radius: var(--border-radius);
-            font-weight: 600;
-            box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);
-        }
-
-        /* Dashboard Grid */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        /* Metric Cards */
-        .metric-card {
-            background: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            padding: 2rem;
-            transition: var(--transition);
-            position: relative;
-            overflow: hidden;
-            animation: slideInUp 0.6s ease-out;
-            animation-fill-mode: backwards;
-        }
-
-        .metric-card:nth-child(1) { animation-delay: 0.1s; }
-        .metric-card:nth-child(2) { animation-delay: 0.2s; }
-        .metric-card:nth-child(3) { animation-delay: 0.3s; }
-        .metric-card:nth-child(4) { animation-delay: 0.4s; }
-
-        .metric-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-        }
-
-        .metric-card:hover {
-            transform: translateY(-8px);
-            box-shadow: var(--box-shadow-hover);
-        }
-
-        .metric-card:hover .metric-icon {
-            transform: scale(1.1) rotate(5deg);
-        }
-
-        .metric-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1.5rem;
-        }
-
-        .metric-info h3 {
-            color: var(--dark-color);
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .metric-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--primary-color);
-            line-height: 1;
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: baseline;
-            gap: 0.25rem;
-        }
-
-        .metric-value .loading {
-            font-size: 1rem;
-            color: #666;
-        }
-
-        .metric-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            color: white;
-            transition: var(--transition);
-        }
-
-        .students-icon { background: linear-gradient(135deg, var(--success-color), #20c997); }
-        .staff-icon { background: linear-gradient(135deg, var(--warning-color), #fd7e14); }
-        .revenue-icon { background: linear-gradient(135deg, var(--info-color), #138496); }
-        .expense-icon { background: linear-gradient(135deg, var(--danger-color), #c82333); }
-
-        .metric-trend {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.85rem;
-            font-weight: 500;
-        }
-
-        .trend-up { color: var(--success-color); }
-        .trend-down { color: var(--danger-color); }
-
-        /* Charts Section */
-        .charts-section {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .chart-card {
-            background: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            padding: 2rem;
-            animation: slideInLeft 0.6s ease-out;
-        }
-
-        .chart-card:nth-child(2) {
-            animation-name: slideInRight;
-        }
-
-        .chart-title {
-            font-size: 1.3rem;
-            color: var(--primary-color);
-            margin-bottom: 1.5rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .chart-container {
-            position: relative;
-            height: 400px;
-        }
-
-        .mini-chart-container {
-            position: relative;
-            height: 200px;
-        }
-
-        /* Recent Activity */
-        .activity-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 1rem;
-            border-radius: var(--border-radius);
-            transition: var(--transition);
-            margin-bottom: 0.5rem;
-        }
-
-        .activity-item:hover {
-            background: #f8f9fa;
-            transform: translateX(5px);
-        }
-
-        .activity-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            flex-shrink: 0;
-        }
-
-        .activity-content {
-            flex: 1;
-        }
-
-        .activity-title {
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-            color: var(--dark-color);
-        }
-
-        .activity-time {
-            font-size: 0.85rem;
-            color: #666;
-        }
-
-        /* Quick Actions */
-        .quick-actions {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-
-        .action-btn {
-            background: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            padding: 1.5rem;
-            text-decoration: none;
-            color: var(--dark-color);
-            transition: var(--transition);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            gap: 1rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .action-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-            transform: scaleX(0);
-            transition: transform 0.3s ease;
-        }
-
-        .action-btn:hover::before {
-            transform: scaleX(1);
-        }
-
-        .action-btn:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--box-shadow-hover);
-            color: var(--primary-color);
-        }
-
-        .action-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.2rem;
-            transition: var(--transition);
-        }
-
-        .action-btn:hover .action-icon {
-            transform: scale(1.1);
-        }
-
-        /* Status Messages */
-        .status-message {
-            padding: 1rem 1.5rem;
-            border-radius: var(--border-radius);
-            margin-bottom: 1rem;
-            font-weight: 500;
-            display: none;
-            animation: slideInDown 0.3s ease-out;
-        }
-
-        .status-message.show {
-            display: block;
-        }
-
-        .status-message.success {
-            background: rgba(40, 167, 69, 0.1);
-            color: var(--success-color);
-            border-left: 4px solid var(--success-color);
-        }
-
-        .status-message.error {
-            background: rgba(220, 53, 69, 0.1);
-            color: var(--danger-color);
-            border-left: 4px solid var(--danger-color);
-        }
-
-        .status-message.info {
-            background: rgba(23, 162, 184, 0.1);
-            color: var(--info-color);
-            border-left: 4px solid var(--info-color);
-        }
-
-        /* Refresh Button */
-        .refresh-btn {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-            color: white;
-            border: none;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: var(--transition);
-            box-shadow: var(--box-shadow);
-            z-index: 100;
-        }
-
-        .refresh-btn:hover {
-            transform: scale(1.1);
-            box-shadow: var(--box-shadow-hover);
-        }
-
-        .refresh-btn.loading {
-            animation: spin 1s linear infinite;
-        }
-
-        /* Read-only banner for visitors */
-        .readonly-banner {
-            background: rgba(255, 193, 7, 0.9);
-            color: #856404;
-            padding: 1rem;
-            text-align: center;
-            font-weight: 600;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            display: none;
-        }
-
-        .readonly-banner.show {
-            display: block;
-        }
-
-        /* Animations */
-        @keyframes shimmer {
-            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        @keyframes slideInDown {
-            from { opacity: 0; transform: translateY(-30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes slideInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes slideInLeft {
-            from { opacity: 0; transform: translateX(-30px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(30px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        /* Responsive Design */
-        @media (max-width: 1200px) {
-            .charts-section {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            nav {
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-
-            nav a {
-                justify-content: center;
-                padding: 0.5rem 1rem;
-                width: 100%;
-            }
-
-            .user-info {
-                margin-left: 0;
-                width: 100%;
-                flex-direction: column;
-            }
-
-            .container {
-                padding: 1rem;
-            }
-
-            .term-selector {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .metric-card {
-                padding: 1.5rem;
-            }
-
-            .metric-value {
-                font-size: 2rem;
-            }
-
-            header h1 {
-                font-size: 2rem;
-            }
-
-            .chart-container {
-                height: 300px;
-            }
-
-            .quick-actions {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 480px) {
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .quick-actions {
-                grid-template-columns: 1fr;
-            }
-
-            .metric-value {
-                font-size: 1.8rem;
-            }
-
-            .tab-buttons {
-                flex-direction: column;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>H.C.S | School Office Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --primary-color: #005fa3;
+      --secondary-color: #004080;
+      --accent-color: #00a8e8;
+      --light-color: #f8f9fa;
+      --dark-color: #343a40;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --warning-color: #ffc107;
+      --info-color: #17a2b8;
+      --border-radius: 8px;
+      --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f5f7fa;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 1.5rem;
+      text-align: center;
+      box-shadow: var(--box-shadow);
+      position: relative;
+      z-index: 10;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      font-size: 1rem;
+      opacity: 0.9;
+    }
+
+    nav {
+      background: var(--secondary-color);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      box-shadow: var(--box-shadow);
+      position: sticky;
+      top: 0;
+      z-index: 9;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: var(--border-radius);
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    nav a:hover {
+      background: var(--accent-color);
+      transform: translateY(-2px);
+    }
+
+    nav a.active {
+      background: var(--accent-color);
+      font-weight: bold;
+    }
+
+    nav a i {
+      font-size: 1rem;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .term-selector {
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      padding: 1rem 1.5rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .term-selector h3 {
+      color: var(--primary-color);
+      margin: 0;
+    }
+
+    .term-buttons {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .term-btn {
+      padding: 0.5rem 1rem;
+      border: 2px solid var(--primary-color);
+      background: transparent;
+      color: var(--primary-color);
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: var(--transition);
+      font-weight: 500;
+    }
+
+    .term-btn.active {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .term-btn:hover {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .current-term-info {
+      background: var(--info-color);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: var(--border-radius);
+      font-weight: 500;
+    }
+
+    .card {
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      transition: var(--transition);
+    }
+
+    .card:hover {
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+      transform: translateY(-3px);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid #eee;
+    }
+
+    .card-title {
+      font-size: 1.5rem;
+      color: var(--primary-color);
+      margin: 0;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: var(--border-radius);
+      background: var(--primary-color);
+      color: white;
+      cursor: pointer;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .btn:hover {
+      background: var(--secondary-color);
+      transform: translateY(-2px);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--primary-color);
+      color: var(--primary-color);
+    }
+
+    .btn-outline:hover {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .btn-success {
+      background: var(--success-color);
+    }
+
+    .btn-success:hover {
+      background: #218838;
+    }
+
+    .btn-danger {
+      background: var(--danger-color);
+    }
+
+    .btn-danger:hover {
+      background: #c82333;
+    }
+
+    .btn-warning {
+      background: var(--warning-color);
+      color: var(--dark-color);
+    }
+
+    .btn-warning:hover {
+      background: #e0a800;
+    }
+
+    .btn-info {
+      background: var(--info-color);
+    }
+
+    .btn-info:hover {
+      background: #138496;
+    }
+
+    .btn-sm {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--dark-color);
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      font-size: 1rem;
+      transition: var(--transition);
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px rgba(0, 168, 232, 0.2);
+    }
+
+    .search-box {
+      position: relative;
+      margin-bottom: 1.5rem;
+      max-width: 400px;
+    }
+
+    .search-box input {
+      padding-left: 2.5rem;
+    }
+
+    .search-box i {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #777;
+    }
+
+    .status-message {
+      padding: 0.75rem 1rem;
+      border-radius: var(--border-radius);
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+
+    .status-message.success {
+      background-color: rgba(40, 167, 69, 0.1);
+      color: var(--success-color);
+      border-left: 4px solid var(--success-color);
+    }
+
+    .status-message.error {
+      background-color: rgba(220, 53, 69, 0.1);
+      color: var(--danger-color);
+      border-left: 4px solid var(--danger-color);
+    }
+
+    .status-message.loading {
+      background-color: rgba(23, 162, 184, 0.1);
+      color: var(--info-color);
+      border-left: 4px solid var(--info-color);
+    }
+
+    .status-message.info {
+      background-color: rgba(0, 123, 255, 0.1);
+      color: #0069d9;
+      border-left: 4px solid #0069d9;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      font-size: 0.95rem;
+    }
+
+    th, td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+
+    th {
+      background-color: var(--primary-color);
+      color: white;
+      font-weight: 500;
+    }
+
+    tr:hover {
+      background-color: #f8f9fa;
+    }
+
+    .class-section {
+      margin-bottom: 2rem;
+    }
+
+    .class-header {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 0.75rem 1rem;
+      border-radius: var(--border-radius) var(--border-radius) 0 0;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: var(--transition);
+    }
+
+    .class-header:hover {
+      background-color: var(--secondary-color);
+    }
+
+    .class-header h3 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+
+    .class-header .badge {
+      background: white;
+      color: var(--primary-color);
+      padding: 0.25rem 0.5rem;
+      border-radius: 1rem;
+      font-size: 0.85rem;
+      font-weight: bold;
+    }
+
+    .class-content {
+      border: 1px solid #ddd;
+      border-top: none;
+      border-radius: 0 0 var(--border-radius) var(--border-radius);
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal.show {
+      display: flex;
+      opacity: 1;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: var(--border-radius);
+      width: 90%;
+      max-width: 700px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      transform: translateY(-20px);
+      transition: transform 0.3s ease;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal.show .modal-content {
+      transform: translateY(0);
+    }
+
+    .modal-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      margin: 0;
+      color: var(--primary-color);
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #777;
+      transition: var(--transition);
+    }
+
+    .modal-close:hover {
+      color: var(--danger-color);
+      transform: rotate(90deg);
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+    }
+
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid #eee;
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .fee-inputs {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .receipt-preview {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      margin-top: 1.5rem;
+      font-family: 'Courier New', monospace;
+      white-space: pre-wrap;
+    }
+
+    .print-only {
+      display: none;
+    }
+
+    .loading-spinner {
+      text-align: center;
+      padding: 2rem;
+      color: var(--info-color);
+    }
+
+    .student-item {
+      list-style: none;
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      .print-only, .print-only * {
+        visibility: visible;
+      }
+      .print-only {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 768px) {
+      nav {
+        padding: 0.75rem;
+      }
+      nav a {
+        padding: 0.5rem;
+        font-size: 0.85rem;
+      }
+      .container {
+        padding: 0 1rem;
+      }
+      .card {
+        padding: 1rem;
+      }
+      .btn-group {
+        flex-direction: column;
+        width: 100%;
+      }
+      .btn {
+        width: 100%;
+        justify-content: center;
+      }
+      table {
+        font-size: 0.85rem;
+      }
+      th, td {
+        padding: 0.5rem;
+      }
+      .term-selector {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .term-buttons {
+        width: 100%;
+        justify-content: space-between;
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.5s ease forwards;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .slide-in {
+      animation: slideIn 0.5s ease forwards;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
-    <!-- Read-only banner for visitors -->
-    <div id="readonlyBanner" class="readonly-banner">
-        <i class="fas fa-eye"></i> You are in READ-ONLY mode (Visitor Access)
+  <header>
+    <h1>Heriwadi Christian Schools Ltd</h1>
+    <p>Fee Receipt Management System</p>
+  </header>
+
+  <nav>
+    <a href="index.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+    <a href="receipts.html" class="active"><i class="fas fa-receipt"></i> Receipts</a>
+    <a href="students.html"><i class="fas fa-users"></i> Students</a>
+    <a href="expense.html"><i class="fas fa-money-bill-wave"></i> Expenses</a>
+    <a href="assets.html"><i class="fas fa-laptop-house"></i> Assets</a>
+    <a href="staff.html"><i class="fas fa-user-tie"></i> Staff</a>
+    <a href="payroll.html"><i class="fas fa-money-check-alt"></i> Payroll</a>
+    <a href="financials.html"><i class="fas fa-money-check-alt"></i> Financials</a>
+  </nav>
+
+  <div class="container">
+    <!-- Term Selector -->
+    <div class="term-selector slide-in">
+      <div>
+        <h3><i class="fas fa-calendar-alt"></i> Academic Term</h3>
+        <div class="current-term-info">
+          Current Academic Year: <span id="currentYear">2024</span>
+        </div>
+      </div>
+      <div class="term-buttons">
+        <button class="term-btn" data-term="1" onclick="switchTerm(1)">Term 1</button>
+        <button class="term-btn active" data-term="2" onclick="switchTerm(2)">Term 2</button>
+        <button class="term-btn" data-term="3" onclick="switchTerm(3)">Term 3</button>
+      </div>
     </div>
 
-    <!-- AUTH SCREEN (Login/Signup) -->
-    <div id="authScreen">
-        <div class="login-container">
-            <div class="login-header">
-                <i class="fas fa-school"></i>
-                <h1>Heriwadi Christian Schools</h1>
-                <p>School Management System</p>
-            </div>
-
-            <div class="login-body">
-                <div id="authAlert" class="auth-alert"></div>
-
-                <div class="tab-buttons">
-                    <button class="tab-btn active" onclick="switchAuthTab('login')">Login</button>
-                    <button class="tab-btn" onclick="switchAuthTab('signup')">Sign Up</button>
-                </div>
-
-                <!-- Login Form -->
-                <div id="loginForm" class="form-container active">
-                    <form onsubmit="handleLogin(event)">
-                        <div class="form-group">
-                            <label><i class="fas fa-envelope"></i> Email Address</label>
-                            <input type="email" id="loginEmail" required placeholder="Enter your email">
-                        </div>
-
-                        <div class="form-group">
-                            <label><i class="fas fa-lock"></i> Password</label>
-                            <div class="input-wrapper">
-                                <input type="password" id="loginPassword" required placeholder="Enter your password">
-                                <i class="fas fa-eye password-toggle" onclick="togglePassword('loginPassword', this)"></i>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="submit-btn" id="loginBtn">
-                            <i class="fas fa-sign-in-alt"></i> Login
-                        </button>
-                    </form>
-
-                    <div class="forgot-password">
-                        <a href="#" onclick="showAuthAlert('Please contact the administrator to reset your password.', 'info'); return false;">
-                            Forgot Password?
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Signup Form -->
-                <div id="signupForm" class="form-container">
-                    <form onsubmit="handleSignup(event)">
-                        <div class="form-group">
-                            <label><i class="fas fa-user"></i> Full Name</label>
-                            <input type="text" id="signupName" required placeholder="Enter your full name">
-                        </div>
-
-                        <div class="form-group">
-                            <label><i class="fas fa-envelope"></i> Email Address</label>
-                            <input type="email" id="signupEmail" required placeholder="Enter your email">
-                        </div>
-
-                        <div class="form-group">
-                            <label><i class="fas fa-lock"></i> Password</label>
-                            <div class="input-wrapper">
-                                <input type="password" id="signupPassword" required placeholder="Create a password (min 6 characters)" minlength="6">
-                                <i class="fas fa-eye password-toggle" onclick="togglePassword('signupPassword', this)"></i>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label><i class="fas fa-user-tag"></i> Role</label>
-                            <select id="signupRole" required>
-                                <option value="">Select your role</option>
-                                <option value="visitor">Visitor (Dashboard only)</option>
-                                <option value="staff">Staff (Dashboard & Students)</option>
-                                <option value="admin">Office Admin (All except Financials)</option>
-                                <option value="director">Director (Full Access)</option>
-                            </select>
-                        </div>
-
-                        <button type="submit" class="submit-btn" id="signupBtn">
-                            <i class="fas fa-user-plus"></i> Create Account
-                        </button>
-                    </form>
-
-                    <div class="role-info" style="margin-top: 1.5rem; background: rgba(255, 193, 7, 0.1); border-left: 4px solid var(--warning-color);">
-                        <i class="fas fa-info-circle" style="color: var(--warning-color);"></i>
-                        <strong style="color: #856404;">Account Approval Required</strong>
-                        Your account will be reviewed by an administrator before activation.
-                    </div>
-                </div>
-            </div>
+    <div class="card slide-in">
+      <div class="card-header">
+        <h2 class="card-title">Issue Fee Receipt - <span id="currentTermDisplay">Term 2</span></h2>
+        <div class="btn-group">
+          <button class="btn btn-info" onclick="openStudentManager()">
+            <i class="fas fa-user-plus"></i> Manage Students
+          </button>
+          <button class="btn btn-warning" onclick="exportByClassPDF()">
+            <i class="fas fa-file-pdf"></i> Export by Class
+          </button>
+          <button class="btn btn-warning" onclick="exportConsolidatedPDF()">
+            <i class="fas fa-file-archive"></i> Export All
+          </button>
+          <button class="btn btn-info" onclick="exportToExcel()">
+            <i class="fas fa-file-excel"></i> Export to Excel
+          </button>
+          <button class="btn btn-success" onclick="window.print()">
+            <i class="fas fa-print"></i> Print
+          </button>
         </div>
-    </div>
+      </div>
 
-    <!-- DASHBOARD SCREEN -->
-    <div id="dashboardScreen">
-        <!-- Loading Screen -->
-        <div class="loading-screen" id="loadingScreen">
-            <div class="loading-logo">
-                <i class="fas fa-school"></i>
-            </div>
-            <div class="loading-text">Loading Dashboard...</div>
-            <div class="loading-spinner-large"></div>
+      <div id="statusMessage" class="status-message"></div>
+
+      <form id="receiptForm">
+        <div class="grid">
+          <div class="form-group">
+            <label for="studentInput"><i class="fas fa-user-graduate"></i> Student Name</label>
+            <input type="text" id="studentInput" list="studentList" required placeholder="Type or select a student..." />
+            <datalist id="studentList"></datalist>
+          </div>
+
+          <div class="form-group">
+            <label for="amountPaid"><i class="fas fa-money-bill-wave"></i> Amount Paid (KES)</label>
+            <input type="number" id="amountPaid" required min="1" step="1" />
+          </div>
+
+          <div class="form-group">
+            <label for="paymentMode"><i class="fas fa-credit-card"></i> Payment Mode</label>
+            <select id="paymentMode" required>
+              <option value="">Select Payment Mode</option>
+              <option value="Cash">Cash</option>
+              <option value="M-Pesa">M-Pesa</option>
+              <option value="Bank">Bank</option>
+              <option value="Cheque">Cheque</option>
+            </select>
+          </div>
         </div>
 
-        <header>
-            <h1>Heriwadi Christian Schools Ltd</h1>
-            <p>Comprehensive School Management Dashboard</p>
-        </header>
-
-        <nav id="mainNav">
-            <a href="#" class="active" onclick="return false;"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-            <a href="receipts.html" id="navReceipts"><i class="fas fa-receipt"></i> Receipts</a>
-            <a href="students.html" id="navStudents"><i class="fas fa-users"></i> Students</a>
-            <a href="expense.html" id="navExpense"><i class="fas fa-money-bill-wave"></i> Expenses</a>
-            <a href="assets.html" id="navAssets"><i class="fas fa-laptop-house"></i> Assets</a>
-            <a href="staff.html" id="navStaff"><i class="fas fa-user-tie"></i> Staff</a>
-            <a href="payroll.html" id="navPayroll"><i class="fas fa-money-check-alt"></i> Payroll</a>
-            <a href="financials.html" id="navFinancials"><i class="fas fa-chart-line"></i> Financials</a>
-            
-            <div class="user-info" id="userInfo">
-                <div class="user-badge">
-                    <i class="fas fa-user"></i>
-                    <span id="userName">Loading...</span>
-                </div>
-                <button class="logout-btn" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </button>
-            </div>
-        </nav>
-
-        <div class="container">
-            <!-- Status Messages -->
-            <div id="statusMessage" class="status-message"></div>
-
-            <!-- Term Selector -->
-            <div class="term-selector">
-                <div>
-                    <h3><i class="fas fa-calendar-alt"></i> Academic Term</h3>
-                    <div class="current-term-info">
-                        Current Academic Year: <span id="currentYear">2024</span>
-                    </div>
-                </div>
-                <div class="term-buttons">
-                    <button class="term-btn" data-term="1" onclick="switchTerm(1)">Term 1</button>
-                    <button class="term-btn active" data-term="2" onclick="switchTerm(2)">Term 2</button>
-                    <button class="term-btn" data-term="3" onclick="switchTerm(3)">Term 3</button>
-                </div>
-            </div>
-
-            <!-- Dashboard Grid -->
-            <div class="dashboard-grid">
-                <div class="metric-card">
-                    <div class="metric-header">
-                        <div class="metric-info">
-                            <h3>Total Students</h3>
-                            <div class="metric-value" id="totalStudents">
-                                <span class="loading">Loading...</span>
-                            </div>
-                            <div class="metric-trend">
-                                <span id="studentTrend">--</span>
-                            </div>
-                        </div>
-                        <div class="metric-icon students-icon">
-                            <i class="fas fa-user-graduate"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="metric-card">
-                    <div class="metric-header">
-                        <div class="metric-info">
-                            <h3>Active Staff</h3>
-                            <div class="metric-value" id="totalStaff">
-                                <span class="loading">Loading...</span>
-                            </div>
-                            <div class="metric-trend">
-                                <span id="staffTrend">--</span>
-                            </div>
-                        </div>
-                        <div class="metric-icon staff-icon">
-                            <i class="fas fa-chalkboard-teacher"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="metric-card">
-                    <div class="metric-header">
-                        <div class="metric-info">
-                            <h3>Fee Revenue</h3>
-                            <div class="metric-value" id="totalRevenue">
-                                <span class="loading">Loading...</span>
-                            </div>
-                            <div class="metric-trend">
-                                <span id="revenueTrend">--</span>
-                            </div>
-                        </div>
-                        <div class="metric-icon revenue-icon">
-                            <i class="fas fa-coins"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="metric-card">
-                    <div class="metric-header">
-                        <div class="metric-info">
-                            <h3>Total Expenses</h3>
-                            <div class="metric-value" id="totalExpenses">
-                                <span class="loading">Loading...</span>
-                            </div>
-                            <div class="metric-trend">
-                                <span id="expenseTrend">--</span>
-                            </div>
-                        </div>
-                        <div class="metric-icon expense-icon">
-                            <i class="fas fa-money-bill-wave"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Charts Section -->
-            <div class="charts-section">
-                <div class="chart-card">
-                    <h2 class="chart-title">
-                        <i class="fas fa-chart-line"></i> Financial Overview - <span id="chartTermDisplay">Term 2</span>
-                    </h2>
-                    <div class="chart-container">
-                        <canvas id="financialChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="chart-card">
-                    <h2 class="chart-title">
-                        <i class="fas fa-history"></i> Recent Activities
-                    </h2>
-                    <div id="recentActivities">
-                        <div class="activity-item">
-                            <div class="activity-icon">
-                                <i class="fas fa-spinner fa-spin"></i>
-                            </div>
-                            <div class="activity-content">
-                                <div class="activity-title">Loading activities...</div>
-                                <div class="activity-time">Please wait</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <h3 style="margin: 1.5rem 0 1rem; color: var(--primary-color);">
-                        <i class="fas fa-chart-pie"></i> Class Distribution
-                    </h3>
-                    <div class="mini-chart-container">
-                        <canvas id="classChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="quick-actions">
-                <a href="students.html" class="action-btn" id="actionAddStudent">
-                    <div class="action-icon">
-                        <i class="fas fa-user-plus"></i>
-                    </div>
-                    <div>
-                        <h4>Add Student</h4>
-                        <p>Register new student</p>
-                    </div>
-                </a>
-                
-                <a href="receipts.html" class="action-btn" id="actionIssueReceipt">
-                    <div class="action-icon">
-                        <i class="fas fa-receipt"></i>
-                    </div>
-                    <div>
-                        <h4>Issue Receipt</h4>
-                        <p>Process fee payment</p>
-                    </div>
-                </a>
-                
-                <a href="expense.html" class="action-btn" id="actionAddExpense">
-                    <div class="action-icon">
-                        <i class="fas fa-money-bill-wave"></i>
-                    </div>
-                    <div>
-                        <h4>Add Expense</h4>
-                        <p>Record new expense</p>
-                    </div>
-                </a>
-                
-                <a href="staff.html" class="action-btn" id="actionManageStaff">
-                    <div class="action-icon">
-                        <i class="fas fa-user-tie"></i>
-                    </div>
-                    <div>
-                        <h4>Manage Staff</h4>
-                        <p>Staff information</p>
-                    </div>
-                </a>
-                
-                <a href="financials.html" class="action-btn" id="actionViewReports">
-                    <div class="action-icon">
-                        <i class="fas fa-chart-bar"></i>
-                    </div>
-                    <div>
-                        <h4>View Reports</h4>
-                        <p>Financial reports</p>
-                    </div>
-                </a>
-            </div>
+        <div class="form-group">
+          <label for="receiptNotes"><i class="fas fa-sticky-note"></i> Notes (Optional)</label>
+          <textarea id="receiptNotes" rows="2" placeholder="Any additional notes about this payment..."></textarea>
         </div>
 
-        <!-- Refresh Button -->
-        <button class="refresh-btn" id="refreshBtn" onclick="refreshAllData()" title="Refresh Data">
-            <i class="fas fa-sync-alt"></i>
+        <button type="submit" class="btn btn-success" id="submitBtn">
+          <i class="fas fa-save"></i> Save Receipt & Send SMS
         </button>
+      </form>
+
+      <div id="receiptPreview" class="receipt-preview" style="display: none;">
+        <h3>Receipt Preview</h3>
+        <div id="previewContent"></div>
+      </div>
     </div>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <div class="card slide-in">
+      <div class="card-header">
+        <h2 class="card-title">Receipt Records - <span id="currentTermRecords">Term 2</span></h2>
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Search by student name..." oninput="updateReceiptTable()" />
+        </div>
+      </div>
 
-    <script>
-        // ============================================
-        // FIREBASE CONFIGURATION
-        // ============================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyBAA6zY40EwbTmWUx1op1cx52C3y0RK3m0",
-            authDomain: "heriwadi-manager.firebaseapp.com",
-            projectId: "heriwadi-manager",
-            storageBucket: "heriwadi-manager.appspot.com",
-            messagingSenderId: "654632910809",
-            appId: "1:654632910809:web:7c65613d2510402a6663c8",
-            measurementId: "G-LLHS6GLB6E"
+      <div id="groupedReceipts"></div>
+    </div>
+  </div>
+
+  <!-- Student Manager Modal -->
+  <div id="studentManagerModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Student Management - <span id="modalTermDisplay">Term 2</span></h3>
+        <button class="modal-close" onclick="closeStudentManager()">×</button>
+      </div>
+      <div class="modal-body">
+        <h4>Add New Student</h4>
+        <form id="studentForm">
+          <div class="grid">
+            <div class="form-group">
+              <label for="studentName">Full Name</label>
+              <input type="text" id="studentName" required />
+            </div>
+            
+            <div class="form-group">
+              <label for="studentClass">Class</label>
+              <select id="studentClass" required>
+                <option value="">Select Class</option>
+                <option value="Play Group">Play Group</option>
+                <option value="PP1">PP1</option>
+                <option value="PP2">PP2</option>
+                <option value="Grade 1">Grade 1</option>
+                <option value="Grade 2">Grade 2</option>
+                <option value="Grade 3">Grade 3</option>
+                <option value="Grade 4">Grade 4</option>
+                <option value="Grade 5">Grade 5</option>
+                <option value="Grade 6">Grade 6</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="phone">Phone Number</label>
+              <input type="tel" id="phone" placeholder="e.g., +254712345678" pattern="^\+?[1-9]\d{9,14}$" required />
+            </div>
+          </div>
+
+          <h4 style="margin-top: 1.5rem;">Fee Structure for <span id="feeTermDisplay">Term 2</span></h4>
+          <div class="fee-inputs">
+            <div class="form-group">
+              <label for="tuition">Tuition (KES)</label>
+              <input type="number" id="tuition" value="0" min="0" />
+            </div>
+            
+            <div class="form-group">
+              <label for="adm">Admission Fee (KES)</label>
+              <input type="number" id="adm" value="0" min="0" />
+            </div>
+            
+            <div class="form-group">
+              <label for="books">Book Fund (KES)</label>
+              <input type="number" id="books" value="0" min="0" />
+            </div>
+            
+            <div class="form-group">
+              <label for="stationery">Stationery (KES)</label>
+              <input type="number" id="stationery" value="0" min="0" />
+            </div>
+            
+            <div class="form-group">
+              <label for="uniform">Uniform (KES)</label>
+              <input type="number" id="uniform" value="0" min="0" />
+            </div>
+            
+            <div class="form-group">
+              <label for="lunch">Lunch (KES)</label>
+              <input type="number" id="lunch" value="0" min="0" />
+            </div>
+            
+            <div class="form-group">
+              <label for="transport">Transport (KES)</label>
+              <input type="number" id="transport" value="0" min="0" />
+            </div>
+            
+            <div class="form-group">
+              <label for="trip">Trip (KES)</label>
+              <input type="number" id="trip" value="0" min="0" />
+            </div>
+            
+            <div class="form-group">
+              <label for="graduation">Graduation (KES)</label>
+              <input type="number" id="graduation" value="0" min="0" />
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline" onclick="closeStudentManager()">
+              <i class="fas fa-times"></i> Cancel
+            </button>
+            <button type="submit" class="btn btn-success">
+              <i class="fas fa-save"></i> Save Student
+            </button>
+          </div>
+        </form>
+
+        <hr style="margin: 1.5rem 0;" />
+
+        <h4>Existing Students - <span id="existingStudentsTermDisplay">Term 2</span></h4>
+        <div id="studentListContainer" style="max-height: 300px; overflow-y: auto;">
+          <ul id="studentListDisplay" class="student-list" style="list-style: none; padding: 0;"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script>
+    // Initialize Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyBAA6zY40EwbTmWUx1op1cx52C3y0RK3m0",
+      authDomain: "heriwadi-manager.firebaseapp.com",
+      projectId: "heriwadi-manager",
+      storageBucket: "heriwadi-manager.appspot.com",
+      messagingSenderId: "654632910809",
+      appId: "1:654632910809:web:7c65613d2510402a6663c8",
+      measurementId: "G-LLHS6GLB6E"
+    };
+
+    let app, db;
+    try {
+      if (!firebase.apps.length) {
+        app = firebase.initializeApp(firebaseConfig);
+      } else {
+        app = firebase.app();
+      }
+      db = firebase.firestore();
+      console.log("Firebase initialized successfully");
+    } catch (error) {
+      console.error('Firebase initialization error:', error);
+      showStatus("Failed to initialize Firebase. Check your configuration.", "error");
+      throw error;
+    }
+    
+    // Current term and year management with persistent storage
+    let currentTerm = parseInt(sessionStorage.getItem('heriwadi_current_term')) || 2;
+    let currentYear = new Date().getFullYear();
+    
+    // Collection references with term support
+    const getStudentsCollection = (term = currentTerm, year = currentYear) => 
+      db.collection(`students_${year}_term_${term}`);
+    const getReceiptsCollection = (term = currentTerm, year = currentYear) => 
+      db.collection(`receipts_${year}_term_${term}`);
+
+    // Initialize data migration on first load
+    let migrationCompleted = false;
+
+    // Real-time student data listeners
+    let studentListener = null;
+    let receiptListener = null;
+
+    // Logo handling function - converts image to base64
+    function getLogoDataUrl() {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          canvas.width = 70;
+          canvas.height = 70;
+          ctx.drawImage(img, 0, 0, 70, 70);
+          const dataUrl = canvas.toDataURL('image/png');
+          resolve(dataUrl);
         };
+        
+        img.onerror = function() {
+          console.log('Logo image not found, using fallback');
+          resolve('');
+        };
+        
+        img.src = 'photos/school-logo.jpg';
+      });
+    }
 
-        // Initialize Firebase
-        let app, db, auth;
-        try {
-            if (!firebase.apps.length) {
-                app = firebase.initializeApp(firebaseConfig);
-            } else {
-                app = firebase.app();
-            }
-            db = firebase.firestore();
-            auth = firebase.auth();
-            console.log("Firebase initialized successfully");
-        } catch (error) {
-            console.error('Firebase initialization error:', error);
-            alert("Failed to initialize Firebase. Please check your internet connection.");
-            throw error;
+    // Setup real-time listeners for student and receipt changes
+    function setupRealTimeListeners() {
+      if (studentListener) studentListener();
+      if (receiptListener) receiptListener();
+      
+      const studentsCollection = getStudentsCollection();
+      studentListener = studentsCollection.onSnapshot(
+        (snapshot) => {
+          console.log("Student data changed - refreshing UI");
+          populateStudents();
+          updateReceiptTable();
+        },
+        (error) => console.error("Error in receipt listener:", error)
+      );
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      updateCurrentYearDisplay();
+      initializeTermFromStorage();
+      initializeMigration().then(() => {
+        // CRITICAL: Recalculate all student balances on page load
+        recalculateAllStudentBalances().then(() => {
+          populateStudents();
+          updateReceiptTable();
+          setupRealTimeListeners();
+        });
+      });
+      
+      document.getElementById('amountPaid').addEventListener('input', validateAmount);
+      document.getElementById('receiptForm').addEventListener('submit', handleReceiptSubmit);
+      document.getElementById('studentForm').addEventListener('submit', handleStudentSubmit);
+      
+      const modal = document.getElementById('studentManagerModal');
+      if (modal) {
+        modal.addEventListener('click', function(e) {
+          if (e.target === modal) closeStudentManager();
+        });
+      }
+    });
+
+    function initializeTermFromStorage() {
+      document.querySelectorAll('.term-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.term) === currentTerm);
+      });
+      updateTermDisplays();
+      console.log(`Initialized with Term ${currentTerm} from storage`);
+    }
+
+    function updateTermDisplays() {
+      document.getElementById('currentTermDisplay').textContent = `Term ${currentTerm}`;
+      document.getElementById('currentTermRecords').textContent = `Term ${currentTerm}`;
+      document.getElementById('modalTermDisplay').textContent = `Term ${currentTerm}`;
+      document.getElementById('feeTermDisplay').textContent = `Term ${currentTerm}`;
+      document.getElementById('existingStudentsTermDisplay').textContent = `Term ${currentTerm}`;
+    }
+
+    function updateCurrentYearDisplay() {
+      document.getElementById('currentYear').textContent = currentYear;
+    }
+
+    function switchTerm(term) {
+      currentTerm = term;
+      sessionStorage.setItem('heriwadi_current_term', term.toString());
+      
+      document.querySelectorAll('.term-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.term) === term);
+      });
+      
+      updateTermDisplays();
+      populateStudents();
+      updateReceiptTable();
+      setupRealTimeListeners();
+      
+      showStatus(`Switched to Term ${term} - This selection will persist across pages`, "success");
+    }
+
+    async function initializeMigration() {
+      try {
+        const migrationDoc = await db.collection('system_settings').doc('migration_status').get();
+        
+        if (migrationDoc.exists && migrationDoc.data().term_migration_completed) {
+          migrationCompleted = true;
+          console.log('Migration already completed');
+          return;
         }
 
-        // ============================================
-        // AUTHENTICATION SYSTEM
-        // ============================================
+        showStatus("Initializing term-based data structure...", "loading");
+
+        const oldStudents = await db.collection('students').get();
+        const newStudentsCollection = getStudentsCollection(2, currentYear);
         
-        // Role-based page access configuration
-        const PAGE_ACCESS = {
-            'receipts.html': ['director', 'admin'],
-            'students.html': ['director', 'admin', 'staff'],
-            'expense.html': ['director', 'admin'],
-            'assets.html': ['director', 'admin'],
-            'staff.html': ['director', 'admin'],
-            'payroll.html': ['director'],
-            'financials.html': ['director']
-        };
+        if (!oldStudents.empty) {
+          const batch = db.batch();
+          oldStudents.forEach(doc => {
+            const studentData = {
+              ...doc.data(),
+              term: 2,
+              year: currentYear,
+              migratedFrom: 'original_collection'
+            };
+            const newDocRef = newStudentsCollection.doc(doc.id);
+            batch.set(newDocRef, studentData);
+          });
+          await batch.commit();
+          console.log(`Migrated ${oldStudents.size} students to Term 2`);
+        }
 
-        let currentUser = null;
+        const oldReceipts = await db.collection('receipts').get();
+        const newReceiptsCollection = getReceiptsCollection(2, currentYear);
+        
+        if (!oldReceipts.empty) {
+          const batch = db.batch();
+          oldReceipts.forEach(doc => {
+            const receiptData = {
+              ...doc.data(),
+              term: 2,
+              year: currentYear,
+              migratedFrom: 'original_collection'
+            };
+            const newDocRef = newReceiptsCollection.doc(doc.id);
+            batch.set(newDocRef, receiptData);
+          });
+          await batch.commit();
+          console.log(`Migrated ${oldReceipts.size} receipts to Term 2`);
+        }
 
-        // Check authentication on page load
-        auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                try {
-                    const userDoc = await db.collection('users').doc(user.uid).get();
-                    
-                    if (!userDoc.exists) {
-                        await auth.signOut();
-                        showAuthScreen();
-                        return;
-                    }
-
-                    const userData = userDoc.data();
-                    
-                    // TEMPORARY BYPASS FOR DEVELOPMENT - REMOVE IN PRODUCTION
-                    if (userData.email === 'cephasduke64@gmail.com' && userData.status === 'pending') {
-                        await db.collection('users').doc(user.uid).update({
-                            status: 'approved'
-                        });
-                        userData.status = 'approved';
-                    }
-                    
-                    if (userData.status !== 'approved') {
-                        await auth.signOut();
-                        showAuthAlert('Your account is pending approval. Please wait for administrator verification.', 'error');
-                        showAuthScreen();
-                        return;
-                    }
-
-                    // User is authenticated and approved
-                    currentUser = {
-                        uid: user.uid,
-                        email: userData.email,
-                        name: userData.name,
-                        role: userData.role,
-                        status: userData.status
-                    };
-
-                    // Update last login
-                    await db.collection('users').doc(user.uid).update({
-                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-
-                    // Also update approval_requests if it exists
-                    const approvalQuery = await db.collection('approval_requests')
-                        .where('userId', '==', user.uid)
-                        .get();
-                    
-                    if (!approvalQuery.empty) {
-                        approvalQuery.forEach(async (doc) => {
-                            if (doc.data().status !== 'approved') {
-                                await db.collection('approval_requests').doc(doc.id).update({
-                                    status: 'approved',
-                                    approvedAt: firebase.firestore.FieldValue.serverTimestamp()
-                                });
-                            }
-                        });
-                    }
-
-                    showDashboard();
-                    updateUIForRole(userData.role);
-                    loadDashboardData();
-                    
-                } catch (error) {
-                    console.error('Error checking user status:', error);
-                    showAuthScreen();
-                }
-            } else {
-                showAuthScreen();
-            }
+        await db.collection('system_settings').doc('migration_status').set({
+          term_migration_completed: true,
+          migration_date: new Date().toISOString(),
+          migrated_students: oldStudents.size,
+          migrated_receipts: oldReceipts.size
         });
 
-        // Show auth screen
-        function showAuthScreen() {
-            document.getElementById('authScreen').classList.remove('hidden');
-            document.getElementById('dashboardScreen').classList.remove('active');
+        migrationCompleted = true;
+        showStatus("Term-based data structure initialized successfully!", "success");
+        
+      } catch (error) {
+        console.error('Migration error:', error);
+        showStatus("Migration completed with some errors. System should still work.", "warning");
+        migrationCompleted = true;
+      }
+    }
+
+    // CRITICAL NEW FUNCTION: Recalculate all student balances based on current fee structure and payments
+    async function recalculateAllStudentBalances() {
+      try {
+        console.log("Recalculating all student balances...");
+        const studentsCollection = getStudentsCollection();
+        const receiptsCollection = getReceiptsCollection();
+        
+        const studentsSnapshot = await studentsCollection.get();
+        
+        if (studentsSnapshot.empty) {
+          console.log("No students to recalculate");
+          return;
         }
 
-        // Show dashboard
-        function showDashboard() {
-            document.getElementById('authScreen').classList.add('hidden');
-            document.getElementById('dashboardScreen').classList.add('active');
+        const batch = db.batch();
+        let updatedCount = 0;
+
+        for (const studentDoc of studentsSnapshot.docs) {
+          const student = studentDoc.data();
+          const studentRef = studentDoc.ref;
+          
+          // Recalculate total based on CURRENT fee structure
+          const currentTotal = (student.tuition || 0) + (student.adm || 0) + (student.books || 0) + 
+                              (student.stationery || 0) + (student.uniform || 0) + (student.lunch || 0) + 
+                              (student.transport || 0) + (student.trip || 0) + (student.graduation || 0);
+          
+          // Get all payments made by this student
+          const receiptsSnapshot = await receiptsCollection
+            .where('name', '==', student.name)
+            .get();
+          
+          let totalPaid = 0;
+          receiptsSnapshot.forEach(receiptDoc => {
+            totalPaid += receiptDoc.data().paid || 0;
+          });
+          
+          // Calculate balance carried forward from previous terms
+          const balanceCarriedForward = await getBalanceCarriedForward(student.name, currentTerm, currentYear);
+          
+          // Calculate new balance: (current term total + carried forward) - total paid
+          const newBalance = (currentTotal + balanceCarriedForward) - totalPaid;
+          
+          // Only update if values have changed
+          if (student.total !== currentTotal || student.paid !== totalPaid || student.balance !== newBalance) {
+            batch.update(studentRef, {
+              total: currentTotal,
+              paid: totalPaid,
+              balance: newBalance
+            });
+            updatedCount++;
+          }
         }
 
-        // Switch between login and signup tabs
-        function switchAuthTab(tab) {
-            const loginForm = document.getElementById('loginForm');
-            const signupForm = document.getElementById('signupForm');
-            const tabBtns = document.querySelectorAll('.tab-btn');
+        if (updatedCount > 0) {
+          await batch.commit();
+          console.log(`Successfully recalculated balances for ${updatedCount} students`);
+        } else {
+          console.log("All student balances are already accurate");
+        }
+        
+      } catch (error) {
+        console.error('Error recalculating student balances:', error);
+      }
+    }
 
-            if (tab === 'login') {
-                loginForm.classList.add('active');
-                signupForm.classList.remove('active');
-                tabBtns[0].classList.add('active');
-                tabBtns[1].classList.remove('active');
-            } else {
-                loginForm.classList.remove('active');
-                signupForm.classList.add('active');
-                tabBtns[0].classList.remove('active');
-                tabBtns[1].classList.add('active');
+    function validateAmount() {
+      const amountInput = document.getElementById('amountPaid');
+      if (amountInput.value <= 0) {
+        amountInput.setCustomValidity('Amount must be greater than 0');
+      } else {
+        amountInput.setCustomValidity('');
+      }
+    }
+
+    function showStatus(message, type = 'info') {
+      const statusMessage = document.getElementById('statusMessage');
+      statusMessage.textContent = message;
+      statusMessage.className = `status-message ${type} fade-in`;
+      
+      setTimeout(() => {
+        statusMessage.classList.remove('fade-in');
+        setTimeout(() => {
+          statusMessage.textContent = '';
+          statusMessage.className = 'status-message';
+        }, 300);
+      }, 5000);
+    }
+
+    async function sendSMS(phone, message) {
+      try {
+        const response = await fetch("/send-sms", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone, message })
+        });
+        const result = await response.json();
+        return result.success;
+      } catch (error) {
+        console.error('SMS Error:', error);
+        return false;
+      }
+    }
+
+    async function populateStudents() {
+      try {
+        const studentList = document.getElementById("studentList");
+        studentList.innerHTML = "";
+        
+        const studentsCollection = getStudentsCollection();
+        const snapshot = await studentsCollection.orderBy('name').get();
+        
+        if (snapshot.empty) {
+          console.log(`No students found for Term ${currentTerm}`);
+          showStatus(`No students found for Term ${currentTerm}. Add a student first.`, "info");
+          return;
+        }
+        
+        snapshot.forEach(doc => {
+          const s = { id: doc.id, ...doc.data() };
+          const opt = document.createElement("option");
+          opt.value = `${s.name} (${s.class})`;
+          opt.dataset.id = s.id;
+          studentList.appendChild(opt);
+        });
+      } catch (error) {
+        console.error('Error populating students:', error);
+        showStatus(`Error loading students: ${error.message}. Check Firebase rules or network.`, "error");
+      }
+    }
+
+    async function getBalanceCarriedForward(studentName, currentTerm, currentYear) {
+      let balanceCarriedForward = 0;
+      
+      if (currentTerm === 1) return 0;
+      
+      try {
+        for (let term = 1; term < currentTerm; term++) {
+          const prevStudentsCollection = getStudentsCollection(term, currentYear);
+          const prevStudentSnapshot = await prevStudentsCollection.where('name', '==', studentName).get();
+          
+          if (!prevStudentSnapshot.empty) {
+            const prevStudent = prevStudentSnapshot.docs[0].data();
+            if (prevStudent.balance > 0) {
+              balanceCarriedForward += prevStudent.balance;
             }
-            hideAuthAlert();
+          }
+        }
+      } catch (error) {
+        console.error('Error calculating carried forward balance:', error);
+      }
+      
+      return balanceCarriedForward;
+    }
+
+    async function updateReceiptTable() {
+      try {
+        const groupedReceipts = document.getElementById('groupedReceipts');
+        groupedReceipts.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading receipts...</div>';
+        
+        const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+        const receiptsCollection = getReceiptsCollection();
+        const studentsCollection = getStudentsCollection();
+        const snapshot = await receiptsCollection.orderBy('date', 'desc').get();
+        
+        if (snapshot.empty) {
+          groupedReceipts.innerHTML = `<div class="status-message info">No receipts found for Term ${currentTerm}.</div>`;
+          return;
         }
 
-        // Toggle password visibility
-        function togglePassword(inputId, icon) {
-            const input = document.getElementById(inputId);
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
-            } else {
-                input.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
-            }
+        const receipts = [];
+        snapshot.forEach(doc => {
+          receipts.push({ id: doc.id, ...doc.data() });
+        });
+
+        const filteredReceipts = searchQuery
+          ? receipts.filter(r => r.name.toLowerCase().includes(searchQuery))
+          : receipts;
+
+        if (filteredReceipts.length === 0) {
+          groupedReceipts.innerHTML = '<div class="status-message info">No receipts match your search.</div>';
+          return;
         }
 
-        // Show auth alert
-        function showAuthAlert(message, type = 'info') {
-            const alertBox = document.getElementById('authAlert');
-            alertBox.textContent = message;
-            alertBox.className = `auth-alert ${type} show`;
-        }
+        groupedReceipts.innerHTML = '';
+        
+        const classes = [
+          "Play Group", "PP1", "PP2",
+          "Grade 1", "Grade 2", "Grade 3",
+          "Grade 4", "Grade 5", "Grade 6"
+        ];
 
-        // Hide auth alert
-        function hideAuthAlert() {
-            const alertBox = document.getElementById('authAlert');
-            alertBox.classList.remove('show');
-        }
+        for (const cls of classes) {
+          const classReceipts = filteredReceipts.filter(r => r.class === cls);
+          if (classReceipts.length === 0) continue;
 
-        // Handle login
-        async function handleLogin(event) {
-            event.preventDefault();
+          const section = document.createElement('div');
+          section.className = 'class-section';
+
+          const header = document.createElement('div');
+          header.className = 'class-header';
+          header.innerHTML = `
+            <h3>${cls} - Term ${currentTerm}</h3>
+            <span class="badge">${classReceipts.length} receipt${classReceipts.length !== 1 ? 's' : ''}</span>
+          `;
+          header.onclick = () => {
+            const content = section.querySelector('.class-content');
+            content.style.display = content.style.display === 'none' ? 'block' : 'none';
+          };
+          section.appendChild(header);
+
+          const content = document.createElement('div');
+          content.className = 'class-content';
+          content.style.display = 'none';
+          
+          const table = document.createElement('table');
+          table.innerHTML = `
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Amount Paid</th>
+                <th>Current Balance</th>
+                <th>Payment Mode</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          `;
+          const tbody = table.querySelector('tbody');
+
+          // FIXED: Calculate real-time balance using CURRENT student fee structure
+          for (const r of classReceipts) {
+            const studentSnapshot = await studentsCollection.where('name', '==', r.name).get();
+            let displayBalance = r.balance || 0;
             
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            const loginBtn = document.getElementById('loginBtn');
-
-            loginBtn.disabled = true;
-            loginBtn.innerHTML = '<span class="loading-spinner"></span> Logging in...';
-
-            try {
-                await auth.signInWithEmailAndPassword(email, password);
-                // Auth state change will handle the rest
-            } catch (error) {
-                console.error('Login error:', error);
-                let errorMessage = 'Login failed. Please try again.';
-
-                if (error.code === 'auth/user-not-found') {
-                    errorMessage = 'No account found with this email.';
-                } else if (error.code === 'auth/wrong-password') {
-                    errorMessage = 'Incorrect password.';
-                } else if (error.code === 'auth/invalid-email') {
-                    errorMessage = 'Invalid email address.';
-                } else if (error.code === 'auth/too-many-requests') {
-                    errorMessage = 'Too many failed attempts. Please try again later.';
-                }
-
-                showAuthAlert(errorMessage, 'error');
-                loginBtn.disabled = false;
-                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+            if (!studentSnapshot.empty) {
+              const currentStudent = studentSnapshot.docs[0].data();
+              displayBalance = currentStudent.balance || 0;
             }
-        }
-
-        // Handle signup
-        async function handleSignup(event) {
-            event.preventDefault();
             
-            const name = document.getElementById('signupName').value;
-            const email = document.getElementById('signupEmail').value;
-            const password = document.getElementById('signupPassword').value;
-            const role = document.getElementById('signupRole').value;
-            const signupBtn = document.getElementById('signupBtn');
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>
+                <strong>${r.name}</strong><br>
+                <small>${r.class} - Term ${currentTerm}</small>
+              </td>
+              <td>${r.paid.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
+              <td>${displayBalance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
+              <td>${r.mode}</td>
+              <td>${new Date(r.date).toLocaleDateString('en-GB')}</td>
+              <td>
+                <button class="btn btn-sm btn-info" onclick="printReceipt('${r.id}')">
+                  <i class="fas fa-print"></i> Print
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="deleteReceipt('${r.id}')">
+                  <i class="fas fa-trash"></i> Delete
+                </button>
+              </td>
+            `;
+            tbody.appendChild(row);
+          }
 
-            signupBtn.disabled = true;
-            signupBtn.innerHTML = '<span class="loading-spinner"></span> Creating Account...';
+          content.appendChild(table);
+          section.appendChild(content);
+          groupedReceipts.appendChild(section);
+        }
+      } catch (error) {
+        console.error('Error updating receipt table:', error);
+        showStatus(`Error loading receipts: ${error.message}. Check Firebase rules or network.`, "error");
+      }
+    }
 
-            try {
-                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                const user = userCredential.user;
+    async function handleReceiptSubmit(e) {
+      e.preventDefault();
+      
+      const studentInput = document.getElementById("studentInput").value;
+      const amount = parseFloat(document.getElementById("amountPaid").value);
+      const mode = document.getElementById("paymentMode").value;
+      const notes = document.getElementById("receiptNotes").value;
+      const submitBtn = document.getElementById("submitBtn");
 
-                await db.collection('users').doc(user.uid).set({
-                    uid: user.uid,
-                    name: name,
-                    email: email,
-                    role: role,
-                    status: 'pending',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    lastLogin: null
-                });
+      if (!studentInput) {
+        showStatus("Please enter or select a student name", "error");
+        return;
+      }
 
-                await db.collection('approval_requests').add({
-                    userId: user.uid,
-                    name: name,
-                    email: email,
-                    role: role,
-                    requestedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    status: 'pending'
-                });
+      if (amount <= 0) {
+        showStatus("Amount must be greater than 0", "error");
+        return;
+      }
 
-                await auth.signOut();
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner"></span> Processing...';
+      showStatus("Processing payment and sending SMS...", "loading");
 
-                showAuthAlert('Account created successfully! Please wait for administrator approval before logging in.', 'success');
+      try {
+        const currentDate = new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
+        const receiptDate = new Date(currentDate);
 
-                setTimeout(() => {
-                    document.getElementById('signupName').value = '';
-                    document.getElementById('signupEmail').value = '';
-                    document.getElementById('signupPassword').value = '';
-                    document.getElementById('signupRole').value = '';
-                    switchAuthTab('login');
-                }, 3000);
-
-                signupBtn.disabled = false;
-                signupBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
-
-            } catch (error) {
-                console.error('Signup error:', error);
-                let errorMessage = 'Signup failed. Please try again.';
-
-                if (error.code === 'auth/email-already-in-use') {
-                    errorMessage = 'An account with this email already exists.';
-                } else if (error.code === 'auth/weak-password') {
-                    errorMessage = 'Password should be at least 6 characters.';
-                } else if (error.code === 'auth/invalid-email') {
-                    errorMessage = 'Invalid email address.';
-                }
-
-                showAuthAlert(errorMessage, 'error');
-                signupBtn.disabled = false;
-                signupBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
-            }
+        const match = studentInput.match(/^(.+?)\s*\((.+?)\)$/);
+        let studentName, studentClass, studentId = null;
+        
+        if (match) {
+          studentName = match[1].trim();
+          studentClass = match[2].trim();
+        } else {
+          studentName = studentInput.trim();
+          studentClass = "Unknown";
         }
 
-        // Logout function
-        async function logout() {
-            if (confirm('Are you sure you want to logout?')) {
-                try {
-                    await auth.signOut();
-                    currentUser = null;
-                    showAuthScreen();
-                } catch (error) {
-                    console.error('Logout error:', error);
-                    alert('Error logging out. Please try again.');
-                }
-            }
+        const studentsCollection = getStudentsCollection();
+        const studentSnapshot = await studentsCollection.where('name', '==', studentName).get();
+        let student;
+        
+        if (!studentSnapshot.empty) {
+          const studentDocRef = studentSnapshot.docs[0].ref;
+          const freshStudentDoc = await studentDocRef.get();
+          student = freshStudentDoc.data();
+          studentId = freshStudentDoc.id;
+          
+          // Recalculate total based on current fee items
+          const currentTotal = (student.tuition || 0) + (student.adm || 0) + (student.books || 0) + 
+                              (student.stationery || 0) + (student.uniform || 0) + (student.lunch || 0) + 
+                              (student.transport || 0) + (student.trip || 0) + (student.graduation || 0);
+          
+          if (student.total !== currentTotal) {
+            console.log(`Updating student total from ${student.total} to ${currentTotal}`);
+            await studentDocRef.update({ total: currentTotal });
+            student.total = currentTotal;
+          }
+        } else {
+          const newStudent = {
+            name: studentName,
+            class: studentClass,
+            phone: "+254000000000",
+            tuition: 0, adm: 0, books: 0, stationery: 0, uniform: 0,
+            lunch: 0, transport: 0, trip: 0, graduation: 0,
+            total: 0, paid: 0, balance: 0,
+            term: currentTerm, year: currentYear
+          };
+          const docRef = await studentsCollection.add(newStudent);
+          studentId = docRef.id;
+          student = newStudent;
         }
 
-        // Update UI based on user role
-        function updateUIForRole(role) {
-            // Update user name display
-            document.getElementById('userName').textContent = `${currentUser.name} (${role})`;
+        const balanceCarriedForward = await getBalanceCarriedForward(studentName, currentTerm, currentYear);
+        const currentTotal = student.total || 0;
+        const totalOutstandingBalance = currentTotal + balanceCarriedForward;
+        const newPaid = (student.paid || 0) + amount;
+        const newBalance = totalOutstandingBalance - newPaid;
 
-            // Navigation access control
-            const navItems = {
-                'navReceipts': ['director', 'admin'],
-                'navStudents': ['director', 'admin', 'staff'],
-                'navExpense': ['director', 'admin'],
-                'navAssets': ['director', 'admin'],
-                'navStaff': ['director', 'admin'],
-                'navPayroll': ['director'],
-                'navFinancials': ['director']
-            };
-
-            // Quick action access control
-            const actionItems = {
-                'actionAddStudent': ['director', 'admin', 'staff'],
-                'actionIssueReceipt': ['director', 'admin'],
-                'actionAddExpense': ['director', 'admin'],
-                'actionManageStaff': ['director', 'admin'],
-                'actionViewReports': ['director']
-            };
-
-            // Disable navigation items based on role
-            for (const [id, allowedRoles] of Object.entries(navItems)) {
-                const element = document.getElementById(id);
-                if (element && !allowedRoles.includes(role)) {
-                    element.classList.add('disabled');
-                    element.title = 'Access restricted';
-                    element.onclick = (e) => {
-                        e.preventDefault();
-                        showStatus('You do not have permission to access this page.', 'error');
-                    };
-                }
-            }
-
-            // Disable quick actions based on role
-            for (const [id, allowedRoles] of Object.entries(actionItems)) {
-                const element = document.getElementById(id);
-                if (element && !allowedRoles.includes(role)) {
-                    element.style.opacity = '0.5';
-                    element.style.pointerEvents = 'none';
-                    element.title = 'Access restricted';
-                }
-            }
-
-            // Show read-only banner for visitors
-            if (role === 'visitor') {
-                document.getElementById('readonlyBanner').classList.add('show');
-                
-                // Disable all term buttons for visitors
-                document.querySelectorAll('.term-btn').forEach(btn => {
-                    btn.disabled = true;
-                    btn.style.opacity = '0.5';
-                    btn.style.cursor = 'not-allowed';
-                });
-
-                // Disable refresh button for visitors
-                document.getElementById('refreshBtn').style.display = 'none';
-            }
-        }
-
-        // ============================================
-        // DASHBOARD FUNCTIONALITY
-        // ============================================
-
-        // Global state
-        let currentTerm = parseInt(sessionStorage.getItem('heriwadi_current_term')) || 2;
-        let currentYear = new Date().getFullYear();
-        let dashboardData = {
-            students: [],
-            staff: [],
-            receipts: [],
-            expenses: [],
-            lastUpdated: null
+        const updatedStudent = {
+          ...student,
+          paid: newPaid,
+          balance: newBalance
         };
-        let charts = {
-            financial: null,
-            class: null
+
+        const receiptsCollection = getReceiptsCollection();
+        const snapshot = await receiptsCollection.get();
+        const receiptCount = snapshot.size + 1;
+        const receiptNumber = `T${currentTerm}-${String(receiptCount).padStart(3, '0')}`;
+
+        const receipt = {
+          name: studentName,
+          class: studentClass,
+          studentId: studentId,
+          paid: amount,
+          balance: newBalance,
+          mode: mode,
+          notes: notes || null,
+          date: receiptDate.toISOString(),
+          receiptNumber: receiptNumber,
+          term: currentTerm,
+          year: currentYear,
+          feeStructure: {
+            tuition: student.tuition || 0,
+            adm: student.adm || 0,
+            books: student.books || 0,
+            stationery: student.stationery || 0,
+            uniform: student.uniform || 0,
+            lunch: student.lunch || 0,
+            transport: student.transport || 0,
+            trip: student.trip || 0,
+            graduation: student.graduation || 0,
+            total: student.total || 0
+          }
         };
 
-        // Collection references
-        const getStudentsCollection = (term = currentTerm, year = currentYear) => 
-            db.collection(`students_${year}_term_${term}`);
-        const getReceiptsCollection = (term = currentTerm, year = currentYear) => 
-            db.collection(`receipts_${year}_term_${term}`);
-        const getStaffCollection = () => db.collection('staff');
-        const getExpensesCollection = () => db.collection('expenses');
+        await db.runTransaction(async transaction => {
+          const studentDocRef = studentsCollection.doc(studentId);
+          const receiptRef = receiptsCollection.doc();
+          transaction.update(studentDocRef, updatedStudent);
+          transaction.set(receiptRef, receipt);
+          receipt.id = receiptRef.id;
+        });
 
-        // Status message function
-        function showStatus(message, type = 'info') {
-            const statusEl = document.getElementById('statusMessage');
-            statusEl.textContent = message;
-            statusEl.className = `status-message ${type} show`;
-            
-            setTimeout(() => {
-                statusEl.classList.remove('show');
-            }, 5000);
+        const timeString = receiptDate.toLocaleTimeString('en-US', {
+          timeZone: 'Africa/Nairobi',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        }).toUpperCase();
+        
+        const smsMessage = `Dear parent to ${studentName}, ${studentClass}, Amount of KES ${amount} Receipt No. ${receiptNumber} was received on ${receiptDate.toLocaleDateString('en-GB')} at ${timeString}. Balance: ${newBalance}. Term ${currentTerm}.`;
+        const smsSent = await sendSMS(student.phone, smsMessage);
+        
+        showStatus(`Receipt saved${smsSent ? ' and SMS sent' : ''} successfully for Term ${currentTerm}!`, "success");
+        
+        const preview = document.getElementById('receiptPreview');
+        const previewContent = document.getElementById('previewContent');
+        previewContent.innerHTML = `
+          <p><strong>Student:</strong> ${studentName} (${studentClass})</p>
+          <p><strong>Term:</strong> ${currentTerm}</p>
+          <p><strong>Amount Paid:</strong> ${amount.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</p>
+          <p><strong>Payment Mode:</strong> ${mode}</p>
+          <p><strong>Date:</strong> ${receiptDate.toLocaleDateString('en-GB')} ${timeString}</p>
+          <p><strong>Current Balance:</strong> ${newBalance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</p>
+          ${notes ? `<p><strong>Notes:</strong> ${notes}</p>` : ''}
+          <p><strong>Receipt No:</strong> ${receiptNumber}</p>
+        `;
+        preview.style.display = 'block';
+        
+        document.getElementById("receiptForm").reset();
+      } catch (error) {
+        console.error('Error processing receipt:', error);
+        showStatus(`Error: ${error.message}. Receipt may not have been saved.`, "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> Save Receipt & Send SMS';
+      }
+    }
+
+    async function handleStudentSubmit(e) {
+      e.preventDefault();
+      
+      const name = document.getElementById("studentName").value.trim();
+      const sclass = document.getElementById("studentClass").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const tuition = +document.getElementById("tuition").value || 0;
+      const adm = +document.getElementById("adm").value || 0;
+      const books = +document.getElementById("books").value || 0;
+      const stationery = +document.getElementById("stationery").value || 0;
+      const uniform = +document.getElementById("uniform").value || 0;
+      const lunch = +document.getElementById("lunch").value || 0;
+      const transport = +document.getElementById("transport").value || 0;
+      const trip = +document.getElementById("trip").value || 0;
+      const graduation = +document.getElementById("graduation").value || 0;
+      
+      if (!name || !sclass || !phone) {
+        showStatus("Please fill in all required fields (Name, Class, Phone)", "error");
+        return;
+      }
+
+      const phoneRegex = /^\+?[1-9]\d{9,14}$/;
+      if (!phoneRegex.test(phone)) {
+        showStatus("Please enter a valid phone number (e.g., +254712345678)", "error");
+        return;
+      }
+
+      const total = tuition + adm + books + stationery + uniform + lunch + transport + trip + graduation;
+      const newStudent = { 
+        name, 
+        class: sclass, 
+        phone, 
+        tuition, 
+        adm, 
+        books, 
+        stationery, 
+        uniform, 
+        lunch, 
+        transport, 
+        trip,
+        graduation,
+        total, 
+        paid: 0, 
+        balance: total,
+        term: currentTerm,
+        year: currentYear
+      };
+
+      try {
+        const studentsCollection = getStudentsCollection();
+        const docRef = await studentsCollection.add(newStudent);
+        showStatus(`Student ${name} added successfully to Term ${currentTerm}!`, "success");
+        document.getElementById("studentForm").reset();
+        renderStudentList();
+        populateStudents();
+      } catch (error) {
+        console.error('Error adding student:', error);
+        showStatus(`Error adding student: ${error.message}. Check Firebase rules or network.`, "error");
+      }
+    }
+
+    async function renderStudentList() {
+      try {
+        const list = document.getElementById("studentListDisplay");
+        list.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading students...</div>';
+        
+        const studentsCollection = getStudentsCollection();
+        const snapshot = await studentsCollection.orderBy('name').get();
+        
+        if (snapshot.empty) {
+          list.innerHTML = `<div class="status-message info">No students found for Term ${currentTerm}.</div>`;
+          return;
         }
+        
+        list.innerHTML = '';
+        
+        snapshot.forEach(doc => {
+          const s = { id: doc.id, ...doc.data() };
+          const li = document.createElement("li");
+          li.className = 'student-item';
+          li.style.padding = '0.75rem';
+          li.style.borderBottom = '1px solid #eee';
+          li.style.display = 'flex';
+          li.style.justifyContent = 'space-between';
+          li.style.alignItems = 'center';
+          
+          li.innerHTML = `
+            <div>
+              <strong>${s.name}</strong> (${s.class}) - Term ${currentTerm}<br>
+              <small>${s.phone}</small><br>
+              <small>Total: ${s.total.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}, 
+              Paid: ${s.paid.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}, 
+              Balance: ${s.balance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</small>
+            </div>
+            <button class="btn btn-sm btn-danger" onclick="deleteStudent('${s.id}')">
+              <i class="fas fa-trash"></i>
+            </button>
+          `;
+          list.appendChild(li);
+        });
+      } catch (error) {
+        console.error('Error rendering student list:', error);
+        showStatus("Error loading student list: " + error.message, "error");
+      }
+    }
 
-        // Initialize term from storage and update UI
-        function initializeTermFromStorage() {
-            document.querySelectorAll('.term-btn').forEach(btn => {
-                btn.classList.toggle('active', parseInt(btn.dataset.term) === currentTerm);
+    async function deleteStudent(id) {
+      if (confirm(`Are you sure you want to delete this student from Term ${currentTerm}? All associated receipts will also be deleted.`)) {
+        try {
+          const studentsCollection = getStudentsCollection();
+          const receiptsCollection = getReceiptsCollection();
+          
+          const studentRef = studentsCollection.doc(id);
+          const studentDoc = await studentRef.get();
+          
+          if (studentDoc.exists) {
+            const studentData = studentDoc.data();
+            const studentName = studentData.name;
+            
+            const receiptsByName = await receiptsCollection.where('name', '==', studentName).get();
+            const receiptsByStudentId = await receiptsCollection.where('studentId', '==', id).get();
+            
+            const allReceiptRefs = new Set();
+            receiptsByName.forEach(doc => allReceiptRefs.add(doc.ref));
+            receiptsByStudentId.forEach(doc => allReceiptRefs.add(doc.ref));
+            
+            const batch = db.batch();
+            allReceiptRefs.forEach(ref => {
+              batch.delete(ref);
             });
-            updateTermDisplays();
-            console.log(`Initialized with Term ${currentTerm} from storage`);
-        }
-
-        // Update all term displays
-        function updateTermDisplays() {
-            document.getElementById('currentYear').textContent = currentYear;
-            document.getElementById('chartTermDisplay').textContent = `Term ${currentTerm}`;
-        }
-
-        // Switch term function with persistent storage
-        function switchTerm(term) {
-            currentTerm = term;
-            sessionStorage.setItem('heriwadi_current_term', term.toString());
+            batch.delete(studentRef);
             
-            document.querySelectorAll('.term-btn').forEach(btn => {
-                btn.classList.toggle('active', parseInt(btn.dataset.term) === term);
-            });
-            
-            updateTermDisplays();
-            loadDashboardData();
-            showStatus(`Switched to Term ${term} - Data refreshed`, "success");
+            await batch.commit();
+            showStatus(`Student and ${allReceiptRefs.size} associated receipts deleted successfully from Term ${currentTerm}`, "success");
+            renderStudentList();
+            populateStudents();
+            updateReceiptTable();
+          }
+        } catch (error) {
+          console.error('Error deleting student:', error);
+          showStatus("Error deleting student: " + error.message, "error");
         }
+      }
+    }
 
-        // Load all dashboard data
-        async function loadDashboardData() {
-            try {
-                showStatus("Loading dashboard data...", "info");
-                
-                // Show loading states
-                document.getElementById('totalStudents').innerHTML = '<span class="loading">Loading...</span>';
-                document.getElementById('totalStaff').innerHTML = '<span class="loading">Loading...</span>';
-                document.getElementById('totalRevenue').innerHTML = '<span class="loading">Loading...</span>';
-                document.getElementById('totalExpenses').innerHTML = '<span class="loading">Loading...</span>';
-
-                // Load data concurrently for better performance
-                const [studentsSnapshot, staffSnapshot, receiptsSnapshot, expensesSnapshot] = await Promise.all([
-                    getStudentsCollection().get(),
-                    getStaffCollection().get(),
-                    getReceiptsCollection().get(),
-                    getExpensesCollection().get()
-                ]);
-
-                // Process students data
-                dashboardData.students = [];
-                studentsSnapshot.forEach(doc => {
-                    dashboardData.students.push({ id: doc.id, ...doc.data() });
-                });
-
-                // Process staff data
-                dashboardData.staff = [];
-                staffSnapshot.forEach(doc => {
-                    dashboardData.staff.push({ id: doc.id, ...doc.data() });
-                });
-
-                // Process receipts data
-                dashboardData.receipts = [];
-                receiptsSnapshot.forEach(doc => {
-                    dashboardData.receipts.push({ id: doc.id, ...doc.data() });
-                });
-
-                // Process expenses data - filter by current term
-                dashboardData.expenses = [];
-                expensesSnapshot.forEach(doc => {
-                    const expense = doc.data();
-                    const expenseTerm = getTermFromName(expense.term);
-                    if (expenseTerm === currentTerm || !expense.term) {
-                        dashboardData.expenses.push({ id: doc.id, ...expense });
-                    }
-                });
-
-                // Update UI with loaded data
-                updateMetricCards();
-                updateCharts();
-                updateRecentActivities();
-                
-                dashboardData.lastUpdated = new Date();
-                showStatus("Dashboard data loaded successfully", "success");
-                
-            } catch (error) {
-                console.error('Error loading dashboard data:', error);
-                showStatus(`Error loading data: ${error.message}`, "error");
+    async function deleteReceipt(id) {
+      if (confirm("Are you sure you want to delete this receipt?")) {
+        try {
+          const receiptsCollection = getReceiptsCollection();
+          const studentsCollection = getStudentsCollection();
+          
+          const receiptRef = receiptsCollection.doc(id);
+          const receiptDoc = await receiptRef.get();
+          
+          if (receiptDoc.exists) {
+            const receipt = receiptDoc.data();
+            let studentFound = false;
+            let studentDoc = null;
+            
+            if (receipt.studentId) {
+              try {
+                const studentDocById = await studentsCollection.doc(receipt.studentId).get();
+                if (studentDocById.exists) {
+                  studentDoc = studentDocById;
+                  studentFound = true;
+                  console.log("Student found by ID");
+                }
+              } catch (error) {
+                console.log("Student ID lookup failed, trying name lookup");
+              }
             }
-        }
-
-        // Convert term name to number
-        function getTermFromName(termName) {
-            if (!termName) return null;
-            const termMap = {
-                'First Term': 1, 'Second Term': 2, 'Third Term': 3,
-                'Term 1': 1, 'Term 2': 2, 'Term 3': 3
-            };
-            return termMap[termName] || null;
-        }
-
-        // Update metric cards with real data
-        function updateMetricCards() {
-            // Students metrics
-            const totalStudents = dashboardData.students.length;
-            document.getElementById('totalStudents').textContent = totalStudents.toLocaleString();
-            document.getElementById('studentTrend').innerHTML = `<i class="fas fa-users"></i> Current term enrollment`;
-            document.getElementById('studentTrend').className = 'trend-up';
-
-            // Staff metrics
-            const totalStaff = dashboardData.staff.length;
-            document.getElementById('totalStaff').textContent = totalStaff.toLocaleString();
-            document.getElementById('staffTrend').innerHTML = `<i class="fas fa-user-tie"></i> Active staff members`;
-            document.getElementById('staffTrend').className = 'trend-up';
-
-            // Revenue metrics (from receipts)
-            const totalRevenue = dashboardData.receipts.reduce((sum, receipt) => sum + (receipt.paid || 0), 0);
-            document.getElementById('totalRevenue').textContent = `KES ${totalRevenue.toLocaleString('en-KE')}`;
-            document.getElementById('revenueTrend').innerHTML = `<i class="fas fa-arrow-up"></i> Fee collections`;
-            document.getElementById('revenueTrend').className = 'trend-up';
-
-            // Expenses metrics
-            const totalExpenses = dashboardData.expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
-            document.getElementById('totalExpenses').textContent = `KES ${totalExpenses.toLocaleString('en-KE')}`;
-            document.getElementById('expenseTrend').innerHTML = `<i class="fas fa-money-bill-wave"></i> Total spent`;
-            document.getElementById('expenseTrend').className = 'trend-down';
-        }
-
-        // Update charts with real data
-        function updateCharts() {
-            updateFinancialChart();
-            updateClassDistributionChart();
-        }
-
-        // Update financial overview chart
-        function updateFinancialChart() {
-            const ctx = document.getElementById('financialChart').getContext('2d');
             
-            // Group receipts and expenses by date
-            const dailyData = {};
-            
-            // Process receipts
-            dashboardData.receipts.forEach(receipt => {
-                const date = receipt.date;
-                if (!dailyData[date]) {
-                    dailyData[date] = { revenue: 0, expenses: 0 };
-                }
-                dailyData[date].revenue += receipt.paid || 0;
-            });
-
-            // Process expenses
-            dashboardData.expenses.forEach(expense => {
-                const date = expense.date;
-                if (!dailyData[date]) {
-                    dailyData[date] = { revenue: 0, expenses: 0 };
-                }
-                dailyData[date].expenses += expense.amount || 0;
-            });
-
-            // Sort dates and prepare data for chart
-            const sortedDates = Object.keys(dailyData).sort();
-            const last30Days = sortedDates.slice(-30); // Show last 30 days with data
-            
-            const labels = last30Days.map(date => new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' }));
-            const revenueData = last30Days.map(date => dailyData[date].revenue);
-            const expenseData = last30Days.map(date => dailyData[date].expenses);
-
-            if (charts.financial) {
-                charts.financial.destroy();
+            if (!studentFound) {
+              const studentQuery = await studentsCollection.where('name', '==', receipt.name).get();
+              if (!studentQuery.empty) {
+                studentDoc = studentQuery.docs[0];
+                studentFound = true;
+                console.log("Student found by name");
+              }
             }
+            
+            if (studentFound) {
+              const studentData = studentDoc.data();
+              const updatedStudent = {
+                ...studentData,
+                paid: Math.max(0, studentData.paid - receipt.paid),
+                balance: studentData.balance + receipt.paid
+              };
+              
+              await db.runTransaction(async transaction => {
+                transaction.update(studentDoc.ref, updatedStudent);
+                transaction.delete(receiptRef);
+              });
+              
+              showStatus(`Receipt deleted and student balance updated successfully for Term ${currentTerm}`, "success");
+            } else {
+              await receiptRef.delete();
+              showStatus(`Receipt deleted successfully. Note: Associated student '${receipt.name}' was not found (may have been renamed or deleted) for Term ${currentTerm}`, "success");
+            }
+            
+            updateReceiptTable();
+          } else {
+            showStatus("Receipt not found", "error");
+          }
+        } catch (error) {
+          console.error('Error deleting receipt:', error);
+          showStatus("Error deleting receipt: " + error.message, "error");
+        }
+      }
+    }
 
-            charts.financial = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Fee Revenue',
-                        data: revenueData,
-                        borderColor: '#28a745',
-                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }, {
-                        label: 'Expenses',
-                        data: expenseData,
-                        borderColor: '#dc3545',
-                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top'
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return context.dataset.label + ': KES ' + context.parsed.y.toLocaleString('en-KE');
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return 'KES ' + value.toLocaleString('en-KE');
-                                }
-                            }
-                        }
-                    }
-                }
-            });
+    // ENHANCED: Calculate fee item balances using CURRENT student fee structure
+    async function calculateFeeItemBalancesForPrint(studentName, currentTerm, currentYear, receiptId) {
+      const feeItems = [
+        'tuition', 'adm', 'lunch', 'uniform', 'books', 
+        'stationery', 'transport', 'trip', 'graduation'
+      ];
+      
+      const studentsCollection = getStudentsCollection(currentTerm, currentYear);
+      const studentSnapshot = await studentsCollection.where('name', '==', studentName).get();
+      
+      if (studentSnapshot.empty) {
+        return null;
+      }
+      
+      const currentStudent = studentSnapshot.docs[0].data();
+      
+      const feeStructure = {
+        tuition: currentStudent.tuition || 0,
+        adm: currentStudent.adm || 0,
+        books: currentStudent.books || 0,
+        stationery: currentStudent.stationery || 0,
+        uniform: currentStudent.uniform || 0,
+        lunch: currentStudent.lunch || 0,
+        transport: currentStudent.transport || 0,
+        trip: currentStudent.trip || 0,
+        graduation: currentStudent.graduation || 0
+      };
+      
+      const balances = {};
+      feeItems.forEach(item => {
+        balances[item] = feeStructure[item] || 0;
+      });
+      
+      const receiptsCollection = getReceiptsCollection(currentTerm, currentYear);
+      const allReceiptsSnapshot = await receiptsCollection.where('name', '==', studentName).get();
+      const allReceipts = [];
+      allReceiptsSnapshot.docs.forEach(doc => {
+        allReceipts.push({ id: doc.id, ...doc.data() });
+      });
+      
+      allReceipts.sort((a, b) => new Date(a.date) - new Date(b.date));
+      
+      const targetReceiptIndex = allReceipts.findIndex(r => r.id === receiptId);
+      if (targetReceiptIndex === -1) return balances;
+      
+      const relevantReceipts = allReceipts.slice(0, targetReceiptIndex + 1);
+      
+      relevantReceipts.forEach(receipt => {
+        let remainingPaid = receipt.paid;
+        
+        for (const item of feeItems) {
+          if (remainingPaid <= 0) break;
+          
+          if (balances[item] > 0) {
+            const paymentApplied = Math.min(remainingPaid, balances[item]);
+            balances[item] -= paymentApplied;
+            remainingPaid -= paymentApplied;
+          }
+        }
+      });
+      
+      return balances;
+    }
+
+    // FIXED: Print receipt with CURRENT fee structure and accurate balance calculation
+    async function printReceipt(id) {
+      try {
+        const receiptsCollection = getReceiptsCollection();
+        const studentsCollection = getStudentsCollection();
+        
+        const receiptDoc = await receiptsCollection.doc(id).get();
+        if (!receiptDoc.exists) {
+          showStatus("Receipt not found", "error");
+          return;
+        }
+        
+        const receipt = { id: receiptDoc.id, ...receiptDoc.data() };
+        const currentDate = new Date(receipt.date).toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
+        const receiptDate = new Date(currentDate);
+        const receiptNumber = receipt.receiptNumber || `T${currentTerm}-001`;
+
+        const feeItemBalances = await calculateFeeItemBalancesForPrint(receipt.name, currentTerm, currentYear, receipt.id);
+        
+        if (!feeItemBalances) {
+          showStatus("Could not calculate fee balances for this receipt", "error");
+          return;
         }
 
-        // Update class distribution chart
-        function updateClassDistributionChart() {
-            const ctx = document.getElementById('classChart').getContext('2d');
-            
-            // Count students by class
-            const classCounts = {};
-            dashboardData.students.forEach(student => {
-                const className = student.class || 'Unassigned';
-                classCounts[className] = (classCounts[className] || 0) + 1;
-            });
+        const studentSnapshot = await studentsCollection.where('name', '==', receipt.name).get();
+        let currentStudentBalance = receipt.balance || 0;
+        
+        if (!studentSnapshot.empty) {
+          const currentStudent = studentSnapshot.docs[0].data();
+          currentStudentBalance = currentStudent.balance || 0;
+        }
 
-            const classes = Object.keys(classCounts);
-            const counts = Object.values(classCounts);
-            const colors = [
-                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
-                '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0'
+        const balanceCarriedForward = await getBalanceCarriedForward(receipt.name, currentTerm, currentYear);
+        const logoDataUrl = await getLogoDataUrl();
+
+        const printWindow = window.open('', '', 'height=800,width=900');
+        
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Official Receipt - ${receipt.name} - Term ${currentTerm}</title>
+              <style>
+                @page { 
+                  size: A4; 
+                  margin: 10mm;
+                }
+                body { 
+                  font-family: Arial, sans-serif; 
+                  margin: 0; 
+                  padding: 10mm; 
+                  font-size: 11px; 
+                  line-height: 1.2;
+                  background: white;
+                  max-height: 277mm;
+                  overflow: hidden;
+                }
+                .header { 
+                  text-align: center; 
+                  margin-bottom: 15px; 
+                  border-bottom: 2px solid #000;
+                  padding-bottom: 10px;
+                }
+                .school-logo {
+                  width: 70px;
+                  height: 70px;
+                  margin: 0 auto 8px;
+                  display: block;
+                  object-fit: contain;
+                }
+                .logo-fallback {
+                  width: 70px;
+                  height: 70px;
+                  margin: 0 auto 8px;
+                  display: block;
+                  border: 2px solid #000;
+                  background: #f0f0f0;
+                  line-height: 66px;
+                  text-align: center;
+                  font-weight: bold;
+                  font-size: 12px;
+                  color: #333;
+                }
+                .school-motto {
+                  font-size: 11px;
+                  font-weight: bold;
+                  margin: 4px 0;
+                }
+                .school-name { 
+                  font-size: 16px; 
+                  font-weight: bold; 
+                  color: #000; 
+                  margin: 6px 0 4px 0; 
+                  letter-spacing: 1px;
+                }
+                .contact-info { 
+                  font-size: 9px; 
+                  margin: 1px 0;
+                  color: #333;
+                }
+                .receipt-title { 
+                  font-size: 14px; 
+                  font-weight: bold; 
+                  margin: 15px 0 10px 0; 
+                  text-decoration: underline;
+                }
+                .receipt-header {
+                  display: flex;
+                  justify-content: space-between;
+                  margin-bottom: 15px;
+                  align-items: flex-end;
+                }
+                .receipt-number {
+                  font-size: 11px;
+                  font-weight: bold;
+                }
+                .paybill-info {
+                  font-size: 9px;
+                  text-align: right;
+                }
+                .student-info { 
+                  margin-bottom: 12px; 
+                  line-height: 1.4;
+                }
+                .student-info div {
+                  margin-bottom: 6px;
+                  display: flex;
+                }
+                .student-info strong {
+                  min-width: 150px;
+                  display: inline-block;
+                }
+                .term-info {
+                  background-color: #f0f0f0;
+                  padding: 8px;
+                  margin: 12px 0;
+                  border: 1px solid #ddd;
+                  text-align: center;
+                  font-weight: bold;
+                  font-size: 11px;
+                }
+                .payment-section {
+                  margin: 15px 0 12px 0;
+                  font-weight: bold;
+                  font-size: 11px;
+                }
+                .fees-table { 
+                  width: 100%; 
+                  border-collapse: collapse; 
+                  margin: 12px 0; 
+                  font-size: 8px;
+                }
+                .fees-table th, .fees-table td { 
+                  border: 1px solid #000; 
+                  padding: 5px 3px; 
+                  text-align: center;
+                  vertical-align: middle;
+                }
+                .fees-table th { 
+                  background-color: #f8f8f8; 
+                  font-weight: bold; 
+                  font-size: 8px;
+                }
+                .fees-row td {
+                  font-size: 8px;
+                  height: 25px;
+                }
+                .total-row { 
+                  font-weight: bold; 
+                  background-color: #f0f0f0;
+                }
+                .total-row td {
+                  font-size: 9px;
+                }
+                .payment-details {
+                  margin: 15px 0;
+                  display: flex;
+                  justify-content: space-between;
+                  font-size: 10px;
+                  page-break-inside: avoid;
+                }
+                .signatures { 
+                  margin-top: 30px;
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: flex-end;
+                  page-break-inside: avoid;
+                }
+                .signature-box { 
+                  text-align: center; 
+                  width: 180px; 
+                }
+                .signature-line { 
+                  border-bottom: 1px solid #000; 
+                  margin-bottom: 4px; 
+                  height: 25px; 
+                }
+                .refund-policy {
+                  text-align: center;
+                  margin-top: 20px;
+                  font-size: 9px;
+                  font-weight: bold;
+                  border-top: 1px solid #000;
+                  padding-top: 8px;
+                  page-break-inside: avoid;
+                }
+                .content-container {
+                  max-height: 240mm;
+                  overflow: hidden;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="content-container">
+                <div class="header">
+                  ${logoDataUrl ? 
+                    `<img src="${logoDataUrl}" alt="School Logo" class="school-logo" />` : 
+                    `<div class="logo-fallback">HCS</div>`
+                  }
+                  <div class="school-motto">LEARN, LEAD, ACHIEVE</div>
+                  <div class="school-name">HERIWADI CHRISTIAN SCHOOLS LTD</div>
+                  <div class="contact-info">Physical Address: Ongata Rongai</div>
+                  <div class="contact-info">Postal Address: P.O. Box 62503 - 00200, Ongata Rongai, Kenya</div>
+                  <div class="contact-info">Mobile: 0723 322449</div>
+                  <div class="contact-info">Email: heriwadics@gmail.com</div>
+                </div>
+
+                <div class="term-info">
+                  ACADEMIC YEAR ${currentYear} - TERM ${currentTerm}
+                </div>
+
+                <div class="receipt-header">
+                  <div>
+                    <div class="receipt-title">RECEIPT</div>
+                  </div>
+                  <div class="paybill-info">
+                    <strong>No. ${receiptNumber}</strong><br>
+                    <strong>Date:</strong> ${receiptDate.toLocaleDateString('en-GB')} ${receiptDate.toLocaleTimeString('en-US', { timeZone: 'Africa/Nairobi', hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}
+                  </div>
+                </div>
+
+                <div class="student-info">
+                  <div><strong>Student:</strong> <span>${receipt.name}</span></div>
+                  <div><strong>Class:</strong> <span>${receipt.class}</span></div>
+                  <div><strong>Term:</strong> <span>${currentTerm}</span></div>
+                  <div><strong>Academic Year:</strong> <span>${currentYear}</span></div>
+                  ${receipt.notes ? `<div><strong>Notes:</strong> <span>${receipt.notes}</span></div>` : ''}
+                </div>
+
+                <div class="payment-section">Mode of Payment: ${receipt.mode}</div>
+                <div class="payment-section">Date: ${receiptDate.toLocaleDateString('en-GB')} ${receiptDate.toLocaleTimeString('en-US', { timeZone: 'Africa/Nairobi', hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}</div>
+
+                <table class="fees-table">
+                  <thead>
+                    <tr>
+                      <th><strong>Fee Item</strong></th>
+                      <th><strong>Fee Charged</strong></th>
+                      <th><strong>Fee Paid</strong></th>
+                      <th><strong>Receipt Balance</strong></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${(() => {
+                      let remainingPaid = receipt.paid;
+                      const fees = [
+                        { name: 'Tuition', amount: feeItemBalances.tuition || 0, balance: feeItemBalances.tuition || 0 },
+                        { name: 'Adm Fee', amount: feeItemBalances.adm || 0, balance: feeItemBalances.adm || 0 },
+                        { name: 'Lunch', amount: feeItemBalances.lunch || 0, balance: feeItemBalances.lunch || 0 },
+                        { name: 'Uniform', amount: feeItemBalances.uniform || 0, balance: feeItemBalances.uniform || 0 },
+                        { name: 'Book Fund', amount: feeItemBalances.books || 0, balance: feeItemBalances.books || 0 },
+                        { name: 'Stationery', amount: feeItemBalances.stationery || 0, balance: feeItemBalances.stationery || 0 },
+                        { name: 'Transport', amount: feeItemBalances.transport || 0, balance: feeItemBalances.transport || 0 },
+                        { name: 'Trip', amount: feeItemBalances.trip || 0, balance: feeItemBalances.trip || 0 },
+                        { name: 'Graduation', amount: feeItemBalances.graduation || 0, balance: feeItemBalances.graduation || 0 }
+                      ];
+                      let rows = '';
+                      let totalPaidThisReceipt = 0;
+
+                      if (balanceCarriedForward > 0) {
+                        const carriedForwardPaid = Math.min(remainingPaid, balanceCarriedForward);
+                        remainingPaid -= carriedForwardPaid;
+                        totalPaidThisReceipt += carriedForwardPaid;
+                        
+                        rows += `
+                          <tr class="fees-row">
+                            <td>Balance Carried Forward</td>
+                            <td>${balanceCarriedForward.toLocaleString()}</td>
+                            <td>${carriedForwardPaid.toLocaleString()}</td>
+                            <td>${(balanceCarriedForward - carriedForwardPaid).toLocaleString()}</td>
+                          </tr>
+                        `;
+                      }
+
+                      fees.forEach(fee => {
+                        const feePaid = Math.min(remainingPaid, fee.balance);
+                        remainingPaid -= feePaid;
+                        totalPaidThisReceipt += feePaid;
+                        const feeBalance = fee.balance - feePaid;
+
+                        rows += `
+                          <tr class="fees-row">
+                            <td>${fee.name}</td>
+                            <td>${fee.amount.toLocaleString()}</td>
+                            <td>${feePaid.toLocaleString()}</td>
+                            <td>${feeBalance.toLocaleString()}</td>
+                          </tr>
+                        `;
+                      });
+
+                      rows += `
+                        <tr class="total-row">
+                          <td colspan="2" style="text-align: right; padding-right: 8px;"><strong>Total</strong></td>
+                          <td><strong>${totalPaidThisReceipt.toLocaleString()}</strong></td>
+                          <td><strong>${currentStudentBalance.toLocaleString()}</strong></td>
+                        </tr>
+                      `;
+
+                      return rows;
+                    })()}
+                  </tbody>
+                </table>
+
+                <div class="payment-details">
+                  <div class="payment-left">
+                    <div><strong>Amount Paid:</strong> ${Number(receipt.paid).toLocaleString()}</div>
+                    <div><strong>Term:</strong> ${currentTerm}</div>
+                  </div>
+                  <div class="payment-right" style="text-align: right;">
+                    <div><strong>For Heriwadi Christian Schools Ltd</strong></div>
+                  </div>
+                </div>
+
+                <div class="signatures">
+                  <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <div style="font-size: 8px;">Accountant/Cashier</div>
+                  </div>
+                  <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <div style="font-size: 8px;">For: Heriwadi Christian Schools</div>
+                  </div>
+                </div>
+
+                <div class="refund-policy">
+                  School Fees Once Paid is not Refundable
+                </div>
+              </div>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        
+        setTimeout(() => {
+          printWindow.print();
+          printWindow.close();
+        }, 1000);
+      } catch (error) {
+        console.error('Error printing receipt:', error);
+        showStatus("Error printing receipt: " + error.message, "error");
+      }
+    }
+
+    async function exportByClassPDF() {
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        const receiptsCollection = getReceiptsCollection();
+        const snapshot = await receiptsCollection.orderBy('date', 'desc').get();
+        let isFirstClass = true;
+
+        const classes = [
+          "Play Group", "PP1", "PP2",
+          "Grade 1", "Grade 2", "Grade 3",
+          "Grade 4", "Grade 5", "Grade 6"
+        ];
+
+        for (const cls of classes) {
+          const classReceipts = snapshot.docs.filter(doc => doc.data().class === cls).map(doc => ({ id: doc.id, ...doc.data() }));
+          if (classReceipts.length === 0) continue;
+
+          if (!isFirstClass) {
+            doc.addPage();
+          }
+          isFirstClass = false;
+
+          doc.setFontSize(18);
+          doc.setFont(undefined, 'bold');
+          doc.text("HERIWADI CHRISTIAN SCHOOLS LTD", 105, 35, { align: 'center' });
+
+          doc.setFontSize(14);
+          doc.text(`Class: ${cls} - Term ${currentTerm} (${currentYear})`, 105, 50, { align: 'center' });
+
+          doc.setFontSize(10);
+          doc.text("P.O. Box 62503 - 00200 Ongata Rongai", 105, 57, { align: 'center' });
+          doc.text("Contact: 0723 322449", 105, 62, { align: 'center' });
+          doc.text("Email: heriwadics@gmail.com", 105, 67, { align: 'center' });
+
+          doc.line(20, 73, 190, 73);
+
+          doc.setFontSize(16);
+          doc.text("RECEIPT SUMMARY", 20, 85);
+
+          if (typeof doc.autoTable === 'function') {
+            const studentsCollection = getStudentsCollection();
+            const tableData = await Promise.all(classReceipts.map(async r => {
+              const studentSnapshot = await studentsCollection.where('name', '==', r.name).get();
+              if (!studentSnapshot.empty) {
+                const student = studentSnapshot.docs[0].data();
+                const balanceCarriedForward = await getBalanceCarriedForward(r.name, currentTerm, currentYear);
+                const totalOutstandingBalance = student.balance + balanceCarriedForward;
+                
+                return [
+                  r.name,
+                  student.tuition || 0,
+                  student.adm || 0,
+                  student.lunch || 0,
+                  student.uniform || 0,
+                  student.books || 0,
+                  student.stationery || 0,
+                  student.transport || 0,
+                  student.trip || 0,
+                  student.graduation || 0,
+                  r.paid,
+                  student.balance
+                ];
+              }
+              return [];
+            }));
+
+            doc.autoTable({
+              startY: 95,
+              head: [['Student', 'Tuition', 'Adm Fee', 'Lunch', 'Uniform', 'Book Fund', 'Stationery', 'Transport', 'Trip', 'Graduation', 'Paid', 'Balance']],
+              body: tableData.filter(row => row.length > 0),
+              theme: 'grid',
+              styles: { fontSize: 8, cellPadding: 2 },
+              headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] }
+            });
+          }
+        }
+
+        doc.save(`heriwadi_receipts_by_class_term_${currentTerm}_${currentYear}.pdf`);
+        showStatus(`Export by class to PDF completed for Term ${currentTerm}!`, "success");
+      } catch (error) {
+        console.error('Error exporting by class to PDF:', error);
+        showStatus("Error exporting by class to PDF: " + error.message, "error");
+      }
+    }
+
+    async function exportConsolidatedPDF() {
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        const receiptsCollection = getReceiptsCollection();
+        const studentsCollection = getStudentsCollection();
+        const snapshot = await receiptsCollection.orderBy('date', 'desc').get();
+        let isFirstReceipt = true;
+
+        for (const docSnapshot of snapshot.docs) {
+          const receipt = { id: docSnapshot.id, ...docSnapshot.data() };
+          const studentSnapshot = await studentsCollection.where('name', '==', receipt.name).get();
+          if (studentSnapshot.empty) continue;
+          const student = studentSnapshot.docs[0].data();
+          const currentDate = new Date(receipt.date).toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
+          const receiptDate = new Date(currentDate);
+
+          const receiptNumber = receipt.receiptNumber || `T${currentTerm}-001`;
+
+          if (!isFirstReceipt) {
+            doc.addPage();
+          }
+          isFirstReceipt = false;
+
+          doc.setFontSize(18);
+          doc.setFont(undefined, 'bold');
+          doc.text("HERIWADI CHRISTIAN SCHOOLS", 105, 35, { align: 'center' });
+
+          doc.setFontSize(12);
+          doc.text(`TERM ${currentTerm} - ACADEMIC YEAR ${currentYear}`, 105, 45, { align: 'center' });
+
+          doc.setFontSize(10);
+          doc.setFont(undefined, 'normal');
+          doc.text("P.O. Box 62503 - 00200 Ongata Rongai", 105, 52, { align: 'center' });
+          doc.text("Contact: 0723 322449", 105, 57, { align: 'center' });
+          doc.text("Email: heriwadics@gmail.com", 105, 62, { align: 'center' });
+
+          doc.line(20, 68, 190, 68);
+
+          doc.setFontSize(16);
+          doc.setFont(undefined, 'bold');
+          doc.text("OFFICIAL RECEIPT", 20, 80);
+
+          doc.setFontSize(10);
+          doc.setFont(undefined, 'normal');
+          doc.text("Paybill No. 8713144", 20, 88);
+
+          doc.text("A/c: Name of learner & Grade", 130, 75);
+          doc.text(`No. ${receiptNumber}, Date: ${receiptDate.toLocaleDateString('en-GB')}`, 130, 82);
+
+          doc.text(`Received from (Student Name): ${receipt.name}`, 20, 105);
+          doc.text(`Grade: ${receipt.class}`, 20, 113);
+          doc.text(`Term: ${currentTerm}`, 100, 113);
+          doc.text("Admission No.: ________________", 20, 121);
+
+          doc.setFont(undefined, 'bold');
+          doc.text("BEING PAYMENT OF:-", 20, 135);
+
+          if (typeof doc.autoTable === 'function') {
+            const tableData = [[
+              student?.tuition > 0 ? student.tuition.toString() : '',
+              student?.adm > 0 ? student.adm.toString() : '',
+              '', '', '',
+              student?.lunch > 0 ? student.lunch.toString() : '',
+              '',
+              student?.uniform > 0 ? student.uniform.toString() : '',
+              student?.books > 0 ? student.books.toString() : '',
+              '',
+              student?.stationery > 0 ? student.stationery.toString() : '',
+              student?.transport > 0 ? student.transport.toString() : '',
+              student?.trip > 0 ? student.trip.toString() : '',
+              student?.graduation > 0 ? student.graduation.toString() : '',
+              '',
+              receipt.paid.toString()
+            ]];
+
+            doc.autoTable({
+              startY: 145,
+              head: [['School fees', 'Admission fees', 'Caution fees', 'Interview', 'Tuition',
+                     'Lunch', 'Swimming', 'Uniform', 'Book fund', 'Medical',
+                     'Stationery', 'Transport', 'Trip', 'Graduation', 'School Activities', 'AMOUNT (KSHS)']],
+              body: tableData,
+              foot: [['', '', '', '', '', '', '', '', '', '', '', '', '', '', 'TOTAL', receipt.paid.toString()]],
+              theme: 'grid',
+              styles: { fontSize: 8, cellPadding: 2 },
+              headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] },
+              footStyles: { fillColor: [240, 240, 240], fontStyle: 'bold' }
+            });
+          }
+
+          let detailsY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 20 : 210;
+          doc.setFontSize(10);
+          doc.setFont(undefined, 'normal');
+
+          const balanceCarriedForward = await getBalanceCarriedForward(receipt.name, currentTerm, currentYear);
+          const totalOutstandingBalance = student.balance + balanceCarriedForward;
+
+          doc.text(`Cash/Paybill: ${receipt.mode}`, 20, detailsY);
+          doc.text(`Fee Balance: ${Number(student.balance).toLocaleString()}`, 20, detailsY + 8);
+          doc.text(`Term: ${currentTerm}`, 20, detailsY + 16);
+
+          doc.text("For: Heriwadi Christian Schools", 130, detailsY);
+
+          doc.line(20, detailsY + 35, 80, detailsY + 35);
+          doc.line(130, detailsY + 35, 190, detailsY + 35);
+
+          doc.setFontSize(8);
+          doc.text("Accountant/Cashier", 50, detailsY + 45, { align: 'center' });
+          doc.text("For: Heriwadi Christian Schools", 160, detailsY + 45, { align: 'center' });
+
+          doc.setFont(undefined, 'bold');
+          doc.text("School Fees Once Paid is not Refundable", 105, detailsY + 60, { align: 'center' });
+        }
+
+        doc.save(`heriwadi_consolidated_receipts_term_${currentTerm}_${currentYear}.pdf`);
+        showStatus(`Consolidated receipts PDF exported successfully for Term ${currentTerm}!`, "success");
+      } catch (error) {
+        console.error('Error exporting consolidated PDF:', error);
+        showStatus("Error exporting consolidated PDF: " + error.message, "error");
+      }
+    }
+
+    async function exportToExcel() {
+      try {
+        const receiptsCollection = getReceiptsCollection();
+        const studentsCollection = getStudentsCollection();
+        const snapshot = await receiptsCollection.get();
+        const data = [];
+        const feeItems = ['tuition', 'adm', 'lunch', 'uniform', 'books', 'stationery', 'transport', 'trip', 'graduation'];
+        const totals = { tuition: 0, adm: 0, lunch: 0, uniform: 0, books: 0, stationery: 0, transport: 0, trip: 0, graduation: 0 };
+
+        await Promise.all(snapshot.docs.map(async doc => {
+          const receipt = doc.data();
+          const studentSnapshot = await studentsCollection.where('name', '==', receipt.name).get();
+          if (!studentSnapshot.empty) {
+            const student = studentSnapshot.docs[0].data();
+            const balanceCarriedForward = await getBalanceCarriedForward(receipt.name, currentTerm, currentYear);
+            
+            const remainingPaid = receipt.paid;
+            const fees = [
+              { name: 'Tuition', amount: student.tuition || 0 },
+              { name: 'Adm Fee', amount: student.adm || 0 },
+              { name: 'Lunch', amount: student.lunch || 0 },
+              { name: 'Uniform', amount: student.uniform || 0 },
+              { name: 'Book Fund', amount: student.books || 0 },
+              { name: 'Stationery', amount: student.stationery || 0 },
+              { name: 'Transport', amount: student.transport || 0 },
+              { name: 'Trip', amount: student.trip || 0 },
+              { name: 'Graduation', amount: student.graduation || 0 }
             ];
 
-            if (charts.class) {
-                charts.class.destroy();
-            }
-
-            charts.class = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: classes,
-                    datasets: [{
-                        data: counts,
-                        backgroundColor: colors.slice(0, classes.length),
-                        borderWidth: 2,
-                        borderColor: '#fff'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                boxWidth: 12,
-                                padding: 10
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return context.label + ': ' + context.parsed + ' students';
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Update recent activities
-        function updateRecentActivities() {
-            const activitiesEl = document.getElementById('recentActivities');
-            const activities = [];
-
-            // Get recent receipts
-            const recentReceipts = dashboardData.receipts
-                .sort((a, b) => new Date(b.date) - new Date(a.date))
-                .slice(0, 3);
-
-            recentReceipts.forEach(receipt => {
-                activities.push({
-                    icon: 'receipt',
-                    title: `Payment received from ${receipt.name}`,
-                    time: getRelativeTime(new Date(receipt.date)),
-                    amount: `KES ${receipt.paid.toLocaleString('en-KE')}`
+            let paidSoFar = 0;
+            fees.forEach(fee => {
+              const feePaid = Math.min(remainingPaid - paidSoFar, fee.amount);
+              paidSoFar += feePaid;
+              if (feePaid > 0) {
+                totals[feeItems[fees.indexOf(fee)]] += feePaid;
+                data.push({
+                  Student: receipt.name,
+                  Class: receipt.class,
+                  Term: currentTerm,
+                  Year: currentYear,
+                  FeeItem: fee.name,
+                  AmountPaid: feePaid,
+                  Date: new Date(receipt.date).toLocaleDateString('en-GB'),
+                  BalanceCarriedForward: balanceCarriedForward,
+                  CurrentBalance: student.balance
                 });
+              }
             });
+          }
+        }));
 
-            // Get recent expenses
-            const recentExpenses = dashboardData.expenses
-                .sort((a, b) => new Date(b.date) - new Date(a.date))
-                .slice(0, 2);
-
-            recentExpenses.forEach(expense => {
-                activities.push({
-                    icon: 'money-bill-wave',
-                    title: expense.description,
-                    time: getRelativeTime(new Date(expense.date)),
-                    amount: `KES ${expense.amount.toLocaleString('en-KE')}`
-                });
-            });
-
-            // Sort all activities by date and take the most recent 5
-            const sortedActivities = activities.slice(0, 5);
-
-            activitiesEl.innerHTML = sortedActivities.length > 0 ? 
-                sortedActivities.map(activity => `
-                    <div class="activity-item">
-                        <div class="activity-icon">
-                            <i class="fas fa-${activity.icon}"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-title">${activity.title}</div>
-                            <div class="activity-time">${activity.time}${activity.amount ? ' • ' + activity.amount : ''}</div>
-                        </div>
-                    </div>
-                `).join('') : 
-                '<div class="activity-item"><div class="activity-icon"><i class="fas fa-info-circle"></i></div><div class="activity-content"><div class="activity-title">No recent activities</div><div class="activity-time">Start by adding students or recording transactions</div></div></div>';
-        }
-
-        // Get relative time string
-        function getRelativeTime(date) {
-            const now = new Date();
-            const diffMs = now - date;
-            const diffMins = Math.floor(diffMs / 60000);
-            const diffHours = Math.floor(diffMins / 60);
-            const diffDays = Math.floor(diffHours / 24);
-
-            if (diffMins < 1) return 'Just now';
-            if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
-            if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-            if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-            return date.toLocaleDateString('en-GB');
-        }
-
-        // Refresh all data
-        function refreshAllData() {
-            const refreshBtn = document.getElementById('refreshBtn');
-            refreshBtn.classList.add('loading');
-            
-            loadDashboardData().finally(() => {
-                refreshBtn.classList.remove('loading');
-            });
-        }
-
-        // Initialize the dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize term from storage
-            initializeTermFromStorage();
-            
-            // Loading screen will be hidden by auth state change
-            setTimeout(() => {
-                const loadingScreen = document.getElementById('loadingScreen');
-                if (loadingScreen) {
-                    loadingScreen.classList.add('hidden');
-                }
-            }, 2000);
-
-            // Auto-refresh every 5 minutes (only if user is authenticated)
-            setInterval(() => {
-                if (!document.hidden && currentUser) {
-                    loadDashboardData();
-                }
-            }, 5 * 60 * 1000);
+        data.push({ Student: 'Total', Class: '', Term: '', Year: '', FeeItem: '', AmountPaid: '', Date: '', BalanceCarriedForward: '', CurrentBalance: '' });
+        feeItems.forEach(item => {
+          data.push({ Student: '', Class: '', Term: '', Year: '', FeeItem: item.charAt(0).toUpperCase() + item.slice(1), AmountPaid: totals[item], Date: '', BalanceCarriedForward: '', CurrentBalance: '' });
         });
 
-        // Handle page visibility changes
-        document.addEventListener('visibilitychange', function() {
-            if (!document.hidden && currentUser) {
-                // Refresh data when page becomes visible
-                setTimeout(loadDashboardData, 1000);
-            }
-        });
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(data);
+        XLSX.utils.book_append_sheet(wb, ws, `Term ${currentTerm} Fee Income`);
+        XLSX.writeFile(wb, `fee_income_term_${currentTerm}_${currentYear}.xlsx`);
+        showStatus(`Export to Excel completed for Term ${currentTerm}!`, "success");
+      } catch (error) {
+        console.error('Error exporting to Excel:', error);
+        showStatus("Error exporting to Excel: " + error.message, "error");
+      }
+    }
 
-        console.log('Heriwadi School Management Dashboard with Authentication loaded successfully');
-    </script>
+    function openStudentManager() {
+      const modal = document.getElementById('studentManagerModal');
+      modal.classList.add('show');
+      renderStudentList();
+      updateTermDisplays();
+    }
+
+    function closeStudentManager() {
+      const modal = document.getElementById('studentManagerModal');
+      modal.classList.remove('show');
+      document.getElementById('studentForm').reset();
+    }
+
+    function handleModalClick(event) {
+      const modal = document.getElementById('studentManagerModal');
+      if (event.target === modal) {
+        closeStudentManager();
+      }
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        const modal = document.getElementById('studentManagerModal');
+        if (modal.classList.contains('show')) {
+          closeStudentManager();
+        }
+      }
+      
+      if (e.altKey) {
+        switch(e.key) {
+          case '1':
+            e.preventDefault();
+            switchTerm(1);
+            break;
+          case '2':
+            e.preventDefault();
+            switchTerm(2);
+            break;
+          case '3':
+            e.preventDefault();
+            switchTerm(3);
+            break;
+        }
+      }
+    });
+
+    function clearTermSelection() {
+      sessionStorage.removeItem('heriwadi_current_term');
+      showStatus("Term selection cleared. Page will reload with default Term 2.", "info");
+      setTimeout(() => location.reload(), 1500);
+    }
+
+    function getCurrentTerm() {
+      return currentTerm;
+    }
+
+    function setCurrentTerm(term) {
+      if (term >= 1 && term <= 3) {
+        switchTerm(term);
+      } else {
+        showStatus("Invalid term. Please use 1, 2, or 3.", "error");
+      }
+    }
+
+    window.addEventListener('beforeunload', function() {
+      if (studentListener) {
+        studentListener();
+      }
+      if (receiptListener) {
+        receiptListener();
+      }
+    });
+
+    window.heriwadi = {
+      getCurrentTerm,
+      setCurrentTerm,
+      clearTermSelection,
+      switchTerm
+    };
+
+    console.log("Heriwadi School Management System initialized with persistent term selection");
+    console.log("Use window.heriwadi.getCurrentTerm() to check current term");
+    console.log("Use window.heriwadi.setCurrentTerm(1|2|3) to change term programmatically");
+  </script>
 </body>
 </html>
+      ("Error in student listener:", error)
+      );
+      
+      const receiptsCollection = getReceiptsCollection();
+      receiptListener = receiptsCollection.onSnapshot(
+        (snapshot) => {
+          console.log("Receipt data changed - refreshing UI");
+          updateReceiptTable();
+        },
+        (error) => console.error
