@@ -1671,7 +1671,7 @@
       }
     }
 
-   // CORRECTED FUNCTION 1: Calculate fee item balances with proper carried forward handling
+   // CORRECTED FUNCTION 1: Calculate fee item balances with proper individual balance calculation
 async function calculateFeeItemBalancesForPrint(studentName, currentTerm, currentYear, receiptId) {
   const feeItems = [
     'tuition', 'adm', 'lunch', 'uniform', 'books', 
@@ -1705,11 +1705,9 @@ async function calculateFeeItemBalancesForPrint(studentName, currentTerm, curren
   
   // Initialize starting balances: carried forward + current term fees
   const initialBalances = {};
-  let totalInitialBalance = balanceCarriedForward; // Start with carried forward
   
   feeItems.forEach(item => {
     initialBalances[item] = feeStructure[item] || 0;
-    totalInitialBalance += initialBalances[item];
   });
   
   // Get all receipts for this student in current term
@@ -1791,11 +1789,20 @@ async function calculateFeeItemBalancesForPrint(studentName, currentTerm, curren
     }
   }
   
+  // CRITICAL FIX: Calculate individual item balances as (Fee Charged - Fee Paid for that item)
+  const individualItemBalances = {};
+  feeItems.forEach(item => {
+    const feeCharged = feeStructure[item] || 0;
+    const feePaidForItem = feePaidBreakdown[item] || 0;
+    individualItemBalances[item] = feeCharged - feePaidForItem;
+  });
+  
   return {
     feeStructure,
     balancesBefore: balancesBeforeThisReceipt,
     balancesAfter: balancesAfterThisReceipt,
     feePaid: feePaidBreakdown,
+    individualBalances: individualItemBalances, // NEW: Individual item balances for display
     carriedForward: {
       total: balanceCarriedForward,
       remainingBefore: carriedForwardRemainingBefore,
@@ -1805,7 +1812,7 @@ async function calculateFeeItemBalancesForPrint(studentName, currentTerm, curren
   };
 }
 
-// CORRECTED FUNCTION 2: Print receipt with proper carried forward balance display
+// CORRECTED FUNCTION 2: Print receipt with accurate individual balance display
 async function printReceipt(id) {
   try {
     const receiptsCollection = getReceiptsCollection();
@@ -2085,6 +2092,7 @@ async function printReceipt(id) {
                   let rows = '';
                   let totalPaidThisReceipt = 0;
                   let totalFeeCharged = 0;
+                  let totalIndividualBalance = 0;
 
                   // Add carried forward balance row if applicable
                   if (feeItemBalances.carriedForward.total > 0) {
@@ -2092,6 +2100,7 @@ async function printReceipt(id) {
                     const carriedForwardBalance = feeItemBalances.carriedForward.remainingAfter;
                     totalPaidThisReceipt += carriedForwardPaid;
                     totalFeeCharged += feeItemBalances.carriedForward.total;
+                    totalIndividualBalance += carriedForwardBalance;
                     
                     rows += `
                       <tr class="fees-row carried-forward-row">
@@ -2103,14 +2112,15 @@ async function printReceipt(id) {
                     `;
                   }
 
-                  // Generate rows for each fee item using the calculated balances
+                  // FIXED: Use individualBalances instead of balancesAfter for display
                   feeItemsList.forEach(item => {
                     const feeCharged = feeItemBalances.feeStructure[item.key] || 0;
                     const feePaid = feeItemBalances.feePaid[item.key] || 0;
-                    const feeBalance = feeItemBalances.balancesAfter[item.key] || 0;
+                    const feeBalance = feeItemBalances.individualBalances[item.key] || 0; // CHANGED
                     
                     totalPaidThisReceipt += feePaid;
                     totalFeeCharged += feeCharged;
+                    totalIndividualBalance += feeBalance;
 
                     rows += `
                       <tr class="fees-row">
@@ -2122,13 +2132,13 @@ async function printReceipt(id) {
                     `;
                   });
 
-                  // Total row
+                  // Total row - use calculated total balance
                   rows += `
                     <tr class="total-row">
                       <td style="text-align: right; padding-right: 8px;"><strong>Total</strong></td>
                       <td><strong>${totalFeeCharged.toLocaleString()}</strong></td>
                       <td><strong>${totalPaidThisReceipt.toLocaleString()}</strong></td>
-                      <td><strong>${currentStudentBalance.toLocaleString()}</strong></td>
+                      <td><strong>${totalIndividualBalance.toLocaleString()}</strong></td>
                     </tr>
                   `;
 
@@ -2176,7 +2186,6 @@ async function printReceipt(id) {
     showStatus("Error printing receipt: " + error.message, "error");
   }
 }
-
     async function exportByClassPDF() {
       try {
         const { jsPDF } = window.jspdf;
