@@ -2016,7 +2016,7 @@
                 <div class="payment-section">Mode of Payment: ${receipt.mode}</div>
                 <div class="payment-section">Date: ${receiptDate.toLocaleDateString('en-GB')} ${receiptDate.toLocaleTimeString('en-US', { timeZone: 'Africa/Nairobi', hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}</div>
 
-                <table class="fees-table">
+               <table class="fees-table">
                   <thead>
                     <tr>
                       <th><strong>Fee Item</strong></th>
@@ -2027,24 +2027,25 @@
                   </thead>
                   <tbody>
                     ${(() => {
-                      let remainingPaid = receipt.paid;
-                      const fees = [
-                        { name: 'Tuition', amount: feeItemBalances.tuition || 0, balance: feeItemBalances.tuition || 0 },
-                        { name: 'Adm Fee', amount: feeItemBalances.adm || 0, balance: feeItemBalances.adm || 0 },
-                        { name: 'Lunch', amount: feeItemBalances.lunch || 0, balance: feeItemBalances.lunch || 0 },
-                        { name: 'Uniform', amount: feeItemBalances.uniform || 0, balance: feeItemBalances.uniform || 0 },
-                        { name: 'Book Fund', amount: feeItemBalances.books || 0, balance: feeItemBalances.books || 0 },
-                        { name: 'Stationery', amount: feeItemBalances.stationery || 0, balance: feeItemBalances.stationery || 0 },
-                        { name: 'Transport', amount: feeItemBalances.transport || 0, balance: feeItemBalances.transport || 0 },
-                        { name: 'Trip', amount: feeItemBalances.trip || 0, balance: feeItemBalances.trip || 0 },
-                        { name: 'Graduation', amount: feeItemBalances.graduation || 0, balance: feeItemBalances.graduation || 0 }
+                      const feeItemsList = [
+                        { name: 'Tuition', key: 'tuition' },
+                        { name: 'Adm Fee', key: 'adm' },
+                        { name: 'Lunch', key: 'lunch' },
+                        { name: 'Uniform', key: 'uniform' },
+                        { name: 'Book Fund', key: 'books' },
+                        { name: 'Stationery', key: 'stationery' },
+                        { name: 'Transport', key: 'transport' },
+                        { name: 'Trip', key: 'trip' },
+                        { name: 'Graduation', key: 'graduation' }
                       ];
+                      
                       let rows = '';
                       let totalPaidThisReceipt = 0;
 
+                      // Add carried forward balance row if applicable
                       if (balanceCarriedForward > 0) {
-                        const carriedForwardPaid = Math.min(remainingPaid, balanceCarriedForward);
-                        remainingPaid -= carriedForwardPaid;
+                        const carriedForwardPaid = Math.min(receipt.paid, balanceCarriedForward);
+                        const carriedForwardBalance = balanceCarriedForward - carriedForwardPaid;
                         totalPaidThisReceipt += carriedForwardPaid;
                         
                         rows += `
@@ -2052,27 +2053,30 @@
                             <td>Balance Carried Forward</td>
                             <td>${balanceCarriedForward.toLocaleString()}</td>
                             <td>${carriedForwardPaid.toLocaleString()}</td>
-                            <td>${(balanceCarriedForward - carriedForwardPaid).toLocaleString()}</td>
+                            <td>${carriedForwardBalance.toLocaleString()}</td>
                           </tr>
                         `;
                       }
 
-                      fees.forEach(fee => {
-                        const feePaid = Math.min(remainingPaid, fee.balance);
-                        remainingPaid -= feePaid;
+                      // Generate rows for each fee item using the calculated balances
+                      feeItemsList.forEach(item => {
+                        const feeCharged = feeItemBalances.feeStructure[item.key] || 0;
+                        const feePaid = feeItemBalances.feePaid[item.key] || 0;
+                        const feeBalance = feeItemBalances.balancesAfter[item.key] || 0;
+                        
                         totalPaidThisReceipt += feePaid;
-                        const feeBalance = fee.balance - feePaid;
 
                         rows += `
                           <tr class="fees-row">
-                            <td>${fee.name}</td>
-                            <td>${fee.amount.toLocaleString()}</td>
+                            <td>${item.name}</td>
+                            <td>${feeCharged.toLocaleString()}</td>
                             <td>${feePaid.toLocaleString()}</td>
                             <td>${feeBalance.toLocaleString()}</td>
                           </tr>
                         `;
                       });
 
+                      // Total row
                       rows += `
                         <tr class="total-row">
                           <td colspan="2" style="text-align: right; padding-right: 8px;"><strong>Total</strong></td>
