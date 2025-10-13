@@ -1671,24 +1671,23 @@
       }
     }
 
-// UPDATED FUNCTION 1: Calculate fee item balances with proper downward clearing
-async function calculateFeeItemBalancesForPrint(studentName, currentTerm, currentYear, receiptId) {
-    const feeItems = [
-        'tuition', 'adm', 'lunch', 'uniform', 'books',
+    // ENHANCED: Calculate fee item balances using CURRENT student fee structure
+    async function calculateFeeItemBalancesForPrint(studentName, currentTerm, currentYear, receiptId) {
+      const feeItems = [
+        'tuition', 'adm', 'lunch', 'uniform', 'books', 
         'stationery', 'transport', 'trip', 'graduation'
-    ];
-    
-    const studentsCollection = getStudentsCollection(currentTerm, currentYear);
-    const studentSnapshot = await studentsCollection.where('name', '==', studentName).get();
-    
-    if (studentSnapshot.empty) {
+      ];
+      
+      const studentsCollection = getStudentsCollection(currentTerm, currentYear);
+      const studentSnapshot = await studentsCollection.where('name', '==', studentName).get();
+      
+      if (studentSnapshot.empty) {
         return null;
-    }
-    
-    const currentStudent = studentSnapshot.docs[0].data();
-    
-    // Current term's fee structure
-    const feeStructure = {
+      }
+      
+      const currentStudent = studentSnapshot.docs[0].data();
+      
+      const feeStructure = {
         tuition: currentStudent.tuition || 0,
         adm: currentStudent.adm || 0,
         books: currentStudent.books || 0,
@@ -1698,119 +1697,54 @@ async function calculateFeeItemBalancesForPrint(studentName, currentTerm, curren
         transport: currentStudent.transport || 0,
         trip: currentStudent.trip || 0,
         graduation: currentStudent.graduation || 0
-    };
-    
-    // Calculate balance carried forward from previous terms
-    const balanceCarriedForwardTotal = await getBalanceCarriedForward(studentName, currentTerm, currentYear);
-    
-    // Get all receipts for this student in current term, sorted by date
-    const receiptsCollection = getReceiptsCollection(currentTerm, currentYear);
-    const allReceiptsSnapshot = await receiptsCollection.where('name', '==', studentName).get();
-    const allReceipts = [];
-    allReceiptsSnapshot.docs.forEach(doc => {
+      };
+      
+      const balances = {};
+      feeItems.forEach(item => {
+        balances[item] = feeStructure[item] || 0;
+      });
+      
+      const receiptsCollection = getReceiptsCollection(currentTerm, currentYear);
+      const allReceiptsSnapshot = await receiptsCollection.where('name', '==', studentName).get();
+      const allReceipts = [];
+      allReceiptsSnapshot.docs.forEach(doc => {
         allReceipts.push({ id: doc.id, ...doc.data() });
-    });
-    
-    // Sort receipts by date (oldest first)
-    allReceipts.sort((a, b) => new Date(a.date) - new Date(b.date));
-    
-    // Find the index of the target receipt
-    const targetReceiptIndex = allReceipts.findIndex(r => r.id === receiptId);
-    if (targetReceiptIndex === -1) return null;
-    
-    // --- START: Calculate Balances BEFORE This Receipt ---
-    
-    // Initialize current balances with the full fee structure
-    const balancesRunning = { ...feeStructure };
-    let carriedForwardRemaining = balanceCarriedForwardTotal;
-    
-    // Apply all receipts BEFORE the target receipt (and implicitly carriedForwardTotal)
-    const receiptsUpToBeforeTarget = allReceipts.slice(0, targetReceiptIndex);
-    
-    receiptsUpToBeforeTarget.forEach(receipt => {
-        let remainingPayment = receipt.paid;
+      });
+      
+      allReceipts.sort((a, b) => new Date(a.date) - new Date(b.date));
+      
+      const targetReceiptIndex = allReceipts.findIndex(r => r.id === receiptId);
+      if (targetReceiptIndex === -1) return balances;
+      
+      const relevantReceipts = allReceipts.slice(0, targetReceiptIndex + 1);
+      
+      relevantReceipts.forEach(receipt => {
+        let remainingPaid = receipt.paid;
         
-        // 1. First clear carried forward balance
-        if (carriedForwardRemaining > 0 && remainingPayment > 0) {
-            const paymentToCarriedForward = Math.min(remainingPayment, carriedForwardRemaining);
-            carriedForwardRemaining -= paymentToCarriedForward;
-            remainingPayment -= paymentToCarriedForward;
-        }
-        
-        // 2. Then clear fee items downwards in order
         for (const item of feeItems) {
-            if (remainingPayment <= 0) break;
-            
-            if (balancesRunning[item] > 0) {
-                const paymentToItem = Math.min(remainingPayment, balancesRunning[item]);
-                balancesRunning[item] -= paymentToItem;
-                remainingPayment -= paymentToItem;
-            }
+          if (remainingPaid <= 0) break;
+          
+          if (balances[item] > 0) {
+            const paymentApplied = Math.min(remainingPaid, balances[item]);
+            balances[item] -= paymentApplied;
+            remainingPaid -= paymentApplied;
+          }
         }
-    });
-    
-    // balancesRunning now holds the Balance B/F for the current receipt
-    const balancesBefore = { ...balancesRunning };
-    const carriedForwardRemainingBefore = carriedForwardRemaining;
-    
-    // --- END: Calculate Balances BEFORE This Receipt ---
-    
-    // --- START: Calculate Payment and Balances AFTER This Receipt ---
-    
-    const balancesAfter = { ...balancesBefore };
-    let carriedForwardRemainingAfter = carriedForwardRemainingBefore;
-    const feePaidBreakdown = {};
-    let carriedForwardPaid = 0;
-    
-    const thisReceipt = allReceipts[targetReceiptIndex];
-    let remainingPayment = thisReceipt.paid;
-    
-    // 1. First clear carried forward balance
-    if (carriedForwardRemainingAfter > 0 && remainingPayment > 0) {
-        carriedForwardPaid = Math.min(remainingPayment, carriedForwardRemainingAfter);
-        carriedForwardRemainingAfter -= carriedForwardPaid;
-        remainingPayment -= carriedForwardPaid;
+      });
+      
+      return balances;
     }
-    
-    // 2. Then clear fee items downwards in order
-    for (const item of feeItems) {
-        feePaidBreakdown[item] = 0;
-        
-        if (remainingPayment <= 0) continue;
-        
-        if (balancesAfter[item] > 0) {
-            const paymentToItem = Math.min(remainingPayment, balancesAfter[item]);
-            feePaidBreakdown[item] = paymentToItem;
-            balancesAfter[item] -= paymentToItem;
-            remainingPayment -= paymentToItem;
-        }
-    }
-    
-    // --- END: Calculate Payment and Balances AFTER This Receipt ---
-    
-    return {
-        feeStructure,
-        balancesBefore,
-        balancesAfter,
-        feePaid: feePaidBreakdown,
-        carriedForward: {
-            total: balanceCarriedForwardTotal,
-            remainingBefore: carriedForwardRemainingBefore,
-            remainingAfter: carriedForwardRemainingAfter,
-            paid: carriedForwardPaid
-        }
-    };
-}
-   // UPDATED FUNCTION 2: Print receipt with simple 4-column structure using current payment breakdown
-async function printReceipt(id) {
-    try {
+
+    // FIXED: Print receipt with CURRENT fee structure and accurate balance calculation
+    async function printReceipt(id) {
+      try {
         const receiptsCollection = getReceiptsCollection();
         const studentsCollection = getStudentsCollection();
         
         const receiptDoc = await receiptsCollection.doc(id).get();
         if (!receiptDoc.exists) {
-            showStatus("Receipt not found", "error");
-            return;
+          showStatus("Receipt not found", "error");
+          return;
         }
         
         const receipt = { id: receiptDoc.id, ...receiptDoc.data() };
@@ -1821,375 +1755,347 @@ async function printReceipt(id) {
         const feeItemBalances = await calculateFeeItemBalancesForPrint(receipt.name, currentTerm, currentYear, receipt.id);
         
         if (!feeItemBalances) {
-            showStatus("Could not calculate fee balances for this receipt", "error");
-            return;
+          showStatus("Could not calculate fee balances for this receipt", "error");
+          return;
         }
 
         const studentSnapshot = await studentsCollection.where('name', '==', receipt.name).get();
-        // The overall balance is fetched from the student record, 
-        // which includes all carried forward balances. This is the TRUE outstanding balance.
-        let currentStudentBalance = receipt.balance || 0; 
+        let currentStudentBalance = receipt.balance || 0;
         
         if (!studentSnapshot.empty) {
-            const currentStudent = studentSnapshot.docs[0].data();
-            currentStudentBalance = currentStudent.balance || 0;
+          const currentStudent = studentSnapshot.docs[0].data();
+          currentStudentBalance = currentStudent.balance || 0;
         }
 
+        const balanceCarriedForward = await getBalanceCarriedForward(receipt.name, currentTerm, currentYear);
         const logoDataUrl = await getLogoDataUrl();
 
         const printWindow = window.open('', '', 'height=800,width=900');
         
         printWindow.document.write(`
-            <html>
-                <head>
-                    <title>Official Receipt - ${receipt.name} - Term ${currentTerm}</title>
-                    <style>
-                        @page { 
-                            size: A4; 
-                            margin: 10mm;
-                        }
-                        body { 
-                            font-family: Arial, sans-serif; 
-                            margin: 0; 
-                            padding: 10mm; 
-                            font-size: 11px; 
-                            line-height: 1.2;
-                            background: white;
-                            max-height: 277mm;
-                            overflow: hidden;
-                        }
-                        .header { 
-                            text-align: center; 
-                            margin-bottom: 15px; 
-                            border-bottom: 2px solid #000;
-                            padding-bottom: 10px;
-                        }
-                        .school-logo {
-                            width: 70px;
-                            height: 70px;
-                            margin: 0 auto 8px;
-                            display: block;
-                            object-fit: contain;
-                        }
-                        .logo-fallback {
-                            width: 70px;
-                            height: 70px;
-                            margin: 0 auto 8px;
-                            display: block;
-                            border: 2px solid #000;
-                            background: #f0f0f0;
-                            line-height: 66px;
-                            text-align: center;
-                            font-weight: bold;
-                            font-size: 12px;
-                            color: #333;
-                        }
-                        .school-motto {
-                            font-size: 11px;
-                            font-weight: bold;
-                            margin: 4px 0;
-                        }
-                        .school-name { 
-                            font-size: 16px; 
-                            font-weight: bold; 
-                            color: #000; 
-                            margin: 6px 0 4px 0; 
-                            letter-spacing: 1px;
-                        }
-                        .contact-info { 
-                            font-size: 9px; 
-                            margin: 1px 0;
-                            color: #333;
-                        }
-                        .receipt-title { 
-                            font-size: 14px; 
-                            font-weight: bold; 
-                            margin: 15px 0 10px 0; 
-                            text-decoration: underline;
-                        }
-                        .receipt-header {
-                            display: flex;
-                            justify-content: space-between;
-                            margin-bottom: 15px;
-                            align-items: flex-end;
-                        }
-                        .receipt-number {
-                            font-size: 11px;
-                            font-weight: bold;
-                        }
-                        .paybill-info {
-                            font-size: 9px;
-                            text-align: right;
-                        }
-                        .student-info { 
-                            margin-bottom: 12px; 
-                            line-height: 1.4;
-                        }
-                        .student-info div {
-                            margin-bottom: 6px;
-                            display: flex;
-                        }
-                        .student-info strong {
-                            min-width: 150px;
-                            display: inline-block;
-                        }
-                        .term-info {
-                            background-color: #f0f0f0;
-                            padding: 8px;
-                            margin: 12px 0;
-                            border: 1px solid #ddd;
-                            text-align: center;
-                            font-weight: bold;
-                            font-size: 11px;
-                        }
-                        .payment-section {
-                            margin: 15px 0 12px 0;
-                            font-weight: bold;
-                            font-size: 11px;
-                        }
-                        .fees-table { 
-                            width: 100%; 
-                            border-collapse: collapse; 
-                            margin: 12px 0; 
-                            font-size: 8px;
-                        }
-                        .fees-table th, .fees-table td { 
-                            border: 1px solid #000; 
-                            padding: 5px 3px; 
-                            text-align: center;
-                            vertical-align: middle;
-                        }
-                        .fees-table th { 
-                            background-color: #f8f8f8; 
-                            font-weight: bold; 
-                            font-size: 8px;
-                        }
-                        .fees-row td {
-                            font-size: 8px;
-                            height: 25px;
-                        }
-                        .total-row { 
-                            font-weight: bold; 
-                            background-color: #f0f0f0;
-                        }
-                        .total-row td {
-                            font-size: 9px;
-                        }
-                        .final-balance-row {
-                            background-color: #e6f7ff;
-                            font-weight: bold;
-                        }
-                        .carried-forward-row {
-                            background-color: #fff9e6;
-                            font-style: italic;
-                        }
-                        .payment-details {
-                            margin: 15px 0;
-                            display: flex;
-                            justify-content: space-between;
-                            font-size: 10px;
-                            page-break-inside: avoid;
-                        }
-                        .signatures { 
-                            margin-top: 30px;
-                            display: flex;
-                            justify-content: space-between;
-                            align-items: flex-end;
-                            page-break-inside: avoid;
-                        }
-                        .signature-box { 
-                            text-align: center; 
-                            width: 180px; 
-                        }
-                        .signature-line { 
-                            border-bottom: 1px solid #000; 
-                            margin-bottom: 4px; 
-                            height: 25px; 
-                        }
-                        .refund-policy {
-                            text-align: center;
-                            margin-top: 20px;
-                            font-size: 9px;
-                            font-weight: bold;
-                            border-top: 1px solid #000;
-                            padding-top: 8px;
-                            page-break-inside: avoid;
-                        }
-                        .content-container {
-                            max-height: 240mm;
-                            overflow: hidden;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="content-container">
-                        <div class="header">
-                            ${logoDataUrl ? 
-                                `<img src="${logoDataUrl}" alt="School Logo" class="school-logo" />` : 
-                                `<div class="logo-fallback">HCS</div>`
-                            }
-                            <div class="school-motto">LEARN, LEAD, ACHIEVE</div>
-                            <div class="school-name">HERIWADI CHRISTIAN SCHOOLS LTD</div>
-                            <div class="contact-info">Physical Address: Ongata Rongai</div>
-                            <div class="contact-info">Postal Address: P.O. Box 62503 - 00200, Ongata Rongai, Kenya</div>
-                            <div class="contact-info">Mobile: 0723 322449</div>
-                            <div class="contact-info">Email: heriwadics@gmail.com</div>
-                        </div>
+          <html>
+            <head>
+              <title>Official Receipt - ${receipt.name} - Term ${currentTerm}</title>
+              <style>
+                @page { 
+                  size: A4; 
+                  margin: 10mm;
+                }
+                body { 
+                  font-family: Arial, sans-serif; 
+                  margin: 0; 
+                  padding: 10mm; 
+                  font-size: 11px; 
+                  line-height: 1.2;
+                  background: white;
+                  max-height: 277mm;
+                  overflow: hidden;
+                }
+                .header { 
+                  text-align: center; 
+                  margin-bottom: 15px; 
+                  border-bottom: 2px solid #000;
+                  padding-bottom: 10px;
+                }
+                .school-logo {
+                  width: 70px;
+                  height: 70px;
+                  margin: 0 auto 8px;
+                  display: block;
+                  object-fit: contain;
+                }
+                .logo-fallback {
+                  width: 70px;
+                  height: 70px;
+                  margin: 0 auto 8px;
+                  display: block;
+                  border: 2px solid #000;
+                  background: #f0f0f0;
+                  line-height: 66px;
+                  text-align: center;
+                  font-weight: bold;
+                  font-size: 12px;
+                  color: #333;
+                }
+                .school-motto {
+                  font-size: 11px;
+                  font-weight: bold;
+                  margin: 4px 0;
+                }
+                .school-name { 
+                  font-size: 16px; 
+                  font-weight: bold; 
+                  color: #000; 
+                  margin: 6px 0 4px 0; 
+                  letter-spacing: 1px;
+                }
+                .contact-info { 
+                  font-size: 9px; 
+                  margin: 1px 0;
+                  color: #333;
+                }
+                .receipt-title { 
+                  font-size: 14px; 
+                  font-weight: bold; 
+                  margin: 15px 0 10px 0; 
+                  text-decoration: underline;
+                }
+                .receipt-header {
+                  display: flex;
+                  justify-content: space-between;
+                  margin-bottom: 15px;
+                  align-items: flex-end;
+                }
+                .receipt-number {
+                  font-size: 11px;
+                  font-weight: bold;
+                }
+                .paybill-info {
+                  font-size: 9px;
+                  text-align: right;
+                }
+                .student-info { 
+                  margin-bottom: 12px; 
+                  line-height: 1.4;
+                }
+                .student-info div {
+                  margin-bottom: 6px;
+                  display: flex;
+                }
+                .student-info strong {
+                  min-width: 150px;
+                  display: inline-block;
+                }
+                .term-info {
+                  background-color: #f0f0f0;
+                  padding: 8px;
+                  margin: 12px 0;
+                  border: 1px solid #ddd;
+                  text-align: center;
+                  font-weight: bold;
+                  font-size: 11px;
+                }
+                .payment-section {
+                  margin: 15px 0 12px 0;
+                  font-weight: bold;
+                  font-size: 11px;
+                }
+                .fees-table { 
+                  width: 100%; 
+                  border-collapse: collapse; 
+                  margin: 12px 0; 
+                  font-size: 8px;
+                }
+                .fees-table th, .fees-table td { 
+                  border: 1px solid #000; 
+                  padding: 5px 3px; 
+                  text-align: center;
+                  vertical-align: middle;
+                }
+                .fees-table th { 
+                  background-color: #f8f8f8; 
+                  font-weight: bold; 
+                  font-size: 8px;
+                }
+                .fees-row td {
+                  font-size: 8px;
+                  height: 25px;
+                }
+                .total-row { 
+                  font-weight: bold; 
+                  background-color: #f0f0f0;
+                }
+                .total-row td {
+                  font-size: 9px;
+                }
+                .payment-details {
+                  margin: 15px 0;
+                  display: flex;
+                  justify-content: space-between;
+                  font-size: 10px;
+                  page-break-inside: avoid;
+                }
+                .signatures { 
+                  margin-top: 30px;
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: flex-end;
+                  page-break-inside: avoid;
+                }
+                .signature-box { 
+                  text-align: center; 
+                  width: 180px; 
+                }
+                .signature-line { 
+                  border-bottom: 1px solid #000; 
+                  margin-bottom: 4px; 
+                  height: 25px; 
+                }
+                .refund-policy {
+                  text-align: center;
+                  margin-top: 20px;
+                  font-size: 9px;
+                  font-weight: bold;
+                  border-top: 1px solid #000;
+                  padding-top: 8px;
+                  page-break-inside: avoid;
+                }
+                .content-container {
+                  max-height: 240mm;
+                  overflow: hidden;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="content-container">
+                <div class="header">
+                  ${logoDataUrl ? 
+                    `<img src="${logoDataUrl}" alt="School Logo" class="school-logo" />` : 
+                    `<div class="logo-fallback">HCS</div>`
+                  }
+                  <div class="school-motto">LEARN, LEAD, ACHIEVE</div>
+                  <div class="school-name">HERIWADI CHRISTIAN SCHOOLS LTD</div>
+                  <div class="contact-info">Physical Address: Ongata Rongai</div>
+                  <div class="contact-info">Postal Address: P.O. Box 62503 - 00200, Ongata Rongai, Kenya</div>
+                  <div class="contact-info">Mobile: 0723 322449</div>
+                  <div class="contact-info">Email: heriwadics@gmail.com</div>
+                </div>
 
-                        <div class="term-info">
-                            ACADEMIC YEAR ${currentYear} - TERM ${currentTerm}
-                        </div>
+                <div class="term-info">
+                  ACADEMIC YEAR ${currentYear} - TERM ${currentTerm}
+                </div>
 
-                        <div class="receipt-header">
-                            <div>
-                                <div class="receipt-title">RECEIPT</div>
-                            </div>
-                            <div class="paybill-info">
-                                <strong>No. ${receiptNumber}</strong><br>
-                                <strong>Date:</strong> ${receiptDate.toLocaleDateString('en-GB')} ${receiptDate.toLocaleTimeString('en-US', { timeZone: 'Africa/Nairobi', hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}
-                            </div>
-                        </div>
+                <div class="receipt-header">
+                  <div>
+                    <div class="receipt-title">RECEIPT</div>
+                  </div>
+                  <div class="paybill-info">
+                    <strong>No. ${receiptNumber}</strong><br>
+                    <strong>Date:</strong> ${receiptDate.toLocaleDateString('en-GB')} ${receiptDate.toLocaleTimeString('en-US', { timeZone: 'Africa/Nairobi', hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}
+                  </div>
+                </div>
 
-                        <div class="student-info">
-                            <div><strong>Student:</strong> <span>${receipt.name}</span></div>
-                            <div><strong>Class:</strong> <span>${receipt.class}</span></div>
-                            <div><strong>Term:</strong> <span>${currentTerm}</span></div>
-                            <div><strong>Academic Year:</strong> <span>${currentYear}</span></div>
-                            ${receipt.notes ? `<div><strong>Notes:</strong> <span>${receipt.notes}</span></div>` : ''}
-                        </div>
+                <div class="student-info">
+                  <div><strong>Student:</strong> <span>${receipt.name}</span></div>
+                  <div><strong>Class:</strong> <span>${receipt.class}</span></div>
+                  <div><strong>Term:</strong> <span>${currentTerm}</span></div>
+                  <div><strong>Academic Year:</strong> <span>${currentYear}</span></div>
+                  ${receipt.notes ? `<div><strong>Notes:</strong> <span>${receipt.notes}</span></div>` : ''}
+                </div>
 
-                        <div class="payment-section">Mode of Payment: ${receipt.mode}</div>
-                        <div class="payment-section">Date: ${receiptDate.toLocaleDateString('en-GB')} ${receiptDate.toLocaleTimeString('en-US', { timeZone: 'Africa/Nairobi', hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}</div>
+                <div class="payment-section">Mode of Payment: ${receipt.mode}</div>
+                <div class="payment-section">Date: ${receiptDate.toLocaleDateString('en-GB')} ${receiptDate.toLocaleTimeString('en-US', { timeZone: 'Africa/Nairobi', hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()}</div>
 
-                        <table class="fees-table">
-                            <thead>
-                                <tr>
-                                    <th><strong>Fee Item</strong></th>
-                                    <th><strong>Fee Charged (Full Term Fee)</strong></th>
-                                    <th><strong>Fee Paid (This Receipt)</strong></th>
-                                    <th><strong>Receipt Balance (Remaining on Item)</strong></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${(() => {
-                                    const feeItemsList = [
-                                        { name: 'Tuition', key: 'tuition' },
-                                        { name: 'Adm Fee', key: 'adm' },
-                                        { name: 'Lunch', key: 'lunch' },
-                                        { name: 'Uniform', key: 'uniform' },
-                                        { name: 'Book Fund', key: 'books' },
-                                        { name: 'Stationery', key: 'stationery' },
-                                        { name: 'Transport', key: 'transport' },
-                                        { name: 'Trip', 'key': 'trip' },
-                                        { name: 'Graduation', key: 'graduation' }
-                                    ];
-                                    
-                                    let rows = '';
-                                    let totalFeeCharged = 0;
-                                    let totalPaidThisReceipt = 0;
-                                    let totalRemainingTermBalance = 0; 
+                <table class="fees-table">
+                  <thead>
+                    <tr>
+                      <th><strong>Fee Item</strong></th>
+                      <th><strong>Fee Charged</strong></th>
+                      <th><strong>Fee Paid</strong></th>
+                      <th><strong>Receipt Balance</strong></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${(() => {
+                      let remainingPaid = receipt.paid;
+                      const fees = [
+                        { name: 'Tuition', amount: feeItemBalances.tuition || 0, balance: feeItemBalances.tuition || 0 },
+                        { name: 'Adm Fee', amount: feeItemBalances.adm || 0, balance: feeItemBalances.adm || 0 },
+                        { name: 'Lunch', amount: feeItemBalances.lunch || 0, balance: feeItemBalances.lunch || 0 },
+                        { name: 'Uniform', amount: feeItemBalances.uniform || 0, balance: feeItemBalances.uniform || 0 },
+                        { name: 'Book Fund', amount: feeItemBalances.books || 0, balance: feeItemBalances.books || 0 },
+                        { name: 'Stationery', amount: feeItemBalances.stationery || 0, balance: feeItemBalances.stationery || 0 },
+                        { name: 'Transport', amount: feeItemBalances.transport || 0, balance: feeItemBalances.transport || 0 },
+                        { name: 'Trip', amount: feeItemBalances.trip || 0, balance: feeItemBalances.trip || 0 },
+                        { name: 'Graduation', amount: feeItemBalances.graduation || 0, balance: feeItemBalances.graduation || 0 }
+                      ];
+                      let rows = '';
+                      let totalPaidThisReceipt = 0;
 
-                                    // Check if there's a prior term balance payment in this receipt
-                                    if (feeItemBalances.carriedForward.paid > 0) {
-                                        const paidCF = feeItemBalances.carriedForward.paid;
-                                        totalPaidThisReceipt += paidCF;
-                                        
-                                        rows += `
-                                            <tr class="fees-row carried-forward-row">
-                                                <td style="text-align: left; padding-left: 8px; font-weight: bold;">Prior Term/Carried Forward Balance Payment</td>
-                                                <td>-</td>
-                                                <td>${paidCF.toLocaleString()}</td>
-                                                <td>${feeItemBalances.carriedForward.remainingAfter.toLocaleString()}</td>
-                                            </tr>
-                                        `;
-                                    }
+                      if (balanceCarriedForward > 0) {
+                        const carriedForwardPaid = Math.min(remainingPaid, balanceCarriedForward);
+                        remainingPaid -= carriedForwardPaid;
+                        totalPaidThisReceipt += carriedForwardPaid;
+                        
+                        rows += `
+                          <tr class="fees-row">
+                            <td>Balance Carried Forward</td>
+                            <td>${balanceCarriedForward.toLocaleString()}</td>
+                            <td>${carriedForwardPaid.toLocaleString()}</td>
+                            <td>${(balanceCarriedForward - carriedForwardPaid).toLocaleString()}</td>
+                          </tr>
+                        `;
+                      }
 
-                                    // Generate rows for each fee item
-                                    feeItemsList.forEach(item => {
-                                        // Column 2: The full term fee for this item
-                                        const feeCharged = feeItemBalances.feeStructure[item.key] || 0; 
-                                        // Column 3: Amount paid by THIS receipt allocated to this item
-                                        const feePaid = feeItemBalances.feePaid[item.key] || 0;
-                                        // Column 4: The remaining balance of the fee item after all payments
-                                        const remainingBalance = feeItemBalances.balancesAfter[item.key] || 0;
-                                        
-                                        totalFeeCharged += feeCharged;
-                                        totalPaidThisReceipt += feePaid;
-                                        totalRemainingTermBalance += remainingBalance;
+                      fees.forEach(fee => {
+                        const feePaid = Math.min(remainingPaid, fee.balance);
+                        remainingPaid -= feePaid;
+                        totalPaidThisReceipt += feePaid;
+                        const feeBalance = fee.balance - feePaid;
 
-                                        rows += `
-                                            <tr class="fees-row">
-                                                <td style="text-align: left; padding-left: 8px;">${item.name}</td>
-                                                <td>${feeCharged.toLocaleString()}</td>
-                                                <td>${feePaid.toLocaleString()}</td>
-                                                <td>${remainingBalance.toLocaleString()}</td>
-                                            </tr>
-                                        `;
-                                    });
+                        rows += `
+                          <tr class="fees-row">
+                            <td>${fee.name}</td>
+                            <td>${fee.amount.toLocaleString()}</td>
+                            <td>${feePaid.toLocaleString()}</td>
+                            <td>${feeBalance.toLocaleString()}</td>
+                          </tr>
+                        `;
+                      });
 
-                                    // Term Fee Summary Row
-                                    rows += `
-                                        <tr class="total-row">
-                                            <td style="text-align: right; padding-right: 8px;"><strong>Term Fee Summary Total</strong></td>
-                                            <td><strong>${totalFeeCharged.toLocaleString()}</strong></td>
-                                            <td><strong>${Number(receipt.paid).toLocaleString()}</strong></td>
-                                            <td><strong>${totalRemainingTermBalance.toLocaleString()}</strong></td>
-                                        </tr>
-                                    `;
+                      rows += `
+                        <tr class="total-row">
+                          <td colspan="2" style="text-align: right; padding-right: 8px;"><strong>Total</strong></td>
+                          <td><strong>${totalPaidThisReceipt.toLocaleString()}</strong></td>
+                          <td><strong>${currentStudentBalance.toLocaleString()}</strong></td>
+                        </tr>
+                      `;
 
-                                    // Final Account Balance Row (shows the TRUE outstanding balance as a separate column)
-                                    rows += `
-                                        <tr class="final-balance-row">
-                                            <td colspan="3" style="text-align: right; padding-right: 8px; background-color: #ffcccc;"><strong>TOTAL ACCOUNT BALANCE OUTSTANDING:</strong></td>
-                                            <td style="font-size: 11px; background-color: #ffcccc;"><strong>KES ${currentStudentBalance.toLocaleString()}</strong></td>
-                                        </tr>
-                                    `;
+                      return rows;
+                    })()}
+                  </tbody>
+                </table>
 
+                <div class="payment-details">
+                  <div class="payment-left">
+                    <div><strong>Amount Paid:</strong> ${Number(receipt.paid).toLocaleString()}</div>
+                    <div><strong>Term:</strong> ${currentTerm}</div>
+                  </div>
+                  <div class="payment-right" style="text-align: right;">
+                    <div><strong>For Heriwadi Christian Schools Ltd</strong></div>
+                  </div>
+                </div>
 
-                                    return rows;
-                                })()}
-                            </tbody>
-                        </table>
+                <div class="signatures">
+                  <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <div style="font-size: 8px;">Accountant/Cashier</div>
+                  </div>
+                  <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <div style="font-size: 8px;">For: Heriwadi Christian Schools</div>
+                  </div>
+                </div>
 
-                        <div class="payment-details">
-                            <div class="payment-left">
-                                <div><strong>TOTAL AMOUNT PAID THIS RECEIPT:</strong> KES ${Number(receipt.paid).toLocaleString()}</div>
-                                <div><strong>Term:</strong> ${currentTerm}</div>
-                            </div>
-                            <div class="payment-right" style="text-align: right;">
-                                <div><strong>For Heriwadi Christian Schools Ltd</strong></div>
-                            </div>
-                        </div>
-
-                        <div class="signatures">
-                            <div class="signature-box">
-                                <div class="signature-line"></div>
-                                <div style="font-size: 8px;">Accountant/Cashier</div>
-                            </div>
-                            <div class="signature-box">
-                                <div class="signature-line"></div>
-                                <div style="font-size: 8px;">For: Heriwadi Christian Schools</div>
-                            </div>
-                        </div>
-
-                        <div class="refund-policy">
-                            School Fees Once Paid is not Refundable
-                        </div>
-                    </div>
-                </body>
-            </html>
+                <div class="refund-policy">
+                  School Fees Once Paid is not Refundable
+                </div>
+              </div>
+            </body>
+          </html>
         `);
         printWindow.document.close();
         
         setTimeout(() => {
-            printWindow.print();
-            printWindow.close();
+          printWindow.print();
+          printWindow.close();
         }, 1000);
-    } catch (error) {
+      } catch (error) {
         console.error('Error printing receipt:', error);
         showStatus("Error printing receipt: " + error.message, "error");
+      }
     }
-}
+
     async function exportByClassPDF() {
       try {
         const { jsPDF } = window.jspdf;
