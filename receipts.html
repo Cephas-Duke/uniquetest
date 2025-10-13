@@ -1801,7 +1801,7 @@ async function calculateFeeItemBalancesForPrint(studentName, currentTerm, curren
         }
     };
 }
-   // UPDATED FUNCTION 2: Print receipt with balanced fee table display
+   // UPDATED FUNCTION 2: Print receipt with running fee item balance and final account balance
 async function printReceipt(id) {
     try {
         const receiptsCollection = getReceiptsCollection();
@@ -1827,7 +1827,7 @@ async function printReceipt(id) {
 
         const studentSnapshot = await studentsCollection.where('name', '==', receipt.name).get();
         // The overall balance is fetched from the student record, 
-        // which includes all carried forward balances.
+        // which includes all carried forward balances. This is the TRUE outstanding balance.
         let currentStudentBalance = receipt.balance || 0; 
         
         if (!studentSnapshot.empty) {
@@ -2065,7 +2065,7 @@ async function printReceipt(id) {
                             <thead>
                                 <tr>
                                     <th><strong>Fee Item</strong></th>
-                                    <th><strong>Fee Charged (This Term)</strong></th>
+                                    <th><strong>Balance B/F (Fee Item)</strong></th>
                                     <th><strong>Fee Paid (This Receipt)</strong></th>
                                     <th><strong>Remaining Term Fee Balance</strong></th>
                                 </tr>
@@ -2085,40 +2085,46 @@ async function printReceipt(id) {
                                     ];
                                     
                                     let rows = '';
-                                    let totalFeeCharged = 0;
+                                    let totalBalanceBefore = 0; // Sum of Fee Item Balance B/F
                                     let totalPaidThisReceipt = 0;
-                                    let totalRemainingTermBalance = 0; // Sum of the balancesAfter
+                                    let totalRemainingTermBalance = 0; 
 
                                     // Add carried forward balance row if applicable
                                     if (feeItemBalances.carriedForward.total > 0) {
+                                        const carriedForwardBalanceBefore = feeItemBalances.carriedForward.remainingBefore;
                                         const carriedForwardPaid = feeItemBalances.carriedForward.paid;
+                                        const carriedForwardBalanceAfter = feeItemBalances.carriedForward.remainingAfter;
+
+                                        totalBalanceBefore += carriedForwardBalanceBefore;
                                         totalPaidThisReceipt += carriedForwardPaid;
+                                        totalRemainingTermBalance += carriedForwardBalanceAfter;
                                         
                                         rows += `
                                             <tr class="fees-row carried-forward-row">
-                                                <td style="text-align: left; padding-left: 8px; font-weight: bold;">Prior Term/Carried Forward Balance Paid</td>
-                                                <td>-</td>
+                                                <td style="text-align: left; padding-left: 8px; font-weight: bold;">Prior Term Balance</td>
+                                                <td>${carriedForwardBalanceBefore.toLocaleString()}</td>
                                                 <td>${carriedForwardPaid.toLocaleString()}</td>
-                                                <td>-</td>
+                                                <td>${carriedForwardBalanceAfter.toLocaleString()}</td>
                                             </tr>
                                         `;
                                     }
 
                                     // Generate rows for each fee item
                                     feeItemsList.forEach(item => {
-                                        const feeCharged = feeItemBalances.feeStructure[item.key] || 0;
+                                        // This is the running balance BEFORE this receipt (e.g., 2300 for tuition on second payment)
+                                        const balanceBefore = feeItemBalances.balancesBefore[item.key] || 0;
                                         const feePaid = feeItemBalances.feePaid[item.key] || 0;
-                                        // Use the balance AFTER this payment
+                                        // This is the balance AFTER this receipt (e.g., 400 for tuition on second payment)
                                         const remainingTermFeeBalance = feeItemBalances.balancesAfter[item.key] || 0;
                                         
-                                        totalFeeCharged += feeCharged;
+                                        totalBalanceBefore += balanceBefore;
                                         totalPaidThisReceipt += feePaid;
                                         totalRemainingTermBalance += remainingTermFeeBalance;
 
                                         rows += `
                                             <tr class="fees-row">
                                                 <td style="text-align: left; padding-left: 8px;">${item.name}</td>
-                                                <td>${feeCharged.toLocaleString()}</td>
+                                                <td>${balanceBefore.toLocaleString()}</td>
                                                 <td>${feePaid.toLocaleString()}</td>
                                                 <td>${remainingTermFeeBalance.toLocaleString()}</td>
                                             </tr>
@@ -2128,22 +2134,18 @@ async function printReceipt(id) {
                                     // Term Fee Summary Row
                                     rows += `
                                         <tr class="total-row">
-                                            <td style="text-align: right; padding-right: 8px;"><strong>Term Fee Summary Total</strong></td>
-                                            <td><strong>${totalFeeCharged.toLocaleString()}</strong></td>
+                                            <td style="text-align: right; padding-right: 8px;"><strong>Term Total Summary</strong></td>
+                                            <td><strong>${totalBalanceBefore.toLocaleString()}</strong></td>
                                             <td><strong>${totalPaidThisReceipt.toLocaleString()}</strong></td>
                                             <td><strong>${totalRemainingTermBalance.toLocaleString()}</strong></td>
                                         </tr>
                                     `;
 
-                                    // Final Account Balance Row (shows the TRUE outstanding balance)
+                                    // Final Account Balance Row (shows the TRUE outstanding balance as a separate column)
                                     rows += `
                                         <tr class="final-balance-row">
-                                            <td style="text-align: right; padding-right: 8px;"><strong>TOTAL AMOUNT PAID THIS RECEIPT:</strong></td>
-                                            <td colspan="3"><strong>KES ${Number(receipt.paid).toLocaleString()}</strong></td>
-                                        </tr>
-                                        <tr class="final-balance-row">
-                                            <td style="text-align: right; padding-right: 8px; background-color: #ffcccc;"><strong>TRUE OUTSTANDING ACCOUNT BALANCE:</strong></td>
-                                            <td colspan="3" style="font-size: 11px; background-color: #ffcccc;"><strong>KES ${currentStudentBalance.toLocaleString()}</strong></td>
+                                            <td colspan="3" style="text-align: right; padding-right: 8px; background-color: #ffcccc;"><strong>TRUE OUTSTANDING ACCOUNT BALANCE:</strong></td>
+                                            <td style="font-size: 11px; background-color: #ffcccc;"><strong>KES ${currentStudentBalance.toLocaleString()}</strong></td>
                                         </tr>
                                     `;
 
@@ -2155,6 +2157,7 @@ async function printReceipt(id) {
 
                         <div class="payment-details">
                             <div class="payment-left">
+                                <div><strong>TOTAL AMOUNT PAID THIS RECEIPT:</strong> KES ${Number(receipt.paid).toLocaleString()}</div>
                                 <div><strong>Term:</strong> ${currentTerm}</div>
                             </div>
                             <div class="payment-right" style="text-align: right;">
