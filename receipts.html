@@ -1671,7 +1671,7 @@
       }
     }
 
-    // ENHANCED: Calculate fee item balances using CURRENT student fee structure
+    // ENHANCED: Calculate fee item balances showing BEFORE and AFTER payment for this specific receipt
     async function calculateFeeItemBalancesForPrint(studentName, currentTerm, currentYear, receiptId) {
       const feeItems = [
         'tuition', 'adm', 'lunch', 'uniform', 'books', 
@@ -1699,9 +1699,10 @@
         graduation: currentStudent.graduation || 0
       };
       
-      const balances = {};
+      // Initialize balances with full fee structure
+      const balancesBeforeThisReceipt = {};
       feeItems.forEach(item => {
-        balances[item] = feeStructure[item] || 0;
+        balancesBeforeThisReceipt[item] = feeStructure[item] || 0;
       });
       
       const receiptsCollection = getReceiptsCollection(currentTerm, currentYear);
@@ -1711,30 +1712,59 @@
         allReceipts.push({ id: doc.id, ...doc.data() });
       });
       
+      // Sort receipts by date (oldest first)
       allReceipts.sort((a, b) => new Date(a.date) - new Date(b.date));
       
       const targetReceiptIndex = allReceipts.findIndex(r => r.id === receiptId);
-      if (targetReceiptIndex === -1) return balances;
+      if (targetReceiptIndex === -1) return null;
       
-      const relevantReceipts = allReceipts.slice(0, targetReceiptIndex + 1);
+      // Apply all payments BEFORE this receipt to get the "before" state
+      const receiptsBeforeTarget = allReceipts.slice(0, targetReceiptIndex);
       
-      relevantReceipts.forEach(receipt => {
+      receiptsBeforeTarget.forEach(receipt => {
         let remainingPaid = receipt.paid;
         
         for (const item of feeItems) {
           if (remainingPaid <= 0) break;
           
-          if (balances[item] > 0) {
-            const paymentApplied = Math.min(remainingPaid, balances[item]);
-            balances[item] -= paymentApplied;
+          if (balancesBeforeThisReceipt[item] > 0) {
+            const paymentApplied = Math.min(remainingPaid, balancesBeforeThisReceipt[item]);
+            balancesBeforeThisReceipt[item] -= paymentApplied;
             remainingPaid -= paymentApplied;
           }
         }
       });
       
-      return balances;
+      // Now calculate the "after" state by applying THIS receipt's payment
+      const balancesAfterThisReceipt = { ...balancesBeforeThisReceipt };
+      const thisReceipt = allReceipts[targetReceiptIndex];
+      let remainingPaid = thisReceipt.paid;
+      
+      const feePaidBreakdown = {};
+      
+      for (const item of feeItems) {
+        if (remainingPaid <= 0) {
+          feePaidBreakdown[item] = 0;
+          continue;
+        }
+        
+        if (balancesAfterThisReceipt[item] > 0) {
+          const paymentApplied = Math.min(remainingPaid, balancesAfterThisReceipt[item]);
+          feePaidBreakdown[item] = paymentApplied;
+          balancesAfterThisReceipt[item] -= paymentApplied;
+          remainingPaid -= paymentApplied;
+        } else {
+          feePaidBreakdown[item] = 0;
+        }
+      }
+      
+      return {
+        feeStructure,
+        balancesBefore: balancesBeforeThisReceipt,
+        balancesAfter: balancesAfterThisReceipt,
+        feePaid: feePaidBreakdown
+      };
     }
-
     // FIXED: Print receipt with CURRENT fee structure and accurate balance calculation
     async function printReceipt(id) {
       try {
