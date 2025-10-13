@@ -1671,7 +1671,7 @@
       }
     }
 
-  // CORRECTED FUNCTION 1: Calculate fee item balances with proper carried forward handling
+ // CORRECTED FUNCTION 1: Calculate fee item balances with proper downward clearing
 async function calculateFeeItemBalancesForPrint(studentName, currentTerm, currentYear, receiptId) {
   const feeItems = [
     'tuition', 'adm', 'lunch', 'uniform', 'books', 
@@ -1703,16 +1703,7 @@ async function calculateFeeItemBalancesForPrint(studentName, currentTerm, curren
   // Calculate balance carried forward from previous terms
   const balanceCarriedForward = await getBalanceCarriedForward(studentName, currentTerm, currentYear);
   
-  // Initialize starting balances: carried forward + current term fees
-  const initialBalances = {};
-  let totalInitialBalance = balanceCarriedForward; // Start with carried forward
-  
-  feeItems.forEach(item => {
-    initialBalances[item] = feeStructure[item] || 0;
-    totalInitialBalance += initialBalances[item];
-  });
-  
-  // Get all receipts for this student in current term
+  // Get all receipts for this student in current term, sorted by date
   const receiptsCollection = getReceiptsCollection(currentTerm, currentYear);
   const allReceiptsSnapshot = await receiptsCollection.where('name', '==', studentName).get();
   const allReceipts = [];
@@ -1727,85 +1718,80 @@ async function calculateFeeItemBalancesForPrint(studentName, currentTerm, curren
   const targetReceiptIndex = allReceipts.findIndex(r => r.id === receiptId);
   if (targetReceiptIndex === -1) return null;
   
-  // Calculate balances BEFORE this receipt by applying all previous payments
-  const balancesBeforeThisReceipt = { ...initialBalances };
-  let carriedForwardRemainingBefore = balanceCarriedForward;
+  // Initialize balances with fee structure
+  const balancesBefore = { ...feeStructure };
+  let carriedForwardRemaining = balanceCarriedForward;
   
+  // Apply all receipts BEFORE the target receipt
   const receiptsBeforeTarget = allReceipts.slice(0, targetReceiptIndex);
   
-  // Apply each previous receipt's payment
   receiptsBeforeTarget.forEach(receipt => {
-    let remainingPaid = receipt.paid;
+    let remainingPayment = receipt.paid;
     
-    // First, apply payment to carried forward balance if any remains
-    if (carriedForwardRemainingBefore > 0 && remainingPaid > 0) {
-      const paymentToCarriedForward = Math.min(remainingPaid, carriedForwardRemainingBefore);
-      carriedForwardRemainingBefore -= paymentToCarriedForward;
-      remainingPaid -= paymentToCarriedForward;
+    // First clear carried forward balance
+    if (carriedForwardRemaining > 0 && remainingPayment > 0) {
+      const paymentToCarriedForward = Math.min(remainingPayment, carriedForwardRemaining);
+      carriedForwardRemaining -= paymentToCarriedForward;
+      remainingPayment -= paymentToCarriedForward;
     }
     
-    // Then apply remaining payment to fee items in order
+    // Then clear fee items downwards in order
     for (const item of feeItems) {
-      if (remainingPaid <= 0) break;
+      if (remainingPayment <= 0) break;
       
-      if (balancesBeforeThisReceipt[item] > 0) {
-        const paymentApplied = Math.min(remainingPaid, balancesBeforeThisReceipt[item]);
-        balancesBeforeThisReceipt[item] -= paymentApplied;
-        remainingPaid -= paymentApplied;
+      if (balancesBefore[item] > 0) {
+        const paymentToItem = Math.min(remainingPayment, balancesBefore[item]);
+        balancesBefore[item] -= paymentToItem;
+        remainingPayment -= paymentToItem;
       }
     }
   });
   
-  // Now calculate balances AFTER applying THIS receipt's payment
-  const balancesAfterThisReceipt = { ...balancesBeforeThisReceipt };
-  let carriedForwardRemainingAfter = carriedForwardRemainingBefore;
-  
-  const thisReceipt = allReceipts[targetReceiptIndex];
-  let remainingPaid = thisReceipt.paid;
-  
-  // Track what was paid from each source
+  // Now calculate what THIS receipt pays
+  const balancesAfter = { ...balancesBefore };
+  let carriedForwardRemainingAfter = carriedForwardRemaining;
   const feePaidBreakdown = {};
   let carriedForwardPaid = 0;
   
-  // First, apply payment to carried forward balance if any remains
-  if (carriedForwardRemainingAfter > 0 && remainingPaid > 0) {
-    carriedForwardPaid = Math.min(remainingPaid, carriedForwardRemainingAfter);
+  const thisReceipt = allReceipts[targetReceiptIndex];
+  let remainingPayment = thisReceipt.paid;
+  
+  // First clear carried forward balance
+  if (carriedForwardRemainingAfter > 0 && remainingPayment > 0) {
+    carriedForwardPaid = Math.min(remainingPayment, carriedForwardRemainingAfter);
     carriedForwardRemainingAfter -= carriedForwardPaid;
-    remainingPaid -= carriedForwardPaid;
+    remainingPayment -= carriedForwardPaid;
   }
   
-  // Then apply remaining payment to fee items in order
+  // Then clear fee items downwards in order
   for (const item of feeItems) {
-    if (remainingPaid <= 0) {
-      feePaidBreakdown[item] = 0;
-      continue;
-    }
+    feePaidBreakdown[item] = 0;
     
-    if (balancesAfterThisReceipt[item] > 0) {
-      const paymentApplied = Math.min(remainingPaid, balancesAfterThisReceipt[item]);
-      feePaidBreakdown[item] = paymentApplied;
-      balancesAfterThisReceipt[item] -= paymentApplied;
-      remainingPaid -= paymentApplied;
-    } else {
-      feePaidBreakdown[item] = 0;
+    if (remainingPayment <= 0) continue;
+    
+    if (balancesAfter[item] > 0) {
+      const paymentToItem = Math.min(remainingPayment, balancesAfter[item]);
+      feePaidBreakdown[item] = paymentToItem;
+      balancesAfter[item] -= paymentToItem;
+      remainingPayment -= paymentToItem;
     }
   }
   
   return {
     feeStructure,
-    balancesBefore: balancesBeforeThisReceipt,
-    balancesAfter: balancesAfterThisReceipt,
+    balancesBefore,
+    balancesAfter,
     feePaid: feePaidBreakdown,
     carriedForward: {
       total: balanceCarriedForward,
-      remainingBefore: carriedForwardRemainingBefore,
+      remainingBefore: carriedForwardRemaining,
       remainingAfter: carriedForwardRemainingAfter,
       paid: carriedForwardPaid
     }
   };
 }
 
-// CORRECTED FUNCTION 2: Print receipt with proper carried forward balance display
+// CORRECTED FUNCTION 2: Print receipt with proper fee item display
 async function printReceipt(id) {
   try {
     const receiptsCollection = getReceiptsCollection();
@@ -2064,8 +2050,9 @@ async function printReceipt(id) {
                 <tr>
                   <th><strong>Fee Item</strong></th>
                   <th><strong>Fee Charged</strong></th>
+                  <th><strong>Balance B/F</strong></th>
                   <th><strong>Fee Paid</strong></th>
-                  <th><strong>Receipt Balance</strong></th>
+                  <th><strong>Balance C/F</strong></th>
                 </tr>
               </thead>
               <tbody>
@@ -2083,41 +2070,52 @@ async function printReceipt(id) {
                   ];
                   
                   let rows = '';
-                  let totalPaidThisReceipt = 0;
                   let totalFeeCharged = 0;
+                  let totalBalanceBefore = 0;
+                  let totalPaidThisReceipt = 0;
+                  let totalBalanceAfter = 0;
 
                   // Add carried forward balance row if applicable
                   if (feeItemBalances.carriedForward.total > 0) {
                     const carriedForwardPaid = feeItemBalances.carriedForward.paid;
-                    const carriedForwardBalance = feeItemBalances.carriedForward.remainingAfter;
-                    totalPaidThisReceipt += carriedForwardPaid;
+                    const carriedForwardBalanceBefore = feeItemBalances.carriedForward.remainingBefore;
+                    const carriedForwardBalanceAfter = feeItemBalances.carriedForward.remainingAfter;
+                    
                     totalFeeCharged += feeItemBalances.carriedForward.total;
+                    totalBalanceBefore += carriedForwardBalanceBefore;
+                    totalPaidThisReceipt += carriedForwardPaid;
+                    totalBalanceAfter += carriedForwardBalanceAfter;
                     
                     rows += `
                       <tr class="fees-row carried-forward-row">
                         <td style="font-weight: bold;">Balance Carried Forward</td>
                         <td>${feeItemBalances.carriedForward.total.toLocaleString()}</td>
+                        <td>${carriedForwardBalanceBefore.toLocaleString()}</td>
                         <td>${carriedForwardPaid.toLocaleString()}</td>
-                        <td>${carriedForwardBalance.toLocaleString()}</td>
+                        <td>${carriedForwardBalanceAfter.toLocaleString()}</td>
                       </tr>
                     `;
                   }
 
-                  // Generate rows for each fee item using the calculated balances
+                  // Generate rows for each fee item
                   feeItemsList.forEach(item => {
                     const feeCharged = feeItemBalances.feeStructure[item.key] || 0;
+                    const balanceBefore = feeItemBalances.balancesBefore[item.key] || 0;
                     const feePaid = feeItemBalances.feePaid[item.key] || 0;
-                    const feeBalance = feeItemBalances.balancesAfter[item.key] || 0;
+                    const balanceAfter = feeItemBalances.balancesAfter[item.key] || 0;
                     
-                    totalPaidThisReceipt += feePaid;
                     totalFeeCharged += feeCharged;
+                    totalBalanceBefore += balanceBefore;
+                    totalPaidThisReceipt += feePaid;
+                    totalBalanceAfter += balanceAfter;
 
                     rows += `
                       <tr class="fees-row">
                         <td>${item.name}</td>
                         <td>${feeCharged.toLocaleString()}</td>
+                        <td>${balanceBefore.toLocaleString()}</td>
                         <td>${feePaid.toLocaleString()}</td>
-                        <td>${feeBalance.toLocaleString()}</td>
+                        <td>${balanceAfter.toLocaleString()}</td>
                       </tr>
                     `;
                   });
@@ -2127,8 +2125,9 @@ async function printReceipt(id) {
                     <tr class="total-row">
                       <td style="text-align: right; padding-right: 8px;"><strong>Total</strong></td>
                       <td><strong>${totalFeeCharged.toLocaleString()}</strong></td>
+                      <td><strong>${totalBalanceBefore.toLocaleString()}</strong></td>
                       <td><strong>${totalPaidThisReceipt.toLocaleString()}</strong></td>
-                      <td><strong>${currentStudentBalance.toLocaleString()}</strong></td>
+                      <td><strong>${totalBalanceAfter.toLocaleString()}</strong></td>
                     </tr>
                   `;
 
@@ -2139,7 +2138,7 @@ async function printReceipt(id) {
 
             <div class="payment-details">
               <div class="payment-left">
-                <div><strong>Amount Paid:</strong> ${Number(receipt.paid).toLocaleString()}</div>
+                <div><strong>Amount Paid:</strong> KES ${Number(receipt.paid).toLocaleString()}</div>
                 <div><strong>Term:</strong> ${currentTerm}</div>
               </div>
               <div class="payment-right" style="text-align: right;">
