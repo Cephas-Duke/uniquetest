@@ -1,7 +1,7 @@
 {
   "name": "heriwadi-school",
   "version": "1.0.0",
-  "description": "Heriwadi School Management System with SMS Integration",
+  "description": "Heriwadi School Management System with SMS and Bank Integration",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -11,13 +11,18 @@
     "school",
     "management",
     "sms",
-    "express"
+    "express",
+    "payments"
   ],
   "author": "Heriwadi School",
   "license": "ISC",
   "dependencies": {
     "express": "^4.18.2",
-    "axios": "^1.6.2"
+    "axios": "^1.6.2",
+    "firebase-admin": "^11.11.0",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
