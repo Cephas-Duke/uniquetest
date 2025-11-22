@@ -28,17 +28,12 @@
 
     header {
       background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-      color: white;
-      padding: 1.5rem;
-      text-align: center;
-      box-shadow: var(--box-shadow);
+      color: white; padding: 1.5rem; text-align: center; box-shadow: var(--box-shadow);
     }
 
     nav {
-      background: var(--secondary-color);
-      padding: 0.75rem 1.5rem;
-      display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;
-      box-shadow: var(--box-shadow);
+      background: var(--secondary-color); padding: 0.75rem 1.5rem;
+      display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; box-shadow: var(--box-shadow);
     }
 
     nav a {
@@ -52,24 +47,24 @@
 
     .container { max-width: 1400px; margin: 2rem auto; padding: 0 1.5rem; }
 
-    .dashboard-header {
-      background: white; border-radius: var(--border-radius);
-      box-shadow: var(--box-shadow); padding: 1.5rem; margin-bottom: 1.5rem;
-      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
-    }
-
+    /* Admin Panel Styles */
     .admin-panel {
       background: linear-gradient(135deg, #2c3e50, #4ca1af);
       color: white; padding: 1rem; border-radius: var(--border-radius);
       margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;
     }
-
     .year-status-badge {
       padding: 0.25rem 0.75rem; border-radius: 20px; font-weight: bold; font-size: 0.9rem;
-      text-transform: uppercase;
+      text-transform: uppercase; margin-left: 10px;
     }
     .status-open { background-color: #28a745; color: white; }
     .status-closed { background-color: #dc3545; color: white; }
+
+    .dashboard-header {
+      background: white; border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow); padding: 1.5rem; margin-bottom: 1.5rem;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
+    }
 
     .btn {
       padding: 0.5rem 1rem; border: none; border-radius: var(--border-radius);
@@ -81,17 +76,18 @@
     .btn-success { background: var(--success-color); color: white; }
     .btn-warning { background: var(--warning-color); color: #333; }
 
+    /* Stats Grid */
     .stats-grid {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 1.5rem; margin-bottom: 2rem;
     }
-
     .stat-card {
       background: white; border-radius: var(--border-radius);
-      box-shadow: var(--box-shadow); padding: 1.5rem;
+      box-shadow: var(--box-shadow); padding: 1.5rem; transition: var(--transition);
     }
-
-    .stat-value { font-size: 1.8rem; font-weight: bold; margin: 0.5rem 0; }
+    .stat-card:hover { transform: translateY(-2px); }
+    .stat-title { font-size: 1rem; color: #666; margin-bottom: 0.5rem; }
+    .stat-value { font-size: 1.8rem; font-weight: bold; }
     .positive { color: var(--success-color); }
     .negative { color: var(--danger-color); }
 
@@ -107,7 +103,17 @@
     .department-content { padding: 1.5rem; display: none; }
     .department-content.active { display: block; }
 
-    .transactions-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    .mini-stat-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem; margin-bottom: 1.5rem;
+    }
+    .mini-stat {
+      background: #f8f9fa; padding: 1rem; border-radius: var(--border-radius); text-align: center;
+    }
+    .mini-stat label { font-size: 0.85rem; color: #666; display: block; margin-bottom: 0.5rem; }
+    .mini-stat span { font-size: 1.2rem; font-weight: bold; }
+
+    .transactions-table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
     .transactions-table th, .transactions-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #eee; }
     .transactions-table th { background: #f8f9fa; }
 
@@ -121,24 +127,20 @@
       background: white; border-radius: var(--border-radius); width: 90%; max-width: 500px;
       padding: 1.5rem; position: relative;
     }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
     .report-option {
       display: block; padding: 1rem; border: 1px solid #ddd; border-radius: var(--border-radius);
       margin-bottom: 0.5rem; cursor: pointer; transition: 0.2s;
     }
     .report-option:hover { background-color: #f0f8ff; border-color: var(--primary-color); }
-    .report-option i { font-size: 1.5rem; color: var(--primary-color); margin-right: 1rem; }
 
-    .status-message {
-      padding: 10px; margin: 10px 0; border-radius: 5px; display: none;
-    }
+    .status-message { padding: 10px; margin: 10px 0; border-radius: 5px; display: none; }
     .status-message.active { display: block; }
-    .status-info { background: #d1ecf1; color: #0c5460; }
     .status-success { background: #d4edda; color: #155724; }
     .status-error { background: #f8d7da; color: #721c24; }
+    .status-info { background: #d1ecf1; color: #0c5460; }
 
     @media (max-width: 768px) {
-      .stats-grid { grid-template-columns: 1fr; }
+      .stats-grid, .mini-stat-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -163,8 +165,8 @@
     
     <div class="admin-panel">
       <div>
-        <h3><i class="fas fa-shield-alt"></i> Admin Control: Financial Year <span id="displayYear">2024</span></h3>
-        <span id="yearStatusBadge" class="year-status-badge status-open">Open</span>
+        <h3><i class="fas fa-shield-alt"></i> Admin Control: <span id="displayYear">2024</span></h3>
+        <span id="yearStatusBadge" class="year-status-badge status-open">Checking...</span>
       </div>
       <div>
         <button class="btn btn-danger" id="closeYearBtn" onclick="confirmCloseYear()">
@@ -174,15 +176,13 @@
     </div>
 
     <div class="dashboard-header">
-      <h2 class="dashboard-title">
-        Term <span id="currentTermDisplay">2</span> Overview
-      </h2>
+      <h2 class="dashboard-title">Term <span id="currentTermDisplay">2</span> Overview</h2>
       <div class="refresh-controls">
-        <button class="btn btn-primary" onclick="refreshAllData()">
+        <button class="btn btn-primary" onclick="loadAllFinancialData()">
           <i class="fas fa-sync-alt"></i> Refresh
         </button>
         <button class="btn btn-success" onclick="openReportModal()">
-          <i class="fas fa-file-invoice-dollar"></i> Generate Reports
+          <i class="fas fa-file-invoice-dollar"></i> Reports Center
         </button>
       </div>
     </div>
@@ -201,35 +201,114 @@
         <div class="stat-value" id="bankBalance">KES 0</div>
       </div>
       <div class="stat-card">
-        <div class="stat-title">Total Income (Term)</div>
-        <div class="stat-value positive" id="termIncome">KES 0</div>
+        <div class="stat-title">Transport P&L</div>
+        <div class="stat-value" id="transportPL">KES 0</div>
       </div>
       <div class="stat-card">
-        <div class="stat-title">Total Expenses (Term)</div>
-        <div class="stat-value negative" id="termExpenses">KES 0</div>
+        <div class="stat-title">Food P&L</div>
+        <div class="stat-value" id="foodPL">KES 0</div>
       </div>
       <div class="stat-card">
-        <div class="stat-title">Net Profit/Loss</div>
-        <div class="stat-value" id="netProfit">KES 0</div>
+        <div class="stat-title">Uniform P&L</div>
+        <div class="stat-value" id="uniformPL">KES 0</div>
       </div>
     </div>
 
     <div class="department-section">
       <div class="department-header" onclick="toggleSection('bank')">
-        <h3><i class="fas fa-university"></i> Bank Transactions</h3>
+        <h3><i class="fas fa-university"></i> Bank Account Management</h3>
         <i class="fas fa-chevron-down" id="bankChevron"></i>
       </div>
       <div class="department-content active" id="bankContent">
+        <div class="mini-stat-grid">
+          <div class="mini-stat"><label>Total Income</label><span class="positive" id="bankIncome">KES 0</span></div>
+          <div class="mini-stat"><label>Total Expenses</label><span class="negative" id="bankExpenses">KES 0</span></div>
+          <div class="mini-stat"><label>Net Flow</label><span id="bankNetFlow">KES 0</span></div>
+        </div>
         <table class="transactions-table">
-          <thead>
-            <tr><th>Date</th><th>Description</th><th>Type</th><th>Amount</th><th>Balance</th></tr>
-          </thead>
+          <thead><tr><th>Date</th><th>Description</th><th>Type</th><th>Amount</th><th>Balance</th></tr></thead>
           <tbody id="bankTransactionsTable"></tbody>
         </table>
       </div>
     </div>
 
-    <div class="chart-container" style="background: white; padding: 20px; border-radius: 8px; margin-top: 20px;">
+    <div class="department-section">
+      <div class="department-header" onclick="toggleSection('transport')">
+        <h3><i class="fas fa-bus"></i> Transport Department</h3>
+        <i class="fas fa-chevron-down" id="transportChevron"></i>
+      </div>
+      <div class="department-content" id="transportContent">
+        <div class="mini-stat-grid">
+          <div class="mini-stat"><label>Students</label><span id="transportStudents">0</span></div>
+          <div class="mini-stat"><label>Revenue</label><span class="positive" id="transportRevenue">KES 0</span></div>
+          <div class="mini-stat"><label>Expenses</label><span class="negative" id="transportExpenses">KES 0</span></div>
+          <div class="mini-stat"><label>Net P&L</label><span id="transportNet">KES 0</span></div>
+        </div>
+        <h4>Student Payments</h4>
+        <table class="transactions-table">
+          <thead><tr><th>Name</th><th>Fee</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead>
+          <tbody id="transportStudentsTable"></tbody>
+        </table>
+        <h4>Department Expenses</h4>
+        <table class="transactions-table">
+          <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr></thead>
+          <tbody id="transportExpensesTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="department-section">
+      <div class="department-header" onclick="toggleSection('food')">
+        <h3><i class="fas fa-utensils"></i> Food Department</h3>
+        <i class="fas fa-chevron-down" id="foodChevron"></i>
+      </div>
+      <div class="department-content" id="foodContent">
+        <div class="mini-stat-grid">
+          <div class="mini-stat"><label>Students</label><span id="foodStudents">0</span></div>
+          <div class="mini-stat"><label>Revenue</label><span class="positive" id="foodRevenue">KES 0</span></div>
+          <div class="mini-stat"><label>Expenses</label><span class="negative" id="foodExpenses">KES 0</span></div>
+          <div class="mini-stat"><label>Net P&L</label><span id="foodNet">KES 0</span></div>
+        </div>
+        <h4>Student Payments</h4>
+        <table class="transactions-table">
+          <thead><tr><th>Name</th><th>Fee</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead>
+          <tbody id="foodStudentsTable"></tbody>
+        </table>
+        <h4>Department Expenses</h4>
+        <table class="transactions-table">
+          <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr></thead>
+          <tbody id="foodExpensesTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="department-section">
+      <div class="department-header" onclick="toggleSection('uniform')">
+        <h3><i class="fas fa-tshirt"></i> Uniform Department</h3>
+        <i class="fas fa-chevron-down" id="uniformChevron"></i>
+      </div>
+      <div class="department-content" id="uniformContent">
+        <div class="mini-stat-grid">
+          <div class="mini-stat"><label>Students</label><span id="uniformStudents">0</span></div>
+          <div class="mini-stat"><label>Revenue</label><span class="positive" id="uniformRevenue">KES 0</span></div>
+          <div class="mini-stat"><label>Expenses</label><span class="negative" id="uniformExpenses">KES 0</span></div>
+          <div class="mini-stat"><label>Net P&L</label><span id="uniformNet">KES 0</span></div>
+        </div>
+        <h4>Student Payments</h4>
+        <table class="transactions-table">
+          <thead><tr><th>Name</th><th>Fee</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead>
+          <tbody id="uniformStudentsTable"></tbody>
+        </table>
+        <h4>Department Expenses</h4>
+        <table class="transactions-table">
+          <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr></thead>
+          <tbody id="uniformExpensesTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="background: white; padding: 20px; border-radius: 8px;">
+      <h3 style="text-align:center; color:var(--primary-color)">Profit & Loss Overview</h3>
       <canvas id="profitLossChart" style="max-height: 400px;"></canvas>
     </div>
 
@@ -237,40 +316,15 @@
 
   <div id="reportModal" class="modal">
     <div class="modal-content">
-      <div class="modal-header">
+      <div style="display:flex; justify-content:space-between; margin-bottom:1rem;">
         <h3>Select Report Type</h3>
         <button class="btn btn-warning" onclick="closeReportModal()">X</button>
       </div>
-      <div class="modal-body">
-        <div class="report-option" onclick="generateAccountantReport()">
-          <div style="display: flex; align-items: center;">
-            <i class="fas fa-calculator"></i>
-            <div>
-              <strong>Accountant's Pack</strong>
-              <div style="font-size: 0.8rem; color: #666;">Detailed ledgers, breakdown by category (Transport, Food, etc.), and bank reconciliation data.</div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="report-option" onclick="generateTaxReport()">
-          <div style="display: flex; align-items: center;">
-            <i class="fas fa-landmark"></i>
-            <div>
-              <strong>Tax Authority (KRA) Summary</strong>
-              <div style="font-size: 0.8rem; color: #666;">Annual consolidated report. Gross Income vs Deductible Expenses for the full year.</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="report-option" onclick="exportFinancialReport()">
-          <div style="display: flex; align-items: center;">
-            <i class="fas fa-table"></i>
-            <div>
-              <strong>Current View Dump</strong>
-              <div style="font-size: 0.8rem; color: #666;">Simple export of what is currently visible on the dashboard.</div>
-            </div>
-          </div>
-        </div>
+      <div class="report-option" onclick="generateAccountantReport()">
+        <i class="fas fa-calculator"></i> <strong>Accountant's Pack</strong> (Ledgers, Breakdowns)
+      </div>
+      <div class="report-option" onclick="generateTaxReport()">
+        <i class="fas fa-landmark"></i> <strong>Tax Authority (KRA) Summary</strong> (Annual P&L)
       </div>
     </div>
   </div>
@@ -280,7 +334,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <script>
-    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyBAA6zY40EwbTmWUx1op1cx52C3y0RK3m0",
       authDomain: "heriwadi-manager.firebaseapp.com",
@@ -294,11 +347,17 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // State
     let currentTerm = parseInt(sessionStorage.getItem('heriwadi_current_term')) || 2;
     let currentYear = new Date().getFullYear();
-    let financialData = { receipts: [], expenses: [], bankTransactions: [] };
     let isYearClosed = false;
+    
+    // Complete Data Storage
+    let financialData = {
+      students: [],
+      receipts: [],
+      expenses: [],
+      bankTransactions: []
+    };
 
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('displayYear').textContent = currentYear;
@@ -324,305 +383,292 @@
       document.getElementById(id+'Content').classList.toggle('active');
     }
 
-    // ==========================================
-    // 1. FINANCIAL YEAR LOCKING LOGIC
-    // ==========================================
+    // --- 1. Admin Year Lock ---
     async function checkYearStatus() {
       try {
         const doc = await db.collection('system_settings').doc('financial_years').get();
         if (doc.exists) {
-          const data = doc.data();
-          const status = data[currentYear] || 'open';
-          isYearClosed = (status === 'closed');
+          isYearClosed = (doc.data()[currentYear] === 'closed');
           updateAdminPanelUI();
         }
-      } catch (e) {
-        console.error("Error checking year status", e);
-      }
+      } catch (e) { console.error(e); }
     }
 
     function updateAdminPanelUI() {
       const badge = document.getElementById('yearStatusBadge');
       const btn = document.getElementById('closeYearBtn');
-      
       if (isYearClosed) {
         badge.textContent = "CLOSED / READ-ONLY";
         badge.className = "year-status-badge status-closed";
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-lock"></i> Year Locked';
-        showStatus(`Financial Year ${currentYear} is Closed. Editing is disabled.`, "error");
       } else {
         badge.textContent = "OPEN";
         badge.className = "year-status-badge status-open";
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-lock"></i> Close Financial Year';
       }
     }
 
     async function confirmCloseYear() {
-      if(!confirm(`⚠️ WARNING: You are about to CLOSE Financial Year ${currentYear}.\n\nThis will:\n1. Lock all receipts and expenses for this year.\n2. Prevent further editing.\n\nAre you sure?`)) return;
+      if(!confirm(`WARNING: Close Financial Year ${currentYear}? This cannot be undone.`)) return;
+      const password = prompt("Enter admin password:");
+      if(password !== "admin2025") { alert("Incorrect password"); return; }
       
-      const password = prompt("Please enter admin password to confirm:");
-      if(password !== "admin2025") { // Replace with your real check logic
-        alert("Incorrect password.");
-        return;
-      }
-
-      try {
-        await db.collection('system_settings').doc('financial_years').set({
-          [currentYear]: 'closed'
-        }, { merge: true });
-        
-        isYearClosed = true;
-        updateAdminPanelUI();
-        alert(`Financial Year ${currentYear} has been successfully closed.`);
-      } catch(e) {
-        alert("Error closing year: " + e.message);
-      }
+      await db.collection('system_settings').doc('financial_years').set({ [currentYear]: 'closed' }, { merge: true });
+      isYearClosed = true;
+      updateAdminPanelUI();
+      alert("Year Closed Successfully.");
     }
 
-    // ==========================================
-    // 2. DATA LOADING
-    // ==========================================
+    // --- 2. Data Loading (Updated to include Students for Departments) ---
     async function loadAllFinancialData() {
-      showStatus("Loading financial data...", "info");
-      financialData = { receipts: [], expenses: [], bankTransactions: [] }; // Reset
+      showStatus("Loading all data...", "info");
+      financialData = { students: [], receipts: [], expenses: [], bankTransactions: [] };
 
       try {
-        // Load Receipts
-        const rSnap = await db.collection(`receipts_${currentYear}_term_${currentTerm}`).get();
-        rSnap.forEach(doc => financialData.receipts.push(doc.data()));
+        // 1. Load Students (Needed for fee allocation calculation)
+        const sSnap = await db.collection(`students_${currentYear}_term_${currentTerm}`).get();
+        sSnap.forEach(doc => financialData.students.push({ id: doc.id, ...doc.data() }));
 
-        // Load Expenses (assuming they are stored by term or have a term field)
-        // If your expenses are in one big collection, we filter in memory
-        const eSnap = await db.collection('expenses').get(); 
+        // 2. Load Receipts
+        const rSnap = await db.collection(`receipts_${currentYear}_term_${currentTerm}`).get();
+        rSnap.forEach(doc => financialData.receipts.push({ id: doc.id, ...doc.data() }));
+
+        // 3. Load Expenses
+        const eSnap = await db.collection('expenses').get();
         eSnap.forEach(doc => {
           const d = doc.data();
-          // Simple check if expense belongs to this term/year
           if(getTermFromDate(d.date) === currentTerm && new Date(d.date).getFullYear() === currentYear) {
             financialData.expenses.push(d);
           }
         });
 
-        processFinancials();
-        showStatus("Data updated successfully", "success");
+        processFinancials(); // Updates Bank & Charts
+        updateDepartmentSections(); // Updates Transport/Food/Uniform
+        showStatus("Dashboard Updated", "success");
+
       } catch (e) {
         console.error(e);
-        showStatus("Error loading data: " + e.message, "error");
+        showStatus("Error: " + e.message, "error");
       }
     }
 
     function getTermFromDate(dateString) {
-      // Simple helper logic - customize based on your school months
       const month = new Date(dateString).getMonth() + 1;
       if (month <= 4) return 1;
       if (month <= 8) return 2;
       return 3;
     }
 
+    // --- 3. General Processing (Bank & Overview) ---
     function processFinancials() {
       let income = 0;
       let expense = 0;
       const transactions = [];
 
-      // Process Income
       financialData.receipts.forEach(r => {
         income += (r.paid || 0);
-        transactions.push({
-          date: r.date,
-          desc: `Fee Payment: ${r.name}`,
-          type: 'Credit',
-          amount: r.paid || 0
-        });
+        transactions.push({ date: r.date, desc: `Fee: ${r.name}`, type: 'Credit', amount: r.paid || 0 });
       });
 
-      // Process Expenses
       financialData.expenses.forEach(e => {
         expense += (e.amount || 0);
-        transactions.push({
-          date: e.date,
-          desc: `Expense: ${e.description} (${e.category})`,
-          type: 'Debit',
-          amount: e.amount || 0
-        });
+        transactions.push({ date: e.date, desc: `Exp: ${e.description}`, type: 'Debit', amount: e.amount || 0 });
       });
 
-      // Sort by date
       transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-      // Calculate Running Balance
       let bal = 0;
       transactions.forEach(t => {
-        if(t.type === 'Credit') bal += t.amount;
-        else bal -= t.amount;
+        if(t.type === 'Credit') bal += t.amount; else bal -= t.amount;
         t.balance = bal;
       });
 
       financialData.bankTransactions = transactions;
 
-      // Update UI
+      // Update Bank UI
       document.getElementById('bankBalance').textContent = `KES ${bal.toLocaleString()}`;
-      document.getElementById('termIncome').textContent = `KES ${income.toLocaleString()}`;
-      document.getElementById('termExpenses').textContent = `KES ${expense.toLocaleString()}`;
-      document.getElementById('netProfit').textContent = `KES ${(income - expense).toLocaleString()}`;
-      
-      if((income - expense) >= 0) {
-        document.getElementById('netProfit').className = "stat-value positive";
-      } else {
-        document.getElementById('netProfit').className = "stat-value negative";
-      }
+      document.getElementById('bankIncome').textContent = `KES ${income.toLocaleString()}`;
+      document.getElementById('bankExpenses').textContent = `KES ${expense.toLocaleString()}`;
+      document.getElementById('bankNetFlow').textContent = `KES ${(income - expense).toLocaleString()}`;
 
-      renderTransactionsTable();
-      renderChart(income, expense);
-    }
-
-    function renderTransactionsTable() {
+      // Render Bank Table (Last 20)
       const tbody = document.getElementById('bankTransactionsTable');
       tbody.innerHTML = '';
-      // Show last 10
-      const recent = financialData.bankTransactions.slice().reverse().slice(0, 20);
-      
-      recent.forEach(t => {
-        const row = `<tr>
+      transactions.slice().reverse().slice(0, 20).forEach(t => {
+        tbody.innerHTML += `<tr>
           <td>${new Date(t.date).toLocaleDateString()}</td>
           <td>${t.desc}</td>
-          <td style="color:${t.type === 'Credit' ? 'green' : 'red'}">${t.type}</td>
+          <td style="color:${t.type==='Credit'?'green':'red'}">${t.type}</td>
           <td>${t.amount.toLocaleString()}</td>
           <td>${t.balance.toLocaleString()}</td>
         </tr>`;
-        tbody.innerHTML += row;
+      });
+
+      renderChart(income, expense);
+    }
+
+    // --- 4. Department Logic (Restored) ---
+    function updateDepartmentSections() {
+      updateDepartment('transport', ['Motor vehicle expenses', 'Fuel & Gas', 'Transport']);
+      updateDepartment('lunch', ['Food']); // 'lunch' matches student field
+      updateDepartment('uniform', ['Uniform Purchase', 'Staff Uniforms']);
+    }
+
+    function updateDepartment(feeType, expenseCategories) {
+      let revenue = 0;
+      const studentList = [];
+      const expenseList = [];
+      let totalExpenses = 0;
+
+      // 1. Calculate Revenue from Student Payments
+      financialData.students.forEach(student => {
+        if (student[feeType] && student[feeType] > 0) {
+          // Find total paid by this student
+          const studentReceipts = financialData.receipts.filter(r => r.name === student.name);
+          const totalPaid = studentReceipts.reduce((sum, r) => sum + (r.paid || 0), 0);
+
+          // Calculate Proportional Share
+          const totalFees = (student.tuition||0) + (student.adm||0) + (student.books||0) + 
+                            (student.stationery||0) + (student.uniform||0) + (student.lunch||0) + 
+                            (student.transport||0) + (student.trip||0) + (student.graduation||0);
+          
+          let allocatedPaid = 0;
+          if (totalFees > 0) {
+            allocatedPaid = totalPaid * (student[feeType] / totalFees);
+          }
+          revenue += allocatedPaid;
+
+          studentList.push({
+            name: student.name,
+            fee: student[feeType],
+            paid: allocatedPaid,
+            bal: student[feeType] - allocatedPaid
+          });
+        }
+      });
+
+      // 2. Calculate Expenses
+      financialData.expenses.forEach(e => {
+        if(expenseCategories.includes(e.category)) {
+          totalExpenses += (e.amount || 0);
+          expenseList.push(e);
+        }
+      });
+
+      const profit = revenue - totalExpenses;
+      const prefix = feeType === 'lunch' ? 'food' : feeType; // UI ID mapping
+
+      // Update UI Stats
+      document.getElementById(`${prefix}Students`).textContent = studentList.length;
+      document.getElementById(`${prefix}Revenue`).textContent = `KES ${revenue.toLocaleString(undefined, {maximumFractionDigits: 0})}`;
+      document.getElementById(`${prefix}Expenses`).textContent = `KES ${totalExpenses.toLocaleString()}`;
+      const plEl = document.getElementById(`${prefix}Net`);
+      const plStat = document.getElementById(`${prefix}PL`);
+      
+      plEl.textContent = `KES ${profit.toLocaleString(undefined, {maximumFractionDigits: 0})}`;
+      plEl.className = profit >= 0 ? "positive" : "negative";
+      
+      // Update Top Grid Stat
+      if(plStat) {
+        plStat.textContent = `KES ${profit.toLocaleString(undefined, {maximumFractionDigits: 0})}`;
+        plStat.className = profit >= 0 ? "stat-value positive" : "stat-value negative";
+      }
+
+      // Update Student Table
+      const sTable = document.getElementById(`${prefix}StudentsTable`);
+      sTable.innerHTML = '';
+      studentList.forEach(s => {
+        sTable.innerHTML += `<tr>
+          <td>${s.name}</td>
+          <td>${s.fee.toLocaleString()}</td>
+          <td>${s.paid.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
+          <td style="color:${s.bal>0?'red':'green'}">${s.bal.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
+          <td>${s.bal <= 0 ? 'Paid' : 'Due'}</td>
+        </tr>`;
+      });
+
+      // Update Expense Table
+      const eTable = document.getElementById(`${prefix}ExpensesTable`);
+      eTable.innerHTML = '';
+      expenseList.forEach(e => {
+        eTable.innerHTML += `<tr>
+          <td>${new Date(e.date).toLocaleDateString()}</td>
+          <td>${e.description}</td>
+          <td>${e.category}</td>
+          <td>${e.amount.toLocaleString()}</td>
+        </tr>`;
       });
     }
 
     function renderChart(inc, exp) {
       const ctx = document.getElementById('profitLossChart').getContext('2d');
       if(window.myChart) window.myChart.destroy();
-      
       window.myChart = new Chart(ctx, {
         type: 'bar',
         data: {
           labels: ['Income', 'Expenses', 'Net Profit'],
           datasets: [{
-            label: `Term ${currentTerm} Financials`,
-            data: [inc, exp, inc - exp],
+            label: 'Current Term',
+            data: [inc, exp, inc-exp],
             backgroundColor: ['#28a745', '#dc3545', '#005fa3']
           }]
         }
       });
     }
 
-    // ==========================================
-    // 3. ADVANCED REPORTING
-    // ==========================================
-    
+    // --- 5. Report Logic ---
     function openReportModal() { document.getElementById('reportModal').classList.add('show'); }
     function closeReportModal() { document.getElementById('reportModal').classList.remove('show'); }
 
-    // 3A. ACCOUNTANT REPORT (Detailed)
     async function generateAccountantReport() {
-      showStatus("Generating Accountant Pack...", "info");
       const wb = XLSX.utils.book_new();
-
-      // Sheet 1: Summary
-      const summaryData = [
-        ["Heriwadi Schools - Accountant Report", `Year: ${currentYear} | Term: ${currentTerm}`],
-        [],
-        ["Category", "Amount"],
-        ["Total Fee Income", document.getElementById('termIncome').textContent],
-        ["Total Operational Expenses", document.getElementById('termExpenses').textContent],
-        ["Net Position", document.getElementById('netProfit').textContent]
+      const sData = [
+        ["Accountant Report", `Year: ${currentYear} | Term: ${currentTerm}`],
+        [], ["Category", "Amount"],
+        ["Bank Income", document.getElementById('bankIncome').textContent],
+        ["Bank Expense", document.getElementById('bankExpenses').textContent],
+        ["Net", document.getElementById('bankNetFlow').textContent]
       ];
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summaryData), "Executive Summary");
-
-      // Sheet 2: Ledger (Bank Transactions)
-      const ledgerData = financialData.bankTransactions.map(t => ({
-        Date: new Date(t.date).toLocaleDateString(),
-        Description: t.desc,
-        Type: t.type,
-        Debit: t.type === 'Debit' ? t.amount : 0,
-        Credit: t.type === 'Credit' ? t.amount : 0,
-        RunningBalance: t.balance
-      }));
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ledgerData), "General Ledger");
-
-      // Sheet 3: Expense Breakdown
-      // Group expenses by category
-      const expenseGroups = {};
-      financialData.expenses.forEach(e => {
-        if(!expenseGroups[e.category]) expenseGroups[e.category] = 0;
-        expenseGroups[e.category] += (e.amount || 0);
-      });
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sData), "Summary");
       
-      const expenseData = Object.keys(expenseGroups).map(cat => ({
-        Category: cat,
-        TotalAmount: expenseGroups[cat]
+      // Ledger
+      const lData = financialData.bankTransactions.map(t => ({
+        Date: new Date(t.date).toLocaleDateString(),
+        Desc: t.desc, Type: t.type, Debit: t.type==='Debit'?t.amount:0, Credit: t.type==='Credit'?t.amount:0, Bal: t.balance
       }));
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(expenseData), "Expense Breakdown");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(lData), "Ledger");
 
-      XLSX.writeFile(wb, `Accountant_Report_${currentYear}_Term${currentTerm}.xlsx`);
+      XLSX.writeFile(wb, `Accountant_Report_${currentYear}_T${currentTerm}.xlsx`);
       closeReportModal();
-      showStatus("Report Downloaded", "success");
     }
 
-    // 3B. TAX REPORT (Annual)
     async function generateTaxReport() {
-      if(!confirm("This will fetch data for the WHOLE YEAR to generate a tax summary. This might take a moment.")) return;
-      showStatus("Fetching Annual Data...", "info");
-
-      let annualIncome = 0;
-      let annualExpense = 0;
-
-      // Fetch all 3 terms for the year
+      if(!confirm("Fetch Annual Data for Tax Report?")) return;
+      let annInc = 0, annExp = 0;
+      
+      // Fetch All Terms (1-3)
       for(let t=1; t<=3; t++) {
         try {
           const rSnap = await db.collection(`receipts_${currentYear}_term_${t}`).get();
-          rSnap.forEach(doc => annualIncome += (doc.data().paid || 0));
-        } catch(e) {} // Ignore missing terms
+          rSnap.forEach(d => annInc += (d.data().paid || 0));
+        } catch(e){}
       }
-
-      // Fetch all expenses for the year
+      
       const eSnap = await db.collection('expenses').get();
-      eSnap.forEach(doc => {
-        const d = doc.data();
-        if(new Date(d.date).getFullYear() === currentYear) {
-          annualExpense += (d.amount || 0);
-        }
+      eSnap.forEach(d => {
+        if(new Date(d.data().date).getFullYear() === currentYear) annExp += (d.data().amount || 0);
       });
 
-      // Create Excel
       const wb = XLSX.utils.book_new();
-      const taxData = [
-        ["HERIWADI CHRISTIAN SCHOOLS LTD"],
-        ["ANNUAL INCOME STATEMENT (Tax Purpose)"],
-        [`Financial Year: ${currentYear}`],
-        [],
-        ["REVENUE"],
-        ["Gross Tuition & Fee Income", annualIncome],
-        ["Total Revenue", annualIncome],
-        [],
-        ["OPERATING EXPENSES"],
-        ["Total Deductible Expenses", annualExpense],
-        [],
-        ["NET INCOME (Before Tax)", annualIncome - annualExpense]
+      const data = [
+        ["HERIWADI SCHOOLS - ANNUAL TAX SUMMARY"],
+        [`Year: ${currentYear}`], [],
+        ["REVENUE", annInc], ["EXPENSES", annExp], ["NET INCOME", annInc - annExp]
       ];
-
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(taxData), "Income Statement");
-      XLSX.writeFile(wb, `Tax_Return_Data_${currentYear}.xlsx`);
-      
-      closeReportModal();
-      showStatus("Tax Report Downloaded", "success");
-    }
-
-    // 3C. Simple Export (Existing)
-    function exportFinancialReport() {
-      // Reuse existing bank transaction data for simple export
-      const ws = XLSX.utils.json_to_sheet(financialData.bankTransactions);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Transactions");
-      XLSX.writeFile(wb, `Simple_Export_${currentYear}.xlsx`);
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), "Income Statement");
+      XLSX.writeFile(wb, `Tax_Report_${currentYear}.xlsx`);
       closeReportModal();
     }
-
   </script>
 </body>
 </html>
