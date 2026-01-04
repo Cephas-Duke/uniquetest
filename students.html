@@ -730,8 +730,10 @@
     <div class="term-selector slide-in">
       <div>
         <h3><i class="fas fa-calendar-alt"></i> Academic Term</h3>
-        <div class="current-term-info">
-          Current Academic Year: <span id="currentYear">2024</span>
+        <div class="current-term-info" style="display: flex; align-items: center; gap: 0.5rem;">
+          <i class="fas fa-calendar"></i>
+          <label for="yearSelector" style="margin: 0; cursor: pointer;">Year:</label>
+          <input type="number" id="yearSelector" class="year-input" min="2020" max="2030" style="width: 80px; padding: 0.25rem; border: none; border-radius: 4px; color: #333; font-weight: bold;">
         </div>
       </div>
       <div class="term-buttons">
@@ -1174,7 +1176,22 @@
 
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
-      updateCurrentYearDisplay();
+      
+      // -- YEAR SELECTOR LOGIC START --
+      const yearInput = document.getElementById('yearSelector');
+      if(yearInput) {
+        yearInput.value = currentYear;
+        yearInput.addEventListener('change', function() {
+          const newYear = parseInt(this.value);
+          if(newYear && newYear > 2000 && newYear < 2100) {
+            currentYear = newYear;
+            showStatus(`Switched to Academic Year ${currentYear}`, "info");
+            loadStudents();
+          }
+        });
+      }
+      // -- YEAR SELECTOR LOGIC END --
+
       initializeTermUI();
       loadStudents();
       setupEventListeners();
@@ -1241,9 +1258,7 @@
       document.getElementById('confirmImportBtn').addEventListener('click', importStudents);
     }
 
-    function updateCurrentYearDisplay() {
-      document.getElementById('currentYear').textContent = currentYear;
-    }
+    // Removed the old updateCurrentYearDisplay function as it's no longer needed
 
     function switchTerm(term) {
       currentTerm = term;
@@ -1428,7 +1443,7 @@ async function loadStudents() {
     }
 
     if (filteredStudents.length === 0) {
-      groupedTables.innerHTML = `<div class="status-message info">No students found for Term ${currentTerm} matching your criteria.</div>`;
+      groupedTables.innerHTML = `<div class="status-message info">No students found for Term ${currentTerm} in ${currentYear} matching your criteria.</div>`;
       statsContainer.innerHTML = '';
       return;
     }
@@ -2838,7 +2853,7 @@ async function loadStudents() {
     }
 
     console.log('Enhanced Student Management System Loaded');
-    console.log('Features: Negative carry-forward balance handling, editable carry-forward field, enhanced smart transitions, End of Year Promotion');
+    console.log('Features: Year Selector added, Negative carry-forward balance handling, editable carry-forward field, enhanced smart transitions, End of Year Promotion');
     console.log('Keyboard shortcuts: Alt+1/2/3 for term switching, Alt+A for auto-fill carry forward, Escape to close modals');
   </script>
 </body>
