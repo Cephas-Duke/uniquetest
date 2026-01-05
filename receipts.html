@@ -23,203 +23,219 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Roboto', sans-serif; background-color: #f5f7fa; color: #333; line-height: 1.6; }
-
-    header {
-      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-      color: white; padding: 1.5rem; text-align: center; box-shadow: var(--box-shadow);
-    }
-
-    nav {
-      background: var(--secondary-color); padding: 0.75rem 1.5rem;
-      display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;
-      position: sticky; top: 0; z-index: 9;
-    }
-
-    nav a {
-      color: white; text-decoration: none; padding: 0.5rem 1rem;
-      border-radius: var(--border-radius); transition: var(--transition);
-      display: flex; align-items: center; gap: 0.5rem;
-    }
+    body { font-family: 'Roboto', sans-serif; background: #f0f2f5; color: var(--dark-color); }
+    header { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; padding: 1.5rem; text-align: center; box-shadow: var(--box-shadow); }
+    nav { background: var(--secondary-color); padding: 0.75rem; display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; }
+    nav a { color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: var(--border-radius); transition: var(--transition); font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; }
     nav a:hover, nav a.active { background: var(--accent-color); }
 
-    .container { max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem; }
+    .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+    .card { background: white; border-radius: var(--border-radius); box-shadow: var(--box-shadow); padding: 1.5rem; margin-bottom: 2rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; margin-bottom: 0.4rem; font-weight: 500; font-size: 0.9rem; }
+    input, select { width: 100%; padding: 0.65rem; border: 1px solid #ddd; border-radius: var(--border-radius); outline: none; transition: var(--transition); }
+    input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(0,95,163,0.1); }
+    
+    .btn { padding: 0.65rem 1.2rem; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 500; transition: var(--transition); display: inline-flex; align-items: center; gap: 0.5rem; justify-content: center; }
+    .btn-primary { background: var(--primary-color); color: white; }
+    .btn-success { background: var(--success-color); color: white; }
+    .btn-danger { background: var(--danger-color); color: white; }
+    .btn-info { background: var(--info-color); color: white; }
+    .btn:hover { opacity: 0.9; transform: translateY(-1px); }
 
-    .term-selector {
-      background: white; border-radius: var(--border-radius);
-      box-shadow: var(--box-shadow); padding: 1rem 1.5rem;
-      margin-bottom: 1.5rem; display: flex; align-items: center;
-      justify-content: space-between; flex-wrap: wrap; gap: 1rem;
-    }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.85rem; }
+    th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #eee; }
+    th { background: #f8f9fa; color: var(--secondary-color); font-weight: 600; }
+    tr.total-row { background: #e9ecef; font-weight: bold; }
 
-    .year-select-container {
-      display: flex; align-items: center; gap: 0.5rem;
-      background: var(--info-color); padding: 0.25rem 0.5rem;
-      border-radius: var(--border-radius); color: white;
-    }
-
-    .year-select-container select {
-      border: none; background: white; padding: 0.25rem 0.5rem;
-      border-radius: 4px; font-weight: bold;
-    }
-
-    .term-buttons { display: flex; gap: 0.5rem; }
-    .term-btn {
-      padding: 0.5rem 1rem; border: 2px solid var(--primary-color);
-      background: transparent; color: var(--primary-color);
-      border-radius: var(--border-radius); cursor: pointer;
-    }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+    .modal.show { display: flex; }
+    .modal-content { background: white; padding: 2rem; border-radius: var(--border-radius); width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; }
+    
+    .receipt-preview { padding: 2rem; border: 2px solid #eee; background: white; width: 100%; max-width: 400px; margin: 0 auto; font-family: 'Courier New', Courier, monospace; }
+    
+    .term-switcher { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1rem; }
+    .term-btn { padding: 0.4rem 1rem; border: 1px solid var(--primary-color); background: white; color: var(--primary-color); border-radius: 20px; cursor: pointer; }
     .term-btn.active { background: var(--primary-color); color: white; }
 
-    .card { background: white; border-radius: var(--border-radius); box-shadow: var(--box-shadow); padding: 1.5rem; margin-bottom: 1.5rem; }
-    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-    
-    .btn {
-      padding: 0.6rem 1.2rem; border: none; border-radius: var(--border-radius);
-      cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; color: white;
-    }
-    .btn-primary { background: var(--primary-color); }
-    .btn-success { background: var(--success-color); }
-    .btn-info { background: var(--info-color); }
-    .btn-warning { background: var(--warning-color); color: #333; }
-    .btn-danger { background: var(--danger-color); }
-
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
-    .fee-inputs { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; margin-top: 1rem; }
-    
-    .form-group { margin-bottom: 1rem; }
-    label { display: block; margin-bottom: 0.4rem; font-weight: 500; }
-    input, select, textarea { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: var(--border-radius); font-size: 1rem; }
-
-    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-    th, td { padding: 0.8rem; text-align: left; border-bottom: 1px solid #eee; }
-    th { background-color: var(--primary-color); color: white; }
-    tr:hover { background-color: #f9f9f9; }
-
-    .modal {
-      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;
-    }
-    .modal.show { display: flex; }
-    .modal-content {
-      background: white; border-radius: var(--border-radius); width: 95%;
-      max-width: 800px; padding: 2rem; max-height: 90vh; overflow-y: auto;
-    }
-
     @media print {
-      nav, header, .term-selector, .btn, #receiptForm, #searchInput { display: none !important; }
+      body * { visibility: hidden; }
+      .receipt-preview, .receipt-preview * { visibility: visible; }
+      .receipt-preview { position: absolute; left: 0; top: 0; width: 100%; border: none; }
     }
   </style>
 </head>
 <body>
-
   <header>
     <h1>Heriwadi Christian Schools Ltd</h1>
-    <p>Fee Receipt Management System</p>
+    <p>Financial Management System</p>
   </header>
-
+  
   <nav>
-    <a href="index.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+    <a href="index.html"><i class="fas fa-home"></i> Dashboard</a>
     <a href="receipts.html" class="active"><i class="fas fa-receipt"></i> Receipts</a>
-    <a href="students.html"><i class="fas fa-users"></i> Students</a>
     <a href="expense.html"><i class="fas fa-money-bill-wave"></i> Expenses</a>
+    <a href="assets.html"><i class="fas fa-laptop-house"></i> Assets</a>
     <a href="staff.html"><i class="fas fa-user-tie"></i> Staff</a>
-    <a href="financials.html"><i class="fas fa-file-invoice-dollar"></i> Financials</a>
+    <a href="students.html"><i class="fas fa-users"></i> Students</a>
+    <a href="payroll.html"><i class="fas fa-money-check-alt"></i> Payroll</a>
+    <a href="financials.html"><i class="fas fa-chart-line"></i> Financials</a>
   </nav>
 
   <div class="container">
-    <div class="term-selector">
-      <div class="year-select-container">
-        <label>Year:</label>
-        <select id="yearSelector" onchange="switchYear(this.value)">
-          <option value="2024">2024</option>
-          <option value="2025">2025</option>
-          <option value="2026">2026</option>
-        </select>
-      </div>
-      <div class="term-buttons">
-        <button class="term-btn" data-term="1" onclick="switchTerm(1)">Term 1</button>
-        <button class="term-btn" data-term="2" onclick="switchTerm(2)">Term 2</button>
-        <button class="term-btn" data-term="3" onclick="switchTerm(3)">Term 3</button>
-      </div>
+    <div class="term-switcher">
+        <button class="term-btn active" onclick="setTerm(1, this)">Term 1</button>
+        <button class="term-btn" onclick="setTerm(2, this)">Term 2</button>
+        <button class="term-btn" onclick="setTerm(3, this)">Term 3</button>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h3><i class="fas fa-plus-circle"></i> Issue New Receipt</h3>
+            <hr style="margin: 1rem 0; opacity: 0.1;">
+            <form id="receiptForm">
+                <div class="form-group">
+                    <label>Select Student</label>
+                    <select id="studentSelect" required onchange="updateStudentInfo()">
+                        <option value="">-- Choose Student --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Amount Paid (KES)</label>
+                    <input type="number" id="amountPaid" required placeholder="0.00" />
+                </div>
+                <div class="form-group">
+                    <label>Payment Method</label>
+                    <select id="paymentMethod">
+                        <option>M-Pesa</option>
+                        <option>Bank Deposit</option>
+                        <option>Cash</option>
+                        <option>Cheque</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Reference / Transaction ID</label>
+                    <input type="text" id="refNo" placeholder="Optional" />
+                </div>
+                <button type="submit" class="btn btn-success" style="width:100%"><i class="fas fa-print"></i> Save & Generate Receipt</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3><i class="fas fa-wallet"></i> Quick Balance Check</h3>
+                <button class="btn btn-primary btn-sm" onclick="openStudentManager()">Manage Students</button>
+            </div>
+            <hr style="margin: 1rem 0; opacity: 0.1;">
+            <div id="balanceList" style="max-height: 300px; overflow-y: auto;">
+                </div>
+        </div>
     </div>
 
     <div class="card">
-      <div class="card-header">
-        <h2>Issue Receipt - <span id="currentTermDisplay">Term 2</span> (<span id="currentYearDisplay">2025</span>)</h2>
-        <div style="display: flex; gap: 10px;">
-          <button class="btn btn-warning" onclick="recalculateAllBalances()"><i class="fas fa-sync"></i> Fix Balances</button>
-          <button class="btn btn-info" onclick="openStudentManager()"><i class="fas fa-user-plus"></i> Manage Students</button>
-        </div>
-      </div>
-
-      <form id="receiptForm">
-        <div class="grid">
-          <div class="form-group">
-            <label>Student Name</label>
-            <input type="text" id="studentInput" list="studentList" required placeholder="Search name..." />
-            <datalist id="studentList"></datalist>
-          </div>
-          <div class="form-group">
-            <label>Amount Paid (KES)</label>
-            <input type="number" id="amountPaid" required min="1" />
-          </div>
-          <div class="form-group">
-            <label>Payment Mode</label>
-            <select id="paymentMode" required>
-              <option value="M-Pesa">M-Pesa</option>
-              <option value="Cash">Cash</option>
-              <option value="Bank">Bank</option>
-            </select>
-          </div>
-        </div>
-        <button type="submit" class="btn btn-success" id="submitBtn"><i class="fas fa-save"></i> Save & Generate Receipt</button>
-      </form>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
-        <h2>Recent Payments</h2>
-        <input type="text" id="searchInput" placeholder="Search receipts..." oninput="updateReceiptTable()" style="width: 300px;" />
-      </div>
-      <div id="groupedReceipts"></div>
+        <h3><i class="fas fa-history"></i> Recent Transactions - Term <span id="termDisplay">1</span></h3>
+        <table id="receiptsTable">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Student</th>
+                    <th>Ref</th>
+                    <th>Method</th>
+                    <th>Amount</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="receiptsBody"></tbody>
+        </table>
     </div>
   </div>
 
   <div id="studentManagerModal" class="modal">
     <div class="modal-content">
-      <div class="card-header">
-        <h3>Student Management</h3>
-        <button class="btn btn-danger" onclick="closeStudentManager()">×</button>
-      </div>
-      <form id="studentForm">
-         <div class="grid">
-            <div class="form-group"><label>Full Name</label><input type="text" id="studentName" required /></div>
-            <div class="form-group">
-                <label>Class</label>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>Student & Fee Structure Manager</h2>
+            <button class="btn btn-danger" onclick="closeStudentManager()">X</button>
+        </div>
+        <hr style="margin: 1rem 0;">
+        <form id="studentForm">
+            <div class="grid">
+                <input type="text" id="studentName" placeholder="Full Name" required />
                 <select id="studentClass">
-                    <option value="Play Group">Play Group</option>
-                    <option value="PP1">PP1</option><option value="PP2">PP2</option>
-                    <option value="Grade 1">Grade 1</option><option value="Grade 2">Grade 2</option>
+                    <option>Play Group</option><option>PP1</option><option>PP2</option>
+                    <option>Grade 1</option><option>Grade 2</option><option>Grade 3</option>
+                    <option>Grade 4</option><option>Grade 5</option><option>Grade 6</option>
                 </select>
+                <input type="text" id="phone" placeholder="Parent Phone" />
             </div>
-            <div class="form-group"><label>Phone</label><input type="tel" id="phone" required /></div>
-         </div>
-         <h4>Term Fees</h4>
-         <div class="fee-inputs" id="feeFields">
-            <div class="form-group"><label>Tuition</label><input type="number" id="tuition" value="0"></div>
-            <div class="form-group"><label>Admission</label><input type="number" id="adm" value="0"></div>
-            <div class="form-group"><label>Medical</label><input type="number" id="medical" value="0"></div>
-            <div class="form-group"><label>Lunch</label><input type="number" id="lunch" value="0"></div>
-            <div class="form-group"><label>Uniform</label><input type="number" id="uniform" value="0"></div>
-            <div class="form-group"><label>Books</label><input type="number" id="books" value="0"></div>
-            <div class="form-group"><label>Stationery</label><input type="number" id="stationery" value="0"></div>
-            <div class="form-group"><label>Transport</label><input type="number" id="transport" value="0"></div>
-            <div class="form-group"><label>Trip</label><input type="number" id="trip" value="0"></div>
-            <div class="form-group"><label>Graduation</label><input type="number" id="graduation" value="0"></div>
-         </div>
-         <button type="submit" class="btn btn-success" style="margin-top:15px;">Save Student</button>
-      </form>
+            <div class="grid" style="grid-template-columns: repeat(4, 1fr);">
+                <div class="form-group"><label>Tuition</label><input type="number" id="tuition" value="0"/></div>
+                <div class="form-group"><label>Admission</label><input type="number" id="adm" value="0"/></div>
+                <div class="form-group"><label>Assessment Fee</label><input type="number" id="assessment" value="0"/></div>
+                <div class="form-group"><label>Medical</label><input type="number" id="medical" value="0"/></div>
+                <div class="form-group"><label>Lunch</label><input type="number" id="lunch" value="0"/></div>
+                <div class="form-group"><label>Uniform</label><input type="number" id="uniform" value="0"/></div>
+                <div class="form-group"><label>Transport</label><input type="number" id="transport" value="0"/></div>
+                <div class="form-group"><label>Trip</label><input type="number" id="trip" value="0"/></div>
+                <div class="form-group"><label>Graduation</label><input type="number" id="graduation" value="0"/></div>
+            </div>
+            <button type="submit" class="btn btn-success">Add Student</button>
+        </form>
+        <hr style="margin: 2rem 0;">
+        <table id="managerTable">
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Class</th>
+                    <th>Total Fee</th>
+                    <th>Paid</th>
+                    <th>Bal</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="managerBody"></tbody>
+            <tfoot id="managerFoot"></tfoot>
+        </table>
+    </div>
+  </div>
+
+  <div id="receiptModal" class="modal">
+    <div class="modal-content" style="max-width: 450px;">
+        <div class="receipt-preview" id="receiptPrintArea">
+            <div style="text-align: center;">
+                <h2 style="font-size: 1.2rem;">HERIWADI CHRISTIAN SCHOOLS</h2>
+                <p style="font-size: 0.8rem;">P.O. Box 12345-00100, Nairobi</p>
+                <p style="font-size: 0.8rem;">Tel: +254 700 000 000</p>
+                <p>-------------------------</p>
+                <h3 style="margin: 0.5rem 0;">OFFICIAL RECEIPT</h3>
+            </div>
+            <div style="font-size: 0.9rem; margin-top: 1rem;">
+                <p><strong>Receipt No:</strong> <span id="rNo"></span></p>
+                <p><strong>Date:</strong> <span id="rDate"></span></p>
+                <p><strong>Student:</strong> <span id="rStudent"></span></p>
+                <p><strong>Class:</strong> <span id="rClass"></span></p>
+                <p>-------------------------</p>
+                <div style="display: flex; justify-content: space-between; margin: 0.5rem 0;">
+                    <span>Payment Method:</span><span id="rMethod"></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin: 0.5rem 0;">
+                    <span>Ref/Trans ID:</span><span id="rRef"></span>
+                </div>
+                <p>-------------------------</p>
+                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1rem;">
+                    <span>TOTAL PAID:</span><span>KES <span id="rAmount"></span></span>
+                </div>
+                <p>-------------------------</p>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Fee Balance:</span><span>KES <span id="rBal"></span></span>
+                </div>
+                <p style="margin-top: 2rem; text-align: center; font-style: italic; font-size: 0.8rem;">Thank you for choosing Heriwadi Christian Schools.</p>
+            </div>
+        </div>
+        <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+            <button class="btn btn-primary" style="flex:1" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+            <button class="btn btn-danger" style="flex:1" onclick="document.getElementById('receiptModal').classList.remove('show')">Close</button>
+        </div>
     </div>
   </div>
 
@@ -237,249 +253,158 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    let currentTerm = parseInt(sessionStorage.getItem('h_term')) || 1;
-    let currentYear = parseInt(sessionStorage.getItem('h_year')) || 2026;
+    let currentTerm = 1;
+    let currentYear = new Date().getFullYear();
 
     const getStudentsColl = () => db.collection(`students_${currentYear}_term_${currentTerm}`);
     const getReceiptsColl = () => db.collection(`receipts_${currentYear}_term_${currentTerm}`);
-    const getStudentsCollection = getStudentsColl;
-    const getReceiptsCollection = getReceiptsColl;
 
-    function switchTerm(t) { currentTerm = t; sessionStorage.setItem('h_term', t); updateUI(); }
-    function switchYear(y) { currentYear = parseInt(y); sessionStorage.setItem('h_year', y); updateUI(); }
+    function setTerm(t, btn) {
+        currentTerm = t;
+        document.querySelectorAll('.term-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('termDisplay').innerText = t;
+        updateUI();
+    }
 
-    function updateUI() {
-      document.getElementById('currentTermDisplay').textContent = `Term ${currentTerm}`;
-      document.getElementById('currentYearDisplay').textContent = currentYear;
-      document.getElementById('yearSelector').value = currentYear;
-      document.querySelectorAll('.term-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.term) === currentTerm));
-      populateStudents();
-      updateReceiptTable();
+    async function updateUI() {
+        populateStudents();
+        loadReceipts();
     }
 
     async function populateStudents() {
-      const list = document.getElementById('studentList');
-      list.innerHTML = "";
-      const snap = await getStudentsColl().orderBy('name').get();
-      snap.forEach(doc => {
-        const s = doc.data();
-        const opt = document.createElement('option');
-        opt.value = `${s.name} (${s.class})`;
-        list.appendChild(opt);
-      });
+        const snap = await getStudentsColl().orderBy('name').get();
+        const select = document.getElementById('studentSelect');
+        const balList = document.getElementById('balanceList');
+        const managerBody = document.getElementById('managerBody');
+        const managerFoot = document.getElementById('managerFoot');
+        
+        select.innerHTML = '<option value="">-- Choose Student --</option>';
+        balList.innerHTML = '';
+        managerBody.innerHTML = '';
+        managerFoot.innerHTML = '';
+
+        let totalSchoolBalance = 0;
+
+        snap.forEach(doc => {
+            const s = doc.data();
+            // Calculation Fix: Bal = Total Items - Paid Amount
+            const balance = (s.total || 0) - (s.paid || 0);
+            totalSchoolBalance += balance;
+
+            // Forms
+            select.innerHTML += `<option value="${doc.id}">${s.name} (${s.class})</option>`;
+            
+            // Side list
+            const div = document.createElement('div');
+            div.style = "display:flex; justify-content:space-between; padding:0.5rem; border-bottom:1px solid #f0f0f0;";
+            div.innerHTML = `<span>${s.name}</span><span style="color:${balance > 0 ? 'red' : 'green'}">KES ${balance.toLocaleString()}</span>`;
+            balList.appendChild(div);
+
+            // Manager Table
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${s.name}</td>
+                <td>${s.class}</td>
+                <td>${(s.total || 0).toLocaleString()}</td>
+                <td>${(s.paid || 0).toLocaleString()}</td>
+                <td style="font-weight:bold; color:${balance > 0 ? 'var(--danger-color)' : 'var(--success-color)'}">${balance.toLocaleString()}</td>
+                <td><button class="btn btn-danger btn-sm" onclick="deleteStudent('${doc.id}')"><i class="fas fa-trash"></i></button></td>
+            `;
+            managerBody.appendChild(row);
+        });
+
+        // Add Total Balance Row to Table Footer
+        if (!snap.empty) {
+            managerFoot.innerHTML = `
+                <tr class="total-row">
+                    <td colspan="4" style="text-align:right">GRAND TOTAL FEE BALANCE:</td>
+                    <td style="color:var(--danger-color)">KES ${totalSchoolBalance.toLocaleString()}</td>
+                    <td></td>
+                </tr>
+            `;
+        }
     }
 
-    async function getBalanceCarriedForward(name, term, year) {
-        let prevT, prevY;
-        if (term === 1) { prevT = 3; prevY = year - 1; }
-        else { prevT = term - 1; prevY = year; }
-        const snap = await db.collection(`students_${prevY}_term_${prevT}`).where('name', '==', name).get();
-        return snap.empty ? 0 : (snap.docs[0].data().balance || 0);
-    }
-    const getArrears = getBalanceCarriedForward;
-
-    async function getLogoDataUrl() {
-        return "photos/school-logo.jpg";
+    async function loadReceipts() {
+        const snap = await getReceiptsColl().orderBy('timestamp', 'desc').limit(20).get();
+        const container = document.getElementById('receiptsBody');
+        container.innerHTML = '';
+        snap.forEach(doc => {
+            const r = doc.data();
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${r.date}</td>
+                <td>${r.studentName}</td>
+                <td>${r.refNo || '-'}</td>
+                <td>${r.method}</td>
+                <td><strong>${r.amount.toLocaleString()}</strong></td>
+                <td>
+                    <button class="btn btn-info btn-sm" onclick="reprintReceipt('${doc.id}')"><i class="fas fa-print"></i></button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteReceipt('${doc.id}')"><i class="fas fa-trash"></i></button>
+                </td>
+            `;
+            container.appendChild(row);
+        });
     }
 
     document.getElementById('receiptForm').onsubmit = async (e) => {
         e.preventDefault();
-        const input = document.getElementById('studentInput').value;
-        const paid = parseFloat(document.getElementById('amountPaid').value);
-        const mode = document.getElementById('paymentMode').value;
-        const nameMatch = input.match(/^(.+?)\s*\((.+?)\)$/);
-        if(!nameMatch) return alert("Select a student from the list");
+        const studentId = document.getElementById('studentSelect').value;
+        const amount = parseFloat(document.getElementById('amountPaid').value);
+        const method = document.getElementById('paymentMethod').value;
+        const refNo = document.getElementById('refNo').value;
 
-        const name = nameMatch[1];
-        const sSnap = await getStudentsColl().where('name', '==', name).get();
-        const sDoc = sSnap.docs[0];
+        if(!studentId) return alert("Select a student");
+
+        const studentRef = getStudentsColl().doc(studentId);
+        const sDoc = await studentRef.get();
         const sData = sDoc.data();
-        const arrears = await getArrears(name, currentTerm, currentYear);
 
-        const newPaid = (sData.paid || 0) + paid;
-        const newBal = (sData.total + arrears) - newPaid;
+        const newPaid = (sData.paid || 0) + amount;
+        const newBalance = (sData.total || 0) - newPaid;
 
-        const rNum = `RCP-${currentYear}-${currentTerm}-${Date.now().toString().slice(-4)}`;
-        const receipt = { 
-            name, class: sData.class, paid, balance: newBal, mode, 
-            date: new Date().toISOString(), receiptNumber: rNum, term: currentTerm, year: currentYear 
+        const receiptData = {
+            studentId,
+            studentName: sData.name,
+            class: sData.class,
+            amount,
+            method,
+            refNo,
+            balanceAfter: newBalance,
+            date: new Date().toLocaleDateString(),
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
         };
 
-        await db.runTransaction(async t => {
-            t.update(sDoc.ref, { paid: newPaid, balance: newBal });
-            t.set(getReceiptsColl().doc(), receipt);
-        });
+        const rRef = await getReceiptsColl().add(receiptData);
+        await studentRef.update({ paid: newPaid, balance: newBalance });
 
-        alert("Saved!");
+        showReceipt(rRef.id, receiptData);
         document.getElementById('receiptForm').reset();
-        updateReceiptTable();
+        updateUI();
     };
 
-    async function printReceipt(id) {
-       try {
-        const rDoc = await getReceiptsCollection().doc(id).get();
-        if(!rDoc.exists) return;
-        const receipt = { id: rDoc.id, ...rDoc.data() };
-        
-        const sSnap = await getStudentsCollection().where('name', '==', receipt.name).get();
-        if(sSnap.empty) return;
-        const sData = sSnap.docs[0].data();
-        
-        const arrears = await getBalanceCarriedForward(receipt.name, currentTerm, currentYear);
-        const logo = await getLogoDataUrl();
-        
-        // Fee distribution logic (Waterfall method)
-        let remainingToDistribute = receipt.paid;
-        let runningPaidTotal = sData.paid - receipt.paid; // Total paid before this receipt
+    function showReceipt(id, data) {
+        document.getElementById('rNo').innerText = id.substring(0,8).toUpperCase();
+        document.getElementById('rDate').innerText = data.date;
+        document.getElementById('rStudent').innerText = data.studentName;
+        document.getElementById('rClass').innerText = data.class;
+        document.getElementById('rMethod').innerText = data.method;
+        document.getElementById('rRef').innerText = data.refNo || 'N/A';
+        document.getElementById('rAmount').innerText = data.amount.toLocaleString();
+        document.getElementById('rBal').innerText = data.balanceAfter.toLocaleString();
+        document.getElementById('receiptModal').classList.add('show');
+    }
 
-        function calculateLine(charged) {
-            let alreadyPaidOnThisItem = Math.min(charged, runningPaidTotal);
-            runningPaidTotal -= alreadyPaidOnThisItem;
-            
-            let itemBalanceBeforeThisReceipt = charged - alreadyPaidOnThisItem;
-            let paidOnThisReceipt = Math.min(itemBalanceBeforeThisReceipt, remainingToDistribute);
-            remainingToDistribute -= paidOnThisReceipt;
-            
-            let finalBal = itemBalanceBeforeThisReceipt - paidOnThisReceipt;
-            
-            return { paidNow: paidOnThisReceipt, bal: finalBal };
-        }
-
-        const allFeeItems = [
-            {key: 'tuition', label: 'Tuition'}, {key: 'adm', label: 'Admission'},
-            {key: 'medical', label: 'Medical'}, {key: 'lunch', label: 'Lunch'},
-            {key: 'uniform', label: 'Uniform'}, {key: 'books', label: 'Books'},
-            {key: 'stationery', label: 'Stationery'}, {key: 'transport', label: 'Transport'},
-            {key: 'trip', label: 'Trip'}, {key: 'graduation', label: 'Graduation'}
-        ];
-
-        let rowsHtml = "";
-
-        // Arrears Row
-        const arrearsCalc = calculateLine(arrears);
-        rowsHtml += `
-            <tr>
-                <td style="text-align: left; padding-left: 15px;"><strong>Arrears (C/F)</strong></td>
-                <td>${arrears.toLocaleString()}</td>
-                <td>${arrearsCalc.paidNow.toLocaleString()}</td>
-                <td>${arrearsCalc.bal.toLocaleString()}</td>
-            </tr>`;
-
-        // Standard Fee Items
-        allFeeItems.forEach(item => {
-            const charged = sData[item.key] || 0;
-            const calc = calculateLine(charged);
-            rowsHtml += `
-                <tr>
-                    <td style="text-align: left; padding-left: 15px;">${item.label}</td>
-                    <td>${charged.toLocaleString()}</td>
-                    <td>${calc.paidNow.toLocaleString()}</td>
-                    <td>${calc.bal.toLocaleString()}</td>
-                </tr>`;
-        });
-
-        const printWindow = window.open('', '', 'height=800,width=900');
-        printWindow.document.write(`
-          <html>
-          <head>
-            <title>Receipt - ${receipt.receiptNumber}</title>
-            <style>
-              body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; color: #000; }
-              .header { text-align: center; margin-bottom: 15px; position: relative; }
-              .header img { position: absolute; left: 30px; top: 0; }
-              .header h2 { color: #005fa3; margin: 0; font-size: 20px; text-transform: uppercase; }
-              .header p { margin: 2px 0; font-size: 11px; font-weight: bold; }
-              .line { border-bottom: 2px solid #000; margin: 10px 0; }
-              .details-table { width: 100%; font-size: 12px; margin-bottom: 10px; border: none; }
-              .details-table td { border: none; padding: 2px; text-align: left; }
-              table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-              th { background: #f2f2f2; border: 1px solid #000; padding: 6px; font-size: 12px; }
-              td { border: 1px solid #000; padding: 5px; text-align: center; font-size: 12px; text-transform: capitalize; }
-              .total-box { border: 1px solid #000; padding: 8px; display: inline-block; font-weight: bold; margin-bottom: 5px; }
-              .footer-text { font-size: 11px; margin-top: 5px; }
-              .motto { text-align: center; font-style: italic; color: #666; margin-top: 15px; font-size: 11px; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-               ${logo ? `<img src="${logo}" width="70">` : ''}
-               <h2>HERIWADI CHRISTIAN SCHOOLS LTD</h2>
-               <p>PO BOX 62503 - 00200, Ongata Rongai | 0723 322449</p>
-            </div>
-            <div class="line"></div>
-            <table class="details-table">
-              <tr>
-                <td width="15%"><strong>Receipt No:</strong></td><td width="35%">${receipt.receiptNumber}</td>
-                <td width="15%" style="text-align:right"><strong>Date:</strong></td><td width="35%">${new Date(receipt.date).toLocaleDateString('en-GB')}</td>
-              </tr>
-              <tr>
-                <td><strong>Student:</strong></td><td>${receipt.name} (${receipt.class})</td>
-                <td style="text-align:right"><strong>Term/Year:</strong></td><td>Term ${currentTerm} | ${currentYear}</td>
-              </tr>
-            </table>
-            <table>
-              <thead><tr><th width="40%">Fee Item</th><th width="20%">Charged</th><th width="20%">Paid Now</th><th width="20%">Bal</th></tr></thead>
-              <tbody>${rowsHtml}</tbody>
-            </table>
-            <div class="total-box">TOTAL PAID THIS RECEIPT: KES ${receipt.paid.toLocaleString()}</div>
-            <div class="footer-text">
-              <p><strong>Current Balance:</strong> KES ${receipt.balance.toLocaleString()}</p>
-              <p style="margin-top: 10px;">Served By: Cashier</p>
-            </div>
-            <div class="motto">Quality Education for a Brighter Future</div>
-          </body></html>`);
-        printWindow.document.close();
-        setTimeout(() => { printWindow.print(); printWindow.close(); }, 800);
-       } catch(e) { console.error("Printing Error: ", e); }
+    async function reprintReceipt(id) {
+        const doc = await getReceiptsColl().doc(id).get();
+        showReceipt(id, doc.data());
     }
 
     async function deleteReceipt(id) {
-        if (!confirm("Are you sure you want to delete this receipt? This will revert the student's balance.")) return;
-        try {
-            const rRef = getReceiptsCollection().doc(id);
-            const rDoc = await rRef.get();
-            if (rDoc.exists) {
-                const rData = rDoc.data();
-                const sQuery = await getStudentsCollection().where('name', '==', rData.name).get();
-                if (!sQuery.empty) {
-                    const sDoc = sQuery.docs[0];
-                    const sData = sDoc.data();
-                    await db.runTransaction(async t => {
-                        t.update(sDoc.ref, { 
-                            paid: Math.max(0, (sData.paid || 0) - rData.paid), 
-                            balance: (sData.balance || 0) + rData.paid 
-                        });
-                        t.delete(rRef);
-                    });
-                } else {
-                    await rRef.delete();
-                }
-                updateReceiptTable();
-            }
-        } catch (e) { console.error("Delete error:", e); }
-    }
-
-    async function updateReceiptTable() {
-        const container = document.getElementById('groupedReceipts');
-        const search = document.getElementById('searchInput').value.toLowerCase();
-        const snap = await getReceiptsColl().orderBy('date', 'desc').get();
-        container.innerHTML = "";
-        snap.forEach(doc => {
-            const r = doc.data();
-            if(search && !r.name.toLowerCase().includes(search)) return;
-            const div = document.createElement('div');
-            div.className = "card";
-            div.style.display = "flex"; div.style.justifyContent = "space-between"; div.style.alignItems = "center";
-            div.innerHTML = `
-                <div><strong>${r.name}</strong><br><small>${r.receiptNumber} | ${new Date(r.date).toLocaleDateString()}</small></div>
-                <div>KES ${r.paid}</div>
-                <div>
-                    <button class="btn btn-info" onclick="printReceipt('${doc.id}')"><i class="fas fa-print"></i></button>
-                    <button class="btn btn-danger" onclick="deleteReceipt('${doc.id}')"><i class="fas fa-trash"></i></button>
-                </div>
-            `;
-            container.appendChild(div);
-        });
+        if(!confirm("Delete this transaction? This will NOT reverse the student's balance automatically.")) return;
+        await getReceiptsColl().doc(id).delete();
+        updateUI();
     }
 
     function openStudentManager() { document.getElementById('studentManagerModal').classList.add('show'); }
@@ -487,23 +412,38 @@
 
     document.getElementById('studentForm').onsubmit = async (e) => {
         e.preventDefault();
-        const fields = ['tuition','adm','medical','lunch','uniform','books','stationery','transport','trip','graduation'];
-        let total = 0; let data = {
+        // Updated items: Added assessment, removed stationary & books
+        const fields = ['tuition','adm','assessment','medical','lunch','uniform','transport','trip','graduation'];
+        let total = 0; 
+        let data = {
             name: document.getElementById('studentName').value,
             class: document.getElementById('studentClass').value,
             phone: document.getElementById('phone').value,
-            paid: 0, term: currentTerm, year: currentYear
+            paid: 0, 
+            term: currentTerm, 
+            year: currentYear
         };
         fields.forEach(f => {
             let val = parseFloat(document.getElementById(f).value) || 0;
-            data[f] = val; total += val;
+            data[f] = val; 
+            total += val;
         });
-        data.total = total; data.balance = total;
+        
+        data.total = total; 
+        // Initial balance = total items minus 0 paid
+        data.balance = total; 
+
         await getStudentsColl().add(data);
         alert("Student Added");
         document.getElementById('studentForm').reset();
         populateStudents();
     };
+
+    async function deleteStudent(id) {
+        if(!confirm("Are you sure? All records for this student will be lost.")) return;
+        await getStudentsColl().doc(id).delete();
+        populateStudents();
+    }
 
     window.onload = updateUI;
   </script>
