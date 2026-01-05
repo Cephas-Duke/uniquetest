@@ -315,7 +315,6 @@
         setTimeout(() => el.className = 'status-message', 4000);
     }
 
-    // --- RESTORED EXACT SMS FUNCTION FROM INITIAL CODE ---
     async function sendSMS(phone, message) {
       try {
         const response = await fetch("/send-sms", {
@@ -324,6 +323,7 @@
           body: JSON.stringify({ phone, message })
         });
         const result = await response.json();
+        console.log("SMS Result:", result);
         return result.success;
       } catch (error) {
         console.error('SMS Error:', error);
@@ -377,12 +377,14 @@
             const sData = sDoc.data();
             const arrears = await getBalanceCarriedForward(name, currentTerm, currentYear);
 
+            // RECALCULATE ACTUAL TERM TOTAL (Fix for zero balance issue)
+            const feeFields = ['tuition','adm','medical','lunch','uniform','assessment','transport','trip','graduation'];
+            const currentTermTotal = feeFields.reduce((sum, key) => sum + (parseFloat(sData[key]) || 0), 0);
+            
             const newPaid = (sData.paid || 0) + paid;
-            const newBal = (sData.total + arrears) - newPaid;
+            const newBal = (currentTermTotal + arrears) - newPaid;
 
             const rNum = `RCP-${currentYear}-${currentTerm}-${Date.now().toString().slice(-4)}`;
-            
-            // Fix for Null Balance: Ensure newBal is a number
             const safeBal = isNaN(newBal) ? 0 : newBal;
 
             const receipt = { 
@@ -393,21 +395,19 @@
             };
 
             await db.runTransaction(async t => {
-                t.update(sDoc.ref, { paid: newPaid, balance: safeBal });
+                t.update(sDoc.ref, { paid: newPaid, balance: safeBal, total: currentTermTotal });
                 t.set(getReceiptsColl().doc(), receipt);
             });
 
-            // --- RESTORED SMS LOGIC FROM INITIAL CODE ---
+            // SMS Logic
             if(sData.phone) {
                 const currentDate = new Date().toLocaleDateString('en-GB');
-                // Message format exactly as requested from initial code
                 const smsMessage = `Dear parent to ${name}, Amount KES ${paid} Receipt ${rNum} received on ${currentDate}. Bal: ${safeBal}. Term ${currentTerm}.`;
-                sendSMS(sData.phone, smsMessage); // Fires to your server.js
+                sendSMS(sData.phone, smsMessage);
             }
 
             showStatus(`Saved! Receipt ${rNum}. Balance: KES ${safeBal}`, 'success');
             
-            // --- RESTORED PRINT PREVIEW LOGIC ---
             const previewContent = document.getElementById('previewContent');
             previewContent.innerHTML = `
               <p><strong>Student:</strong> ${name}</p>
@@ -508,10 +508,13 @@
         let runningPaidTotal = sData.paid - receipt.paid; 
 
         function calculateLine(charged) {
-            let alreadyPaidOnThisItem = Math.min(charged, runningPaidTotal);
-            runningPaidTotal -= alreadyPaidOnThisItem;
+            if (charged === 0) return { paidNow: 0, bal: 0 };
             
-            let itemBalanceBeforeThisReceipt = charged - alreadyPaidOnThisItem;
+            let alreadyPaidOnThisItem = Math.min(charged, runningPaidTotal);
+            let deduct = Math.max(0, alreadyPaidOnThisItem); 
+            runningPaidTotal -= deduct; 
+            
+            let itemBalanceBeforeThisReceipt = charged - deduct;
             let paidOnThisReceipt = Math.min(itemBalanceBeforeThisReceipt, remainingToDistribute);
             remainingToDistribute -= paidOnThisReceipt;
             
@@ -546,18 +549,17 @@
 
         allFeeItems.forEach(item => {
             const charged = sData[item.key] || 0;
-            if (charged > 0) { 
-                const calc = calculateLine(charged);
-                totalFeeBalance += calc.bal;
+            // SHOW ALL ITEMS, EVEN IF CHARGED IS 0
+            const calc = calculateLine(charged);
+            totalFeeBalance += calc.bal;
 
-                rowsHtml += `
-                    <tr>
-                        <td>${item.label}</td>
-                        <td>${charged.toLocaleString()}</td>
-                        <td>${calc.paidNow.toLocaleString()}</td>
-                        <td>${calc.bal.toLocaleString()}</td>
-                    </tr>`;
-            }
+            rowsHtml += `
+                <tr>
+                    <td>${item.label}</td>
+                    <td>${charged.toLocaleString()}</td>
+                    <td>${calc.paidNow.toLocaleString()}</td>
+                    <td>${calc.bal.toLocaleString()}</td>
+                </tr>`;
         });
 
         const printWindow = window.open('', '', 'height=800,width=900');
@@ -722,11 +724,15 @@
             let paid = 0;
             rSnaps.forEach(r => paid += r.data().paid);
             const cf = await getBalanceCarriedForward(s.name, currentTerm, currentYear);
-            const bal = (s.total + cf) - paid;
-            if(s.balance !== bal) {
-                await sColl.doc(sDoc.id).update({ paid, balance: bal });
-                count++;
-            }
+            
+            // Recalculate total manually again
+            const feeFields = ['tuition','adm','medical','lunch','uniform','assessment','transport','trip','graduation'];
+            const actualTotal = feeFields.reduce((sum, key) => sum + (parseFloat(s[key]) || 0), 0);
+
+            const bal = (actualTotal + cf) - paid;
+            
+            await sColl.doc(sDoc.id).update({ paid, balance: bal, total: actualTotal });
+            count++;
         }
         showStatus(`Recalculation complete. Updated ${count} students.`, "success");
         updateReceiptTable();
