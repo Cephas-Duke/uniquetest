@@ -6,6 +6,11 @@
   <title>H.C.S | School Office Management</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
   <style>
     :root {
       --primary-color: #005fa3;
@@ -72,11 +77,11 @@
     .term-btn.active { background: var(--primary-color); color: white; }
 
     .card { background: white; border-radius: var(--border-radius); box-shadow: var(--box-shadow); padding: 1.5rem; margin-bottom: 1.5rem; }
-    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid #eee; padding-bottom: 10px; flex-wrap: wrap; gap: 10px; }
     
     .btn {
       padding: 0.6rem 1.2rem; border: none; border-radius: var(--border-radius);
-      cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; color: white;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; color: white; font-size: 0.9rem;
     }
     .btn-primary { background: var(--primary-color); }
     .btn-success { background: var(--success-color); }
@@ -91,10 +96,43 @@
     label { display: block; margin-bottom: 0.4rem; font-weight: 500; }
     input, select, textarea { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: var(--border-radius); font-size: 1rem; }
 
-    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    /* Updated Table Styles for Class Grouping */
+    table { width: 100%; border-collapse: collapse; margin-top: 0; }
     th, td { padding: 0.8rem; text-align: left; border-bottom: 1px solid #eee; }
     th { background-color: var(--primary-color); color: white; }
     tr:hover { background-color: #f9f9f9; }
+
+    /* Accordion Styles from Initial Code */
+    .class-section { margin-bottom: 1rem; border: 1px solid #eee; border-radius: var(--border-radius); overflow: hidden; }
+    .class-header-accordion {
+      background-color: #f8f9fa;
+      padding: 1rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #eee;
+      transition: background-color 0.2s;
+    }
+    .class-header-accordion:hover { background-color: #e9ecef; }
+    .class-header-accordion h3 { margin: 0; font-size: 1.1rem; color: var(--primary-color); }
+    .badge {
+      background: var(--primary-color); color: white;
+      padding: 0.25rem 0.6rem; border-radius: 1rem;
+      font-size: 0.8rem; font-weight: bold;
+    }
+    .class-content { display: none; padding: 0; }
+
+    /* Status Message Toast */
+    .status-message {
+      padding: 1rem; border-radius: var(--border-radius);
+      margin-bottom: 1rem; display: none; font-weight: 500;
+    }
+    .status-message.show { display: block; animation: fadeIn 0.5s; }
+    .status-message.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .status-message.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
     .modal {
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -107,7 +145,7 @@
     }
 
     @media print {
-      nav, header, .term-selector, .btn, #receiptForm, #searchInput { display: none !important; }
+      nav, header, .term-selector, .btn, #receiptForm, #searchInput, .card-header button { display: none !important; }
     }
   </style>
 </head>
@@ -147,11 +185,15 @@
     <div class="card">
       <div class="card-header">
         <h2>Issue Receipt - <span id="currentTermDisplay">Term 2</span> (<span id="currentYearDisplay">2025</span>)</h2>
-        <div style="display: flex; gap: 10px;">
-          <button class="btn btn-warning" onclick="recalculateAllBalances()"><i class="fas fa-sync"></i> Fix Balances</button>
-          <button class="btn btn-info" onclick="openStudentManager()"><i class="fas fa-user-plus"></i> Manage Students</button>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+           <button class="btn btn-warning" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Excel</button>
+           <button class="btn btn-warning" onclick="exportByClassPDF()"><i class="fas fa-file-pdf"></i> Class PDF</button>
+           <button class="btn btn-warning" onclick="recalculateAllBalances()"><i class="fas fa-sync"></i> Fix Bals</button>
+           <button class="btn btn-info" onclick="openStudentManager()"><i class="fas fa-user-plus"></i> Students</button>
         </div>
       </div>
+
+      <div id="statusMessage" class="status-message"></div>
 
       <form id="receiptForm">
         <div class="grid">
@@ -170,10 +212,11 @@
               <option value="M-Pesa">M-Pesa</option>
               <option value="Cash">Cash</option>
               <option value="Bank">Bank</option>
+              <option value="Cheque">Cheque</option>
             </select>
           </div>
         </div>
-        <button type="submit" class="btn btn-success" id="submitBtn"><i class="fas fa-save"></i> Save & Generate Receipt</button>
+        <button type="submit" class="btn btn-success" id="submitBtn"><i class="fas fa-save"></i> Save & Send SMS</button>
       </form>
     </div>
 
@@ -201,9 +244,11 @@
                     <option value="Play Group">Play Group</option>
                     <option value="PP1">PP1</option><option value="PP2">PP2</option>
                     <option value="Grade 1">Grade 1</option><option value="Grade 2">Grade 2</option>
+                    <option value="Grade 3">Grade 3</option><option value="Grade 4">Grade 4</option>
+                    <option value="Grade 5">Grade 5</option><option value="Grade 6">Grade 6</option>
                 </select>
             </div>
-            <div class="form-group"><label>Phone</label><input type="tel" id="phone" required /></div>
+            <div class="form-group"><label>Phone</label><input type="tel" id="phone" required placeholder="07..." /></div>
          </div>
          <h4>Term Fees</h4>
          <div class="fee-inputs" id="feeFields">
@@ -213,7 +258,6 @@
             <div class="form-group"><label>Lunch</label><input type="number" id="lunch" value="0"></div>
             <div class="form-group"><label>Uniform</label><input type="number" id="uniform" value="0"></div>
             <div class="form-group"><label>Assessment Fee</label><input type="number" id="assessment" value="0"></div>
-            
             <div class="form-group"><label>Transport</label><input type="number" id="transport" value="0"></div>
             <div class="form-group"><label>Trip</label><input type="number" id="trip" value="0"></div>
             <div class="form-group"><label>Graduation</label><input type="number" id="graduation" value="0"></div>
@@ -257,6 +301,29 @@
       updateReceiptTable();
     }
 
+    function showStatus(msg, type) {
+        const el = document.getElementById('statusMessage');
+        el.className = `status-message ${type} show`;
+        el.textContent = msg;
+        setTimeout(() => el.className = 'status-message', 4000);
+    }
+
+    // --- SMS FUNCTIONALITY ADDED ---
+    async function sendSMS(phone, message) {
+      try {
+        const response = await fetch("/send-sms", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone, message })
+        });
+        const result = await response.json();
+        return result.success;
+      } catch (error) {
+        console.error('SMS Error:', error);
+        return false;
+      }
+    }
+
     async function populateStudents() {
       const list = document.getElementById('studentList');
       list.innerHTML = "";
@@ -273,6 +340,7 @@
         let prevT, prevY;
         if (term === 1) { prevT = 3; prevY = year - 1; }
         else { prevT = term - 1; prevY = year; }
+        // Simple 1-step back check, can be made recursive if needed
         const snap = await db.collection(`students_${prevY}_term_${prevT}`).where('name', '==', name).get();
         return snap.empty ? 0 : (snap.docs[0].data().balance || 0);
     }
@@ -282,39 +350,128 @@
         return "photos/school-logo.jpg";
     }
 
+    // --- MODIFIED SUBMIT HANDLER (SMS + Status) ---
     document.getElementById('receiptForm').onsubmit = async (e) => {
         e.preventDefault();
-        const input = document.getElementById('studentInput').value;
-        const paid = parseFloat(document.getElementById('amountPaid').value);
-        const mode = document.getElementById('paymentMode').value;
-        const nameMatch = input.match(/^(.+?)\s*\((.+?)\)$/);
-        if(!nameMatch) return alert("Select a student from the list");
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
-        const name = nameMatch[1];
-        const sSnap = await getStudentsColl().where('name', '==', name).get();
-        const sDoc = sSnap.docs[0];
-        const sData = sDoc.data();
-        const arrears = await getArrears(name, currentTerm, currentYear);
+        try {
+            const input = document.getElementById('studentInput').value;
+            const paid = parseFloat(document.getElementById('amountPaid').value);
+            const mode = document.getElementById('paymentMode').value;
+            const nameMatch = input.match(/^(.+?)\s*\((.+?)\)$/);
+            
+            if(!nameMatch) throw new Error("Select a valid student from the list");
 
-        const newPaid = (sData.paid || 0) + paid;
-        const newBal = (sData.total + arrears) - newPaid;
+            const name = nameMatch[1];
+            const sSnap = await getStudentsColl().where('name', '==', name).get();
+            if(sSnap.empty) throw new Error("Student not found in database");
 
-        const rNum = `RCP-${currentYear}-${currentTerm}-${Date.now().toString().slice(-4)}`;
-        const receipt = { 
-            name, class: sData.class, paid, balance: newBal, mode, 
-            date: new Date().toISOString(), receiptNumber: rNum, term: currentTerm, year: currentYear 
-        };
+            const sDoc = sSnap.docs[0];
+            const sData = sDoc.data();
+            const arrears = await getArrears(name, currentTerm, currentYear);
 
-        await db.runTransaction(async t => {
-            t.update(sDoc.ref, { paid: newPaid, balance: newBal });
-            t.set(getReceiptsColl().doc(), receipt);
-        });
+            const newPaid = (sData.paid || 0) + paid;
+            const newBal = (sData.total + arrears) - newPaid;
 
-        alert("Saved!");
-        document.getElementById('receiptForm').reset();
-        updateReceiptTable();
+            const rNum = `RCP-${currentYear}-${currentTerm}-${Date.now().toString().slice(-4)}`;
+            const receipt = { 
+                name, class: sData.class, paid, balance: newBal, mode, 
+                date: new Date().toISOString(), receiptNumber: rNum, term: currentTerm, year: currentYear 
+            };
+
+            await db.runTransaction(async t => {
+                t.update(sDoc.ref, { paid: newPaid, balance: newBal });
+                t.set(getReceiptsColl().doc(), receipt);
+            });
+
+            // SMS Logic
+            const phone = sData.phone;
+            if(phone) {
+                const msg = `Received KES ${paid} for ${name}. Bal: ${newBal}. Ref: ${rNum}. Thank you.`;
+                sendSMS(phone, msg); // Async, don't await blocking UI
+            }
+
+            showStatus(`Saved! Receipt ${rNum}. Balance: KES ${newBal}`, 'success');
+            document.getElementById('receiptForm').reset();
+            updateReceiptTable();
+
+        } catch(err) {
+            alert(err.message);
+            showStatus(err.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save"></i> Save & Send SMS';
+        }
     };
 
+    // --- RESTORED GROUPED RECEIPT TABLE ---
+    async function updateReceiptTable() {
+        const container = document.getElementById('groupedReceipts');
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        
+        container.innerHTML = '<div style="text-align:center; padding:20px;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+        
+        const snap = await getReceiptsColl().orderBy('date', 'desc').get();
+        const receipts = [];
+        snap.forEach(doc => receipts.push({ id: doc.id, ...doc.data() }));
+
+        container.innerHTML = "";
+        
+        if (receipts.length === 0) {
+            container.innerHTML = '<div class="status-message show error">No receipts found for this term.</div>';
+            return;
+        }
+
+        const classes = ["Play Group", "PP1", "PP2", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"];
+        
+        classes.forEach(cls => {
+            // Filter by class AND search term
+            const classReceipts = receipts.filter(r => 
+                (r.class === cls) && 
+                (!search || r.name.toLowerCase().includes(search) || r.receiptNumber.toLowerCase().includes(search))
+            );
+
+            if (classReceipts.length === 0) return;
+
+            const section = document.createElement('div');
+            section.className = "class-section";
+            
+            // Accordion Header
+            section.innerHTML = `
+                <div class="class-header-accordion" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'block' ? 'none' : 'block'">
+                    <h3>${cls}</h3>
+                    <span class="badge">${classReceipts.length}</span>
+                </div>
+                <div class="class-content" style="display: ${search ? 'block' : 'none'}"> <table>
+                        <thead>
+                            <tr><th>Student</th><th>Amount</th><th>Bal</th><th>Mode</th><th>Date</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody>
+                            ${classReceipts.map(r => `
+                                <tr>
+                                    <td><strong>${r.name}</strong><br><small>${r.receiptNumber}</small></td>
+                                    <td>${r.paid}</td>
+                                    <td>${r.balance}</td>
+                                    <td>${r.mode}</td>
+                                    <td>${new Date(r.date).toLocaleDateString()}</td>
+                                    <td>
+                                        <button class="btn btn-info" style="padding:4px 8px; font-size:0.8rem" onclick="printReceipt('${r.id}')"><i class="fas fa-print"></i></button>
+                                        <button class="btn btn-danger" style="padding:4px 8px; font-size:0.8rem" onclick="deleteReceipt('${r.id}')"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            container.appendChild(section);
+        });
+    }
+
+    // --- PRESERVED WATERFALL PRINTING LOGIC FROM CURRENT CODE ---
     async function printReceipt(id) {
        try {
         const rDoc = await getReceiptsCollection().doc(id).get();
@@ -341,11 +498,10 @@
             remainingToDistribute -= paidOnThisReceipt;
             
             let finalBal = itemBalanceBeforeThisReceipt - paidOnThisReceipt;
-            
             return { paidNow: paidOnThisReceipt, bal: finalBal };
         }
 
-        // UPDATED: Removed Books/Stationery, Added Assessment Fee
+        // Updated Fields based on your Current Code
         const allFeeItems = [
             {key: 'tuition', label: 'Tuition'}, {key: 'adm', label: 'Admission'},
             {key: 'medical', label: 'Medical'}, {key: 'lunch', label: 'Lunch'},
@@ -356,11 +512,11 @@
         ];
 
         let rowsHtml = "";
-        let totalFeeBalance = 0; // New variable to track total balance sum
+        let totalFeeBalance = 0;
 
         // Arrears Row
         const arrearsCalc = calculateLine(arrears);
-        totalFeeBalance += arrearsCalc.bal; // Add to running balance total
+        totalFeeBalance += arrearsCalc.bal;
 
         rowsHtml += `
             <tr>
@@ -374,7 +530,7 @@
         allFeeItems.forEach(item => {
             const charged = sData[item.key] || 0;
             const calc = calculateLine(charged);
-            totalFeeBalance += calc.bal; // Add to running balance total
+            totalFeeBalance += calc.bal;
 
             rowsHtml += `
                 <tr>
@@ -385,7 +541,6 @@
                 </tr>`;
         });
 
-        // ADDED: Total Balance Row
         rowsHtml += `
             <tr>
                 <td colspan="3" style="text-align: right; padding-right: 15px; background-color: #f2f2f2;"><strong>TOTAL BALANCE</strong></td>
@@ -447,14 +602,59 @@
        } catch(e) { console.error("Printing Error: ", e); }
     }
 
+    // --- ADDED EXPORT FUNCTIONS (Updated for current fee structure) ---
+    async function exportToExcel() {
+        const snap = await getReceiptsColl().orderBy('date', 'desc').get();
+        if(snap.empty) return alert("No data to export");
+        
+        const data = snap.docs.map(doc => {
+            const r = doc.data();
+            return {
+                Date: new Date(r.date).toLocaleDateString(),
+                ReceiptNo: r.receiptNumber,
+                Name: r.name,
+                Class: r.class,
+                AmountPaid: r.paid,
+                Balance: r.balance,
+                Mode: r.mode
+            };
+        });
+
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Receipts");
+        XLSX.writeFile(wb, `Receipts_${currentYear}_Term_${currentTerm}.xlsx`);
+    }
+
+    async function exportByClassPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        const snap = await getReceiptsColl().orderBy('class').get();
+        const data = [];
+        
+        snap.forEach(d => {
+            const r = d.data();
+            data.push([new Date(r.date).toLocaleDateString(), r.receiptNumber, r.name, r.class, r.paid, r.balance]);
+        });
+
+        doc.text(`Receipts Report - Term ${currentTerm}, ${currentYear}`, 14, 15);
+        doc.autoTable({
+            head: [['Date', 'Receipt #', 'Name', 'Class', 'Paid', 'Bal']],
+            body: data,
+            startY: 20,
+        });
+        doc.save(`Receipts_${currentYear}_Term_${currentTerm}.pdf`);
+    }
+
     async function deleteReceipt(id) {
-        if (!confirm("Are you sure you want to delete this receipt? This will revert the student's balance.")) return;
+        if (!confirm("Are you sure? This reverts student balance.")) return;
         try {
-            const rRef = getReceiptsCollection().doc(id);
+            const rRef = getReceiptsColl().doc(id);
             const rDoc = await rRef.get();
             if (rDoc.exists) {
                 const rData = rDoc.data();
-                const sQuery = await getStudentsCollection().where('name', '==', rData.name).get();
+                const sQuery = await getStudentsColl().where('name', '==', rData.name).get();
                 if (!sQuery.empty) {
                     const sDoc = sQuery.docs[0];
                     const sData = sDoc.data();
@@ -468,32 +668,35 @@
                 } else {
                     await rRef.delete();
                 }
+                showStatus("Receipt deleted successfully", 'success');
                 updateReceiptTable();
             }
-        } catch (e) { console.error("Delete error:", e); }
+        } catch (e) { console.error("Delete error:", e); showStatus("Delete failed", 'error'); }
     }
 
-    async function updateReceiptTable() {
-        const container = document.getElementById('groupedReceipts');
-        const search = document.getElementById('searchInput').value.toLowerCase();
-        const snap = await getReceiptsColl().orderBy('date', 'desc').get();
-        container.innerHTML = "";
-        snap.forEach(doc => {
-            const r = doc.data();
-            if(search && !r.name.toLowerCase().includes(search)) return;
-            const div = document.createElement('div');
-            div.className = "card";
-            div.style.display = "flex"; div.style.justifyContent = "space-between"; div.style.alignItems = "center";
-            div.innerHTML = `
-                <div><strong>${r.name}</strong><br><small>${r.receiptNumber} | ${new Date(r.date).toLocaleDateString()}</small></div>
-                <div>KES ${r.paid}</div>
-                <div>
-                    <button class="btn btn-info" onclick="printReceipt('${doc.id}')"><i class="fas fa-print"></i></button>
-                    <button class="btn btn-danger" onclick="deleteReceipt('${doc.id}')"><i class="fas fa-trash"></i></button>
-                </div>
-            `;
-            container.appendChild(div);
-        });
+    async function recalculateAllBalances() {
+      if (!confirm("Recalculate all balances?")) return;
+      showStatus("Recalculating...", "loading");
+      try {
+        const sColl = getStudentsColl();
+        const rColl = getReceiptsColl();
+        const sSnaps = await sColl.get();
+        let count = 0;
+        for (const sDoc of sSnaps.docs) {
+            const s = sDoc.data();
+            const rSnaps = await rColl.where('name', '==', s.name).get();
+            let paid = 0;
+            rSnaps.forEach(r => paid += r.data().paid);
+            const cf = await getBalanceCarriedForward(s.name, currentTerm, currentYear);
+            const bal = (s.total + cf) - paid;
+            if(s.balance !== bal) {
+                await sColl.doc(sDoc.id).update({ paid, balance: bal });
+                count++;
+            }
+        }
+        showStatus(`Recalculation complete. Updated ${count} students.`, "success");
+        updateReceiptTable();
+      } catch(e) { console.error(e); showStatus("Error recalculating", 'error'); }
     }
 
     function openStudentManager() { document.getElementById('studentManagerModal').classList.add('show'); }
@@ -501,9 +704,10 @@
 
     document.getElementById('studentForm').onsubmit = async (e) => {
         e.preventDefault();
-        // UPDATED: Removed books/stationery from fields array, added assessment
+        // Updated Fields to match your Current Code (Removed books, added assessment)
         const fields = ['tuition','adm','medical','lunch','uniform','assessment','transport','trip','graduation'];
-        let total = 0; let data = {
+        let total = 0; 
+        let data = {
             name: document.getElementById('studentName').value,
             class: document.getElementById('studentClass').value,
             phone: document.getElementById('phone').value,
@@ -514,8 +718,9 @@
             data[f] = val; total += val;
         });
         data.total = total; data.balance = total;
+        
         await getStudentsColl().add(data);
-        alert("Student Added");
+        showStatus("Student Added Successfully", 'success');
         document.getElementById('studentForm').reset();
         populateStudents();
     };
