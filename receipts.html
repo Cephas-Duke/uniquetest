@@ -25,377 +25,107 @@
       --transition: all 0.3s ease;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: 'Roboto', sans-serif;
-      background-color: #f5f7fa;
-      color: #333;
-      line-height: 1.6;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Roboto', sans-serif; background-color: #f5f7fa; color: #333; line-height: 1.6; }
 
     header {
       background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-      color: white;
-      padding: 1.5rem;
-      text-align: center;
-      box-shadow: var(--box-shadow);
-      position: relative;
-      z-index: 10;
-    }
-
-    header h1 {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
-    }
-
-    header p {
-      font-size: 1rem;
-      opacity: 0.9;
+      color: white; padding: 1.5rem; text-align: center; box-shadow: var(--box-shadow);
     }
 
     nav {
-      background: var(--secondary-color);
-      padding: 0.75rem 1.5rem;
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      justify-content: center;
-      box-shadow: var(--box-shadow);
-      position: sticky;
-      top: 0;
-      z-index: 9;
+      background: var(--secondary-color); padding: 0.75rem 1.5rem;
+      display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;
+      position: sticky; top: 0; z-index: 9;
     }
 
     nav a {
-      color: white;
-      text-decoration: none;
-      padding: 0.5rem 1rem;
-      border-radius: var(--border-radius);
-      transition: var(--transition);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.95rem;
+      color: white; text-decoration: none; padding: 0.5rem 1rem;
+      border-radius: var(--border-radius); transition: var(--transition);
+      display: flex; align-items: center; gap: 0.5rem;
     }
+    nav a:hover, nav a.active { background: var(--accent-color); }
 
-    nav a:hover {
-      background: var(--accent-color);
-      transform: translateY(-2px);
-    }
+    .container { max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem; }
 
-    nav a.active {
-      background: var(--accent-color);
-      font-weight: bold;
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 2rem auto;
-      padding: 0 1.5rem;
-    }
-
-    /* Term Selector Updates for Year Picker */
     .term-selector {
-      background: white;
-      border-radius: var(--border-radius);
-      box-shadow: var(--box-shadow);
-      padding: 1rem 1.5rem;
-      margin-bottom: 1.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-
-    .term-selector-left {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      flex-wrap: wrap;
+      background: white; border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow); padding: 1rem 1.5rem;
+      margin-bottom: 1.5rem; display: flex; align-items: center;
+      justify-content: space-between; flex-wrap: wrap; gap: 1rem;
     }
 
     .year-select-container {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: var(--info-color);
-      padding: 0.25rem 0.5rem;
-      border-radius: var(--border-radius);
+      display: flex; align-items: center; gap: 0.5rem;
+      background: var(--info-color); padding: 0.25rem 0.5rem;
+      border-radius: var(--border-radius); color: white;
     }
 
     .year-select-container select {
-      border: none;
-      background: white;
-      padding: 0.25rem 0.5rem;
-      border-radius: 4px;
-      font-weight: bold;
-      color: var(--dark-color);
-      cursor: pointer;
-      width: auto;
+      border: none; background: white; padding: 0.25rem 0.5rem;
+      border-radius: 4px; font-weight: bold;
     }
 
-    .year-select-container label {
-      color: white;
-      margin-bottom: 0;
-      font-size: 0.9rem;
-    }
-
-    .term-buttons {
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-    }
-
+    .term-buttons { display: flex; gap: 0.5rem; }
     .term-btn {
-      padding: 0.5rem 1rem;
-      border: 2px solid var(--primary-color);
-      background: transparent;
-      color: var(--primary-color);
-      border-radius: var(--border-radius);
-      cursor: pointer;
-      transition: var(--transition);
-      font-weight: 500;
+      padding: 0.5rem 1rem; border: 2px solid var(--primary-color);
+      background: transparent; color: var(--primary-color);
+      border-radius: var(--border-radius); cursor: pointer;
     }
+    .term-btn.active { background: var(--primary-color); color: white; }
 
-    .term-btn.active {
-      background: var(--primary-color);
-      color: white;
-    }
-
-    .term-btn:hover {
-      background: var(--primary-color);
-      color: white;
-    }
-
-    .card {
-      background: white;
-      border-radius: var(--border-radius);
-      box-shadow: var(--box-shadow);
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
-      transition: var(--transition);
-    }
-
-    .card:hover {
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-      transform: translateY(-3px);
-    }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid #eee;
-    }
-
-    .card-title {
-      font-size: 1.5rem;
-      color: var(--primary-color);
-      margin: 0;
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-    }
-
+    .card { background: white; border-radius: var(--border-radius); box-shadow: var(--box-shadow); padding: 1.5rem; margin-bottom: 1.5rem; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+    
     .btn {
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: var(--border-radius);
-      background: var(--primary-color);
-      color: white;
-      cursor: pointer;
-      transition: var(--transition);
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.95rem;
+      padding: 0.6rem 1.2rem; border: none; border-radius: var(--border-radius);
+      cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; color: white;
     }
-
-    .btn:hover {
-      background: var(--secondary-color);
-      transform: translateY(-2px);
-    }
-
-    .btn-outline {
-      background: transparent;
-      border: 1px solid var(--primary-color);
-      color: var(--primary-color);
-    }
-
-    .btn-outline:hover {
-      background: var(--primary-color);
-      color: white;
-    }
-
+    .btn-primary { background: var(--primary-color); }
     .btn-success { background: var(--success-color); }
-    .btn-success:hover { background: #218838; }
-    .btn-danger { background: var(--danger-color); }
-    .btn-danger:hover { background: #c82333; }
-    .btn-warning { background: var(--warning-color); color: var(--dark-color); }
-    .btn-warning:hover { background: #e0a800; }
     .btn-info { background: var(--info-color); }
-    .btn-info:hover { background: #138496; }
-    .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.85rem; }
+    .btn-warning { background: var(--warning-color); color: #333; }
+    .btn-danger { background: var(--danger-color); }
 
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+    .fee-inputs { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    
     .form-group { margin-bottom: 1rem; }
+    label { display: block; margin-bottom: 0.4rem; font-weight: 500; }
+    input, select, textarea { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: var(--border-radius); font-size: 1rem; }
 
-    label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-weight: 500;
-      color: var(--dark-color);
-    }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { padding: 0.8rem; text-align: left; border-bottom: 1px solid #eee; }
+    th { background-color: var(--primary-color); color: white; }
+    tr:hover { background-color: #f9f9f9; }
 
-    input, select, textarea {
-      width: 100%;
-      padding: 0.75rem;
-      border: 1px solid #ddd;
-      border-radius: var(--border-radius);
-      font-size: 1rem;
-      transition: var(--transition);
-    }
-
-    input:focus, select:focus, textarea:focus {
-      outline: none;
-      border-color: var(--accent-color);
-      box-shadow: 0 0 0 3px rgba(0, 168, 232, 0.2);
-    }
-
-    .search-box {
-      position: relative;
-      margin-bottom: 1.5rem;
-      max-width: 400px;
-    }
-
-    .search-box input { padding-left: 2.5rem; }
-    .search-box i {
-      position: absolute;
-      left: 1rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #777;
-    }
-
-    .status-message {
-      padding: 0.75rem 1rem;
-      border-radius: var(--border-radius);
-      margin-bottom: 1rem;
-      font-weight: 500;
-    }
-    .status-message.success { background-color: rgba(40, 167, 69, 0.1); color: var(--success-color); border-left: 4px solid var(--success-color); }
-    .status-message.error { background-color: rgba(220, 53, 69, 0.1); color: var(--danger-color); border-left: 4px solid var(--danger-color); }
-    .status-message.loading { background-color: rgba(23, 162, 184, 0.1); color: var(--info-color); border-left: 4px solid var(--info-color); }
-    .status-message.info { background-color: rgba(0, 123, 255, 0.1); color: #0069d9; border-left: 4px solid #0069d9; }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-      font-size: 0.95rem;
-    }
-    th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #eee; }
-    th { background-color: var(--primary-color); color: white; font-weight: 500; }
-    tr:hover { background-color: #f8f9fa; }
-
-    .class-section { margin-bottom: 2rem; }
-    .class-header {
-      background-color: var(--primary-color);
-      color: white;
-      padding: 0.75rem 1rem;
-      border-radius: var(--border-radius) var(--border-radius) 0 0;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: var(--transition);
-    }
-    .class-header:hover { background-color: var(--secondary-color); }
-    .class-header h3 { margin: 0; font-size: 1.1rem; }
-    .class-header .badge {
-      background: white;
-      color: var(--primary-color);
-      padding: 0.25rem 0.5rem;
-      border-radius: 1rem;
-      font-size: 0.85rem;
-      font-weight: bold;
-    }
-    .class-content {
-      border: 1px solid #ddd;
-      border-top: none;
-      border-radius: 0 0 var(--border-radius) var(--border-radius);
-      overflow: hidden;
-      transition: all 0.3s ease;
-    }
+    .status-message { padding: 1rem; border-radius: var(--border-radius); margin-bottom: 1rem; display: none; }
+    .status-message.success { display: block; background: #d4edda; color: #155724; }
+    .status-message.error { display: block; background: #f8d7da; color: #721c24; }
 
     .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-      opacity: 0;
-      transition: opacity 0.3s ease;
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;
     }
-    .modal.show { display: flex; opacity: 1; }
+    .modal.show { display: flex; }
     .modal-content {
-      background: white;
-      border-radius: var(--border-radius);
-      width: 90%;
-      max-width: 700px;
-      max-height: 90vh;
-      overflow-y: auto;
-      transform: translateY(-20px);
-      transition: transform 0.3s ease;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      background: white; border-radius: var(--border-radius); width: 95%;
+      max-width: 800px; padding: 2rem; max-height: 90vh; overflow-y: auto;
     }
-    .modal.show .modal-content { transform: translateY(0); }
-    .modal-header { padding: 1rem 1.5rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-    .modal-title { margin: 0; color: var(--primary-color); }
-    .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #777; transition: var(--transition); }
-    .modal-close:hover { color: var(--danger-color); transform: rotate(90deg); }
-    .modal-body { padding: 1.5rem; }
-    .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 0.75rem; }
 
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
-    .fee-inputs { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
-    .receipt-preview { background: white; border: 1px solid #ddd; border-radius: var(--border-radius); padding: 1.5rem; margin-top: 1.5rem; font-family: 'Courier New', monospace; white-space: pre-wrap; }
+    .class-header {
+      background: var(--primary-color); color: white; padding: 12px;
+      cursor: pointer; margin-top: 10px; border-radius: 4px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
 
-    .print-only { display: none; }
     @media print {
-      body * { visibility: hidden; }
-      .print-only, .print-only * { visibility: visible; }
-      .print-only { position: absolute; left: 0; top: 0; width: 100%; }
+      nav, header, .term-selector, .btn, #receiptForm, #searchInput { display: none !important; }
     }
-    @media (max-width: 768px) {
-      .term-selector { flex-direction: column; align-items: flex-start; }
-      .term-buttons { width: 100%; justify-content: space-between; margin-top: 1rem; }
-      .btn-group { flex-direction: column; width: 100%; }
-      .btn { width: 100%; justify-content: center; }
-    }
-
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    .fade-in { animation: fadeIn 0.5s ease forwards; }
-    .spinner { display: inline-block; width: 1rem; height: 1rem; border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top-color: white; animation: spin 1s ease-in-out infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
+
   <header>
     <h1>Heriwadi Christian Schools Ltd</h1>
     <p>Fee Receipt Management System</p>
@@ -406,57 +136,34 @@
     <a href="receipts.html" class="active"><i class="fas fa-receipt"></i> Receipts</a>
     <a href="students.html"><i class="fas fa-users"></i> Students</a>
     <a href="expense.html"><i class="fas fa-money-bill-wave"></i> Expenses</a>
-    <a href="assets.html"><i class="fas fa-laptop-house"></i> Assets</a>
     <a href="staff.html"><i class="fas fa-user-tie"></i> Staff</a>
-    <a href="payroll.html"><i class="fas fa-money-check-alt"></i> Payroll</a>
-    <a href="financials.html"><i class="fas fa-money-check-alt"></i> Financials</a>
+    <a href="financials.html"><i class="fas fa-file-invoice-dollar"></i> Financials</a>
   </nav>
 
   <div class="container">
-    <div class="term-selector fade-in">
-      <div class="term-selector-left">
-        <h3><i class="fas fa-calendar-alt"></i> Selection</h3>
-        <div class="year-select-container">
-          <label for="yearSelector">Year:</label>
-          <select id="yearSelector" onchange="switchYear(this.value)">
-            <option value="2024">2024</option>
-            <option value="2025">2025</option>
-            <option value="2026">2026</option>
-            <option value="2027">2027</option>
-            <option value="2028">2028</option>
-          </select>
-        </div>
+    <div class="term-selector">
+      <div class="year-select-container">
+        <label>Year:</label>
+        <select id="yearSelector" onchange="switchYear(this.value)">
+          <option value="2024">2024</option>
+          <option value="2025">2025</option>
+          <option value="2026">2026</option>
+        </select>
       </div>
       <div class="term-buttons">
         <button class="term-btn" data-term="1" onclick="switchTerm(1)">Term 1</button>
-        <button class="term-btn active" data-term="2" onclick="switchTerm(2)">Term 2</button>
+        <button class="term-btn" data-term="2" onclick="switchTerm(2)">Term 2</button>
         <button class="term-btn" data-term="3" onclick="switchTerm(3)">Term 3</button>
       </div>
     </div>
 
-    <div class="card fade-in">
+    <div class="card">
       <div class="card-header">
-        <h2 class="card-title">Issue Fee Receipt - <span id="currentTermDisplay">Term 2</span> (<span id="currentYearDisplay">2025</span>)</h2>
-        <div class="btn-group">
-          <button class="btn btn-info" onclick="openStudentManager()">
-            <i class="fas fa-user-plus"></i> Manage Students
-          </button>
-          <button class="btn btn-warning" onclick="recalculateAllBalances()">
-           <i class="fas fa-calculator"></i> Fix Balances
-          </button>
-          <button class="btn btn-warning" onclick="exportByClassPDF()">
-           <i class="fas fa-file-pdf"></i> Export by Class
-          </button>
-          <button class="btn btn-warning" onclick="exportConsolidatedPDF()">
-          <i class="fas fa-file-archive"></i> Export All
-         </button>
-         <button class="btn btn-info" onclick="exportToExcel()">
-          <i class="fas fa-file-excel"></i> Export to Excel
-         </button>
-         <button class="btn btn-success" onclick="window.print()">
-          <i class="fas fa-print"></i> Print
-         </button>
-       </div>
+        <h2>Issue Receipt - <span id="currentTermDisplay">Term 2</span> (<span id="currentYearDisplay">2025</span>)</h2>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-warning" onclick="recalculateAllBalances()"><i class="fas fa-sync"></i> Fix Balances</button>
+          <button class="btn btn-info" onclick="openStudentManager()"><i class="fas fa-user-plus"></i> Manage Students</button>
+        </div>
       </div>
 
       <div id="statusMessage" class="status-message"></div>
@@ -464,859 +171,401 @@
       <form id="receiptForm">
         <div class="grid">
           <div class="form-group">
-            <label for="studentInput"><i class="fas fa-user-graduate"></i> Student Name</label>
-            <input type="text" id="studentInput" list="studentList" required placeholder="Type or select a student..." />
+            <label>Student Name (Search...)</label>
+            <input type="text" id="studentInput" list="studentList" required placeholder="Type name..." />
             <datalist id="studentList"></datalist>
           </div>
-
           <div class="form-group">
-            <label for="amountPaid"><i class="fas fa-money-bill-wave"></i> Amount Paid (KES)</label>
+            <label>Amount Paid (KES)</label>
             <input type="number" id="amountPaid" required min="1" step="1" />
           </div>
-
           <div class="form-group">
-            <label for="paymentMode"><i class="fas fa-credit-card"></i> Payment Mode</label>
+            <label>Payment Mode</label>
             <select id="paymentMode" required>
-              <option value="">Select Payment Mode</option>
-              <option value="Cash">Cash</option>
               <option value="M-Pesa">M-Pesa</option>
-              <option value="Bank">Bank</option>
+              <option value="Cash">Cash</option>
+              <option value="Bank Transfer">Bank Transfer</option>
               <option value="Cheque">Cheque</option>
             </select>
           </div>
         </div>
-
         <div class="form-group">
-          <label for="receiptNotes"><i class="fas fa-sticky-note"></i> Notes (Optional)</label>
-          <textarea id="receiptNotes" rows="2" placeholder="Any additional notes about this payment..."></textarea>
+            <label>Notes (Optional)</label>
+            <input type="text" id="receiptNotes" placeholder="e.g. Paid by Uncle John" />
         </div>
-
-        <button type="submit" class="btn btn-success" id="submitBtn">
-          <i class="fas fa-save"></i> Save Receipt & Send SMS
-        </button>
+        <button type="submit" class="btn btn-success" id="submitBtn"><i class="fas fa-save"></i> Save & Generate Receipt</button>
       </form>
-
-      <div id="receiptPreview" class="receipt-preview" style="display: none;">
-        <h3>Receipt Preview</h3>
-        <div id="previewContent"></div>
-      </div>
     </div>
 
-    <div class="card fade-in">
+    <div class="card">
       <div class="card-header">
-        <h2 class="card-title">Receipt Records - <span id="currentTermRecords">Term 2</span></h2>
-        <div class="search-box">
-          <i class="fas fa-search"></i>
-          <input type="text" id="searchInput" placeholder="Search by student name..." oninput="updateReceiptTable()" />
-        </div>
+        <h2>Recent Payments</h2>
+        <input type="text" id="searchInput" placeholder="Search by name..." oninput="updateReceiptTable()" style="width: 300px;" />
       </div>
-
       <div id="groupedReceipts"></div>
     </div>
   </div>
 
   <div id="studentManagerModal" class="modal">
     <div class="modal-content">
-      <div class="modal-header">
-        <h3 class="modal-title">Student Management - <span id="modalTermDisplay">Term 2</span></h3>
-        <button class="modal-close" onclick="closeStudentManager()">×</button>
+      <div class="card-header">
+        <h3>Student Management</h3>
+        <button class="btn btn-danger" onclick="closeStudentManager()">×</button>
       </div>
-      <div class="modal-body">
-        <h4>Add New Student</h4>
-        <form id="studentForm">
-          <div class="grid">
+      <form id="studentForm">
+         <div class="grid">
             <div class="form-group">
-              <label for="studentName">Full Name</label>
-              <input type="text" id="studentName" required />
-            </div>
-            
-            <div class="form-group">
-              <label for="studentClass">Class</label>
-              <select id="studentClass" required>
-                <option value="">Select Class</option>
-                <option value="Play Group">Play Group</option>
-                <option value="PP1">PP1</option>
-                <option value="PP2">PP2</option>
-                <option value="Grade 1">Grade 1</option>
-                <option value="Grade 2">Grade 2</option>
-                <option value="Grade 3">Grade 3</option>
-                <option value="Grade 4">Grade 4</option>
-                <option value="Grade 5">Grade 5</option>
-                <option value="Grade 6">Grade 6</option>
-              </select>
-            </div>
-            
-            <div class="form-group">
-              <label for="phone">Phone Number</label>
-              <input type="tel" id="phone" placeholder="e.g., +254712345678" pattern="^\+?[1-9]\d{9,14}$" required />
-            </div>
-          </div>
-
-          <h4 style="margin-top: 1.5rem;">Fee Structure for <span id="feeTermDisplay">Term 2</span></h4>
-          <div class="fee-inputs">
-            <div class="form-group">
-              <label for="tuition">Tuition (KES)</label>
-              <input type="number" id="tuition" value="0" min="0" />
+                <label>Full Name</label>
+                <input type="text" id="studentName" required />
             </div>
             <div class="form-group">
-              <label for="adm">Admission Fee (KES)</label>
-              <input type="number" id="adm" value="0" min="0" />
+                <label>Class</label>
+                <select id="studentClass" required>
+                    <option value="Play Group">Play Group</option>
+                    <option value="PP1">PP1</option>
+                    <option value="PP2">PP2</option>
+                    <option value="Grade 1">Grade 1</option>
+                    <option value="Grade 2">Grade 2</option>
+                    <option value="Grade 3">Grade 3</option>
+                    <option value="Grade 4">Grade 4</option>
+                    <option value="Grade 5">Grade 5</option>
+                    <option value="Grade 6">Grade 6</option>
+                </select>
             </div>
             <div class="form-group">
-              <label for="books">Book Fund (KES)</label>
-              <input type="number" id="books" value="0" min="0" />
+                <label>Parent Phone (for SMS)</label>
+                <input type="tel" id="phone" placeholder="+254..." required />
             </div>
-            <div class="form-group">
-              <label for="stationery">Stationery (KES)</label>
-              <input type="number" id="stationery" value="0" min="0" />
-            </div>
-            <div class="form-group">
-              <label for="uniform">Uniform (KES)</label>
-              <input type="number" id="uniform" value="0" min="0" />
-            </div>
-            <div class="form-group">
-              <label for="lunch">Lunch (KES)</label>
-              <input type="number" id="lunch" value="0" min="0" />
-            </div>
-            <div class="form-group">
-              <label for="transport">Transport (KES)</label>
-              <input type="number" id="transport" value="0" min="0" />
-            </div>
-            <div class="form-group">
-              <label for="trip">Trip (KES)</label>
-              <input type="number" id="trip" value="0" min="0" />
-            </div>
-            <div class="form-group">
-              <label for="graduation">Graduation (KES)</label>
-              <input type="number" id="graduation" value="0" min="0" />
-            </div>
-            <div class="form-group">
-              <label for="medical">Medical (KES)</label>
-              <input type="number" id="medical" value="0" min="0" />
-            </div>
-          </div>
-
-          <div class="modal-footer">
-            <button type="button" class="btn btn-outline" onclick="closeStudentManager()">
-              <i class="fas fa-times"></i> Cancel
-            </button>
-            <button type="submit" class="btn btn-success">
-              <i class="fas fa-save"></i> Save Student
-            </button>
-          </div>
-        </form>
-
-        <hr style="margin: 1.5rem 0;" />
-
-        <h4>Existing Students - <span id="existingStudentsTermDisplay">Term 2</span></h4>
-        <div id="studentListContainer" style="max-height: 300px; overflow-y: auto;">
-          <ul id="studentListDisplay" class="student-list"></ul>
-        </div>
-      </div>
+         </div>
+         
+         <h4>Termly Fee Structure</h4>
+         <div class="fee-inputs">
+            <div class="form-group"><label>Tuition</label><input type="number" id="tuition" value="0"></div>
+            <div class="form-group"><label>Admission</label><input type="number" id="adm" value="0"></div>
+            <div class="form-group"><label>Books</label><input type="number" id="books" value="0"></div>
+            <div class="form-group"><label>Stationery</label><input type="number" id="stationery" value="0"></div>
+            <div class="form-group"><label>Uniform</label><input type="number" id="uniform" value="0"></div>
+            <div class="form-group"><label>Lunch</label><input type="number" id="lunch" value="0"></div>
+            <div class="form-group"><label>Transport</label><input type="number" id="transport" value="0"></div>
+            <div class="form-group"><label>Graduation</label><input type="number" id="graduation" value="0"></div>
+            <div class="form-group"><label>Medical</label><input type="number" id="medical" value="0"></div>
+         </div>
+         
+         <div style="margin-top: 20px; text-align: right;">
+            <button type="submit" class="btn btn-success">Save Student Data</button>
+         </div>
+      </form>
+      <hr style="margin: 20px 0;">
+      <h4>Student List</h4>
+      <div id="studentListDisplay" style="margin-top: 10px;"></div>
     </div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script>
-    // Initialize Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyBAA6zY40EwbTmWUx1op1cx52C3y0RK3m0",
       authDomain: "heriwadi-manager.firebaseapp.com",
       projectId: "heriwadi-manager",
       storageBucket: "heriwadi-manager.appspot.com",
       messagingSenderId: "654632910809",
-      appId: "1:654632910809:web:7c65613d2510402a6663c8",
-      measurementId: "G-LLHS6GLB6E"
+      appId: "1:654632910809:web:7c65613d2510402a6663c8"
     };
 
-    let app, db;
-    try {
-      if (!firebase.apps.length) {
-        app = firebase.initializeApp(firebaseConfig);
-      } else {
-        app = firebase.app();
-      }
-      db = firebase.firestore();
-      console.log("Firebase initialized successfully");
-    } catch (error) {
-      console.error('Firebase initialization error:', error);
-      showStatus("Failed to initialize Firebase. Check your configuration.", "error");
-      throw error;
-    }
-    
-    // --- STATE MANAGEMENT (YEAR & TERM) ---
-    // Persistent storage for Term
-    let currentTerm = parseInt(sessionStorage.getItem('heriwadi_current_term')) || 2;
-    // Persistent storage for Year (Defaults to current year if not set, but allows switching back)
-    let currentYear = parseInt(sessionStorage.getItem('heriwadi_current_year')) || new Date().getFullYear();
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-    // Collection references with dynamic term and year
-    const getStudentsCollection = (term = currentTerm, year = currentYear) => 
-      db.collection(`students_${year}_term_${term}`);
-    const getReceiptsCollection = (term = currentTerm, year = currentYear) => 
-      db.collection(`receipts_${year}_term_${term}`);
+    let currentTerm = parseInt(sessionStorage.getItem('heriwadi_term')) || 2;
+    let currentYear = parseInt(sessionStorage.getItem('heriwadi_year')) || 2025;
 
-    let migrationCompleted = false;
-    let studentListener = null;
-    let receiptListener = null;
+    const getStudentsCollection = (t = currentTerm, y = currentYear) => db.collection(`students_${y}_term_${t}`);
+    const getReceiptsCollection = (t = currentTerm, y = currentYear) => db.collection(`receipts_${y}_term_${t}`);
 
-    // --- INITIALIZATION ---
-    document.addEventListener('DOMContentLoaded', function() {
-      // Set dropdown to saved year
-      document.getElementById('yearSelector').value = currentYear;
-      
-      // Initialize displays
-      updateYearDisplays();
-      initializeTermFromStorage();
-      
-      // Initialize Logic
-      initializeMigration().then(() => {
-        populateStudents();
-        updateReceiptTable();
-        setupRealTimeListeners();
-      });
-      
-      // Event Listeners
-      document.getElementById('amountPaid').addEventListener('input', validateAmount);
-      document.getElementById('receiptForm').addEventListener('submit', handleReceiptSubmit);
-      document.getElementById('studentForm').addEventListener('submit', handleStudentSubmit);
-      
-      // Modal Listener
-      const modal = document.getElementById('studentManagerModal');
-      if (modal) {
-        modal.addEventListener('click', function(e) {
-          if (e.target === modal) closeStudentManager();
-        });
-      }
-      
-      // Keyboard shortcuts
-      document.addEventListener('keydown', function(e) {
-        if (e.altKey) {
-          if(e.key === '1') switchTerm(1);
-          if(e.key === '2') switchTerm(2);
-          if(e.key === '3') switchTerm(3);
-        }
-        if (e.key === 'Escape') {
-          if (modal.classList.contains('show')) closeStudentManager();
-        }
-      });
-    });
+    function switchTerm(t) { currentTerm = t; sessionStorage.setItem('heriwadi_term', t); updateUI(); }
+    function switchYear(y) { currentYear = parseInt(y); sessionStorage.setItem('heriwadi_year', y); updateUI(); }
 
-    // --- TERM & YEAR LOGIC ---
-
-    function updateYearDisplays() {
-      const yearDisplay = document.getElementById('currentYearDisplay');
-      if(yearDisplay) yearDisplay.textContent = currentYear;
-    }
-
-    // Switch Year
-    function switchYear(year) {
-      currentYear = parseInt(year);
-      sessionStorage.setItem('heriwadi_current_year', currentYear);
-      
-      updateYearDisplays();
-      updateTermDisplays(); // Updates titles
-      
-      // Refresh Data
-      populateStudents();
-      updateReceiptTable();
-      setupRealTimeListeners();
-      
-      showStatus(`Switched to Academic Year ${currentYear}`, "success");
-    }
-
-    function switchTerm(term) {
-      currentTerm = term;
-      sessionStorage.setItem('heriwadi_current_term', term.toString());
-      
-      document.querySelectorAll('.term-btn').forEach(btn => {
-        btn.classList.toggle('active', parseInt(btn.dataset.term) === term);
-      });
-      
-      updateTermDisplays();
-      populateStudents();
-      updateReceiptTable();
-      setupRealTimeListeners();
-      
-      showStatus(`Switched to Term ${term} (${currentYear})`, "success");
-    }
-
-    function initializeTermFromStorage() {
-      document.querySelectorAll('.term-btn').forEach(btn => {
-        btn.classList.toggle('active', parseInt(btn.dataset.term) === currentTerm);
-      });
-      updateTermDisplays();
-    }
-
-    function updateTermDisplays() {
-      const suffix = ` (${currentYear})`;
+    function updateUI() {
       document.getElementById('currentTermDisplay').textContent = `Term ${currentTerm}`;
-      document.getElementById('currentTermRecords').textContent = `Term ${currentTerm}`;
-      document.getElementById('modalTermDisplay').textContent = `Term ${currentTerm}${suffix}`;
-      document.getElementById('feeTermDisplay').textContent = `Term ${currentTerm}`;
-      document.getElementById('existingStudentsTermDisplay').textContent = `Term ${currentTerm}`;
+      document.getElementById('currentYearDisplay').textContent = currentYear;
+      document.getElementById('yearSelector').value = currentYear;
+      document.querySelectorAll('.term-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.term) === currentTerm));
+      populateStudents();
+      updateReceiptTable();
     }
 
-    // --- CORE LOGIC ---
-
-    function getLogoDataUrl() {
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = function() {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          canvas.width = 70;
-          canvas.height = 70;
-          ctx.drawImage(img, 0, 0, 70, 70);
-          resolve(canvas.toDataURL('image/png'));
-        };
-        img.onerror = () => resolve('');
-        img.src = 'photos/school-logo.jpg';
-      });
-    }
-
-    function setupRealTimeListeners() {
-      if (studentListener) studentListener();
-      if (receiptListener) receiptListener();
-      
-      const studentsCollection = getStudentsCollection();
-      studentListener = studentsCollection.onSnapshot(
-        () => { populateStudents(); updateReceiptTable(); },
-        (error) => console.error("Error in student listener:", error)
-      );
-      
-      const receiptsCollection = getReceiptsCollection();
-      receiptListener = receiptsCollection.onSnapshot(
-        () => updateReceiptTable(),
-        (error) => console.error("Error in receipt listener:", error)
-      );
-    }
-
-    async function initializeMigration() {
-      try {
-        const migrationDoc = await db.collection('system_settings').doc('migration_status').get();
-        if (migrationDoc.exists && migrationDoc.data().term_migration_completed) {
-          migrationCompleted = true;
-          return;
-        }
-        migrationCompleted = true;
-      } catch (error) {
-        console.error('Migration error:', error);
-      }
-    }
-
-    function validateAmount() {
-      const amountInput = document.getElementById('amountPaid');
-      if (amountInput.value <= 0) amountInput.setCustomValidity('Amount must be greater than 0');
-      else amountInput.setCustomValidity('');
-    }
-
-    function showStatus(message, type = 'info') {
-      const statusMessage = document.getElementById('statusMessage');
-      statusMessage.textContent = message;
-      statusMessage.className = `status-message ${type} fade-in`;
-      setTimeout(() => {
-        statusMessage.classList.remove('fade-in');
-        setTimeout(() => {
-          statusMessage.textContent = '';
-          statusMessage.className = 'status-message';
-        }, 300);
-      }, 5000);
-    }
-
-    async function sendSMS(phone, message) {
-      try {
-        const response = await fetch("/send-sms", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone, message })
-        });
-        const result = await response.json();
-        return result.success;
-      } catch (error) {
-        console.error('SMS Error:', error);
-        return false;
-      }
-    }
-
+    // Populate Datalist
     async function populateStudents() {
-      try {
-        const studentList = document.getElementById("studentList");
-        studentList.innerHTML = "";
-        
-        const studentsCollection = getStudentsCollection();
-        const snapshot = await studentsCollection.orderBy('name').get();
-        
-        if (snapshot.empty) {
-          return;
-        }
-        
-        snapshot.forEach(doc => {
-          const s = { id: doc.id, ...doc.data() };
-          const opt = document.createElement("option");
-          opt.value = `${s.name} (${s.class})`;
-          opt.dataset.id = s.id;
-          studentList.appendChild(opt);
-        });
-      } catch (error) {
-        console.error('Error populating students:', error);
-      }
-    }
-
-    // --- UPDATED LOGIC FOR BALANCE CARRIED FORWARD ---
-    async function getBalanceCarriedForward(studentName, currentTerm, currentYear) {
-      let prevTerm, prevYear;
-
-      // Determine the immediate previous term (rolling back year if needed)
-      if (currentTerm === 1) {
-        prevTerm = 3;
-        prevYear = currentYear - 1; 
-      } else {
-        prevTerm = currentTerm - 1;
-        prevYear = currentYear;
-      }
-
-      try {
-        // Fetch the student record from the previous term
-        const prevStudentsCollection = getStudentsCollection(prevTerm, prevYear);
-        const prevStudentSnapshot = await prevStudentsCollection.where('name', '==', studentName).get();
-        
-        if (!prevStudentSnapshot.empty) {
-          const prevStudent = prevStudentSnapshot.docs[0].data();
-          // Return their final balance from that term
-          return parseFloat(prevStudent.balance) || 0; 
-        }
-      } catch (error) {
-        console.error('Error calculating carried forward balance:', error);
-      }
-      
-      // Return 0 if no record found (e.g., new student)
-      return 0;
-    }
-
-    async function updateReceiptTable() {
-      try {
-        const groupedReceipts = document.getElementById('groupedReceipts');
-        groupedReceipts.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading receipts...</div>';
-        
-        const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-        const receiptsCollection = getReceiptsCollection();
-        const snapshot = await receiptsCollection.orderBy('date', 'desc').get();
-        
-        if (snapshot.empty) {
-          groupedReceipts.innerHTML = `<div class="status-message info">No receipts found for Term ${currentTerm}, ${currentYear}.</div>`;
-          return;
-        }
-
-        const receipts = [];
-        snapshot.forEach(doc => receipts.push({ id: doc.id, ...doc.data() }));
-
-        const filteredReceipts = searchQuery
-          ? receipts.filter(r => r.name.toLowerCase().includes(searchQuery))
-          : receipts;
-
-        if (filteredReceipts.length === 0) {
-          groupedReceipts.innerHTML = '<div class="status-message info">No receipts match your search.</div>';
-          return;
-        }
-
-        groupedReceipts.innerHTML = '';
-        const classes = ["Play Group", "PP1", "PP2", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"];
-
-        for (const cls of classes) {
-          const classReceipts = filteredReceipts.filter(r => r.class === cls);
-          if (classReceipts.length === 0) continue;
-
-          const section = document.createElement('div');
-          section.className = 'class-section';
-
-          const header = document.createElement('div');
-          header.className = 'class-header';
-          header.innerHTML = `<h3>${cls} - Term ${currentTerm}</h3><span class="badge">${classReceipts.length} receipt${classReceipts.length !== 1 ? 's' : ''}</span>`;
-          header.onclick = () => {
-            const content = section.querySelector('.class-content');
-            content.style.display = content.style.display === 'none' ? 'block' : 'none';
-          };
-          section.appendChild(header);
-
-          const content = document.createElement('div');
-          content.className = 'class-content';
-          content.style.display = 'none'; // Default collapsed
-          
-          const table = document.createElement('table');
-          table.innerHTML = `<thead><tr><th>Student</th><th>Amount Paid</th><th>Balance After Payment</th><th>Payment Mode</th><th>Date</th><th>Actions</th></tr></thead><tbody></tbody>`;
-          const tbody = table.querySelector('tbody');
-
-          classReceipts.forEach(r => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-              <td><strong>${r.name}</strong><br><small>${r.class}</small></td>
-              <td>${r.paid.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
-              <td>${(r.balance || 0).toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</td>
-              <td>${r.mode}</td>
-              <td>${new Date(r.date).toLocaleDateString('en-GB')}</td>
-              <td>
-                <button class="btn btn-sm btn-info" onclick="printReceipt('${r.id}')"><i class="fas fa-print"></i> Print</button>
-                <button class="btn btn-sm btn-danger" onclick="deleteReceipt('${r.id}')"><i class="fas fa-trash"></i> Delete</button>
-              </td>
-            `;
-            tbody.appendChild(row);
-          });
-
-          content.appendChild(table);
-          section.appendChild(content);
-          groupedReceipts.appendChild(section);
-        }
-      } catch (error) {
-        console.error('Error updating receipt table:', error);
-        showStatus(`Error loading receipts: ${error.message}.`, "error");
-      }
-    }
-
-    async function handleReceiptSubmit(e) {
-      e.preventDefault();
-      
-      const studentInput = document.getElementById("studentInput").value;
-      const amount = parseFloat(document.getElementById("amountPaid").value);
-      const mode = document.getElementById("paymentMode").value;
-      const notes = document.getElementById("receiptNotes").value;
-      const submitBtn = document.getElementById("submitBtn");
-
-      if (!studentInput || amount <= 0) {
-        showStatus("Please check inputs.", "error");
-        return;
-      }
-
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<span class="spinner"></span> Processing...';
-      
-      try {
-        const currentDate = new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
-        const receiptDate = new Date(currentDate);
-
-        const match = studentInput.match(/^(.+?)\s*\((.+?)\)$/);
-        let studentName, studentClass, studentId = null;
-        
-        if (match) {
-          studentName = match[1].trim();
-          studentClass = match[2].trim();
-        } else {
-          studentName = studentInput.trim();
-          studentClass = "Unknown";
-        }
-
-        const studentsCollection = getStudentsCollection();
-        const studentSnapshot = await studentsCollection.where('name', '==', studentName).get();
-        let student;
-        
-        if (!studentSnapshot.empty) {
-          student = studentSnapshot.docs[0].data();
-          studentId = studentSnapshot.docs[0].id;
-        } else {
-          showStatus(`Student "${studentName}" not found in Year ${currentYear}.`, "error");
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = '<i class="fas fa-save"></i> Save Receipt & Send SMS';
-          return;
-        }
-
-        const balanceCarriedForward = await getBalanceCarriedForward(studentName, currentTerm, currentYear);
-        const totalExpectedPayment = student.total + balanceCarriedForward;
-        const currentPaidAmount = (student.paid || 0) + amount;
-        const newBalance = totalExpectedPayment - currentPaidAmount;
-
-        const updatedStudent = { ...student, paid: currentPaidAmount, balance: newBalance };
-        const receiptsCollection = getReceiptsCollection();
-        const snapshot = await receiptsCollection.get();
-        const receiptCount = snapshot.size + 1;
-        const receiptNumber = `T${currentTerm}-${String(receiptCount).padStart(3, '0')}`;
-
-        const receipt = {
-          name: studentName,
-          class: studentClass,
-          studentId: studentId,
-          paid: amount,
-          balance: newBalance,
-          mode: mode,
-          notes: notes || null,
-          date: receiptDate.toISOString(),
-          receiptNumber: receiptNumber,
-          term: currentTerm,
-          year: currentYear,
-          feeStructure: {
-            tuition: student.tuition || 0,
-            adm: student.adm || 0,
-            books: student.books || 0,
-            stationery: student.stationery || 0,
-            uniform: student.uniform || 0,
-            lunch: student.lunch || 0,
-            transport: student.transport || 0,
-            trip: student.trip || 0,
-            graduation: student.graduation || 0,
-            medical: student.medical || 0, // Added Medical
-            total: student.total || 0
-          }
-        };
-
-        await db.runTransaction(async transaction => {
-          const studentDocRef = studentsCollection.doc(studentId);
-          const receiptRef = receiptsCollection.doc();
-          transaction.update(studentDocRef, updatedStudent);
-          transaction.set(receiptRef, receipt);
-          receipt.id = receiptRef.id;
-        });
-
-        const timeString = receiptDate.toLocaleTimeString('en-US', { timeZone: 'Africa/Nairobi', hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase();
-        const smsMessage = `Dear parent to ${studentName}, Amount KES ${amount} Receipt ${receiptNumber} received on ${receiptDate.toLocaleDateString('en-GB')}. Bal: ${newBalance}. Term ${currentTerm}.`;
-        
-        // SMS sending
-        sendSMS(student.phone, smsMessage);
-        
-        showStatus(`Receipt saved. Balance: ${newBalance.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}`, "success");
-        
-        // Preview
-        const previewContent = document.getElementById('previewContent');
-        previewContent.innerHTML = `
-          <p><strong>Student:</strong> ${studentName}</p>
-          <p><strong>Amount:</strong> ${amount.toLocaleString('en-KE', { style: 'currency', currency: 'KES' })}</p>
-          <p><strong>Receipt No:</strong> ${receiptNumber}</p>
-        `;
-        document.getElementById('receiptPreview').style.display = 'block';
-        document.getElementById("receiptForm").reset();
-
-      } catch (error) {
-        console.error('Error processing receipt:', error);
-        showStatus(`Error: ${error.message}`, "error");
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fas fa-save"></i> Save Receipt & Send SMS';
-      }
-    }
-
-    async function handleStudentSubmit(e) {
-      e.preventDefault();
-      
-      const name = document.getElementById("studentName").value.trim();
-      const sclass = document.getElementById("studentClass").value.trim();
-      const phone = document.getElementById("phone").value.trim();
-      
-      // Added 'medical' to fields array
-      const fields = ['tuition', 'adm', 'books', 'stationery', 'uniform', 'lunch', 'transport', 'trip', 'graduation', 'medical'];
-      let total = 0;
-      const feeData = {};
-      
-      fields.forEach(f => {
-        const val = +document.getElementById(f).value || 0;
-        feeData[f] = val;
-        total += val;
+      const list = document.getElementById('studentList');
+      list.innerHTML = "";
+      const snap = await getStudentsCollection().orderBy('name').get();
+      snap.forEach(doc => {
+        const s = doc.data();
+        const opt = document.createElement('option');
+        opt.value = `${s.name} (${s.class})`;
+        list.appendChild(opt);
       });
-
-      const newStudent = { 
-        name, class: sclass, phone, ...feeData, total, 
-        paid: 0, balance: total, term: currentTerm, year: currentYear 
-      };
-
-      try {
-        await getStudentsCollection().add(newStudent);
-        showStatus(`Student ${name} added to Term ${currentTerm}, ${currentYear}!`, "success");
-        document.getElementById("studentForm").reset();
-        renderStudentList();
-        populateStudents();
-      } catch (error) {
-        console.error('Error adding student:', error);
-        showStatus("Error adding student.", "error");
-      }
     }
 
-    async function renderStudentList() {
-      try {
-        const list = document.getElementById("studentListDisplay");
-        list.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
-        
-        const snapshot = await getStudentsCollection().orderBy('name').get();
-        if (snapshot.empty) {
-          list.innerHTML = `<div class="status-message info">No students found.</div>`;
-          return;
+    // --- FIX BALANCES CARRIED FORWARD ---
+    async function getBalanceCarriedForward(name, term, year) {
+        let prevTerm, prevYear;
+        if (term === 1) {
+            prevTerm = 3; prevYear = year - 1;
+        } else {
+            prevTerm = term - 1; prevYear = year;
         }
+
+        try {
+            const snap = await getStudentsCollection(prevTerm, prevYear).where('name', '==', name).get();
+            if (!snap.empty) {
+                return parseFloat(snap.docs[0].data().balance) || 0;
+            }
+        } catch(e) { console.error("Balance fetch error", e); }
+        return 0;
+    }
+
+    // Handle Receipt Submission
+    document.getElementById('receiptForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        const input = document.getElementById('studentInput').value;
+        const paid = parseFloat(document.getElementById('amountPaid').value);
+        const mode = document.getElementById('paymentMode').value;
+        const notes = document.getElementById('receiptNotes').value;
         
-        list.innerHTML = '';
-        snapshot.forEach(doc => {
-          const s = doc.data();
-          const li = document.createElement("li");
-          li.style.padding = '0.75rem';
-          li.style.borderBottom = '1px solid #eee';
-          li.style.display = 'flex';
-          li.style.justifyContent = 'space-between';
-          li.innerHTML = `<div><strong>${s.name}</strong> (${s.class})<br>Bal: ${s.balance}</div>
-            <button class="btn btn-sm btn-danger" onclick="deleteStudent('${doc.id}')"><i class="fas fa-trash"></i></button>`;
-          list.appendChild(li);
-        });
-      } catch (error) {
-        console.error(error);
-      }
-    }
+        const nameMatch = input.match(/^(.+?)\s*\((.+?)\)$/);
+        if (!nameMatch) return alert("Please select a student from the dropdown list.");
+        const name = nameMatch[1];
 
-    async function deleteStudent(id) {
-      if (!confirm("Delete student and all their receipts?")) return;
-      try {
-        const studentRef = getStudentsCollection().doc(id);
-        const sDoc = await studentRef.get();
-        if(sDoc.exists) {
-            const name = sDoc.data().name;
-            const receipts = await getReceiptsCollection().where('name', '==', name).get();
-            const batch = db.batch();
-            receipts.forEach(r => batch.delete(r.ref));
-            batch.delete(studentRef);
-            await batch.commit();
-            showStatus("Deleted.", "success");
-            renderStudentList();
-        }
-      } catch(e) { console.error(e); }
-    }
+        btn.disabled = true;
+        btn.innerHTML = "Processing...";
 
-    async function deleteReceipt(id) {
-      if (!confirm("Delete receipt?")) return;
-      try {
-        const rRef = getReceiptsCollection().doc(id);
-        const rDoc = await rRef.get();
-        if (rDoc.exists) {
-          const rData = rDoc.data();
-          const sQuery = await getStudentsCollection().where('name', '==', rData.name).get();
-          if(!sQuery.empty) {
-            const sDoc = sQuery.docs[0];
+        try {
+            const sSnap = await getStudentsCollection().where('name', '==', name).get();
+            if (sSnap.empty) throw new Error("Student record not found in database.");
+
+            const sDoc = sSnap.docs[0];
             const sData = sDoc.data();
-            await db.runTransaction(async t => {
-              t.update(sDoc.ref, { paid: Math.max(0, sData.paid - rData.paid), balance: sData.balance + rData.paid });
-              t.delete(rRef);
+            const arrears = await getBalanceCarriedForward(name, currentTerm, currentYear);
+            
+            const totalDue = (sData.total || 0) + arrears;
+            const newCumulativePaid = (sData.paid || 0) + paid;
+            const newBal = totalDue - newCumulativePaid;
+
+            const rSnap = await getReceiptsCollection().get();
+            const rNum = `RCP-${currentYear}-${currentTerm}-${String(rSnap.size + 1).padStart(3, '0')}`;
+
+            const receipt = {
+                name, class: sData.class, paid, balance: newBal, mode, notes,
+                date: new Date().toISOString(), receiptNumber: rNum, term: currentTerm, year: currentYear
+            };
+
+            await db.runTransaction(async (t) => {
+                t.update(sDoc.ref, { paid: newCumulativePaid, balance: newBal });
+                t.set(getReceiptsCollection().doc(), receipt);
             });
-          } else {
-             await rRef.delete();
-          }
-          showStatus("Receipt deleted.", "success");
+
+            alert("Payment Saved Successfully!");
+            document.getElementById('receiptForm').reset();
+            updateReceiptTable();
+        } catch(err) {
+            alert("Error: " + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save"></i> Save & Generate Receipt';
         }
-      } catch(e) { console.error(e); }
-    }
+    };
 
-    // Modal Functions
-    function openStudentManager() {
-      document.getElementById('studentManagerModal').classList.add('show');
-      renderStudentList();
-      updateTermDisplays();
-    }
-    function closeStudentManager() {
-      document.getElementById('studentManagerModal').classList.remove('show');
-      document.getElementById('studentForm').reset();
-    }
+    // --- RECEIPT PRINTING BREAKDOWN ---
+    async function getReceiptBreakdown(receiptId) {
+        const rDoc = await getReceiptsCollection().doc(receiptId).get();
+        const receipt = rDoc.data();
+        
+        const sSnap = await getStudentsCollection().where('name', '==', receipt.name).get();
+        const sData = sSnap.docs[0].data();
+        const arrears = await getBalanceCarriedForward(receipt.name, currentTerm, currentYear);
 
-    // Recalculate Balances
-    async function recalculateAllBalances() {
-      if (!confirm("Recalculate balances? This will update current balances based on fees, payments, and debts from previous terms.")) return;
-      showStatus("Recalculating...", "loading");
-      try {
-        const sColl = getStudentsCollection();
-        const rColl = getReceiptsCollection();
-        const sSnaps = await sColl.get();
-        let count = 0;
-        for (const sDoc of sSnaps.docs) {
-            const s = sDoc.data();
-            const rSnaps = await rColl.where('name', '==', s.name).get();
-            let paid = 0;
-            rSnaps.forEach(r => paid += r.data().paid);
-            
-            // This now calls the updated logic checking the previous year/term
-            const cf = await getBalanceCarriedForward(s.name, currentTerm, currentYear);
-            
-            const bal = (s.total + cf) - paid;
-            if(s.balance !== bal) {
-                await sColl.doc(sDoc.id).update({ paid, balance: bal });
-                count++;
+        const feeItems = ['tuition', 'adm', 'books', 'stationery', 'uniform', 'lunch', 'transport', 'graduation', 'medical'];
+        let breakdown = [];
+
+        if (arrears > 0) breakdown.push({ label: 'Arrears (Carried Fwd)', charged: arrears, paidNow: 0, bal: arrears });
+
+        feeItems.forEach(item => {
+            const amt = parseFloat(sData[item]) || 0;
+            if (amt > 0) breakdown.push({ label: item.toUpperCase(), charged: amt, paidNow: 0, bal: amt });
+        });
+
+        const allRSnap = await getReceiptsCollection().where('name', '==', receipt.name).get();
+        let history = allRSnap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => new Date(a.date) - new Date(b.date));
+
+        for (const r of history) {
+            let money = parseFloat(r.paid);
+            const isTarget = (r.id === receiptId);
+
+            for (let row of breakdown) {
+                if (money <= 0) break;
+                if (row.bal > 0) {
+                    let payment = Math.min(money, row.bal);
+                    if (isTarget) row.paidNow = payment;
+                    row.bal -= payment;
+                    money -= payment;
+                }
             }
+            if (isTarget) break;
         }
-        showStatus(`Updated ${count} records.`, "success");
-        populateStudents();
-        updateReceiptTable();
-      } catch(e) { console.error(e); }
-    }
-
-    // PDF and Excel Exports 
-    async function exportByClassPDF() {
-       alert("Feature available in full version. Use Print -> Save as PDF for now."); 
-    }
-
-    async function calculateFeeItemBalancesAtReceiptTime(studentName, currentTerm, currentYear, targetReceiptId) {
-      // Added 'medical' to feeItems array
-      const feeItems = ['tuition', 'adm', 'lunch', 'uniform', 'books', 'stationery', 'transport', 'trip', 'graduation', 'medical'];
-      const targetReceiptDoc = await getReceiptsCollection(currentTerm, currentYear).doc(targetReceiptId).get();
-      if (!targetReceiptDoc.exists) return null;
-      const targetReceipt = targetReceiptDoc.data();
-      let feeStructure = targetReceipt.feeStructure; 
-      if (!feeStructure) {
-        const sSnap = await getStudentsCollection(currentTerm, currentYear).where('name', '==', studentName).get();
-        if (sSnap.empty) return null;
-        const s = sSnap.docs[0].data();
-        feeStructure = { 
-          tuition: s.tuition||0, adm: s.adm||0, books: s.books||0, stationery: s.stationery||0, 
-          uniform: s.uniform||0, lunch: s.lunch||0, transport: s.transport||0, trip: s.trip||0, 
-          graduation: s.graduation||0, medical: s.medical||0 
-        };
-      }
-      const balances = {};
-      feeItems.forEach(item => balances[item] = feeStructure[item] || 0);
-      const allReceiptsSnapshot = await getReceiptsCollection(currentTerm, currentYear).where('name', '==', studentName).get();
-      const allReceipts = [];
-      allReceiptsSnapshot.docs.forEach(doc => { if (doc.id !== targetReceiptId) allReceipts.push({ id: doc.id, ...doc.data() }); });
-      allReceipts.sort((a, b) => new Date(a.date) - new Date(b.date));
-      const targetReceiptDate = new Date(targetReceipt.date);
-      allReceipts.filter(r => new Date(r.date) < targetReceiptDate).forEach(receipt => {
-         let remaining = receipt.paid;
-         for (const item of feeItems) {
-            if (remaining <= 0) break;
-            if (balances[item] > 0) {
-               const applied = Math.min(remaining, balances[item]);
-               balances[item] -= applied;
-               remaining -= applied;
-            }
-         }
-      });
-      return balances;
+        return breakdown;
     }
 
     async function printReceipt(id) {
-       try {
         const rDoc = await getReceiptsCollection().doc(id).get();
-        if(!rDoc.exists) return;
-        const receipt = { id: rDoc.id, ...rDoc.data() };
-        const feeItemBalances = await calculateFeeItemBalancesAtReceiptTime(receipt.name, currentTerm, currentYear, receipt.id);
-        const cf = await getBalanceCarriedForward(receipt.name, currentTerm, currentYear);
-        const logo = await getLogoDataUrl();
-        
+        const r = rDoc.data();
+        const breakdown = await getReceiptBreakdown(id);
+
         const printWindow = window.open('', '', 'height=800,width=900');
-        printWindow.document.write(`<html><head><title>Receipt</title><style>body{font-family:Arial,sans-serif;font-size:12px;} .header{text-align:center;border-bottom:2px solid black;margin-bottom:10px;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid black;padding:5px;}</style></head><body>
-          <div class="header">
-             ${logo ? `<img src="${logo}" width="70">` : ''}
-             <h2>HERIWADI CHRISTIAN SCHOOLS LTD</h2>
-             <p>PO BOX 62503 - 00200, Ongata Rongai | 0723 322449</p>
-          </div>
-          <p><strong>Receipt No:</strong> ${receipt.receiptNumber} | <strong>Date:</strong> ${new Date(receipt.date).toLocaleDateString()}</p>
-          <p><strong>Student:</strong> ${receipt.name} | <strong>Class:</strong> ${receipt.class}</p>
-          <p><strong>Term:</strong> ${currentTerm} | <strong>Year:</strong> ${currentYear}</p>
-          <br>
-          <table>
-            <thead><tr><th>Fee Item</th><th>Charged</th><th>Paid Now</th><th>Bal</th></tr></thead>
-            <tbody>
-              ${Object.keys(feeItemBalances).map(k => {
-                 return `<tr><td>${k}</td><td>${feeItemBalances[k]}</td><td>-</td><td>-</td></tr>`
-              }).join('')}
-              <tr><td colspan="2"><strong>Total Paid</strong></td><td colspan="2"><strong>${receipt.paid}</strong></td></tr>
-            </tbody>
-          </table>
-          <p>Served By: Cashier</p>
-        </body></html>`);
+        let tableRows = breakdown.map(row => `
+            <tr>
+                <td>${row.label}</td>
+                <td style="text-align:right">${row.charged.toLocaleString()}</td>
+                <td style="text-align:right">${row.paidNow.toLocaleString()}</td>
+                <td style="text-align:right">${row.bal.toLocaleString()}</td>
+            </tr>
+        `).join('');
+
+        printWindow.document.write(`
+            <html><head><style>
+                body { font-family: 'Courier New', Courier, monospace; padding: 40px; }
+                .header { text-align: center; border-bottom: 2px dashed #333; padding-bottom: 10px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th, td { border: 1px solid #333; padding: 10px; }
+                .total-row { font-weight: bold; background: #eee; }
+            </style></head>
+            <body>
+                <div class="header">
+                    <h2>HERIWADI CHRISTIAN SCHOOLS LTD</h2>
+                    <p>FEE RECEIPT</p>
+                    <p>No: ${r.receiptNumber} | Date: ${new Date(r.date).toLocaleDateString()}</p>
+                </div>
+                <p><strong>Student:</strong> ${r.name} (${r.class})</p>
+                <p><strong>Term:</strong> ${r.term} | <strong>Year:</strong> ${r.year}</p>
+                <table>
+                    <thead><tr><th>Description</th><th>Total Due</th><th>Paid Now</th><th>Balance</th></tr></thead>
+                    <tbody>${tableRows}</tbody>
+                    <tr class="total-row">
+                        <td>TOTALS</td><td></td>
+                        <td style="text-align:right">${r.paid.toLocaleString()}</td>
+                        <td style="text-align:right">${r.balance.toLocaleString()}</td>
+                    </tr>
+                </table>
+                <p style="margin-top:30px;">Payment Mode: ${r.mode}</p>
+                <p>Served By: School Accountant</p>
+                <p style="text-align:center; font-size: 12px; margin-top: 50px;">Thank you for your payment.</p>
+            </body></html>
+        `);
         printWindow.document.close();
-        setTimeout(() => { printWindow.print(); printWindow.close(); }, 1000);
-       } catch(e) { console.error(e); }
+        setTimeout(() => { printWindow.print(); printWindow.close(); }, 700);
     }
+
+    async function updateReceiptTable() {
+        const container = document.getElementById('groupedReceipts');
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        container.innerHTML = "Syncing with cloud...";
+        
+        const snap = await getReceiptsCollection().orderBy('date', 'desc').get();
+        container.innerHTML = "";
+        
+        snap.forEach(doc => {
+            const r = doc.data();
+            if (search && !r.name.toLowerCase().includes(search)) return;
+
+            const div = document.createElement('div');
+            div.style.padding = "15px"; div.style.border = "1px solid #ddd"; div.style.marginBottom = "8px";
+            div.style.display = "flex"; div.style.justifyContent = "space-between"; div.style.alignItems = "center";
+            div.style.borderRadius = "6px";
+
+            div.innerHTML = `
+                <div>
+                    <strong>${r.name}</strong> (${r.class})<br>
+                    <small>${new Date(r.date).toLocaleDateString()} | ${r.receiptNumber}</small>
+                </div>
+                <div>
+                    <span style="color: green; font-weight: bold;">+ KES ${r.paid.toLocaleString()}</span><br>
+                    <small>Bal: KES ${r.balance.toLocaleString()}</small>
+                </div>
+                <div>
+                    <button class="btn btn-info" onclick="printReceipt('${doc.id}')"><i class="fas fa-print"></i></button>
+                    <button class="btn btn-danger" onclick="deleteReceipt('${doc.id}')"><i class="fas fa-trash"></i></button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    // Student Manager Logic
+    function openStudentManager() { document.getElementById('studentManagerModal').classList.add('show'); renderStudentList(); }
+    function closeStudentManager() { document.getElementById('studentManagerModal').classList.remove('show'); }
+
+    document.getElementById('studentForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const f = ['tuition', 'adm', 'books', 'stationery', 'uniform', 'lunch', 'transport', 'graduation', 'medical'];
+        let total = 0;
+        let data = {
+            name: document.getElementById('studentName').value,
+            class: document.getElementById('studentClass').value,
+            phone: document.getElementById('phone').value,
+            paid: 0, term: currentTerm, year: currentYear
+        };
+        f.forEach(item => {
+            let v = parseFloat(document.getElementById(item).value) || 0;
+            data[item] = v; total += v;
+        });
+        data.total = total;
+        data.balance = total;
+
+        await getStudentsCollection().add(data);
+        alert("Student Added!");
+        document.getElementById('studentForm').reset();
+        renderStudentList();
+        populateStudents();
+    };
+
+    async function renderStudentList() {
+        const display = document.getElementById('studentListDisplay');
+        const snap = await getStudentsCollection().orderBy('name').get();
+        display.innerHTML = "<table><tr><th>Name</th><th>Class</th><th>Fees</th><th>Action</th></tr>" + 
+            snap.docs.map(doc => {
+                const s = doc.data();
+                return `<tr><td>${s.name}</td><td>${s.class}</td><td>${s.total}</td><td><button onclick="deleteStudent('${doc.id}')" class="btn btn-danger btn-sm">Delete</button></td></tr>`;
+            }).join('') + "</table>";
+    }
+
+    async function deleteReceipt(id) {
+        if (!confirm("Delete this receipt? This will revert the student's balance.")) return;
+        const rDoc = await getReceiptsCollection().doc(id).get();
+        const r = rDoc.data();
+        const sSnap = await getStudentsCollection().where('name', '==', r.name).get();
+        
+        if (!sSnap.empty) {
+            const sDoc = sSnap.docs[0];
+            const s = sDoc.data();
+            await db.runTransaction(async t => {
+                t.update(sDoc.ref, { paid: s.paid - r.paid, balance: s.balance + r.paid });
+                t.delete(rDoc.ref);
+            });
+        } else {
+            await rDoc.ref.delete();
+        }
+        updateReceiptTable();
+    }
+
+    async function deleteStudent(id) {
+        if (confirm("Delete student?")) {
+            await getStudentsCollection().doc(id).delete();
+            renderStudentList();
+        }
+    }
+
+    window.onload = updateUI;
   </script>
 </body>
 </html>
