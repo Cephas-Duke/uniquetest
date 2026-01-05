@@ -282,16 +282,6 @@
         return "photos/school-logo.jpg";
     }
 
-    async function calculateFeeItemBalancesAtReceiptTime(studentName, term, year, currentReceiptId) {
-        const sSnap = await db.collection(`students_${year}_term_${term}`).where('name', '==', studentName).get();
-        if (sSnap.empty) return {};
-        const sData = sSnap.docs[0].data();
-        const items = ['tuition', 'adm', 'medical', 'lunch', 'uniform', 'books', 'stationery', 'transport', 'trip', 'graduation'];
-        let balances = {};
-        items.forEach(item => balances[item] = sData[item] || 0);
-        return balances;
-    }
-
     document.getElementById('receiptForm').onsubmit = async (e) => {
         e.preventDefault();
         const input = document.getElementById('studentInput').value;
@@ -331,28 +321,60 @@
         if(!rDoc.exists) return;
         const receipt = { id: rDoc.id, ...rDoc.data() };
         
-        const feeItemBalances = await calculateFeeItemBalancesAtReceiptTime(receipt.name, currentTerm, currentYear, receipt.id);
+        const sSnap = await getStudentsCollection().where('name', '==', receipt.name).get();
+        if(sSnap.empty) return;
+        const sData = sSnap.docs[0].data();
+        
         const arrears = await getBalanceCarriedForward(receipt.name, currentTerm, currentYear);
         const logo = await getLogoDataUrl();
         
-        const allFeeItems = ['tuition', 'adm', 'medical', 'lunch', 'uniform', 'books', 'stationery', 'transport', 'trip', 'graduation'];
+        // Fee distribution logic (Waterfall method)
+        let remainingToDistribute = receipt.paid;
+        let runningPaidTotal = sData.paid - receipt.paid; // Total paid before this receipt
 
-        let rowsHtml = `
+        function calculateLine(charged) {
+            let alreadyPaidOnThisItem = Math.min(charged, runningPaidTotal);
+            runningPaidTotal -= alreadyPaidOnThisItem;
+            
+            let itemBalanceBeforeThisReceipt = charged - alreadyPaidOnThisItem;
+            let paidOnThisReceipt = Math.min(itemBalanceBeforeThisReceipt, remainingToDistribute);
+            remainingToDistribute -= paidOnThisReceipt;
+            
+            let finalBal = itemBalanceBeforeThisReceipt - paidOnThisReceipt;
+            
+            return { paidNow: paidOnThisReceipt, bal: finalBal };
+        }
+
+        const allFeeItems = [
+            {key: 'tuition', label: 'Tuition'}, {key: 'adm', label: 'Admission'},
+            {key: 'medical', label: 'Medical'}, {key: 'lunch', label: 'Lunch'},
+            {key: 'uniform', label: 'Uniform'}, {key: 'books', label: 'Books'},
+            {key: 'stationery', label: 'Stationery'}, {key: 'transport', label: 'Transport'},
+            {key: 'trip', label: 'Trip'}, {key: 'graduation', label: 'Graduation'}
+        ];
+
+        let rowsHtml = "";
+
+        // Arrears Row
+        const arrearsCalc = calculateLine(arrears);
+        rowsHtml += `
             <tr>
-                <td style="text-align: left; padding-left: 15px;"><strong>Arrears (Carried Fwd)</strong></td>
+                <td style="text-align: left; padding-left: 15px;"><strong>Arrears (C/F)</strong></td>
                 <td>${arrears.toLocaleString()}</td>
-                <td>-</td>
-                <td>-</td>
+                <td>${arrearsCalc.paidNow.toLocaleString()}</td>
+                <td>${arrearsCalc.bal.toLocaleString()}</td>
             </tr>`;
 
+        // Standard Fee Items
         allFeeItems.forEach(item => {
-            const amount = feeItemBalances[item] || 0;
+            const charged = sData[item.key] || 0;
+            const calc = calculateLine(charged);
             rowsHtml += `
                 <tr>
-                    <td style="text-align: left; padding-left: 15px;">${item}</td>
-                    <td>${amount.toLocaleString()}</td>
-                    <td>-</td>
-                    <td>-</td>
+                    <td style="text-align: left; padding-left: 15px;">${item.label}</td>
+                    <td>${charged.toLocaleString()}</td>
+                    <td>${calc.paidNow.toLocaleString()}</td>
+                    <td>${calc.bal.toLocaleString()}</td>
                 </tr>`;
         });
 
@@ -396,7 +418,7 @@
               </tr>
             </table>
             <table>
-              <thead><tr><th width="45%">Fee Item</th><th width="15%">Charged</th><th width="20%">Paid Now</th><th width="20%">Bal</th></tr></thead>
+              <thead><tr><th width="40%">Fee Item</th><th width="20%">Charged</th><th width="20%">Paid Now</th><th width="20%">Bal</th></tr></thead>
               <tbody>${rowsHtml}</tbody>
             </table>
             <div class="total-box">TOTAL PAID THIS RECEIPT: KES ${receipt.paid.toLocaleString()}</div>
