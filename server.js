@@ -16,11 +16,10 @@ app.use(express.static(__dirname));
 // =========================================================
 // 1. SAFE FIREBASE SETUP
 // =========================================================
-let db = null; // Start with no database connection
+let db = null;
 
 try {
   if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-    // Clean up the string in case of copy-paste errors (removes extra quotes)
     const keyString = process.env.FIREBASE_SERVICE_ACCOUNT.replace(/^"|"$/g, '');
     const serviceAccount = JSON.parse(keyString);
     
@@ -28,7 +27,7 @@ try {
       credential: admin.credential.cert(serviceAccount)
     });
     
-    db = admin.firestore(); // Only connect if init succeeded
+    db = admin.firestore();
     console.log("✅ Firebase Admin Initialized Successfully");
   } else {
     console.error("⚠️ CRITICAL: FIREBASE_SERVICE_ACCOUNT environment variable is missing.");
@@ -65,7 +64,54 @@ const authenticateBank = (req, res, next) => {
 };
 
 // =========================================================
-// 3. ROUTES
+// 3. CELCOM AFRICA SMS ENDPOINT
+// =========================================================
+app.post('/send-sms', async (req, res) => {
+    const { phone, message } = req.body;
+
+    if (!phone || !message) {
+        return res.status(400).json({ success: false, error: "Missing phone or message" });
+    }
+
+    // Celcom Credentials from .env
+    const apikey = process.env.CELCOM_API_KEY;
+    const partnerID = process.env.CELCOM_PARTNER_ID;
+    const shortcode = process.env.CELCOM_SHORTCODE;
+
+    if (!apikey || !partnerID || !shortcode) {
+        console.log("⚠️ Celcom Credentials missing in .env. SMS Logged only:", message);
+        return res.json({ success: true, message: "SMS Logged (Simulation Mode)" });
+    }
+
+    try {
+        console.log(`📨 Sending Celcom SMS to ${phone}...`);
+        
+        // Celcom Africa API Endpoint
+        const url = 'https://isms.celcomafrica.com/api/services/sendsms/';
+        
+        const payload = {
+            apikey: apikey,
+            partnerID: partnerID,
+            message: message,
+            shortcode: shortcode,
+            mobile: phone
+        };
+
+        const response = await axios.post(url, payload, {
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        console.log("✅ Celcom Response:", response.data);
+        return res.json({ success: true, data: response.data });
+
+    } catch (error) {
+        console.error("❌ SMS Failed:", error.message);
+        return res.status(500).json({ success: false, error: "SMS Gateway Error" });
+    }
+});
+
+// =========================================================
+// 4. BANK API ROUTES
 // =========================================================
 
 app.get('/', (req, res) => {
@@ -75,12 +121,11 @@ app.get('/', (req, res) => {
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
-    database_connected: !!db, // Returns true if DB is ready
+    database_connected: !!db,
     timestamp: new Date().toISOString()
   });
 });
 
-// Bank Validation Endpoint
 app.post('/api/validate', authenticateBank, async (req, res) => {
   if (!db) return res.status(500).json({ resultCode: 1, message: "Database not connected" });
 
@@ -107,7 +152,6 @@ app.post('/api/validate', authenticateBank, async (req, res) => {
   }
 });
 
-// Bank Payment Endpoint
 app.post('/api/payment', authenticateBank, async (req, res) => {
   if (!db) return res.status(500).json({ resultCode: 1, message: "Database not connected" });
 
