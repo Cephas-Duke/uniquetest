@@ -96,7 +96,6 @@
     label { display: block; margin-bottom: 0.4rem; font-weight: 500; }
     input, select, textarea { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: var(--border-radius); font-size: 1rem; }
 
-    /* Updated Table Styles */
     table { width: 100%; border-collapse: collapse; margin-top: 0; }
     th, td { padding: 0.8rem; text-align: left; border-bottom: 1px solid #eee; }
     th { background-color: var(--primary-color); color: white; }
@@ -123,6 +122,10 @@
     }
     .class-content { display: none; padding: 0; }
 
+    /* Receipt Preview Box */
+    .receipt-preview { background: #f8f9fa; border: 1px solid #ddd; border-radius: var(--border-radius); padding: 1rem; margin-top: 1.5rem; font-family: 'Courier New', monospace; }
+    .receipt-preview h3 { margin-bottom: 10px; color: var(--primary-color); }
+
     /* Status Message Toast */
     .status-message {
       padding: 1rem; border-radius: var(--border-radius);
@@ -145,7 +148,7 @@
     }
 
     @media print {
-      nav, header, .term-selector, .btn, #receiptForm, #searchInput, .card-header button { display: none !important; }
+      nav, header, .term-selector, .btn, #receiptForm, #searchInput, .card-header button, .receipt-preview { display: none !important; }
     }
   </style>
 </head>
@@ -218,6 +221,12 @@
         </div>
         <button type="submit" class="btn btn-success" id="submitBtn"><i class="fas fa-save"></i> Save & Send SMS</button>
       </form>
+
+      <div id="receiptPreview" class="receipt-preview" style="display: none;">
+        <h3><i class="fas fa-check-circle"></i> Receipt Preview</h3>
+        <div id="previewContent"></div>
+      </div>
+
     </div>
 
     <div class="card">
@@ -306,18 +315,20 @@
         setTimeout(() => el.className = 'status-message', 4000);
     }
 
-    // --- SIMULATED SMS FUNCTIONALITY ---
+    // --- RESTORED EXACT SMS FUNCTION FROM INITIAL CODE ---
     async function sendSMS(phone, message) {
-      // NOTE: Browsers CANNOT send real SMS directly for security reasons.
-      // You need a backend server (Node.js) to connect to Africa's Talking or Twilio.
-      // For now, we will simulate it so you can see the logic works.
-      console.log("SENDING SMS TO:", phone);
-      console.log("MESSAGE:", message);
-      
-      // Remove this alert when you have a real backend
-      alert(`[SMS SIMULATION]\nTo: ${phone}\nMsg: ${message}`);
-      
-      return true; 
+      try {
+        const response = await fetch("/send-sms", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone, message })
+        });
+        const result = await response.json();
+        return result.success;
+      } catch (error) {
+        console.error('SMS Error:', error);
+        return false;
+      }
     }
 
     async function populateStudents() {
@@ -376,7 +387,7 @@
 
             const receipt = { 
                 name, class: sData.class, paid, 
-                balance: safeBal, // Saving specifically here
+                balance: safeBal, 
                 mode, 
                 date: new Date().toISOString(), receiptNumber: rNum, term: currentTerm, year: currentYear 
             };
@@ -386,14 +397,26 @@
                 t.set(getReceiptsColl().doc(), receipt);
             });
 
-            // SMS Logic
-            const phone = sData.phone;
-            if(phone) {
-                const msg = `Received KES ${paid} for ${name}. Bal: ${safeBal}. Ref: ${rNum}. Thank you.`;
-                sendSMS(phone, msg); 
+            // --- RESTORED SMS LOGIC FROM INITIAL CODE ---
+            if(sData.phone) {
+                const currentDate = new Date().toLocaleDateString('en-GB');
+                // Message format exactly as requested from initial code
+                const smsMessage = `Dear parent to ${name}, Amount KES ${paid} Receipt ${rNum} received on ${currentDate}. Bal: ${safeBal}. Term ${currentTerm}.`;
+                sendSMS(sData.phone, smsMessage); // Fires to your server.js
             }
 
             showStatus(`Saved! Receipt ${rNum}. Balance: KES ${safeBal}`, 'success');
+            
+            // --- RESTORED PRINT PREVIEW LOGIC ---
+            const previewContent = document.getElementById('previewContent');
+            previewContent.innerHTML = `
+              <p><strong>Student:</strong> ${name}</p>
+              <p><strong>Amount:</strong> KES ${paid.toLocaleString()}</p>
+              <p><strong>Receipt No:</strong> ${rNum}</p>
+              <p><strong>Balance:</strong> KES ${safeBal.toLocaleString()}</p>
+            `;
+            document.getElementById('receiptPreview').style.display = 'block';
+
             document.getElementById('receiptForm').reset();
             updateReceiptTable();
 
@@ -468,7 +491,6 @@
         });
     }
 
-    // --- UPDATED PRINT FUNCTION (Original Styles + New Logic) ---
     async function printReceipt(id) {
        try {
         const rDoc = await getReceiptsColl().doc(id).get();
@@ -482,7 +504,6 @@
         const arrears = await getBalanceCarriedForward(receipt.name, currentTerm, currentYear);
         const logo = await getLogoDataUrl();
         
-        // Fee distribution logic (Waterfall)
         let remainingToDistribute = receipt.paid;
         let runningPaidTotal = sData.paid - receipt.paid; 
 
@@ -510,7 +531,6 @@
         let rowsHtml = "";
         let totalFeeBalance = 0;
 
-        // Arrears Row
         const arrearsCalc = calculateLine(arrears);
         totalFeeBalance += arrearsCalc.bal;
 
@@ -526,7 +546,7 @@
 
         allFeeItems.forEach(item => {
             const charged = sData[item.key] || 0;
-            if (charged > 0) { // Only show items that have a charge
+            if (charged > 0) { 
                 const calc = calculateLine(charged);
                 totalFeeBalance += calc.bal;
 
@@ -540,7 +560,6 @@
             }
         });
 
-        // --- THE INITIAL CODE HTML STRUCTURE ---
         const printWindow = window.open('', '', 'height=800,width=900');
         printWindow.document.write(`
           <html>
