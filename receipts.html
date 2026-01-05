@@ -6,9 +6,6 @@
   <title>H.C.S | School Office Management</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     :root {
       --primary-color: #005fa3;
@@ -48,6 +45,7 @@
 
     .container { max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem; }
 
+    /* Term Selector */
     .term-selector {
       background: white; border-radius: var(--border-radius);
       box-shadow: var(--box-shadow); padding: 1rem 1.5rem;
@@ -99,10 +97,6 @@
     th { background-color: var(--primary-color); color: white; }
     tr:hover { background-color: #f9f9f9; }
 
-    .status-message { padding: 1rem; border-radius: var(--border-radius); margin-bottom: 1rem; display: none; }
-    .status-message.success { display: block; background: #d4edda; color: #155724; }
-    .status-message.error { display: block; background: #f8d7da; color: #721c24; }
-
     .modal {
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;
@@ -111,12 +105,6 @@
     .modal-content {
       background: white; border-radius: var(--border-radius); width: 95%;
       max-width: 800px; padding: 2rem; max-height: 90vh; overflow-y: auto;
-    }
-
-    .class-header {
-      background: var(--primary-color); color: white; padding: 12px;
-      cursor: pointer; margin-top: 10px; border-radius: 4px;
-      display: flex; justify-content: space-between; align-items: center;
     }
 
     @media print {
@@ -166,32 +154,25 @@
         </div>
       </div>
 
-      <div id="statusMessage" class="status-message"></div>
-
       <form id="receiptForm">
         <div class="grid">
           <div class="form-group">
-            <label>Student Name (Search...)</label>
-            <input type="text" id="studentInput" list="studentList" required placeholder="Type name..." />
+            <label>Student Name</label>
+            <input type="text" id="studentInput" list="studentList" required placeholder="Search name..." />
             <datalist id="studentList"></datalist>
           </div>
           <div class="form-group">
             <label>Amount Paid (KES)</label>
-            <input type="number" id="amountPaid" required min="1" step="1" />
+            <input type="number" id="amountPaid" required min="1" />
           </div>
           <div class="form-group">
             <label>Payment Mode</label>
             <select id="paymentMode" required>
               <option value="M-Pesa">M-Pesa</option>
               <option value="Cash">Cash</option>
-              <option value="Bank Transfer">Bank Transfer</option>
-              <option value="Cheque">Cheque</option>
+              <option value="Bank">Bank</option>
             </select>
           </div>
-        </div>
-        <div class="form-group">
-            <label>Notes (Optional)</label>
-            <input type="text" id="receiptNotes" placeholder="e.g. Paid by Uncle John" />
         </div>
         <button type="submit" class="btn btn-success" id="submitBtn"><i class="fas fa-save"></i> Save & Generate Receipt</button>
       </form>
@@ -200,7 +181,7 @@
     <div class="card">
       <div class="card-header">
         <h2>Recent Payments</h2>
-        <input type="text" id="searchInput" placeholder="Search by name..." oninput="updateReceiptTable()" style="width: 300px;" />
+        <input type="text" id="searchInput" placeholder="Search receipts..." oninput="updateReceiptTable()" style="width: 300px;" />
       </div>
       <div id="groupedReceipts"></div>
     </div>
@@ -214,50 +195,32 @@
       </div>
       <form id="studentForm">
          <div class="grid">
-            <div class="form-group">
-                <label>Full Name</label>
-                <input type="text" id="studentName" required />
-            </div>
+            <div class="form-group"><label>Full Name</label><input type="text" id="studentName" required /></div>
             <div class="form-group">
                 <label>Class</label>
-                <select id="studentClass" required>
+                <select id="studentClass">
                     <option value="Play Group">Play Group</option>
-                    <option value="PP1">PP1</option>
-                    <option value="PP2">PP2</option>
-                    <option value="Grade 1">Grade 1</option>
-                    <option value="Grade 2">Grade 2</option>
-                    <option value="Grade 3">Grade 3</option>
-                    <option value="Grade 4">Grade 4</option>
-                    <option value="Grade 5">Grade 5</option>
-                    <option value="Grade 6">Grade 6</option>
+                    <option value="PP1">PP1</option><option value="PP2">PP2</option>
+                    <option value="Grade 1">Grade 1</option><option value="Grade 2">Grade 2</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label>Parent Phone (for SMS)</label>
-                <input type="tel" id="phone" placeholder="+254..." required />
-            </div>
+            <div class="form-group"><label>Phone</label><input type="tel" id="phone" required /></div>
          </div>
-         
-         <h4>Termly Fee Structure</h4>
-         <div class="fee-inputs">
+         <h4>Term Fees</h4>
+         <div class="fee-inputs" id="feeFields">
             <div class="form-group"><label>Tuition</label><input type="number" id="tuition" value="0"></div>
             <div class="form-group"><label>Admission</label><input type="number" id="adm" value="0"></div>
+            <div class="form-group"><label>Medical</label><input type="number" id="medical" value="0"></div>
+            <div class="form-group"><label>Lunch</label><input type="number" id="lunch" value="0"></div>
+            <div class="form-group"><label>Uniform</label><input type="number" id="uniform" value="0"></div>
             <div class="form-group"><label>Books</label><input type="number" id="books" value="0"></div>
             <div class="form-group"><label>Stationery</label><input type="number" id="stationery" value="0"></div>
-            <div class="form-group"><label>Uniform</label><input type="number" id="uniform" value="0"></div>
-            <div class="form-group"><label>Lunch</label><input type="number" id="lunch" value="0"></div>
             <div class="form-group"><label>Transport</label><input type="number" id="transport" value="0"></div>
+            <div class="form-group"><label>Trip</label><input type="number" id="trip" value="0"></div>
             <div class="form-group"><label>Graduation</label><input type="number" id="graduation" value="0"></div>
-            <div class="form-group"><label>Medical</label><input type="number" id="medical" value="0"></div>
          </div>
-         
-         <div style="margin-top: 20px; text-align: right;">
-            <button type="submit" class="btn btn-success">Save Student Data</button>
-         </div>
+         <button type="submit" class="btn btn-success" style="margin-top:15px;">Save Student</button>
       </form>
-      <hr style="margin: 20px 0;">
-      <h4>Student List</h4>
-      <div id="studentListDisplay" style="margin-top: 10px;"></div>
     </div>
   </div>
 
@@ -272,18 +235,17 @@
       messagingSenderId: "654632910809",
       appId: "1:654632910809:web:7c65613d2510402a6663c8"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    let currentTerm = parseInt(sessionStorage.getItem('heriwadi_term')) || 2;
-    let currentYear = parseInt(sessionStorage.getItem('heriwadi_year')) || 2025;
+    let currentTerm = parseInt(sessionStorage.getItem('h_term')) || 1;
+    let currentYear = parseInt(sessionStorage.getItem('h_year')) || 2026;
 
-    const getStudentsCollection = (t = currentTerm, y = currentYear) => db.collection(`students_${y}_term_${t}`);
-    const getReceiptsCollection = (t = currentTerm, y = currentYear) => db.collection(`receipts_${y}_term_${t}`);
+    const getStudentsColl = () => db.collection(`students_${currentYear}_term_${currentTerm}`);
+    const getReceiptsColl = () => db.collection(`receipts_${currentYear}_term_${currentTerm}`);
 
-    function switchTerm(t) { currentTerm = t; sessionStorage.setItem('heriwadi_term', t); updateUI(); }
-    function switchYear(y) { currentYear = parseInt(y); sessionStorage.setItem('heriwadi_year', y); updateUI(); }
+    function switchTerm(t) { currentTerm = t; sessionStorage.setItem('h_term', t); updateUI(); }
+    function switchYear(y) { currentYear = parseInt(y); sessionStorage.setItem('h_year', y); updateUI(); }
 
     function updateUI() {
       document.getElementById('currentTermDisplay').textContent = `Term ${currentTerm}`;
@@ -294,11 +256,10 @@
       updateReceiptTable();
     }
 
-    // Populate Datalist
     async function populateStudents() {
       const list = document.getElementById('studentList');
       list.innerHTML = "";
-      const snap = await getStudentsCollection().orderBy('name').get();
+      const snap = await getStudentsColl().orderBy('name').get();
       snap.forEach(doc => {
         const s = doc.data();
         const opt = document.createElement('option');
@@ -307,191 +268,123 @@
       });
     }
 
-    // --- FIX BALANCES CARRIED FORWARD ---
-    async function getBalanceCarriedForward(name, term, year) {
-        let prevTerm, prevYear;
-        if (term === 1) {
-            prevTerm = 3; prevYear = year - 1;
-        } else {
-            prevTerm = term - 1; prevYear = year;
-        }
-
-        try {
-            const snap = await getStudentsCollection(prevTerm, prevYear).where('name', '==', name).get();
-            if (!snap.empty) {
-                return parseFloat(snap.docs[0].data().balance) || 0;
-            }
-        } catch(e) { console.error("Balance fetch error", e); }
-        return 0;
+    async function getArrears(name) {
+        let prevT, prevY;
+        if (currentTerm === 1) { prevT = 3; prevY = currentYear - 1; }
+        else { prevT = currentTerm - 1; prevY = currentYear; }
+        const snap = await db.collection(`students_${prevY}_term_${prevT}`).where('name', '==', name).get();
+        return snap.empty ? 0 : (snap.docs[0].data().balance || 0);
     }
 
-    // Handle Receipt Submission
     document.getElementById('receiptForm').onsubmit = async (e) => {
         e.preventDefault();
-        const btn = document.getElementById('submitBtn');
         const input = document.getElementById('studentInput').value;
         const paid = parseFloat(document.getElementById('amountPaid').value);
         const mode = document.getElementById('paymentMode').value;
-        const notes = document.getElementById('receiptNotes').value;
-        
         const nameMatch = input.match(/^(.+?)\s*\((.+?)\)$/);
-        if (!nameMatch) return alert("Please select a student from the dropdown list.");
+        if(!nameMatch) return alert("Select a student from the list");
+
         const name = nameMatch[1];
+        const sSnap = await getStudentsColl().where('name', '==', name).get();
+        const sDoc = sSnap.docs[0];
+        const sData = sDoc.data();
+        const arrears = await getArrears(name);
 
-        btn.disabled = true;
-        btn.innerHTML = "Processing...";
+        const newPaid = (sData.paid || 0) + paid;
+        const newBal = (sData.total + arrears) - newPaid;
 
-        try {
-            const sSnap = await getStudentsCollection().where('name', '==', name).get();
-            if (sSnap.empty) throw new Error("Student record not found in database.");
+        const rNum = `RCP-${currentYear}-${currentTerm}-${Date.now().toString().slice(-4)}`;
+        const receipt = { 
+            name, class: sData.class, paid, balance: newBal, mode, 
+            date: new Date().toISOString(), receiptNumber: rNum, term: currentTerm, year: currentYear 
+        };
 
-            const sDoc = sSnap.docs[0];
-            const sData = sDoc.data();
-            const arrears = await getBalanceCarriedForward(name, currentTerm, currentYear);
-            
-            const totalDue = (sData.total || 0) + arrears;
-            const newCumulativePaid = (sData.paid || 0) + paid;
-            const newBal = totalDue - newCumulativePaid;
-
-            const rSnap = await getReceiptsCollection().get();
-            const rNum = `RCP-${currentYear}-${currentTerm}-${String(rSnap.size + 1).padStart(3, '0')}`;
-
-            const receipt = {
-                name, class: sData.class, paid, balance: newBal, mode, notes,
-                date: new Date().toISOString(), receiptNumber: rNum, term: currentTerm, year: currentYear
-            };
-
-            await db.runTransaction(async (t) => {
-                t.update(sDoc.ref, { paid: newCumulativePaid, balance: newBal });
-                t.set(getReceiptsCollection().doc(), receipt);
-            });
-
-            alert("Payment Saved Successfully!");
-            document.getElementById('receiptForm').reset();
-            updateReceiptTable();
-        } catch(err) {
-            alert("Error: " + err.message);
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-save"></i> Save & Generate Receipt';
-        }
-    };
-
-    // --- RECEIPT PRINTING BREAKDOWN ---
-    async function getReceiptBreakdown(receiptId) {
-        const rDoc = await getReceiptsCollection().doc(receiptId).get();
-        const receipt = rDoc.data();
-        
-        const sSnap = await getStudentsCollection().where('name', '==', receipt.name).get();
-        const sData = sSnap.docs[0].data();
-        const arrears = await getBalanceCarriedForward(receipt.name, currentTerm, currentYear);
-
-        const feeItems = ['tuition', 'adm', 'books', 'stationery', 'uniform', 'lunch', 'transport', 'graduation', 'medical'];
-        let breakdown = [];
-
-        if (arrears > 0) breakdown.push({ label: 'Arrears (Carried Fwd)', charged: arrears, paidNow: 0, bal: arrears });
-
-        feeItems.forEach(item => {
-            const amt = parseFloat(sData[item]) || 0;
-            if (amt > 0) breakdown.push({ label: item.toUpperCase(), charged: amt, paidNow: 0, bal: amt });
+        await db.runTransaction(async t => {
+            t.update(sDoc.ref, { paid: newPaid, balance: newBal });
+            t.set(getReceiptsColl().doc(), receipt);
         });
 
-        const allRSnap = await getReceiptsCollection().where('name', '==', receipt.name).get();
-        let history = allRSnap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => new Date(a.date) - new Date(b.date));
-
-        for (const r of history) {
-            let money = parseFloat(r.paid);
-            const isTarget = (r.id === receiptId);
-
-            for (let row of breakdown) {
-                if (money <= 0) break;
-                if (row.bal > 0) {
-                    let payment = Math.min(money, row.bal);
-                    if (isTarget) row.paidNow = payment;
-                    row.bal -= payment;
-                    money -= payment;
-                }
-            }
-            if (isTarget) break;
-        }
-        return breakdown;
-    }
+        alert("Saved!");
+        document.getElementById('receiptForm').reset();
+        updateReceiptTable();
+    };
 
     async function printReceipt(id) {
-        const rDoc = await getReceiptsCollection().doc(id).get();
+        const rDoc = await getReceiptsColl().doc(id).get();
         const r = rDoc.data();
-        const breakdown = await getReceiptBreakdown(id);
+        const sSnap = await getStudentsColl().where('name', '==', r.name).get();
+        const s = sSnap.docs[0].data();
+        const arrears = await getArrears(r.name);
+
+        const feeItems = ['tuition','adm','medical','lunch','uniform','books','stationery','transport','trip','graduation'];
+        let rowsHtml = "";
+        
+        // Add Arrears row if exists
+        if(arrears > 0) {
+            rowsHtml += `<tr><td>Arrears (C/F)</td><td>${arrears}</td><td>-</td><td>-</td></tr>`;
+        }
+
+        feeItems.forEach(item => {
+            if(s[item] > 0) {
+                rowsHtml += `<tr><td>${item}</td><td>${s[item]}</td><td>-</td><td>-</td></tr>`;
+            }
+        });
 
         const printWindow = window.open('', '', 'height=800,width=900');
-        let tableRows = breakdown.map(row => `
-            <tr>
-                <td>${row.label}</td>
-                <td style="text-align:right">${row.charged.toLocaleString()}</td>
-                <td style="text-align:right">${row.paidNow.toLocaleString()}</td>
-                <td style="text-align:right">${row.bal.toLocaleString()}</td>
-            </tr>
-        `).join('');
-
         printWindow.document.write(`
             <html><head><style>
-                body { font-family: 'Courier New', Courier, monospace; padding: 40px; }
-                .header { text-align: center; border-bottom: 2px dashed #333; padding-bottom: 10px; }
-                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                th, td { border: 1px solid #333; padding: 10px; }
-                .total-row { font-weight: bold; background: #eee; }
+                body { font-family: sans-serif; padding: 20px; }
+                .header { text-align: center; border-bottom: 2px solid #005fa3; margin-bottom: 20px; padding-bottom: 10px; }
+                .meta { display: flex; justify-content: space-between; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; }
+                th { background: #005fa3; color: white; padding: 10px; border: 1px solid #ddd; }
+                td { padding: 10px; border: 1px solid #ddd; text-align: center; }
+                .total-box { margin-top: 20px; border: 2px solid #005fa3; padding: 10px; display: inline-block; font-weight: bold; }
             </style></head>
             <body>
                 <div class="header">
-                    <h2>HERIWADI CHRISTIAN SCHOOLS LTD</h2>
-                    <p>FEE RECEIPT</p>
-                    <p>No: ${r.receiptNumber} | Date: ${new Date(r.date).toLocaleDateString()}</p>
+                    <img src="photos/school-logo.jpg" width="80" onerror="this.style.display='none'">
+                    <h2 style="color:#005fa3; margin:5px 0;">HERIWADI CHRISTIAN SCHOOLS LTD</h2>
+                    <p style="margin:2px 0;">PO BOX 62503 - 00200, Ongata Rongai | 0723 322449</p>
                 </div>
-                <p><strong>Student:</strong> ${r.name} (${r.class})</p>
-                <p><strong>Term:</strong> ${r.term} | <strong>Year:</strong> ${r.year}</p>
+                <div class="meta">
+                    <div>
+                        <strong>Receipt No:</strong> ${r.receiptNumber}<br>
+                        <strong>Student:</strong> ${r.name} (${r.class})
+                    </div>
+                    <div style="text-align:right">
+                        <strong>Date:</strong> ${new Date(r.date).toLocaleDateString()}<br>
+                        <strong>Term:</strong> ${r.term} | <strong>Year:</strong> ${r.year}
+                    </div>
+                </div>
                 <table>
-                    <thead><tr><th>Description</th><th>Total Due</th><th>Paid Now</th><th>Balance</th></tr></thead>
-                    <tbody>${tableRows}</tbody>
-                    <tr class="total-row">
-                        <td>TOTALS</td><td></td>
-                        <td style="text-align:right">${r.paid.toLocaleString()}</td>
-                        <td style="text-align:right">${r.balance.toLocaleString()}</td>
-                    </tr>
+                    <thead><tr><th>Fee Item</th><th>Charged</th><th>Paid Now</th><th>Bal</th></tr></thead>
+                    <tbody>${rowsHtml}</tbody>
                 </table>
-                <p style="margin-top:30px;">Payment Mode: ${r.mode}</p>
-                <p>Served By: School Accountant</p>
-                <p style="text-align:center; font-size: 12px; margin-top: 50px;">Thank you for your payment.</p>
+                <div class="total-box">TOTAL PAID THIS RECEIPT: KES ${r.paid.toLocaleString()}</div>
+                <p><strong>Current Balance:</strong> KES ${r.balance.toLocaleString()}</p>
+                <p style="margin-top:30px;">Served By: Cashier</p>
+                <p style="text-align:center; font-style:italic; color:#777;">Quality Education for a Brighter Future</p>
             </body></html>
         `);
         printWindow.document.close();
-        setTimeout(() => { printWindow.print(); printWindow.close(); }, 700);
+        setTimeout(() => { printWindow.print(); printWindow.close(); }, 800);
     }
 
     async function updateReceiptTable() {
         const container = document.getElementById('groupedReceipts');
         const search = document.getElementById('searchInput').value.toLowerCase();
-        container.innerHTML = "Syncing with cloud...";
-        
-        const snap = await getReceiptsCollection().orderBy('date', 'desc').get();
+        const snap = await getReceiptsColl().orderBy('date', 'desc').get();
         container.innerHTML = "";
-        
         snap.forEach(doc => {
             const r = doc.data();
-            if (search && !r.name.toLowerCase().includes(search)) return;
-
+            if(search && !r.name.toLowerCase().includes(search)) return;
             const div = document.createElement('div');
-            div.style.padding = "15px"; div.style.border = "1px solid #ddd"; div.style.marginBottom = "8px";
+            div.className = "card";
             div.style.display = "flex"; div.style.justifyContent = "space-between"; div.style.alignItems = "center";
-            div.style.borderRadius = "6px";
-
             div.innerHTML = `
-                <div>
-                    <strong>${r.name}</strong> (${r.class})<br>
-                    <small>${new Date(r.date).toLocaleDateString()} | ${r.receiptNumber}</small>
-                </div>
-                <div>
-                    <span style="color: green; font-weight: bold;">+ KES ${r.paid.toLocaleString()}</span><br>
-                    <small>Bal: KES ${r.balance.toLocaleString()}</small>
-                </div>
+                <div><strong>${r.name}</strong><br><small>${r.receiptNumber} | ${new Date(r.date).toLocaleDateString()}</small></div>
+                <div>KES ${r.paid}</div>
                 <div>
                     <button class="btn btn-info" onclick="printReceipt('${doc.id}')"><i class="fas fa-print"></i></button>
                     <button class="btn btn-danger" onclick="deleteReceipt('${doc.id}')"><i class="fas fa-trash"></i></button>
@@ -501,69 +394,29 @@
         });
     }
 
-    // Student Manager Logic
-    function openStudentManager() { document.getElementById('studentManagerModal').classList.add('show'); renderStudentList(); }
+    // Modal & Student Management
+    function openStudentManager() { document.getElementById('studentManagerModal').classList.add('show'); }
     function closeStudentManager() { document.getElementById('studentManagerModal').classList.remove('show'); }
 
     document.getElementById('studentForm').onsubmit = async (e) => {
         e.preventDefault();
-        const f = ['tuition', 'adm', 'books', 'stationery', 'uniform', 'lunch', 'transport', 'graduation', 'medical'];
-        let total = 0;
-        let data = {
+        const fields = ['tuition','adm','medical','lunch','uniform','books','stationery','transport','trip','graduation'];
+        let total = 0; let data = {
             name: document.getElementById('studentName').value,
             class: document.getElementById('studentClass').value,
             phone: document.getElementById('phone').value,
             paid: 0, term: currentTerm, year: currentYear
         };
-        f.forEach(item => {
-            let v = parseFloat(document.getElementById(item).value) || 0;
-            data[item] = v; total += v;
+        fields.forEach(f => {
+            let val = parseFloat(document.getElementById(f).value) || 0;
+            data[f] = val; total += val;
         });
-        data.total = total;
-        data.balance = total;
-
-        await getStudentsCollection().add(data);
-        alert("Student Added!");
+        data.total = total; data.balance = total;
+        await getStudentsColl().add(data);
+        alert("Student Added");
         document.getElementById('studentForm').reset();
-        renderStudentList();
         populateStudents();
     };
-
-    async function renderStudentList() {
-        const display = document.getElementById('studentListDisplay');
-        const snap = await getStudentsCollection().orderBy('name').get();
-        display.innerHTML = "<table><tr><th>Name</th><th>Class</th><th>Fees</th><th>Action</th></tr>" + 
-            snap.docs.map(doc => {
-                const s = doc.data();
-                return `<tr><td>${s.name}</td><td>${s.class}</td><td>${s.total}</td><td><button onclick="deleteStudent('${doc.id}')" class="btn btn-danger btn-sm">Delete</button></td></tr>`;
-            }).join('') + "</table>";
-    }
-
-    async function deleteReceipt(id) {
-        if (!confirm("Delete this receipt? This will revert the student's balance.")) return;
-        const rDoc = await getReceiptsCollection().doc(id).get();
-        const r = rDoc.data();
-        const sSnap = await getStudentsCollection().where('name', '==', r.name).get();
-        
-        if (!sSnap.empty) {
-            const sDoc = sSnap.docs[0];
-            const s = sDoc.data();
-            await db.runTransaction(async t => {
-                t.update(sDoc.ref, { paid: s.paid - r.paid, balance: s.balance + r.paid });
-                t.delete(rDoc.ref);
-            });
-        } else {
-            await rDoc.ref.delete();
-        }
-        updateReceiptTable();
-    }
-
-    async function deleteStudent(id) {
-        if (confirm("Delete student?")) {
-            await getStudentsCollection().doc(id).delete();
-            renderStudentList();
-        }
-    }
 
     window.onload = updateUI;
   </script>
