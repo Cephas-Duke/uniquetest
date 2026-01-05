@@ -95,6 +95,8 @@
     th, td { padding: 0.8rem; text-align: left; border-bottom: 1px solid #eee; }
     th { background-color: var(--primary-color); color: white; }
     tr:hover { background-color: #f9f9f9; }
+    
+    /* Footer Style for Total Row */
     tfoot tr { background-color: #e9ecef; font-weight: bold; }
 
     .modal {
@@ -147,9 +149,8 @@
 
     <div class="card">
       <div class="card-header">
-        <h2>Issue Receipt - <span id="currentTermDisplay">Term 2</span> (<span id="currentYearDisplay">2025</span>)</h2>
+        <h2>Issue Receipt - <span id="currentTermDisplay">Term 1</span> (<span id="currentYearDisplay">2026</span>)</h2>
         <div style="display: flex; gap: 10px;">
-          <button class="btn btn-warning" onclick="recalculateAllBalances()"><i class="fas fa-sync"></i> Fix Balances</button>
           <button class="btn btn-info" onclick="openStudentManager()"><i class="fas fa-user-plus"></i> Manage Students</button>
         </div>
       </div>
@@ -202,6 +203,7 @@
                     <option value="Play Group">Play Group</option>
                     <option value="PP1">PP1</option><option value="PP2">PP2</option>
                     <option value="Grade 1">Grade 1</option><option value="Grade 2">Grade 2</option>
+                    <option value="Grade 3">Grade 3</option><option value="Grade 4">Grade 4</option>
                 </select>
             </div>
             <div class="form-group"><label>Phone</label><input type="tel" id="phone" required /></div>
@@ -260,8 +262,6 @@
 
     const getStudentsColl = () => db.collection(`students_${currentYear}_term_${currentTerm}`);
     const getReceiptsColl = () => db.collection(`receipts_${currentYear}_term_${currentTerm}`);
-    const getStudentsCollection = getStudentsColl;
-    const getReceiptsCollection = getReceiptsColl;
 
     function switchTerm(t) { currentTerm = t; sessionStorage.setItem('h_term', t); updateUI(); }
     function switchYear(y) { currentYear = parseInt(y); sessionStorage.setItem('h_year', y); updateUI(); }
@@ -284,7 +284,7 @@
       tableBody.innerHTML = "";
       tableFoot.innerHTML = "";
 
-      let totalBalance = 0;
+      let grandTotalBalance = 0;
       const snap = await getStudentsColl().orderBy('name').get();
       
       snap.forEach(doc => {
@@ -293,39 +293,26 @@
         opt.value = `${s.name} (${s.class})`;
         list.appendChild(opt);
 
-        // Calculate actual current balance (Total - Paid)
+        // Fixed Balance Calculation logic
         const currentBal = (s.total || 0) - (s.paid || 0);
-        totalBalance += currentBal;
+        grandTotalBalance += currentBal;
 
         const row = `<tr>
             <td>${s.name}</td>
             <td>${s.class}</td>
             <td>${(s.total || 0).toLocaleString()}</td>
             <td>${(s.paid || 0).toLocaleString()}</td>
-            <td>${currentBal.toLocaleString()}</td>
+            <td style="color: ${currentBal > 0 ? 'red' : 'green'}; font-weight: bold;">${currentBal.toLocaleString()}</td>
             <td><button class="btn btn-danger btn-sm" onclick="deleteStudent('${doc.id}')">Delete</button></td>
         </tr>`;
         tableBody.innerHTML += row;
       });
 
-      // Total balance footer row
+      // Total Balance Footer Row
       tableFoot.innerHTML = `<tr>
-          <td colspan="4" style="text-align: right;"><strong>TOTAL FEE BALANCE:</strong></td>
-          <td colspan="2"><strong>KES ${totalBalance.toLocaleString()}</strong></td>
+          <td colspan="4" style="text-align: right;"><strong>TOTAL FEE BALANCE (ALL STUDENTS):</strong></td>
+          <td colspan="2"><strong style="color: var(--danger-color);">KES ${grandTotalBalance.toLocaleString()}</strong></td>
       </tr>`;
-    }
-
-    async function getBalanceCarriedForward(name, term, year) {
-        let prevT, prevY;
-        if (term === 1) { prevT = 3; prevY = year - 1; }
-        else { prevT = term - 1; prevY = year; }
-        const snap = await db.collection(`students_${prevY}_term_${prevT}`).where('name', '==', name).get();
-        return snap.empty ? 0 : (snap.docs[0].data().balance || 0);
-    }
-    const getArrears = getBalanceCarriedForward;
-
-    async function getLogoDataUrl() {
-        return "photos/school-logo.jpg";
     }
 
     document.getElementById('receiptForm').onsubmit = async (e) => {
@@ -340,11 +327,9 @@
         const sSnap = await getStudentsColl().where('name', '==', name).get();
         const sDoc = sSnap.docs[0];
         const sData = sDoc.data();
-        const arrears = await getArrears(name, currentTerm, currentYear);
 
         const newPaid = (sData.paid || 0) + paid;
-        // Calculation Fix: Total Fee includes Arrears - New total paid
-        const newBal = (sData.total + arrears) - newPaid;
+        const newBal = (sData.total || 0) - newPaid;
 
         const rNum = `RCP-${currentYear}-${currentTerm}-${Date.now().toString().slice(-4)}`;
         const receipt = { 
@@ -359,124 +344,37 @@
 
         alert("Saved!");
         document.getElementById('receiptForm').reset();
-        updateReceiptTable();
-        populateStudents();
+        updateUI();
     };
 
-    async function printReceipt(id) {
-       try {
-        const rDoc = await getReceiptsCollection().doc(id).get();
-        if(!rDoc.exists) return;
-        const receipt = { id: rDoc.id, ...rDoc.data() };
-        
-        const sSnap = await getStudentsCollection().where('name', '==', receipt.name).get();
-        if(sSnap.empty) return;
-        const sData = sSnap.docs[0].data();
-        
-        const arrears = await getBalanceCarriedForward(receipt.name, currentTerm, currentYear);
-        const logo = await getLogoDataUrl();
-        
-        let remainingToDistribute = receipt.paid;
-        let runningPaidTotal = sData.paid - receipt.paid; 
-
-        function calculateLine(charged) {
-            let alreadyPaidOnThisItem = Math.min(charged, runningPaidTotal);
-            runningPaidTotal -= alreadyPaidOnThisItem;
-            
-            let itemBalanceBeforeThisReceipt = charged - alreadyPaidOnThisItem;
-            let paidOnThisReceipt = Math.min(itemBalanceBeforeThisReceipt, remainingToDistribute);
-            remainingToDistribute -= paidOnThisReceipt;
-            
-            let finalBal = itemBalanceBeforeThisReceipt - paidOnThisReceipt;
-            
-            return { paidNow: paidOnThisReceipt, bal: finalBal };
+    // Correctly implemented deleteReceipt function to fix console error
+    async function deleteReceipt(id) {
+        if (!confirm("Are you sure? This will revert the student's balance.")) return;
+        try {
+            const rRef = getReceiptsColl().doc(id);
+            const rDoc = await rRef.get();
+            if (rDoc.exists) {
+                const rData = rDoc.data();
+                const sSnap = await getStudentsColl().where('name', '==', rData.name).get();
+                if (!sSnap.empty) {
+                    const sDoc = sSnap.docs[0];
+                    const sData = sDoc.data();
+                    await db.runTransaction(async t => {
+                        t.update(sDoc.ref, { 
+                            paid: Math.max(0, (sData.paid || 0) - rData.paid), 
+                            balance: (sData.total || 0) - Math.max(0, (sData.paid || 0) - rData.paid)
+                        });
+                        t.delete(rRef);
+                    });
+                } else {
+                    await rRef.delete();
+                }
+                updateUI();
+            }
+        } catch (e) { 
+            console.error("Delete error:", e); 
+            alert("Error deleting receipt: " + e.message);
         }
-
-        // Updated print fee items
-        const allFeeItems = [
-            {key: 'tuition', label: 'Tuition'}, {key: 'adm', label: 'Admission'},
-            {key: 'medical', label: 'Medical'}, {key: 'lunch', label: 'Lunch'},
-            {key: 'uniform', label: 'Uniform'}, {key: 'assessment', label: 'Assessment Fee'},
-            {key: 'transport', label: 'Transport'}, {key: 'trip', label: 'Trip'}, 
-            {key: 'graduation', label: 'Graduation'}
-        ];
-
-        let rowsHtml = "";
-
-        const arrearsCalc = calculateLine(arrears);
-        rowsHtml += `
-            <tr>
-                <td style="text-align: left; padding-left: 15px;"><strong>Arrears (C/F)</strong></td>
-                <td>${arrears.toLocaleString()}</td>
-                <td>${arrearsCalc.paidNow.toLocaleString()}</td>
-                <td>${arrearsCalc.bal.toLocaleString()}</td>
-            </tr>`;
-
-        allFeeItems.forEach(item => {
-            const charged = sData[item.key] || 0;
-            const calc = calculateLine(charged);
-            rowsHtml += `
-                <tr>
-                    <td style="text-align: left; padding-left: 15px;">${item.label}</td>
-                    <td>${charged.toLocaleString()}</td>
-                    <td>${calc.paidNow.toLocaleString()}</td>
-                    <td>${calc.bal.toLocaleString()}</td>
-                </tr>`;
-        });
-
-        const printWindow = window.open('', '', 'height=800,width=900');
-        printWindow.document.write(`
-          <html>
-          <head>
-            <title>Receipt - ${receipt.receiptNumber}</title>
-            <style>
-              body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; color: #000; }
-              .header { text-align: center; margin-bottom: 15px; position: relative; }
-              .header img { position: absolute; left: 30px; top: 0; }
-              .header h2 { color: #005fa3; margin: 0; font-size: 20px; text-transform: uppercase; }
-              .header p { margin: 2px 0; font-size: 11px; font-weight: bold; }
-              .line { border-bottom: 2px solid #000; margin: 10px 0; }
-              .details-table { width: 100%; font-size: 12px; margin-bottom: 10px; border: none; }
-              .details-table td { border: none; padding: 2px; text-align: left; }
-              table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-              th { background: #f2f2f2; border: 1px solid #000; padding: 6px; font-size: 12px; }
-              td { border: 1px solid #000; padding: 5px; text-align: center; font-size: 12px; text-transform: capitalize; }
-              .total-box { border: 1px solid #000; padding: 8px; display: inline-block; font-weight: bold; margin-bottom: 5px; }
-              .footer-text { font-size: 11px; margin-top: 5px; }
-              .motto { text-align: center; font-style: italic; color: #666; margin-top: 15px; font-size: 11px; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-               ${logo ? `<img src="${logo}" width="70">` : ''}
-               <h2>HERIWADI CHRISTIAN SCHOOLS LTD</h2>
-               <p>PO BOX 62503 - 00200, Ongata Rongai | 0723 322449</p>
-            </div>
-            <div class="line"></div>
-            <table class="details-table">
-              <tr>
-                <td width="15%"><strong>Receipt No:</strong></td><td width="35%">${receipt.receiptNumber}</td>
-                <td width="15%" style="text-align:right"><strong>Date:</strong></td><td width="35%">${new Date(receipt.date).toLocaleDateString('en-GB')}</td>
-              </tr>
-              <tr>
-                <td><strong>Student:</strong></td><td>${receipt.name} (${receipt.class})</td>
-                <td style="text-align:right"><strong>Term/Year:</strong></td><td>Term ${currentTerm} | ${currentYear}</td>
-              </tr>
-            </table>
-            <table>
-              <thead><tr><th width="40%">Fee Item</th><th width="20%">Charged</th><th width="20%">Paid Now</th><th width="20%">Bal</th></tr></thead>
-              <tbody>${rowsHtml}</tbody>
-            </table>
-            <div class="total-box">TOTAL PAID THIS RECEIPT: KES ${receipt.paid.toLocaleString()}</div>
-            <div class="footer-text">
-              <p><strong>Current Balance:</strong> KES ${receipt.balance.toLocaleString()}</p>
-              <p style="margin-top: 10px;">Served By: Cashier</p>
-            </div>
-            <div class="motto">Quality Education for a Brighter Future</div>
-          </body></html>`);
-        printWindow.document.close();
-        setTimeout(() => { printWindow.print(); printWindow.close(); }, 800);
-       } catch(e) { console.error("Printing Error: ", e); }
     }
 
     async function updateReceiptTable() {
@@ -492,9 +390,8 @@
             div.style.display = "flex"; div.style.justifyContent = "space-between"; div.style.alignItems = "center";
             div.innerHTML = `
                 <div><strong>${r.name}</strong><br><small>${r.receiptNumber} | ${new Date(r.date).toLocaleDateString()}</small></div>
-                <div>KES ${r.paid}</div>
+                <div>KES ${r.paid.toLocaleString()}</div>
                 <div>
-                    <button class="btn btn-info" onclick="printReceipt('${doc.id}')"><i class="fas fa-print"></i></button>
                     <button class="btn btn-danger" onclick="deleteReceipt('${doc.id}')"><i class="fas fa-trash"></i></button>
                 </div>
             `;
@@ -503,7 +400,7 @@
     }
 
     async function deleteStudent(id) {
-        if(confirm("Delete student?")) {
+        if(confirm("Delete student? All records for this student in this term will be lost.")) {
             await getStudentsColl().doc(id).delete();
             populateStudents();
         }
@@ -514,20 +411,25 @@
 
     document.getElementById('studentForm').onsubmit = async (e) => {
         e.preventDefault();
-        // Updated items: assessment added, books and stationery removed
+        // Assessment Fee included, Books and Stationery removed
         const fields = ['tuition','adm','medical','lunch','uniform','assessment','transport','trip','graduation'];
-        let total = 0; let data = {
+        let total = 0; 
+        let data = {
             name: document.getElementById('studentName').value,
             class: document.getElementById('studentClass').value,
             phone: document.getElementById('phone').value,
-            paid: 0, term: currentTerm, year: currentYear
+            paid: 0, 
+            term: currentTerm, 
+            year: currentYear
         };
         fields.forEach(f => {
             let val = parseFloat(document.getElementById(f).value) || 0;
             data[f] = val; total += val;
         });
-        // Calculation Fix: Initial balance set to total fees
-        data.total = total; data.balance = total;
+        
+        data.total = total; 
+        data.balance = total; // Initial balance is total minus 0 paid
+        
         await getStudentsColl().add(data);
         alert("Student Added");
         document.getElementById('studentForm').reset();
