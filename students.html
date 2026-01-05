@@ -831,13 +831,8 @@
           </div>
           
           <div class="form-group">
-            <label for="books">Book Fund (KES)</label>
-            <input type="number" id="books" value="0" min="0">
-          </div>
-          
-          <div class="form-group">
-            <label for="stationery">Stationery (KES)</label>
-            <input type="number" id="stationery" value="0" min="0">
+            <label for="medical">Medical (KES)</label>
+            <input type="number" id="medical" value="0" min="0">
           </div>
           
           <div class="form-group">
@@ -1258,8 +1253,6 @@
       document.getElementById('confirmImportBtn').addEventListener('click', importStudents);
     }
 
-    // Removed the old updateCurrentYearDisplay function as it's no longer needed
-
     function switchTerm(term) {
       currentTerm = term;
       saveTermToStorage(term);
@@ -1292,20 +1285,18 @@
       }, 5000);
     }
 
-    // CORRECTED BALANCE CALCULATION - Handles overpayments as negative carry-forward
+    // CORRECTED BALANCE CALCULATION - UPDATED FOR MEDICAL FEE
     function calculateBalances(student) {
       const currentTermTotal = (student.tuition || 0) + (student.adm || 0) + 
-                              (student.books || 0) + (student.stationery || 0) + 
+                              (student.medical || 0) + // ADDED MEDICAL
                               (student.uniform || 0) + (student.lunch || 0) + 
                               (student.transport || 0) + (student.trip || 0) + 
                               (student.graduation || 0);
       
       const currentTermBalance = currentTermTotal - (student.paid || 0);
       
-      // CORRECTED: Carried forward can be negative (overpayment/credit)
       const carriedForwardBalance = student.carriedForwardBalance || 0;
       
-      // Total outstanding includes both positive and negative balances
       const totalOutstanding = currentTermBalance + carriedForwardBalance;
 
       return {
@@ -1339,7 +1330,6 @@
           const studentData = snapshot.docs[0].data();
           const balances = calculateBalances(studentData);
           
-          // CORRECTED: Carry forward the actual total outstanding (can be negative)
           document.getElementById('carriedForwardBalance').value = balances.totalOutstanding;
           
           if (balances.totalOutstanding > 0) {
@@ -1379,7 +1369,6 @@
           const studentData = snapshot.docs[0].data();
           const balances = calculateBalances(studentData);
           
-          // Show info for any non-zero balance (positive or negative)
           if (balances.totalOutstanding !== 0) {
             if (balances.totalOutstanding > 0) {
               previousBalanceSpan.textContent = `KES ${balances.totalOutstanding.toLocaleString('en-KE')} (Outstanding)`;
@@ -1387,8 +1376,6 @@
               previousBalanceSpan.textContent = `KES ${Math.abs(balances.totalOutstanding).toLocaleString('en-KE')} (Credit/Overpayment)`;
             }
             carryForwardInfo.style.display = 'block';
-            
-            // Auto-fill the carry forward field but keep it editable
             document.getElementById('carriedForwardBalance').value = balances.totalOutstanding;
           } else {
             carryForwardInfo.style.display = 'none';
@@ -1404,60 +1391,53 @@
       }
     }
 
-    // Replace the existing loadStudents function with this corrected version
-async function loadStudents() {
-  const groupedTables = document.getElementById('groupedTables');
-  const statsContainer = document.getElementById('statsContainer');
-  
-  groupedTables.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading students...</div>';
-  
-  const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-  const classFilter = document.getElementById('classFilter').value;
+    async function loadStudents() {
+      const groupedTables = document.getElementById('groupedTables');
+      const statsContainer = document.getElementById('statsContainer');
+      
+      groupedTables.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading students...</div>';
+      
+      const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+      const classFilter = document.getElementById('classFilter').value;
 
-  try {
-    const studentsCollection = getStudentsCollection();
-    let snapshot;
-    
-    // Modified query logic to avoid the composite index requirement
-    if (classFilter) {
-      // Use simple query for class filtering
-      snapshot = await studentsCollection.where('class', '==', classFilter).get();
-    } else {
-      // Use orderBy only when not filtering by class
-      snapshot = await studentsCollection.orderBy('name').get();
+      try {
+        const studentsCollection = getStudentsCollection();
+        let snapshot;
+        
+        if (classFilter) {
+          snapshot = await studentsCollection.where('class', '==', classFilter).get();
+        } else {
+          snapshot = await studentsCollection.orderBy('name').get();
+        }
+
+        const students = [];
+        snapshot.forEach(doc => {
+          students.push({ id: doc.id, ...doc.data() });
+        });
+
+        const filteredStudents = searchQuery
+          ? students.filter(s => s.name.toLowerCase().includes(searchQuery))
+          : students;
+
+        if (classFilter) {
+          filteredStudents.sort((a, b) => a.name.localeCompare(b.name));
+        }
+
+        if (filteredStudents.length === 0) {
+          groupedTables.innerHTML = `<div class="status-message info">No students found for Term ${currentTerm} in ${currentYear} matching your criteria.</div>`;
+          statsContainer.innerHTML = '';
+          return;
+        }
+
+        renderStudents(filteredStudents);
+        updateSummaryStats(filteredStudents);
+      } catch (error) {
+        console.error("Error loading students:", error);
+        showStatus(`Error loading students: ${error.message}`, "error");
+        groupedTables.innerHTML = `<div class="status-message error">Error loading students: ${error.message}</div>`;
+      }
     }
 
-    const students = [];
-    snapshot.forEach(doc => {
-      students.push({ id: doc.id, ...doc.data() });
-    });
-
-    // Apply search filter in JavaScript instead of Firestore
-    const filteredStudents = searchQuery
-      ? students.filter(s => s.name.toLowerCase().includes(searchQuery))
-      : students;
-
-    // Sort the results in JavaScript if class filter was applied
-    if (classFilter) {
-      filteredStudents.sort((a, b) => a.name.localeCompare(b.name));
-    }
-
-    if (filteredStudents.length === 0) {
-      groupedTables.innerHTML = `<div class="status-message info">No students found for Term ${currentTerm} in ${currentYear} matching your criteria.</div>`;
-      statsContainer.innerHTML = '';
-      return;
-    }
-
-    renderStudents(filteredStudents);
-    updateSummaryStats(filteredStudents);
-  } catch (error) {
-    console.error("Error loading students:", error);
-    showStatus(`Error loading students: ${error.message}`, "error");
-    groupedTables.innerHTML = `<div class="status-message error">Error loading students: ${error.message}</div>`;
-  }
-}
-
-    // Enhanced rendering with proper overpayment display
     function renderStudents(students) {
       const groupedTables = document.getElementById('groupedTables');
       groupedTables.innerHTML = '';
@@ -1546,7 +1526,6 @@ async function loadStudents() {
       });
     }
 
-    // Enhanced summary stats with proper balance tracking
     function updateSummaryStats(students) {
       const totalStudents = students.length;
       let totalCurrentTermFees = 0;
@@ -1616,7 +1595,7 @@ async function loadStudents() {
       `;
     }
 
-    // Enhanced form submission with editable carry forward
+    // UPDATED FORM SUBMISSION FOR MEDICAL
     async function handleStudentSubmit(e) {
       e.preventDefault();
 
@@ -1625,8 +1604,7 @@ async function loadStudents() {
       const phone = document.getElementById('phone').value.trim();
       const tuition = parseFloat(document.getElementById('tuition').value) || 0;
       const adm = parseFloat(document.getElementById('adm').value) || 0;
-      const books = parseFloat(document.getElementById('books').value) || 0;
-      const stationery = parseFloat(document.getElementById('stationery').value) || 0;
+      const medical = parseFloat(document.getElementById('medical').value) || 0; // ADDED
       const uniform = parseFloat(document.getElementById('uniform').value) || 0;
       const lunch = parseFloat(document.getElementById('lunch').value) || 0;
       const transport = parseFloat(document.getElementById('transport').value) || 0;
@@ -1634,7 +1612,6 @@ async function loadStudents() {
       const graduation = parseFloat(document.getElementById('graduation').value) || 0;
       const paid = parseFloat(document.getElementById('paid').value) || 0;
       
-      // Get the manually editable carry forward balance
       const carriedForwardBalance = parseFloat(document.getElementById('carriedForwardBalance').value) || 0;
 
       // Validation
@@ -1654,7 +1631,8 @@ async function loadStudents() {
       submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
       try {
-        const currentTermTotal = tuition + adm + books + stationery + uniform + lunch + transport + trip + graduation;
+        // Updated calculation
+        const currentTermTotal = tuition + adm + medical + uniform + lunch + transport + trip + graduation;
         const currentTermBalance = currentTermTotal - paid;
         const totalOutstanding = currentTermBalance + carriedForwardBalance;
 
@@ -1664,8 +1642,7 @@ async function loadStudents() {
           phone, 
           tuition, 
           adm, 
-          books, 
-          stationery, 
+          medical, // ADDED
           uniform, 
           lunch, 
           transport, 
@@ -1674,7 +1651,7 @@ async function loadStudents() {
           currentTermTotal, 
           paid, 
           currentTermBalance,
-          carriedForwardBalance, // Now editable by user
+          carriedForwardBalance, 
           totalOutstanding,
           term: currentTerm,
           year: currentYear,
@@ -1737,6 +1714,7 @@ async function loadStudents() {
       document.getElementById('carriedForwardBalance').value = 0;
     }
 
+    // UPDATED EDIT FUNCTION
     async function editStudent(id) {
       try {
         const studentsCollection = getStudentsCollection();
@@ -1754,8 +1732,7 @@ async function loadStudents() {
         document.getElementById('phone').value = s.phone || '';
         document.getElementById('tuition').value = s.tuition || 0;
         document.getElementById('adm').value = s.adm || 0;
-        document.getElementById('books').value = s.books || 0;
-        document.getElementById('stationery').value = s.stationery || 0;
+        document.getElementById('medical').value = s.medical || 0; // ADDED
         document.getElementById('uniform').value = s.uniform || 0;
         document.getElementById('lunch').value = s.lunch || 0;
         document.getElementById('transport').value = s.transport || 0;
@@ -1804,6 +1781,7 @@ async function loadStudents() {
       }
     }
 
+    // UPDATED MODAL VIEW
     async function viewStudent(id) {
       try {
         const studentsCollection = getStudentsCollection();
@@ -1850,9 +1828,7 @@ async function loadStudents() {
               <div>
                 <p><strong>Tuition:</strong> KES ${(s.tuition || 0).toLocaleString('en-KE')}</p>
                 <p><strong>Admission Fee:</strong> KES ${(s.adm || 0).toLocaleString('en-KE')}</p>
-                <p><strong>Book Fund:</strong> KES ${(s.books || 0).toLocaleString('en-KE')}</p>
-                <p><strong>Stationery:</strong> KES ${(s.stationery || 0).toLocaleString('en-KE')}</p>
-                <p><strong>Uniform:</strong> KES ${(s.uniform || 0).toLocaleString('en-KE')}</p>
+                <p><strong>Medical:</strong> KES ${(s.medical || 0).toLocaleString('en-KE')}</p> <p><strong>Uniform:</strong> KES ${(s.uniform || 0).toLocaleString('en-KE')}</p>
               </div>
               <div>
                 <p><strong>Lunch:</strong> KES ${(s.lunch || 0).toLocaleString('en-KE')}</p>
@@ -1949,7 +1925,7 @@ async function loadStudents() {
       document.getElementById('termTransitionModal').classList.add('show');
     }
 
-    // ENHANCED Smart Term Transition with proper overpay handling
+    // UPDATED TRANSITION (Removed old fields, initialized Medical)
     async function executeSmartTermTransition() {
       const sourceTerm = parseInt(document.getElementById('sourceTerm').value);
       const targetTerm = parseInt(document.getElementById('targetTerm').value);
@@ -1990,17 +1966,15 @@ async function loadStudents() {
           const sourceStudent = doc.data();
           const sourceBalances = calculateBalances(sourceStudent);
           
-          // CORRECTED: Carry forward actual total outstanding (positive or negative)
           const carryForwardAmount = sourceBalances.totalOutstanding;
           
           const newStudent = {
             name: sourceStudent.name,
             class: sourceStudent.class,
             phone: sourceStudent.phone,
-            tuition: 0, // Reset fees for new term
+            tuition: 0, 
             adm: 0,
-            books: 0,
-            stationery: 0,
+            medical: 0, // ADDED
             uniform: 0,
             lunch: 0,
             transport: 0,
@@ -2008,9 +1982,9 @@ async function loadStudents() {
             graduation: 0,
             currentTermTotal: 0,
             paid: resetPaidAmounts ? 0 : (sourceStudent.paid || 0),
-            currentTermBalance: 0, // Will be recalculated based on new term fees
-            carriedForwardBalance: carryForwardAmount, // CORRECTED: Can be negative
-            totalOutstanding: carryForwardAmount, // Initially equals carry forward
+            currentTermBalance: 0, 
+            carriedForwardBalance: carryForwardAmount, 
+            totalOutstanding: carryForwardAmount,
             term: targetTerm,
             year: currentYear,
             createdAt: new Date().toISOString(),
@@ -2019,7 +1993,6 @@ async function loadStudents() {
             transitionedAt: new Date().toISOString()
           };
 
-          // Count different balance types
           if (carryForwardAmount > 0) {
             studentsWithDebt++;
           } else if (carryForwardAmount < 0) {
@@ -2038,7 +2011,6 @@ async function loadStudents() {
         showStatus(`Smart transition completed! Processed ${processedCount} students.`, "success");
         showStatus(`${studentsWithDebt} with outstanding balance, ${studentsWithCredit} with credit, ${studentsWithZeroBalance} with zero balance`, "info");
         
-        // Switch to target term to see results
         switchTerm(targetTerm);
         closeTermTransitionModal();
         
@@ -2085,7 +2057,7 @@ async function loadStudents() {
           const copiedStudent = {
             ...student,
             term: parseInt(toTerm),
-            carriedForwardBalance: balances.totalOutstanding, // CORRECTED
+            carriedForwardBalance: balances.totalOutstanding,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             copiedFrom: `Term ${fromTerm}`,
@@ -2126,7 +2098,6 @@ async function loadStudents() {
           students.push({ id: doc.id, ...doc.data() });
         });
 
-        // Calculate comprehensive statistics
         let totalStudents = students.length;
         let totalFees = 0;
         let totalPaid = 0;
@@ -2164,7 +2135,6 @@ async function loadStudents() {
             totalCreditAmount += Math.abs(balances.totalOutstanding);
           }
 
-          // Class summary
           if (classSummary[s.class]) {
             classSummary[s.class].count++;
             classSummary[s.class].totalFees += balances.currentTermTotal;
@@ -2173,7 +2143,6 @@ async function loadStudents() {
           }
         });
 
-        // Calculate averages for class summary
         Object.keys(classSummary).forEach(cls => {
           if (classSummary[cls].count > 0) {
             classSummary[cls].avgBalance = classSummary[cls].totalOutstanding / classSummary[cls].count;
@@ -2277,6 +2246,7 @@ async function loadStudents() {
       }
     }
 
+    // UPDATED EXPORT
     async function exportToExcel() {
       try {
         const studentsCollection = getStudentsCollection();
@@ -2298,8 +2268,7 @@ async function loadStudents() {
             'Phone': s.phone || '',
             'Tuition': s.tuition || 0,
             'Admission': s.adm || 0,
-            'Books': s.books || 0,
-            'Stationery': s.stationery || 0,
+            'Medical': s.medical || 0, // ADDED
             'Uniform': s.uniform || 0,
             'Lunch': s.lunch || 0,
             'Transport': s.transport || 0,
@@ -2327,6 +2296,7 @@ async function loadStudents() {
       }
     }
 
+    // UPDATED CLASS EXPORT
     async function exportClassToExcel() {
       const selectedClass = prompt("Enter class name to export (e.g., Grade 1, PP1, etc.):");
       if (!selectedClass) return;
@@ -2350,8 +2320,7 @@ async function loadStudents() {
             'Phone': s.phone || '',
             'Tuition': s.tuition || 0,
             'Admission': s.adm || 0,
-            'Books': s.books || 0,
-            'Stationery': s.stationery || 0,
+            'Medical': s.medical || 0, // ADDED
             'Uniform': s.uniform || 0,
             'Lunch': s.lunch || 0,
             'Transport': s.transport || 0,
@@ -2381,6 +2350,7 @@ async function loadStudents() {
       document.getElementById('importModal').classList.add('show');
     }
 
+    // UPDATED IMPORT
     async function importStudents() {
       const fileInput = document.getElementById('importFile');
       const file = fileInput.files[0];
@@ -2409,15 +2379,14 @@ async function loadStudents() {
         let importCount = 0;
 
         data.forEach(student => {
-          // Validate required fields
           if (!student.name || !student.class) {
-            return; // Skip invalid entries
+            return; 
           }
 
-          // Ensure all balance fields are present and calculated correctly
           const carriedForwardBalance = student.carriedForwardBalance || 0;
+          // Updated calculation for import
           const currentTermTotal = (student.tuition || 0) + (student.adm || 0) + 
-                                  (student.books || 0) + (student.stationery || 0) + 
+                                  (student.medical || 0) + // ADDED
                                   (student.uniform || 0) + (student.lunch || 0) + 
                                   (student.transport || 0) + (student.trip || 0) + 
                                   (student.graduation || 0);
@@ -2428,7 +2397,7 @@ async function loadStudents() {
             ...student,
             currentTermTotal,
             currentTermBalance,
-            carriedForwardBalance, // Preserve from import, including negative values
+            carriedForwardBalance, 
             totalOutstanding,
             term: currentTerm,
             year: currentYear,
@@ -2519,20 +2488,6 @@ async function loadStudents() {
       });
     };
 
-    // Enhanced form validation
-    function validateFormData() {
-      const requiredFields = ['studentName', 'studentClass', 'phone'];
-      for (const fieldId of requiredFields) {
-        const field = document.getElementById(fieldId);
-        if (!field.value.trim()) {
-          field.focus();
-          showStatus(`Please fill in the ${fieldId.replace(/([A-Z])/g, ' $1').toLowerCase()} field`, "error");
-          return false;
-        }
-      }
-      return true;
-    }
-
     // Auto-save functionality for form data (using localStorage for draft)
     function saveFormDraft() {
       const formData = {
@@ -2542,8 +2497,7 @@ async function loadStudents() {
         carriedForwardBalance: document.getElementById('carriedForwardBalance').value,
         tuition: document.getElementById('tuition').value,
         adm: document.getElementById('adm').value,
-        books: document.getElementById('books').value,
-        stationery: document.getElementById('stationery').value,
+        medical: document.getElementById('medical').value, // UPDATED
         uniform: document.getElementById('uniform').value,
         lunch: document.getElementById('lunch').value,
         transport: document.getElementById('transport').value,
@@ -2585,11 +2539,11 @@ async function loadStudents() {
       }
     }
 
-    // Add auto-save listeners
+    // UPDATED AUTO-SAVE LISTENERS
     document.addEventListener('DOMContentLoaded', function() {
       const formFields = ['studentName', 'studentClass', 'phone', 'carriedForwardBalance', 
-                         'tuition', 'adm', 'books', 'stationery', 'uniform', 'lunch', 
-                         'transport', 'trip', 'graduation', 'paid'];
+                         'tuition', 'adm', 'medical', 'uniform', 'lunch', 
+                         'transport', 'trip', 'graduation', 'paid']; // UPDATED
       
       formFields.forEach(fieldId => {
         const field = document.getElementById(fieldId);
@@ -2602,7 +2556,6 @@ async function loadStudents() {
       setTimeout(loadFormDraft, 500);
     });
 
-    // Debounce function for auto-save
     function debounce(func, wait) {
       let timeout;
       return function executedFunction(...args) {
@@ -2615,34 +2568,11 @@ async function loadStudents() {
       };
     }
 
-    // Clear draft when form is successfully submitted
     document.getElementById('studentForm').addEventListener('submit', function() {
-      setTimeout(clearFormDraft, 1000); // Clear after successful submission
+      setTimeout(clearFormDraft, 1000); 
     });
 
-    // Enhanced error handling for Firebase operations
-    function handleFirebaseError(error, operation) {
-      console.error(`Firebase error during ${operation}:`, error);
-      
-      let userMessage = `Error during ${operation}: `;
-      switch (error.code) {
-        case 'permission-denied':
-          userMessage += 'Permission denied. Check your Firebase security rules.';
-          break;
-        case 'unavailable':
-          userMessage += 'Service temporarily unavailable. Please try again.';
-          break;
-        case 'network-request-failed':
-          userMessage += 'Network error. Check your internet connection.';
-          break;
-        default:
-          userMessage += error.message;
-      }
-      
-      showStatus(userMessage, "error");
-    }
-
-    // Performance monitoring for large datasets
+    // Performance monitoring
     function measurePerformance(operation, func) {
       const start = performance.now();
       const result = func();
@@ -2660,13 +2590,12 @@ async function loadStudents() {
       }
     }
 
-    // Add performance monitoring to critical operations
     const originalLoadStudents = loadStudents;
     loadStudents = function() {
       return measurePerformance('Load Students', originalLoadStudents);
     };
 
-    // Periodic data refresh (every 5 minutes when page is visible)
+    // Periodic data refresh
     let refreshInterval;
     
     function startPeriodicRefresh() {
@@ -2675,7 +2604,7 @@ async function loadStudents() {
           loadStudents();
           console.log('Auto-refreshed student data');
         }
-      }, 5 * 60 * 1000); // 5 minutes
+      }, 5 * 60 * 1000); 
     }
 
     function stopPeriodicRefresh() {
@@ -2685,33 +2614,28 @@ async function loadStudents() {
       }
     }
 
-    // Handle page visibility changes
     document.addEventListener('visibilitychange', function() {
       if (document.hidden) {
         stopPeriodicRefresh();
       } else {
         startPeriodicRefresh();
-        // Refresh data when page becomes visible again
         setTimeout(loadStudents, 1000);
       }
     });
 
-    // Start periodic refresh when page loads
     document.addEventListener('DOMContentLoaded', function() {
       startPeriodicRefresh();
     });
 
-    // Cleanup when page unloads
     window.addEventListener('beforeunload', function() {
       stopPeriodicRefresh();
-      saveFormDraft(); // Save any pending form data
+      saveFormDraft(); 
     });
 
     // ==========================================
     // END OF YEAR PROMOTION LOGIC
     // ==========================================
 
-    // 1. Class Hierarchy Definition
     const promotionPath = {
       "Play Group": "PP1",
       "PP1": "PP2",
@@ -2721,17 +2645,15 @@ async function loadStudents() {
       "Grade 3": "Grade 4",
       "Grade 4": "Grade 5",
       "Grade 5": "Grade 6",
-      "Grade 6": "Finished" // Students graduating
+      "Grade 6": "Finished"
     };
 
-    // 2. Event Listeners for Promotion
     document.getElementById('endOfYearBtn').addEventListener('click', openPromotionModal);
     document.getElementById('closePromotionModal').addEventListener('click', closePromotionModal);
     document.getElementById('cancelPromotionBtn').addEventListener('click', closePromotionModal);
     document.getElementById('executePromotionBtn').addEventListener('click', executePromotion);
 
     function openPromotionModal() {
-      // Only allow promotion if we are in Term 3
       if (currentTerm !== 3) {
         showStatus("End of Year Promotion is only available in Term 3.", "error");
         return;
@@ -2749,12 +2671,12 @@ async function loadStudents() {
 
     function closePromotionModal() {
       document.getElementById('promotionModal').classList.remove('show');
-      // Reset progress bar
       document.getElementById('promoProgress').style.display = 'none';
       document.getElementById('promoBar').style.width = '0%';
       document.getElementById('executePromotionBtn').disabled = false;
     }
 
+    // UPDATED PROMOTION (Removed old fields, initialized Medical)
     async function executePromotion() {
       const confirmBtn = document.getElementById('executePromotionBtn');
       const progressBar = document.getElementById('promoBar');
@@ -2767,8 +2689,8 @@ async function loadStudents() {
 
       try {
         const nextYear = currentYear + 1;
-        const sourceCollection = getStudentsCollection(3, currentYear); // Term 3 Current Year
-        const targetCollection = getStudentsCollection(1, nextYear);    // Term 1 Next Year
+        const sourceCollection = getStudentsCollection(3, currentYear);
+        const targetCollection = getStudentsCollection(1, nextYear);
 
         const snapshot = await sourceCollection.get();
 
@@ -2785,33 +2707,26 @@ async function loadStudents() {
 
         const batch = db.batch();
         
-        // Process each student
         snapshot.forEach(doc => {
           const student = doc.data();
           const balances = calculateBalances(student);
           
-          // Determine new class
           const nextClass = promotionPath[student.class] || student.class;
 
-          // Handle Graduates (Optional: Don't move them to next year, or move to 'Alumni')
           if (nextClass === "Finished") {
             graduated++;
             processed++;
             return; 
           }
 
-          // Create New Student Record for Next Year
           const promotedStudent = {
             name: student.name,
-            class: nextClass, // NEW CLASS
+            class: nextClass,
             phone: student.phone || "",
             
-            // FINANCIAL LOGIC:
-            // Old 'Total Outstanding' becomes the new 'Carried Forward'
             carriedForwardBalance: balances.totalOutstanding, 
             
-            // Reset everything else
-            tuition: 0, adm: 0, books: 0, stationery: 0, 
+            tuition: 0, adm: 0, medical: 0, // ADDED
             uniform: 0, lunch: 0, transport: 0, trip: 0, graduation: 0,
             paid: 0,
             
@@ -2826,7 +2741,6 @@ async function loadStudents() {
           promoted++;
           processed++;
 
-          // Update UI Progress
           const percentage = Math.round((processed / totalStudents) * 100);
           progressBar.style.width = `${percentage}%`;
           progressText.textContent = `Promoting... ${processed}/${totalStudents}`;
@@ -2834,7 +2748,6 @@ async function loadStudents() {
 
         await batch.commit();
 
-        // Success Message
         progressBar.style.backgroundColor = "#28a745";
         progressText.innerHTML = `<strong>Success!</strong> Promoted ${promoted} students. ${graduated} graduated.`;
         
@@ -2853,8 +2766,6 @@ async function loadStudents() {
     }
 
     console.log('Enhanced Student Management System Loaded');
-    console.log('Features: Year Selector added, Negative carry-forward balance handling, editable carry-forward field, enhanced smart transitions, End of Year Promotion');
-    console.log('Keyboard shortcuts: Alt+1/2/3 for term switching, Alt+A for auto-fill carry forward, Escape to close modals');
   </script>
 </body>
 </html>
