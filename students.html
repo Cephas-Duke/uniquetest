@@ -829,6 +829,11 @@
             <label for="adm">Admission Fee (KES)</label>
             <input type="number" id="adm" value="0" min="0">
           </div>
+
+          <div class="form-group">
+            <label for="assessment">Assessment Fee (KES)</label>
+            <input type="number" id="assessment" value="0" min="0">
+          </div>
           
           <div class="form-group">
             <label for="medical">Medical (KES)</label>
@@ -1285,10 +1290,11 @@
       }, 5000);
     }
 
-    // CORRECTED BALANCE CALCULATION - UPDATED FOR MEDICAL FEE
+    // CORRECTED BALANCE CALCULATION - UPDATED FOR MEDICAL FEE AND ASSESSMENT
     function calculateBalances(student) {
       const currentTermTotal = (student.tuition || 0) + (student.adm || 0) + 
-                              (student.medical || 0) + // ADDED MEDICAL
+                              (student.assessment || 0) + // ADDED ASSESSMENT
+                              (student.medical || 0) + 
                               (student.uniform || 0) + (student.lunch || 0) + 
                               (student.transport || 0) + (student.trip || 0) + 
                               (student.graduation || 0);
@@ -1595,7 +1601,7 @@
       `;
     }
 
-    // UPDATED FORM SUBMISSION FOR MEDICAL
+    // UPDATED FORM SUBMISSION FOR MEDICAL AND ASSESSMENT
     async function handleStudentSubmit(e) {
       e.preventDefault();
 
@@ -1604,7 +1610,8 @@
       const phone = document.getElementById('phone').value.trim();
       const tuition = parseFloat(document.getElementById('tuition').value) || 0;
       const adm = parseFloat(document.getElementById('adm').value) || 0;
-      const medical = parseFloat(document.getElementById('medical').value) || 0; // ADDED
+      const assessment = parseFloat(document.getElementById('assessment').value) || 0; // ADDED
+      const medical = parseFloat(document.getElementById('medical').value) || 0; 
       const uniform = parseFloat(document.getElementById('uniform').value) || 0;
       const lunch = parseFloat(document.getElementById('lunch').value) || 0;
       const transport = parseFloat(document.getElementById('transport').value) || 0;
@@ -1632,7 +1639,7 @@
 
       try {
         // Updated calculation
-        const currentTermTotal = tuition + adm + medical + uniform + lunch + transport + trip + graduation;
+        const currentTermTotal = tuition + adm + assessment + medical + uniform + lunch + transport + trip + graduation;
         const currentTermBalance = currentTermTotal - paid;
         const totalOutstanding = currentTermBalance + carriedForwardBalance;
 
@@ -1642,7 +1649,8 @@
           phone, 
           tuition, 
           adm, 
-          medical, // ADDED
+          assessment, // ADDED
+          medical,
           uniform, 
           lunch, 
           transport, 
@@ -1714,7 +1722,7 @@
       document.getElementById('carriedForwardBalance').value = 0;
     }
 
-    // UPDATED EDIT FUNCTION
+    // UPDATED EDIT FUNCTION TO INCLUDE ASSESSMENT
     async function editStudent(id) {
       try {
         const studentsCollection = getStudentsCollection();
@@ -1732,7 +1740,8 @@
         document.getElementById('phone').value = s.phone || '';
         document.getElementById('tuition').value = s.tuition || 0;
         document.getElementById('adm').value = s.adm || 0;
-        document.getElementById('medical').value = s.medical || 0; // ADDED
+        document.getElementById('assessment').value = s.assessment || 0; // ADDED
+        document.getElementById('medical').value = s.medical || 0;
         document.getElementById('uniform').value = s.uniform || 0;
         document.getElementById('lunch').value = s.lunch || 0;
         document.getElementById('transport').value = s.transport || 0;
@@ -1781,7 +1790,7 @@
       }
     }
 
-    // UPDATED MODAL VIEW
+    // UPDATED MODAL VIEW TO DISPLAY ASSESSMENT
     async function viewStudent(id) {
       try {
         const studentsCollection = getStudentsCollection();
@@ -1828,6 +1837,7 @@
               <div>
                 <p><strong>Tuition:</strong> KES ${(s.tuition || 0).toLocaleString('en-KE')}</p>
                 <p><strong>Admission Fee:</strong> KES ${(s.adm || 0).toLocaleString('en-KE')}</p>
+                <p><strong>Assessment Fee:</strong> KES ${(s.assessment || 0).toLocaleString('en-KE')}</p>
                 <p><strong>Medical:</strong> KES ${(s.medical || 0).toLocaleString('en-KE')}</p> <p><strong>Uniform:</strong> KES ${(s.uniform || 0).toLocaleString('en-KE')}</p>
               </div>
               <div>
@@ -1925,7 +1935,7 @@
       document.getElementById('termTransitionModal').classList.add('show');
     }
 
-    // UPDATED TRANSITION (Removed old fields, initialized Medical)
+    // UPDATED TRANSITION TO RESET ASSESSMENT
     async function executeSmartTermTransition() {
       const sourceTerm = parseInt(document.getElementById('sourceTerm').value);
       const targetTerm = parseInt(document.getElementById('targetTerm').value);
@@ -1974,7 +1984,8 @@
             phone: sourceStudent.phone,
             tuition: 0, 
             adm: 0,
-            medical: 0, // ADDED
+            assessment: 0, // ADDED
+            medical: 0, 
             uniform: 0,
             lunch: 0,
             transport: 0,
@@ -2246,7 +2257,7 @@
       }
     }
 
-    // UPDATED EXPORT
+    // UPDATED EXPORT TO INCLUDE ASSESSMENT
     async function exportToExcel() {
       try {
         const studentsCollection = getStudentsCollection();
@@ -2268,7 +2279,8 @@
             'Phone': s.phone || '',
             'Tuition': s.tuition || 0,
             'Admission': s.adm || 0,
-            'Medical': s.medical || 0, // ADDED
+            'Assessment': s.assessment || 0, // ADDED
+            'Medical': s.medical || 0, 
             'Uniform': s.uniform || 0,
             'Lunch': s.lunch || 0,
             'Transport': s.transport || 0,
@@ -2296,7 +2308,7 @@
       }
     }
 
-    // UPDATED CLASS EXPORT
+    // UPDATED CLASS EXPORT TO INCLUDE ASSESSMENT
     async function exportClassToExcel() {
       const selectedClass = prompt("Enter class name to export (e.g., Grade 1, PP1, etc.):");
       if (!selectedClass) return;
@@ -2320,7 +2332,8 @@
             'Phone': s.phone || '',
             'Tuition': s.tuition || 0,
             'Admission': s.adm || 0,
-            'Medical': s.medical || 0, // ADDED
+            'Assessment': s.assessment || 0, // ADDED
+            'Medical': s.medical || 0, 
             'Uniform': s.uniform || 0,
             'Lunch': s.lunch || 0,
             'Transport': s.transport || 0,
@@ -2350,7 +2363,7 @@
       document.getElementById('importModal').classList.add('show');
     }
 
-    // UPDATED IMPORT
+    // UPDATED IMPORT TO INCLUDE ASSESSMENT
     async function importStudents() {
       const fileInput = document.getElementById('importFile');
       const file = fileInput.files[0];
@@ -2386,7 +2399,8 @@
           const carriedForwardBalance = student.carriedForwardBalance || 0;
           // Updated calculation for import
           const currentTermTotal = (student.tuition || 0) + (student.adm || 0) + 
-                                  (student.medical || 0) + // ADDED
+                                  (student.assessment || 0) + // ADDED
+                                  (student.medical || 0) + 
                                   (student.uniform || 0) + (student.lunch || 0) + 
                                   (student.transport || 0) + (student.trip || 0) + 
                                   (student.graduation || 0);
@@ -2497,7 +2511,8 @@
         carriedForwardBalance: document.getElementById('carriedForwardBalance').value,
         tuition: document.getElementById('tuition').value,
         adm: document.getElementById('adm').value,
-        medical: document.getElementById('medical').value, // UPDATED
+        assessment: document.getElementById('assessment').value, // ADDED
+        medical: document.getElementById('medical').value, 
         uniform: document.getElementById('uniform').value,
         lunch: document.getElementById('lunch').value,
         transport: document.getElementById('transport').value,
@@ -2539,11 +2554,11 @@
       }
     }
 
-    // UPDATED AUTO-SAVE LISTENERS
+    // UPDATED AUTO-SAVE LISTENERS TO INCLUDE ASSESSMENT
     document.addEventListener('DOMContentLoaded', function() {
       const formFields = ['studentName', 'studentClass', 'phone', 'carriedForwardBalance', 
-                         'tuition', 'adm', 'medical', 'uniform', 'lunch', 
-                         'transport', 'trip', 'graduation', 'paid']; // UPDATED
+                         'tuition', 'adm', 'assessment', 'medical', 'uniform', 'lunch', // ADDED assessment
+                         'transport', 'trip', 'graduation', 'paid']; 
       
       formFields.forEach(fieldId => {
         const field = document.getElementById(fieldId);
@@ -2676,7 +2691,7 @@
       document.getElementById('executePromotionBtn').disabled = false;
     }
 
-    // UPDATED PROMOTION (Removed old fields, initialized Medical)
+    // UPDATED PROMOTION TO RESET ASSESSMENT
     async function executePromotion() {
       const confirmBtn = document.getElementById('executePromotionBtn');
       const progressBar = document.getElementById('promoBar');
@@ -2726,7 +2741,9 @@
             
             carriedForwardBalance: balances.totalOutstanding, 
             
-            tuition: 0, adm: 0, medical: 0, // ADDED
+            tuition: 0, adm: 0, 
+            assessment: 0, // ADDED
+            medical: 0, 
             uniform: 0, lunch: 0, transport: 0, trip: 0, graduation: 0,
             paid: 0,
             
