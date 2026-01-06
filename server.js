@@ -64,16 +64,16 @@ const authenticateBank = (req, res, next) => {
 };
 
 // =========================================================
-// 3. CELCOM AFRICA SMS ENDPOINT
+// 3. CELCOM AFRICA SMS ENDPOINT (UPDATED)
 // =========================================================
 app.post('/send-sms', async (req, res) => {
-    const { phone, message } = req.body;
+    let { phone, message } = req.body;
 
     if (!phone || !message) {
         return res.status(400).json({ success: false, error: "Missing phone or message" });
     }
 
-    // Celcom Credentials from .env
+    // 1. Credential Loading
     const apikey = process.env.CELCOM_API_KEY;
     const partnerID = process.env.CELCOM_PARTNER_ID;
     const shortcode = process.env.CELCOM_SHORTCODE;
@@ -83,11 +83,21 @@ app.post('/send-sms', async (req, res) => {
         return res.json({ success: true, message: "SMS Logged (Simulation Mode)" });
     }
 
+    // 2. Phone Number Formatting (Ensure 254 format)
+    // If number is 0722000000 -> 254722000000
+    if (phone.startsWith('0')) {
+        phone = '254' + phone.substring(1);
+    }
+    // If number is +254... remove the +
+    if (phone.startsWith('+')) {
+        phone = phone.substring(1);
+    }
+
     try {
         console.log(`📨 Sending Celcom SMS to ${phone}...`);
         
-        // Celcom Africa API Endpoint
-        const url = 'https://isms.celcomafrica.com/api/services/sendsms/';
+        // 3. Celcom Africa API Call
+        const url = 'https://isms.celcomafrica.com/api/services/sendsms';
         
         const payload = {
             apikey: apikey,
@@ -102,6 +112,8 @@ app.post('/send-sms', async (req, res) => {
         });
 
         console.log("✅ Celcom Response:", response.data);
+        
+        // Celcom sometimes returns success:false even with 200 OK if credits are low
         return res.json({ success: true, data: response.data });
 
     } catch (error) {
