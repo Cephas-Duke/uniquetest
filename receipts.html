@@ -395,7 +395,9 @@
             };
 
             await db.runTransaction(async t => {
+                // Update student record with paid amount and new balance
                 t.update(sDoc.ref, { paid: newPaid, balance: safeBal, total: currentTermTotal });
+                // Create receipt
                 t.set(getReceiptsColl().doc(), receipt);
             });
 
@@ -725,7 +727,7 @@
             rSnaps.forEach(r => paid += r.data().paid);
             const cf = await getBalanceCarriedForward(s.name, currentTerm, currentYear);
             
-            // Recalculate total manually again
+            // RECALCULATE ACTUAL TOTAL (Fix for zero balance issue)
             const feeFields = ['tuition','adm','medical','lunch','uniform','assessment','transport','trip','graduation'];
             const actualTotal = feeFields.reduce((sum, key) => sum + (parseFloat(s[key]) || 0), 0);
 
