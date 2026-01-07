@@ -404,7 +404,8 @@
             // SMS Logic
             if(sData.phone) {
                 const currentDate = new Date().toLocaleDateString('en-GB');
-                const smsMessage = `Dear parent to ${name}, Amount KES ${paid} Receipt ${rNum} received on ${currentDate}. Bal: ${safeBal}. Term ${currentTerm}.`;
+                let balMsg = safeBal < 0 ? `Overpaid: ${Math.abs(safeBal)}` : `Bal: ${safeBal}`;
+                const smsMessage = `Dear parent to ${name}, Amount KES ${paid} Receipt ${rNum} received on ${currentDate}. ${balMsg}. Term ${currentTerm}.`;
                 sendSMS(sData.phone, smsMessage);
             }
 
@@ -415,7 +416,7 @@
               <p><strong>Student:</strong> ${name}</p>
               <p><strong>Amount:</strong> KES ${paid.toLocaleString()}</p>
               <p><strong>Receipt No:</strong> ${rNum}</p>
-              <p><strong>Balance:</strong> KES ${safeBal.toLocaleString()}</p>
+              <p><strong>${safeBal < 0 ? 'Overpayment' : 'Balance'}:</strong> KES ${Math.abs(safeBal).toLocaleString()}</p>
             `;
             document.getElementById('receiptPreview').style.display = 'block';
 
@@ -476,7 +477,7 @@
                                 <tr>
                                     <td><strong>${r.name}</strong><br><small>${r.receiptNumber}</small></td>
                                     <td>${r.paid.toLocaleString()}</td>
-                                    <td>${(r.balance !== undefined && r.balance !== null) ? r.balance.toLocaleString() : '-'}</td>
+                                    <td>${(r.balance !== undefined && r.balance !== null) ? (r.balance < 0 ? '(' + Math.abs(r.balance).toLocaleString() + ') CR' : r.balance.toLocaleString()) : '-'}</td>
                                     <td>${r.mode}</td>
                                     <td>${new Date(r.date).toLocaleDateString()}</td>
                                     <td>
@@ -534,7 +535,8 @@
         ];
 
         let rowsHtml = "";
-        let totalFeeBalance = 0;
+        // Note: totalFeeBalance tracks unpaid DEBT. It does not track overpayments.
+        let totalFeeBalance = 0; 
 
         const arrearsCalc = calculateLine(arrears);
         totalFeeBalance += arrearsCalc.bal;
@@ -563,6 +565,30 @@
                     <td>${calc.bal.toLocaleString()}</td>
                 </tr>`;
         });
+
+        // *** OVERPAYMENT FIX ***
+        // If money remains after paying all items, add an "Overpayment" row.
+        if (remainingToDistribute > 0) {
+            rowsHtml += `
+            <tr>
+                <td><strong>Overpayment / Credit</strong></td>
+                <td>-</td>
+                <td>${remainingToDistribute.toLocaleString()}</td>
+                <td><strong>(${remainingToDistribute.toLocaleString()}) CR</strong></td>
+            </tr>`;
+        }
+        
+        // Determine Final Footer Labels (using the true balance from DB)
+        let finalLabel = "OUTSTANDING BALANCE";
+        let finalValue = 0;
+
+        if (sData.balance < 0) {
+            finalLabel = "OVERPAYMENT (CREDIT)";
+            finalValue = Math.abs(sData.balance);
+        } else {
+            finalValue = sData.balance;
+        }
+
 
         const printWindow = window.open('', '', 'height=800,width=900');
         printWindow.document.write(`
@@ -620,8 +646,8 @@
                   <td colspan="2">KES ${receipt.paid.toLocaleString()}</td>
                 </tr>
                 <tr class="total-row">
-                  <td colspan="2" style="text-align: right;">OUTSTANDING BALANCE:</td>
-                  <td colspan="2">KES ${totalFeeBalance.toLocaleString()}</td>
+                  <td colspan="2" style="text-align: right;">${finalLabel}:</td>
+                  <td colspan="2">KES ${finalValue.toLocaleString()}</td>
                 </tr>
               </tbody>
             </table>
