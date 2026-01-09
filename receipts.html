@@ -271,6 +271,7 @@
             <div class="form-group"><label>Trip</label><input type="number" id="trip" value="0"></div>
             <div class="form-group"><label>Co-curricular Activities</label><input type="number" id="coCurricular" value="0"></div>
             <div class="form-group"><label>Graduation</label><input type="number" id="graduation" value="0"></div>
+            <div class="form-group"><label>Carried Forward (Arrears/Credit)</label><input type="number" id="carriedForwardBalance" value="0" style="border: 2px dashed #007bff; background: #f0f8ff;"></div>
          </div>
          <button type="submit" class="btn btn-success" style="margin-top:15px;">Save Student</button>
       </form>
@@ -344,14 +345,6 @@
       });
     }
 
-    async function getBalanceCarriedForward(name, term, year) {
-        let prevT, prevY;
-        if (term === 1) { prevT = 3; prevY = year - 1; }
-        else { prevT = term - 1; prevY = year; }
-        const snap = await db.collection(`students_${prevY}_term_${prevT}`).where('name', '==', name).get();
-        return snap.empty ? 0 : (snap.docs[0].data().balance || 0);
-    }
-
     async function getLogoDataUrl() {
         return "photos/school-logo.jpg";
     }
@@ -376,7 +369,12 @@
 
             const sDoc = sSnap.docs[0];
             const sData = sDoc.data();
-            const arrears = await getBalanceCarriedForward(name, currentTerm, currentYear);
+            
+            // --- FIX START ---
+            // Instead of calculating from previous terms, we read the carriedForwardBalance
+            // directly from the current student document, which includes manual edits.
+            const arrears = parseFloat(sData.carriedForwardBalance) || 0;
+            // --- FIX END ---
 
             // RECALCULATE ACTUAL TERM TOTAL (Including coCurricular)
             const feeFields = ['tuition','adm','medical','lunch','uniform','assessment','transport','trip','coCurricular','graduation'];
@@ -505,7 +503,11 @@
         if(sSnap.empty) return;
         const sData = sSnap.docs[0].data();
         
-        const arrears = await getBalanceCarriedForward(receipt.name, currentTerm, currentYear);
+        // --- FIX START ---
+        // Fetch manually edited balance from current student record
+        const arrears = parseFloat(sData.carriedForwardBalance) || 0;
+        // --- FIX END ---
+        
         const logo = await getLogoDataUrl();
         
         let remainingToDistribute = receipt.paid;
@@ -538,16 +540,16 @@
         ];
 
         let rowsHtml = "";
-        // Note: totalFeeBalance tracks unpaid DEBT. It does not track overpayments.
         let totalFeeBalance = 0; 
 
+        // Fix: Ensure arrears calculation respects manual edits
         const arrearsCalc = calculateLine(arrears);
         totalFeeBalance += arrearsCalc.bal;
 
-        if (arrears > 0) {
+        if (arrears !== 0) {
             rowsHtml += `
             <tr>
-                <td>Arrears (C/F)</td>
+                <td>Carried Forward ${arrears < 0 ? '(Credit)' : '(Arrears)'}</td>
                 <td>${arrears.toLocaleString()}</td>
                 <td>${arrearsCalc.paidNow.toLocaleString()}</td>
                 <td>${arrearsCalc.bal.toLocaleString()}</td>
@@ -556,7 +558,6 @@
 
         allFeeItems.forEach(item => {
             const charged = sData[item.key] || 0;
-            // SHOW ALL ITEMS, EVEN IF CHARGED IS 0
             const calc = calculateLine(charged);
             totalFeeBalance += calc.bal;
 
@@ -569,8 +570,6 @@
                 </tr>`;
         });
 
-        // *** OVERPAYMENT FIX ***
-        // If money remains after paying all items, add an "Overpayment" row.
         if (remainingToDistribute > 0) {
             rowsHtml += `
             <tr>
@@ -581,7 +580,6 @@
             </tr>`;
         }
         
-        // Determine Final Footer Labels (using the true balance from DB)
         let finalLabel = "OUTSTANDING BALANCE";
         let finalValue = 0;
 
@@ -591,7 +589,6 @@
         } else {
             finalValue = sData.balance;
         }
-
 
         const printWindow = window.open('', '', 'height=800,width=900');
         printWindow.document.write(`
@@ -745,7 +742,7 @@
     }
 
     async function recalculateAllBalances() {
-      if (!confirm("Recalculate all balances?")) return;
+      if (!confirm("Recalculate all balances based on current term fees + manual arrears?")) return;
       showStatus("Recalculating...", "loading");
       try {
         const sColl = getStudentsColl();
@@ -757,7 +754,11 @@
             const rSnaps = await rColl.where('name', '==', s.name).get();
             let paid = 0;
             rSnaps.forEach(r => paid += r.data().paid);
-            const cf = await getBalanceCarriedForward(s.name, currentTerm, currentYear);
+            
+            // --- FIX START ---
+            // Use current student record carried forward logic
+            const cf = parseFloat(s.carriedForwardBalance) || 0;
+            // --- FIX END ---
             
             // RECALCULATE ACTUAL TOTAL (Including coCurricular)
             const feeFields = ['tuition','adm','medical','lunch','uniform','assessment','transport','trip','coCurricular','graduation'];
@@ -778,7 +779,7 @@
 
     document.getElementById('studentForm').onsubmit = async (e) => {
         e.preventDefault();
-        // Added coCurricular to fields list
+        // Updated fields list with coCurricular
         const fields = ['tuition','adm','medical','lunch','uniform','assessment','transport','trip','coCurricular','graduation'];
         let total = 0; 
         let data = {
@@ -787,11 +788,19 @@
             phone: document.getElementById('phone').value,
             paid: 0, term: currentTerm, year: currentYear
         };
+        
+        // Fix: Capture carried forward if manually entered here
+        const cf = parseFloat(document.getElementById('carriedForwardBalance').value) || 0;
+        data.carriedForwardBalance = cf;
+
         fields.forEach(f => {
             let val = parseFloat(document.getElementById(f).value) || 0;
             data[f] = val; total += val;
         });
-        data.total = total; data.balance = total;
+        
+        // Calculate initial balance
+        data.total = total; 
+        data.balance = total + cf;
         
         await getStudentsColl().add(data);
         showStatus("Student Added Successfully", 'success');
