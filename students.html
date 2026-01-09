@@ -859,6 +859,12 @@
             <label for="trip">Trip (KES)</label>
             <input type="number" id="trip" value="0" min="0">
           </div>
+
+          <div class="form-group">
+            <label for="coCurricular">Co-curricular (KES)</label>
+            <input type="number" id="coCurricular" value="0" min="0">
+          </div>
+           
            <div class="form-group">
             <label for="graduation">Graduation (KES)</label>
             <input type="number" id="graduation" value="0" min="0">
@@ -1233,6 +1239,12 @@
       // Form submission
       document.getElementById('studentForm').addEventListener('submit', handleStudentSubmit);
       document.getElementById('studentName').addEventListener('input', checkForExistingStudent);
+      
+      // Track manual edits to the balance field to prevent overwriting
+      document.getElementById('carriedForwardBalance').addEventListener('input', function() {
+         this.dataset.manualEdit = "true";
+      });
+
       document.getElementById('autoFillCarryForward').addEventListener('click', autoFillCarryForward);
       
       // Search and filter
@@ -1290,13 +1302,14 @@
       }, 5000);
     }
 
-    // CORRECTED BALANCE CALCULATION - UPDATED FOR MEDICAL FEE AND ASSESSMENT
+    // CORRECTED BALANCE CALCULATION - UPDATED FOR CO-CURRICULAR
     function calculateBalances(student) {
       const currentTermTotal = (student.tuition || 0) + (student.adm || 0) + 
-                              (student.assessment || 0) + // ADDED ASSESSMENT
+                              (student.assessment || 0) + 
                               (student.medical || 0) + 
                               (student.uniform || 0) + (student.lunch || 0) + 
                               (student.transport || 0) + (student.trip || 0) + 
+                              (student.coCurricular || 0) + // ADDED
                               (student.graduation || 0);
       
       const currentTermBalance = currentTermTotal - (student.paid || 0);
@@ -1317,6 +1330,11 @@
     // Auto-fill carry forward from previous term
     async function autoFillCarryForward() {
       const studentName = document.getElementById('studentName').value.trim();
+      const balanceInput = document.getElementById('carriedForwardBalance');
+      
+      // Allow overriding manual edits if the button is explicitly clicked
+      balanceInput.dataset.manualEdit = "false";
+
       if (!studentName) {
         showStatus("Please enter student name first", "error");
         return;
@@ -1336,7 +1354,7 @@
           const studentData = snapshot.docs[0].data();
           const balances = calculateBalances(studentData);
           
-          document.getElementById('carriedForwardBalance').value = balances.totalOutstanding;
+          balanceInput.value = balances.totalOutstanding;
           
           if (balances.totalOutstanding > 0) {
             showStatus(`Found outstanding balance of KES ${balances.totalOutstanding.toLocaleString('en-KE')}`, "info");
@@ -1346,7 +1364,7 @@
             showStatus("Student has zero balance from previous term", "info");
           }
         } else {
-          document.getElementById('carriedForwardBalance').value = 0;
+          balanceInput.value = 0;
           showStatus("Student not found in previous term", "info");
         }
       } catch (error) {
@@ -1355,11 +1373,21 @@
       }
     }
 
-    // Enhanced check for existing student
+    // Enhanced check for existing student - UPDATED TO PROTECT MANUAL EDITS
     async function checkForExistingStudent() {
+      // Prevent running this if we are in EDIT mode to stop overwriting current data
+      if (editingId !== null) return;
+
       const studentName = document.getElementById('studentName').value.trim();
+      const balanceInput = document.getElementById('carriedForwardBalance');
+
       if (!studentName || currentTerm === 1) {
         document.getElementById('carryForwardInfo').style.display = 'none';
+        return;
+      }
+
+      // Check if user has manually edited the field. If so, don't auto-overwrite.
+      if (balanceInput.dataset.manualEdit === "true") {
         return;
       }
 
@@ -1382,14 +1410,22 @@
               previousBalanceSpan.textContent = `KES ${Math.abs(balances.totalOutstanding).toLocaleString('en-KE')} (Credit/Overpayment)`;
             }
             carryForwardInfo.style.display = 'block';
-            document.getElementById('carriedForwardBalance').value = balances.totalOutstanding;
+            
+            // Only update value if user hasn't touched it
+            if (balanceInput.dataset.manualEdit !== "true") {
+               balanceInput.value = balances.totalOutstanding;
+            }
           } else {
             carryForwardInfo.style.display = 'none';
-            document.getElementById('carriedForwardBalance').value = 0;
+            if (balanceInput.dataset.manualEdit !== "true") {
+               balanceInput.value = 0;
+            }
           }
         } else {
           carryForwardInfo.style.display = 'none';
-          document.getElementById('carriedForwardBalance').value = 0;
+          if (balanceInput.dataset.manualEdit !== "true") {
+             balanceInput.value = 0;
+          }
         }
       } catch (error) {
         console.error('Error checking for existing student:', error);
@@ -1601,24 +1637,27 @@
       `;
     }
 
-    // UPDATED FORM SUBMISSION FOR MEDICAL AND ASSESSMENT
+    // UPDATED FORM SUBMISSION FOR CO-CURRICULAR & MANUAL BALANCE FIX
     async function handleStudentSubmit(e) {
       e.preventDefault();
 
       const name = document.getElementById('studentName').value.trim();
       const studentClass = document.getElementById('studentClass').value;
       const phone = document.getElementById('phone').value.trim();
+      
       const tuition = parseFloat(document.getElementById('tuition').value) || 0;
       const adm = parseFloat(document.getElementById('adm').value) || 0;
-      const assessment = parseFloat(document.getElementById('assessment').value) || 0; // ADDED
+      const assessment = parseFloat(document.getElementById('assessment').value) || 0;
       const medical = parseFloat(document.getElementById('medical').value) || 0; 
       const uniform = parseFloat(document.getElementById('uniform').value) || 0;
       const lunch = parseFloat(document.getElementById('lunch').value) || 0;
       const transport = parseFloat(document.getElementById('transport').value) || 0;
       const trip = parseFloat(document.getElementById('trip').value) || 0;
+      const coCurricular = parseFloat(document.getElementById('coCurricular').value) || 0; // ADDED
       const graduation = parseFloat(document.getElementById('graduation').value) || 0;
       const paid = parseFloat(document.getElementById('paid').value) || 0;
       
+      // CRITICAL FIX: Ensure carriedForwardBalance is taken directly from the input
       const carriedForwardBalance = parseFloat(document.getElementById('carriedForwardBalance').value) || 0;
 
       // Validation
@@ -1638,9 +1677,11 @@
       submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
       try {
-        // Updated calculation
-        const currentTermTotal = tuition + adm + assessment + medical + uniform + lunch + transport + trip + graduation;
+        // Updated calculation to include coCurricular
+        const currentTermTotal = tuition + adm + assessment + medical + uniform + lunch + transport + trip + coCurricular + graduation;
         const currentTermBalance = currentTermTotal - paid;
+        
+        // This ensures the manual edit in carriedForwardBalance is respected in the total calculation
         const totalOutstanding = currentTermBalance + carriedForwardBalance;
 
         const student = { 
@@ -1649,17 +1690,18 @@
           phone, 
           tuition, 
           adm, 
-          assessment, // ADDED
+          assessment,
           medical,
           uniform, 
           lunch, 
           transport, 
           trip,
+          coCurricular, // ADDED
           graduation,
           currentTermTotal, 
           paid, 
           currentTermBalance,
-          carriedForwardBalance, 
+          carriedForwardBalance, // Will be saved as entered by user
           totalOutstanding,
           term: currentTerm,
           year: currentYear,
@@ -1719,10 +1761,12 @@
       submitBtn.classList.remove('btn-warning');
       submitBtn.classList.add('btn-success');
       document.getElementById('carryForwardInfo').style.display = 'none';
-      document.getElementById('carriedForwardBalance').value = 0;
+      const balanceInput = document.getElementById('carriedForwardBalance');
+      balanceInput.value = 0;
+      balanceInput.dataset.manualEdit = "false";
     }
 
-    // UPDATED EDIT FUNCTION TO INCLUDE ASSESSMENT
+    // UPDATED EDIT FUNCTION TO INCLUDE CO-CURRICULAR
     async function editStudent(id) {
       try {
         const studentsCollection = getStudentsCollection();
@@ -1740,15 +1784,19 @@
         document.getElementById('phone').value = s.phone || '';
         document.getElementById('tuition').value = s.tuition || 0;
         document.getElementById('adm').value = s.adm || 0;
-        document.getElementById('assessment').value = s.assessment || 0; // ADDED
+        document.getElementById('assessment').value = s.assessment || 0;
         document.getElementById('medical').value = s.medical || 0;
         document.getElementById('uniform').value = s.uniform || 0;
         document.getElementById('lunch').value = s.lunch || 0;
         document.getElementById('transport').value = s.transport || 0;
         document.getElementById('trip').value = s.trip || 0;
+        document.getElementById('coCurricular').value = s.coCurricular || 0; // ADDED
         document.getElementById('graduation').value = s.graduation || 0;
         document.getElementById('paid').value = s.paid || 0;
         document.getElementById('carriedForwardBalance').value = s.carriedForwardBalance || 0;
+        
+        // Mark as manual edit so checkForExistingStudent doesn't overwrite it
+        document.getElementById('carriedForwardBalance').dataset.manualEdit = "true";
 
         // Show carry-forward info if applicable
         if ((s.carriedForwardBalance || 0) !== 0) {
@@ -1790,7 +1838,7 @@
       }
     }
 
-    // UPDATED MODAL VIEW TO DISPLAY ASSESSMENT
+    // UPDATED MODAL VIEW TO DISPLAY CO-CURRICULAR
     async function viewStudent(id) {
       try {
         const studentsCollection = getStudentsCollection();
@@ -1838,12 +1886,14 @@
                 <p><strong>Tuition:</strong> KES ${(s.tuition || 0).toLocaleString('en-KE')}</p>
                 <p><strong>Admission Fee:</strong> KES ${(s.adm || 0).toLocaleString('en-KE')}</p>
                 <p><strong>Assessment Fee:</strong> KES ${(s.assessment || 0).toLocaleString('en-KE')}</p>
-                <p><strong>Medical:</strong> KES ${(s.medical || 0).toLocaleString('en-KE')}</p> <p><strong>Uniform:</strong> KES ${(s.uniform || 0).toLocaleString('en-KE')}</p>
+                <p><strong>Medical:</strong> KES ${(s.medical || 0).toLocaleString('en-KE')}</p> 
+                <p><strong>Uniform:</strong> KES ${(s.uniform || 0).toLocaleString('en-KE')}</p>
               </div>
               <div>
                 <p><strong>Lunch:</strong> KES ${(s.lunch || 0).toLocaleString('en-KE')}</p>
                 <p><strong>Transport:</strong> KES ${(s.transport || 0).toLocaleString('en-KE')}</p>
                 <p><strong>Trip:</strong> KES ${(s.trip || 0).toLocaleString('en-KE')}</p>
+                <p><strong>Co-curricular:</strong> KES ${(s.coCurricular || 0).toLocaleString('en-KE')}</p>
                 <p><strong>Graduation:</strong> KES ${(s.graduation || 0).toLocaleString('en-KE')}</p>
               </div>
             </div>
@@ -1935,7 +1985,7 @@
       document.getElementById('termTransitionModal').classList.add('show');
     }
 
-    // UPDATED TRANSITION TO RESET ASSESSMENT
+    // UPDATED TRANSITION TO RESET CO-CURRICULAR
     async function executeSmartTermTransition() {
       const sourceTerm = parseInt(document.getElementById('sourceTerm').value);
       const targetTerm = parseInt(document.getElementById('targetTerm').value);
@@ -1984,12 +2034,13 @@
             phone: sourceStudent.phone,
             tuition: 0, 
             adm: 0,
-            assessment: 0, // ADDED
+            assessment: 0,
             medical: 0, 
             uniform: 0,
             lunch: 0,
             transport: 0,
             trip: 0,
+            coCurricular: 0, // ADDED - Reset
             graduation: 0,
             currentTermTotal: 0,
             paid: resetPaidAmounts ? 0 : (sourceStudent.paid || 0),
@@ -2257,7 +2308,7 @@
       }
     }
 
-    // UPDATED EXPORT TO INCLUDE ASSESSMENT
+    // UPDATED EXPORT TO INCLUDE CO-CURRICULAR
     async function exportToExcel() {
       try {
         const studentsCollection = getStudentsCollection();
@@ -2279,12 +2330,13 @@
             'Phone': s.phone || '',
             'Tuition': s.tuition || 0,
             'Admission': s.adm || 0,
-            'Assessment': s.assessment || 0, // ADDED
+            'Assessment': s.assessment || 0,
             'Medical': s.medical || 0, 
             'Uniform': s.uniform || 0,
             'Lunch': s.lunch || 0,
             'Transport': s.transport || 0,
             'Trip': s.trip || 0,
+            'Co-curricular': s.coCurricular || 0, // ADDED
             'Graduation': s.graduation || 0,
             'Current Term Total': balances.currentTermTotal,
             'Amount Paid': balances.paid,
@@ -2308,7 +2360,7 @@
       }
     }
 
-    // UPDATED CLASS EXPORT TO INCLUDE ASSESSMENT
+    // UPDATED CLASS EXPORT TO INCLUDE CO-CURRICULAR
     async function exportClassToExcel() {
       const selectedClass = prompt("Enter class name to export (e.g., Grade 1, PP1, etc.):");
       if (!selectedClass) return;
@@ -2332,12 +2384,13 @@
             'Phone': s.phone || '',
             'Tuition': s.tuition || 0,
             'Admission': s.adm || 0,
-            'Assessment': s.assessment || 0, // ADDED
+            'Assessment': s.assessment || 0,
             'Medical': s.medical || 0, 
             'Uniform': s.uniform || 0,
             'Lunch': s.lunch || 0,
             'Transport': s.transport || 0,
             'Trip': s.trip || 0,
+            'Co-curricular': s.coCurricular || 0, // ADDED
             'Graduation': s.graduation || 0,
             'Current Term Total': balances.currentTermTotal,
             'Amount Paid': balances.paid,
@@ -2363,7 +2416,7 @@
       document.getElementById('importModal').classList.add('show');
     }
 
-    // UPDATED IMPORT TO INCLUDE ASSESSMENT
+    // UPDATED IMPORT TO INCLUDE CO-CURRICULAR
     async function importStudents() {
       const fileInput = document.getElementById('importFile');
       const file = fileInput.files[0];
@@ -2399,10 +2452,11 @@
           const carriedForwardBalance = student.carriedForwardBalance || 0;
           // Updated calculation for import
           const currentTermTotal = (student.tuition || 0) + (student.adm || 0) + 
-                                  (student.assessment || 0) + // ADDED
+                                  (student.assessment || 0) + 
                                   (student.medical || 0) + 
                                   (student.uniform || 0) + (student.lunch || 0) + 
                                   (student.transport || 0) + (student.trip || 0) + 
+                                  (student.coCurricular || 0) + // ADDED
                                   (student.graduation || 0);
           const currentTermBalance = currentTermTotal - (student.paid || 0);
           const totalOutstanding = currentTermBalance + carriedForwardBalance;
@@ -2483,25 +2537,6 @@
       }
     });
 
-    // Debug function for balance calculations (can be removed in production)
-    window.debugBalances = function(studentName) {
-      const studentsCollection = getStudentsCollection();
-      studentsCollection.where('name', '==', studentName).get().then(snapshot => {
-        if (!snapshot.empty) {
-          const student = snapshot.docs[0].data();
-          const balances = calculateBalances(student);
-          console.log('Student:', studentName);
-          console.log('Current Term Total:', balances.currentTermTotal);
-          console.log('Paid:', balances.paid);
-          console.log('Current Term Balance:', balances.currentTermBalance);
-          console.log('Carried Forward:', balances.carriedForwardBalance);
-          console.log('Total Outstanding:', balances.totalOutstanding);
-        } else {
-          console.log('Student not found:', studentName);
-        }
-      });
-    };
-
     // Auto-save functionality for form data (using localStorage for draft)
     function saveFormDraft() {
       const formData = {
@@ -2511,12 +2546,13 @@
         carriedForwardBalance: document.getElementById('carriedForwardBalance').value,
         tuition: document.getElementById('tuition').value,
         adm: document.getElementById('adm').value,
-        assessment: document.getElementById('assessment').value, // ADDED
+        assessment: document.getElementById('assessment').value,
         medical: document.getElementById('medical').value, 
         uniform: document.getElementById('uniform').value,
         lunch: document.getElementById('lunch').value,
         transport: document.getElementById('transport').value,
         trip: document.getElementById('trip').value,
+        coCurricular: document.getElementById('coCurricular').value, // ADDED
         graduation: document.getElementById('graduation').value,
         paid: document.getElementById('paid').value
       };
@@ -2554,11 +2590,11 @@
       }
     }
 
-    // UPDATED AUTO-SAVE LISTENERS TO INCLUDE ASSESSMENT
+    // UPDATED AUTO-SAVE LISTENERS TO INCLUDE CO-CURRICULAR
     document.addEventListener('DOMContentLoaded', function() {
       const formFields = ['studentName', 'studentClass', 'phone', 'carriedForwardBalance', 
-                         'tuition', 'adm', 'assessment', 'medical', 'uniform', 'lunch', // ADDED assessment
-                         'transport', 'trip', 'graduation', 'paid']; 
+                         'tuition', 'adm', 'assessment', 'medical', 'uniform', 'lunch', 
+                         'transport', 'trip', 'coCurricular', 'graduation', 'paid']; // ADDED coCurricular
       
       formFields.forEach(fieldId => {
         const field = document.getElementById(fieldId);
@@ -2691,7 +2727,7 @@
       document.getElementById('executePromotionBtn').disabled = false;
     }
 
-    // UPDATED PROMOTION TO RESET ASSESSMENT
+    // UPDATED PROMOTION TO RESET CO-CURRICULAR
     async function executePromotion() {
       const confirmBtn = document.getElementById('executePromotionBtn');
       const progressBar = document.getElementById('promoBar');
@@ -2742,9 +2778,11 @@
             carriedForwardBalance: balances.totalOutstanding, 
             
             tuition: 0, adm: 0, 
-            assessment: 0, // ADDED
+            assessment: 0,
             medical: 0, 
-            uniform: 0, lunch: 0, transport: 0, trip: 0, graduation: 0,
+            uniform: 0, lunch: 0, transport: 0, trip: 0, 
+            coCurricular: 0, // ADDED - Reset
+            graduation: 0,
             paid: 0,
             
             term: 1,
