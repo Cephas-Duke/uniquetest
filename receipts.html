@@ -270,6 +270,7 @@
             <div class="form-group"><label>Transport</label><input type="number" id="transport" value="0"></div>
             <div class="form-group"><label>Trip</label><input type="number" id="trip" value="0"></div>
             <div class="form-group"><label>Graduation</label><input type="number" id="graduation" value="0"></div>
+            <div class="form-group"><label>Swimming</label><input type="number" id="swimming" value="0"></div>
          </div>
          <button type="submit" class="btn btn-success" style="margin-top:15px;">Save Student</button>
       </form>
@@ -377,8 +378,8 @@
             const sData = sDoc.data();
             const arrears = await getBalanceCarriedForward(name, currentTerm, currentYear);
 
-            // RECALCULATE ACTUAL TERM TOTAL (Fix for zero balance issue)
-            const feeFields = ['tuition','adm','medical','lunch','uniform','assessment','transport','trip','graduation'];
+            // RECALCULATE ACTUAL TERM TOTAL (Including Swimming)
+            const feeFields = ['tuition','adm','medical','lunch','uniform','assessment','transport','trip','graduation','swimming'];
             const currentTermTotal = feeFields.reduce((sum, key) => sum + (parseFloat(sData[key]) || 0), 0);
             
             const newPaid = (sData.paid || 0) + paid;
@@ -525,13 +526,15 @@
             return { paidNow: paidOnThisReceipt, bal: finalBal };
         }
 
+        // Added Swimming to fee items
         const allFeeItems = [
             {key: 'tuition', label: 'Tuition'}, {key: 'adm', label: 'Admission'},
             {key: 'medical', label: 'Medical'}, {key: 'lunch', label: 'Lunch'},
             {key: 'uniform', label: 'Uniform'}, 
             {key: 'assessment', label: 'Assessment Fee'},
             {key: 'transport', label: 'Transport'},
-            {key: 'trip', label: 'Trip'}, {key: 'graduation', label: 'Graduation'}
+            {key: 'trip', label: 'Trip'}, {key: 'graduation', label: 'Graduation'},
+            {key: 'swimming', label: 'Swimming'}
         ];
 
         let rowsHtml = "";
@@ -756,8 +759,8 @@
             rSnaps.forEach(r => paid += r.data().paid);
             const cf = await getBalanceCarriedForward(s.name, currentTerm, currentYear);
             
-            // RECALCULATE ACTUAL TOTAL (Fix for zero balance issue)
-            const feeFields = ['tuition','adm','medical','lunch','uniform','assessment','transport','trip','graduation'];
+            // RECALCULATE ACTUAL TOTAL (Including Swimming)
+            const feeFields = ['tuition','adm','medical','lunch','uniform','assessment','transport','trip','graduation','swimming'];
             const actualTotal = feeFields.reduce((sum, key) => sum + (parseFloat(s[key]) || 0), 0);
 
             const bal = (actualTotal + cf) - paid;
@@ -775,7 +778,8 @@
 
     document.getElementById('studentForm').onsubmit = async (e) => {
         e.preventDefault();
-        const fields = ['tuition','adm','medical','lunch','uniform','assessment','transport','trip','graduation'];
+        // Added 'swimming' to fields
+        const fields = ['tuition','adm','medical','lunch','uniform','assessment','transport','trip','graduation','swimming'];
         let total = 0; 
         let data = {
             name: document.getElementById('studentName').value,
