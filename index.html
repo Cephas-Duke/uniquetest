@@ -927,8 +927,7 @@
             throw error;
         }
 
-        // Global state - UPDATED to match receipts.html storage keys ('h_term', 'h_year')
-        // This ensures both pages are always in sync
+        // Global state - using session storage for persistence between pages
         let currentTerm = parseInt(sessionStorage.getItem('h_term')) || 1;
         let currentYear = parseInt(sessionStorage.getItem('h_year')) || new Date().getFullYear();
         
@@ -944,12 +943,16 @@
             class: null
         };
 
-        // Collection references
+        // Collection references - Dynamic based on selected term/year
         const getStudentsCollection = (term = currentTerm, year = currentYear) => 
             db.collection(`students_${year}_term_${term}`);
+        
         const getReceiptsCollection = (term = currentTerm, year = currentYear) => 
             db.collection(`receipts_${year}_term_${term}`);
+        
         const getStaffCollection = () => db.collection('staff');
+        
+        // Expenses are global, need to filter by term/year
         const getExpensesCollection = () => db.collection('expenses');
 
         // Status message function
@@ -979,7 +982,6 @@
 
         // Update all term displays
         function updateTermDisplays() {
-            // Updated to show year on chart title
             const yearDisplay = document.getElementById('chartYearDisplay');
             if(yearDisplay) yearDisplay.textContent = currentYear;
             
@@ -1000,7 +1002,7 @@
             showStatus(`Switched to Term ${term} - Data refreshed`, "success");
         }
 
-        // NEW: Switch Year Function
+        // Switch Year Function
         function switchYear(year) {
             currentYear = parseInt(year);
             sessionStorage.setItem('h_year', year.toString());
@@ -1010,7 +1012,7 @@
             showStatus(`Switched to Year ${year} - Data refreshed`, "success");
         }
 
-        // Load all dashboard data
+        // Load all dashboard data with strict filtering
         async function loadDashboardData() {
             try {
                 showStatus(`Loading data for Term ${currentTerm}, ${currentYear}...`, "info");
@@ -1021,11 +1023,12 @@
                 document.getElementById('totalRevenue').innerHTML = '<span class="loading">Loading...</span>';
                 document.getElementById('totalExpenses').innerHTML = '<span class="loading">Loading...</span>';
 
-                // Load data concurrently for better performance
+                // Load data concurrently
+                // Students and Receipts are already filtered by the collection name (sharding)
                 const [studentsSnapshot, staffSnapshot, receiptsSnapshot, expensesSnapshot] = await Promise.all([
-                    getStudentsCollection().get(),
+                    getStudentsCollection(currentTerm, currentYear).get(),
                     getStaffCollection().get(),
-                    getReceiptsCollection().get(),
+                    getReceiptsCollection(currentTerm, currentYear).get(),
                     getExpensesCollection().get()
                 ]);
 
@@ -1041,18 +1044,23 @@
                     dashboardData.staff.push({ id: doc.id, ...doc.data() });
                 });
 
-                // Process receipts data
+                // Process receipts data (Already filtered by collection)
                 dashboardData.receipts = [];
                 receiptsSnapshot.forEach(doc => {
                     dashboardData.receipts.push({ id: doc.id, ...doc.data() });
                 });
 
-                // Process expenses data - filter by current term
+                // Process expenses data - STRICT FILTERING for Term AND Year
                 dashboardData.expenses = [];
                 expensesSnapshot.forEach(doc => {
                     const expense = doc.data();
+                    
+                    // Normalize Term and Year for comparison
                     const expenseTerm = getTermFromName(expense.term);
-                    if (expenseTerm === currentTerm || !expense.term) {
+                    const expenseYear = expense.year ? parseInt(expense.year) : null;
+                    
+                    // Filter: Must match current Term AND current Year
+                    if (expenseTerm === currentTerm && expenseYear === currentYear) {
                         dashboardData.expenses.push({ id: doc.id, ...expense });
                     }
                 });
@@ -1074,9 +1082,13 @@
         // Convert term name to number
         function getTermFromName(termName) {
             if (!termName) return null;
+            // Handle various formats
+            if (typeof termName === 'number') return termName;
+            
             const termMap = {
                 'First Term': 1, 'Second Term': 2, 'Third Term': 3,
-                'Term 1': 1, 'Term 2': 2, 'Term 3': 3
+                'Term 1': 1, 'Term 2': 2, 'Term 3': 3,
+                '1': 1, '2': 2, '3': 3
             };
             return termMap[termName] || null;
         }
@@ -1124,7 +1136,8 @@
             // Process receipts
             dashboardData.receipts.forEach(receipt => {
                 const date = receipt.date;
-                // Normalize date string to group correctly if timestamps differ
+                if (!date) return;
+                
                 const dateKey = new Date(date).toDateString();
                 
                 if (!dailyData[dateKey]) {
@@ -1136,6 +1149,8 @@
             // Process expenses
             dashboardData.expenses.forEach(expense => {
                 const date = expense.date;
+                if (!date) return;
+                
                 const dateKey = new Date(date).toDateString();
 
                 if (!dailyData[dateKey]) {
@@ -1146,11 +1161,12 @@
 
             // Sort dates and prepare data for chart
             const sortedDates = Object.values(dailyData).sort((a, b) => a.rawDate - b.rawDate);
-            const last30Days = sortedDates.slice(-30); // Show last 30 active days
+            // Limit to last 30 entries if too many
+            const chartData = sortedDates.slice(-30); 
             
-            const labels = last30Days.map(d => d.rawDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' }));
-            const revenueData = last30Days.map(d => d.revenue);
-            const expenseData = last30Days.map(d => d.expenses);
+            const labels = chartData.map(d => d.rawDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' }));
+            const revenueData = chartData.map(d => d.revenue);
+            const expenseData = chartData.map(d => d.expenses);
 
             if (charts.financial) {
                 charts.financial.destroy();
@@ -1266,7 +1282,7 @@
             const activitiesEl = document.getElementById('recentActivities');
             const activities = [];
 
-            // Get recent receipts
+            // Get recent receipts (limited to 3)
             const recentReceipts = dashboardData.receipts
                 .sort((a, b) => new Date(b.date) - new Date(a.date))
                 .slice(0, 3);
@@ -1276,12 +1292,12 @@
                     icon: 'receipt',
                     title: `Payment received from ${receipt.name}`,
                     time: getRelativeTime(new Date(receipt.date)),
-                    amount: `KES ${receipt.paid.toLocaleString('en-KE')}`,
+                    amount: `KES ${(receipt.paid || 0).toLocaleString('en-KE')}`,
                     sortTime: new Date(receipt.date)
                 });
             });
 
-            // Get recent expenses
+            // Get recent expenses (limited to 2)
             const recentExpenses = dashboardData.expenses
                 .sort((a, b) => new Date(b.date) - new Date(a.date))
                 .slice(0, 2);
@@ -1289,9 +1305,9 @@
             recentExpenses.forEach(expense => {
                 activities.push({
                     icon: 'money-bill-wave',
-                    title: expense.description,
+                    title: expense.description || 'Expense',
                     time: getRelativeTime(new Date(expense.date)),
-                    amount: `KES ${expense.amount.toLocaleString('en-KE')}`,
+                    amount: `KES ${(expense.amount || 0).toLocaleString('en-KE')}`,
                     sortTime: new Date(expense.date)
                 });
             });
@@ -1316,6 +1332,8 @@
 
         // Get relative time string
         function getRelativeTime(date) {
+            if (isNaN(date.getTime())) return 'Unknown date';
+            
             const now = new Date();
             const diffMs = now - date;
             const diffMins = Math.floor(diffMs / 60000);
