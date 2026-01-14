@@ -87,6 +87,47 @@
       padding: 0 1.5rem;
     }
 
+    /* CONTROL PANEL & YEAR SELECTOR STYLES */
+    .control-panel {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: white;
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        margin-bottom: 1.5rem;
+    }
+
+    .year-select-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--primary-color);
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius);
+        color: white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .year-select-container label {
+        font-weight: 500;
+        margin-bottom: 0;
+        color: white;
+    }
+
+    .year-select-container select {
+        border: none;
+        background: white;
+        padding: 0.3rem 0.8rem;
+        border-radius: 4px;
+        font-weight: bold;
+        color: var(--primary-color);
+        cursor: pointer;
+        outline: none;
+        width: auto;
+    }
+
     .card {
       background: white;
       border-radius: var(--border-radius);
@@ -563,6 +604,17 @@
       .chart-container {
         height: 300px;
       }
+      
+      .control-panel {
+          flex-direction: column;
+          gap: 10px;
+          text-align: center;
+      }
+      
+      .year-select-container {
+          width: 100%;
+          justify-content: space-between;
+      }
     }
 
     @media print {
@@ -598,16 +650,28 @@
       <li><a href="assets.html"><i class="fas fa-laptop-house"></i> Assets</a></li>
       <li><a href="staff.html"><i class="fas fa-user-tie"></i> Staff</a></li>
       <li><a href="payroll.html"><i class="fas fa-money-check-alt"></i> Payroll</a></li>
-      <a href="financials.html"><i class="fas fa-money-check-alt"></i> financials</a>
+      <a href="financials.html"><i class="fas fa-money-check-alt"></i> Financials</a>
     </ul>
   </nav>
 
   <div class="container">
     <div id="statusMessage" class="status-message"></div>
 
+    <div class="control-panel no-print">
+        <h3 style="color: var(--primary-color); margin: 0;">Expense Management</h3>
+        <div class="year-select-container">
+            <label><i class="fas fa-calendar-alt"></i> Financial Year:</label>
+            <select id="yearSelector" onchange="switchYear(this.value)">
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026">2026</option>
+            </select>
+        </div>
+    </div>
+
     <div class="term-navigator no-print">
       <h2 style="color: var(--primary-color); margin-bottom: 1rem;">
-        <i class="fas fa-calendar-alt"></i> Academic Terms Management
+        <i class="fas fa-calendar-alt"></i> Academic Terms - <span id="currentYearDisplay"></span>
       </h2>
       <div class="term-tabs" id="termTabs">
         <div class="term-tab active" onclick="setActiveTerm('all')">
@@ -633,7 +697,7 @@
 
     <div class="card no-print">
       <div class="card-header">
-        <h2 class="card-title">Add New Expense</h2>
+        <h2 class="card-title">Add New Expense (<span id="formYearDisplay"></span>)</h2>
       </div>
       <form id="expenseForm">
         <div class="grid">
@@ -719,7 +783,7 @@
 
     <div class="card">
       <div class="card-header">
-        <h2 class="card-title">Expense Records</h2>
+        <h2 class="card-title">Expense Records - <span id="recordsYearDisplay"></span></h2>
         <div class="btn-group">
           <button class="btn btn-info" onclick="renderCharts()">
             <i class="fas fa-chart-pie"></i> View Charts
@@ -791,7 +855,7 @@
     </div>
 
     <div class="chart-card no-print">
-      <h3 class="chart-title">Expense Analysis</h3>
+      <h3 class="chart-title">Expense Analysis - <span id="chartYearDisplay"></span></h3>
       <div class="chart-container">
         <canvas id="categoryChart"></canvas>
       </div>
@@ -817,13 +881,26 @@
       measurementId: "G-LLHS6GLB6E"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const expensesCollection = db.collection('expenses');
+    let app, db;
+    try {
+        if (!firebase.apps.length) {
+            app = firebase.initializeApp(firebaseConfig);
+        } else {
+            app = firebase.app();
+        }
+        db = firebase.firestore();
+    } catch (error) {
+        console.error("Firebase init error:", error);
+    }
 
-    // Global state
+    // STATE MANAGEMENT
+    // Load year from session storage to sync with other pages
+    let currentYear = parseInt(sessionStorage.getItem('h_year')) || new Date().getFullYear();
     let currentActiveTerm = 'all';
     let allExpensesData = [];
+
+    // Dynamic Collection Reference
+    const getExpensesCollection = () => db.collection(`expenses_${currentYear}`);
 
     // Status message function
     function showStatus(message, type = 'info') {
@@ -838,6 +915,26 @@
           statusMessage.className = 'status-message';
         }, 300);
       }, 5000);
+    }
+
+    // Year Switch Function
+    function switchYear(year) {
+        currentYear = parseInt(year);
+        sessionStorage.setItem('h_year', year.toString());
+        
+        // Update UI displays
+        updateYearDisplays();
+        
+        // Reload Data
+        loadExpenses();
+        showStatus(`Switched to Year ${year}`, "success");
+    }
+
+    function updateYearDisplays() {
+        document.getElementById('currentYearDisplay').textContent = currentYear;
+        document.getElementById('formYearDisplay').textContent = currentYear;
+        document.getElementById('recordsYearDisplay').textContent = currentYear;
+        document.getElementById('chartYearDisplay').textContent = currentYear;
     }
 
     // Set active term for filtering
@@ -856,30 +953,26 @@
       showStatus(`Viewing ${term === 'all' ? 'all terms' : term}`, "info");
     }
 
-    // FIXED: Load expenses without requiring composite indexes
+    // Load expenses
     function loadExpenses() {
       const searchQuery = document.getElementById('searchInput').value.toLowerCase();
       const categoryFilter = document.getElementById('categoryFilter').value;
       const monthFilter = document.getElementById('monthFilter').value;
 
-      // Start with a simple query to avoid index issues
-      let query = expensesCollection;
+      // Use dynamic collection
+      let query = getExpensesCollection();
       
-      // Only add ONE filter at a time to avoid composite index requirements
       if (categoryFilter && !monthFilter) {
-        // Filter by category only
         query = query.where('category', '==', categoryFilter);
       } else if (monthFilter && !categoryFilter) {
-        // Filter by month only
         query = query.where('date', '>=', `${monthFilter}-01`)
                      .where('date', '<=', `${monthFilter}-31`);
       }
-      // If both filters are selected or term filter is needed, we'll filter client-side
 
       query.get().then(snapshot => {
         let expensesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
-        // Apply client-side filtering for complex filters
+        // Apply client-side filtering
         if (currentActiveTerm !== 'all') {
           expensesData = expensesData.filter(e => e.term === currentActiveTerm);
         }
@@ -891,14 +984,12 @@
           );
         }
         
-        // Filter by search query if provided
         if (searchQuery) {
           expensesData = expensesData.filter(e => 
             e.description.toLowerCase().includes(searchQuery)
           );
         }
 
-        // Sort by date (descending) client-side
         expensesData.sort((a, b) => new Date(b.date) - new Date(a.date));
 
         renderGroupedExpenses(expensesData);
@@ -908,8 +999,8 @@
         showStatus(`Error loading expenses: ${error.message}`, "error");
       });
 
-      // Load all data for term navigator (simple query without ordering)
-      expensesCollection.get().then(snapshot => {
+      // Load all data for term navigator stats
+      getExpensesCollection().get().then(snapshot => {
         allExpensesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         updateTermNavigator();
       });
@@ -926,7 +1017,6 @@
       let totalCount = 0;
       let grandTotal = 0;
 
-      // Calculate statistics
       allExpensesData.forEach(expense => {
         if (termStats[expense.term]) {
           termStats[expense.term].count++;
@@ -936,13 +1026,11 @@
         grandTotal += expense.amount;
       });
 
-      // Update badges
       document.getElementById('allTermsBadge').textContent = totalCount;
       document.getElementById('firstTermBadge').textContent = termStats['First Term'].count;
       document.getElementById('secondTermBadge').textContent = termStats['Second Term'].count;
       document.getElementById('thirdTermBadge').textContent = termStats['Third Term'].count;
 
-      // Update overview section
       const overview = document.getElementById('termOverview');
       if (currentActiveTerm === 'all') {
         overview.innerHTML = `
@@ -958,10 +1046,6 @@
             <h4><i class="fas fa-money-bill-wave"></i> Grand Total</h4>
             <div class="value">KES ${grandTotal.toLocaleString('en-KE', { minimumFractionDigits: 2 })}</div>
           </div>
-          <div class="term-stat">
-            <h4><i class="fas fa-chart-line"></i> Average per Term</h4>
-            <div class="value">KES ${(grandTotal / 3).toLocaleString('en-KE', { minimumFractionDigits: 2 })}</div>
-          </div>
         `;
       } else {
         const currentStats = termStats[currentActiveTerm];
@@ -973,10 +1057,6 @@
           <div class="term-stat">
             <h4><i class="fas fa-money-bill-wave"></i> Total Amount</h4>
             <div class="value">KES ${currentStats.total.toLocaleString('en-KE', { minimumFractionDigits: 2 })}</div>
-          </div>
-          <div class="term-stat">
-            <h4><i class="fas fa-calculator"></i> Average per Transaction</h4>
-            <div class="value">KES ${currentStats.count > 0 ? (currentStats.total / currentStats.count).toLocaleString('en-KE', { minimumFractionDigits: 2 }) : '0.00'}</div>
           </div>
           <div class="term-stat">
             <h4><i class="fas fa-percentage"></i> % of Total</h4>
@@ -999,7 +1079,6 @@
       const groupedByTerm = {};
       let grandTotal = 0;
 
-      // Group expenses by term, then category
       expensesData.forEach(e => {
         if (!groupedByTerm[e.term]) groupedByTerm[e.term] = {};
         if (!groupedByTerm[e.term][e.category]) groupedByTerm[e.term][e.category] = [];
@@ -1007,7 +1086,6 @@
         grandTotal += e.amount;
       });
 
-      // Create sections for each term
       for (let term in groupedByTerm) {
         const termSection = document.createElement('div');
         termSection.className = 'term-section';
@@ -1026,7 +1104,6 @@
 
         let termTotal = 0;
 
-        // Create sections for each category within the term
         for (let category in groupedByTerm[term]) {
           const categorySection = document.createElement('div');
           categorySection.className = 'category-section';
@@ -1078,7 +1155,6 @@
             tbody.appendChild(row);
           });
 
-          // Add category total row
           const totalRow = document.createElement('tr');
           totalRow.className = 'total-row';
           totalRow.innerHTML = `
@@ -1093,7 +1169,6 @@
           termContent.appendChild(categorySection);
         }
 
-        // Add term total row
         const termTotalDiv = document.createElement('div');
         termTotalDiv.className = 'total-row';
         termTotalDiv.style.padding = '1rem';
@@ -1108,7 +1183,6 @@
         container.appendChild(termSection);
       }
 
-      // Add grand total if showing multiple terms
       if (Object.keys(groupedByTerm).length > 1) {
         const grandTotalDiv = document.createElement('div');
         grandTotalDiv.className = 'total-row';
@@ -1129,39 +1203,32 @@
     function updateSummaryStats(expensesData) {
       const summaryContainer = document.getElementById('expensesSummary');
       
-      // Calculate totals by term and category
       const termTotals = {};
       const categoryTotals = {};
       const monthlyTotals = {};
       let overallTotal = 0;
 
       expensesData.forEach(expense => {
-        // Term totals
         termTotals[expense.term] = (termTotals[expense.term] || 0) + expense.amount;
-        
-        // Category totals
         categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + expense.amount;
         
-        // Monthly totals (YYYY-MM format)
         const month = expense.date.substring(0, 7);
         monthlyTotals[month] = (monthlyTotals[month] || 0) + expense.amount;
         
         overallTotal += expense.amount;
       });
 
-      // Populate month filter dropdown
       const monthFilter = document.getElementById('monthFilter');
       const months = Object.keys(monthlyTotals).sort();
       monthFilter.innerHTML = '<option value="">Filter by Month</option>' + 
         months.map(m => `<option value="${m}">${new Date(m + '-01').toLocaleDateString('en-KE', { year: 'numeric', month: 'long' })}</option>`).join('');
 
-      // Create summary cards
       const currentTermText = currentActiveTerm === 'all' ? 'All Terms' : currentActiveTerm;
       summaryContainer.innerHTML = `
         <div class="summary-card">
           <h3><i class="fas fa-money-bill-wave"></i> Total Expenses</h3>
           <p class="amount">KES ${overallTotal.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-          <small style="color: #666;">${currentTermText}</small>
+          <small style="color: #666;">${currentTermText} - ${currentYear}</small>
         </div>
         
         <div class="summary-card">
@@ -1187,14 +1254,11 @@
     // Export current term data
     async function exportCurrentTerm() {
       try {
-        let query = expensesCollection;
-        
-        const snapshot = await query.get();
+        const snapshot = await getExpensesCollection().get();
         let expenses = [];
         
         snapshot.forEach(doc => {
           const e = doc.data();
-          // Filter client-side if needed
           if (currentActiveTerm === 'all' || e.term === currentActiveTerm) {
             expenses.push({
               Term: e.term,
@@ -1212,7 +1276,6 @@
           return;
         }
 
-        // Sort by date descending
         expenses.sort((a, b) => new Date(b.Date) - new Date(a.Date));
 
         const worksheet = XLSX.utils.json_to_sheet(expenses);
@@ -1220,9 +1283,7 @@
         const sheetName = currentActiveTerm === 'all' ? 'All_Terms' : currentActiveTerm.replace(' ', '_');
         XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
         
-        const fileName = currentActiveTerm === 'all' 
-          ? `all_terms_expenses_${new Date().toISOString().split('T')[0]}.xlsx`
-          : `${currentActiveTerm.toLowerCase().replace(' ', '_')}_expenses_${new Date().toISOString().split('T')[0]}.xlsx`;
+        const fileName = `${sheetName.toLowerCase()}_expenses_${currentYear}_${new Date().toISOString().split('T')[0]}.xlsx`;
           
         XLSX.writeFile(workbook, fileName);
         showStatus(`${currentActiveTerm === 'all' ? 'All terms' : currentActiveTerm} expenses exported successfully`, "success");
@@ -1235,7 +1296,7 @@
     // Edit expense function
     async function editExpense(id) {
       try {
-        const doc = await expensesCollection.doc(id).get();
+        const doc = await getExpensesCollection().doc(id).get();
         if (!doc.exists) {
           showStatus("Expense not found", "error");
           return;
@@ -1253,12 +1314,9 @@
         submitBtn.classList.add('btn-warning');
         submitBtn.classList.remove('btn-success');
         
-        // Store the expense ID for updating
         submitBtn.dataset.expenseId = id;
         
         showStatus(`Editing expense: ${expense.description}`, "info");
-        
-        // Scroll to form
         document.getElementById('expenseForm').scrollIntoView({ behavior: 'smooth' });
       } catch (error) {
         showStatus("Error loading expense: " + error.message, "error");
@@ -1268,11 +1326,11 @@
     // Delete expense function
     async function deleteExpense(id) {
       try {
-        const doc = await expensesCollection.doc(id).get();
+        const doc = await getExpensesCollection().doc(id).get();
         const expenseDesc = doc.data().description;
         
         if (confirm(`Are you sure you want to delete "${expenseDesc}"? This action cannot be undone.`)) {
-          await expensesCollection.doc(id).delete();
+          await getExpensesCollection().doc(id).delete();
           showStatus(`Expense "${expenseDesc}" deleted successfully`, "success");
           loadExpenses();
         }
@@ -1292,7 +1350,6 @@
       const date = document.getElementById('date').value;
       const submitBtn = document.getElementById('submitBtn');
 
-      // Validation
       if (!term || !description || !category || !date) {
         showStatus("Please fill in all required fields", "error");
         return;
@@ -1316,22 +1373,24 @@
 
       try {
         if (submitBtn.dataset.expenseId) {
-          // Update existing expense
-          await expensesCollection.doc(submitBtn.dataset.expenseId).update(expenseData);
+          // Update
+          await getExpensesCollection().doc(submitBtn.dataset.expenseId).update(expenseData);
           showStatus("Expense updated successfully", "success");
           
-          // Reset form to "add" mode
           submitBtn.innerHTML = '<i class="fas fa-plus-circle"></i> Add Expense';
           submitBtn.classList.remove('btn-warning');
           submitBtn.classList.add('btn-success');
           delete submitBtn.dataset.expenseId;
         } else {
-          // Add new expense
-          await expensesCollection.add(expenseData);
+          // Add
+          await getExpensesCollection().add(expenseData);
           showStatus(`Expense added to ${term} successfully`, "success");
         }
 
         this.reset();
+        // Keep the year consistent
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('date').value = today;
         loadExpenses();
       } catch (error) {
         console.error('Error saving expense:', error);
@@ -1344,7 +1403,7 @@
     // Export all expenses to Excel
     async function exportAllToExcel() {
       try {
-        const snapshot = await expensesCollection.get();
+        const snapshot = await getExpensesCollection().get();
         const expenses = [];
         
         snapshot.forEach(doc => {
@@ -1364,13 +1423,12 @@
           return;
         }
 
-        // Sort by date descending
         expenses.sort((a, b) => new Date(b.Date) - new Date(a.Date));
 
         const worksheet = XLSX.utils.json_to_sheet(expenses);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "All_Expenses");
-        XLSX.writeFile(workbook, `all_expenses_export_${new Date().toISOString().split('T')[0]}.xlsx`);
+        XLSX.writeFile(workbook, `all_expenses_${currentYear}_export.xlsx`);
         showStatus("All expenses exported to Excel successfully", "success");
       } catch (error) {
         console.error('Error exporting to Excel:', error);
@@ -1378,13 +1436,12 @@
       }
     }
 
-    // FIXED: Render charts for expense analysis (using simple queries)
+    // Render charts
     async function renderCharts() {
       try {
-        const snapshot = await expensesCollection.get();
+        const snapshot = await getExpensesCollection().get();
         let expensesData = snapshot.docs.map(doc => doc.data());
         
-        // Filter client-side by current active term if not "all"
         if (currentActiveTerm !== 'all') {
           expensesData = expensesData.filter(e => e.term === currentActiveTerm);
         }
@@ -1398,26 +1455,19 @@
         const monthlyTotals = {};
         const categoryColors = {};
 
-        // Generate colors for categories
         const categories = [...new Set(expensesData.map(e => e.category))];
         categories.forEach((cat, i) => {
           categoryColors[cat] = `hsl(${(i * 360 / categories.length)}, 70%, 60%)`;
         });
 
-        // Calculate totals
         expensesData.forEach(e => {
-          // Category totals
           categoryTotals[e.category] = (categoryTotals[e.category] || 0) + e.amount;
-          
-          // Monthly totals (YYYY-MM format)
           const month = e.date.substring(0, 7);
           monthlyTotals[month] = (monthlyTotals[month] || 0) + e.amount;
         });
 
-        // Sort months chronologically
         const sortedMonths = Object.keys(monthlyTotals).sort();
 
-        // Destroy existing charts if they exist to prevent canvas issues
         if (window.categoryChart) window.categoryChart.destroy();
         if (window.monthlyChart) window.monthlyChart.destroy();
 
@@ -1442,7 +1492,7 @@
               plugins: {
                 title: {
                   display: true,
-                  text: `Expenses by Category - ${currentTermTitle}`,
+                  text: `Expenses by Category - ${currentTermTitle} (${currentYear})`,
                   font: { size: 16, weight: 'bold' },
                   color: '#005fa3'
                 },
@@ -1489,7 +1539,7 @@
               plugins: {
                 title: {
                   display: true,
-                  text: `Monthly Expenses - ${currentTermTitle}`,
+                  text: `Monthly Expenses - ${currentTermTitle} (${currentYear})`,
                   font: { size: 16, weight: 'bold' },
                   color: '#005fa3'
                 },
@@ -1516,7 +1566,6 @@
           }
         );
 
-        // Scroll to charts
         document.querySelector('.chart-card').scrollIntoView({ behavior: 'smooth' });
         showStatus(`Charts generated for ${currentTermTitle}`, "success");
       } catch (error) {
@@ -1527,13 +1576,16 @@
 
     // Initialize the page
     document.addEventListener('DOMContentLoaded', () => {
+      // Set dropdown to match stored year
+      const yearSelector = document.getElementById('yearSelector');
+      if(yearSelector) yearSelector.value = currentYear;
+      
+      updateYearDisplays();
       loadExpenses();
       
-      // Set default date to today
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('date').value = today;
       
-      // Keyboard shortcuts
       document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
           const submitBtn = document.getElementById('submitBtn');
@@ -1543,14 +1595,13 @@
             submitBtn.classList.add('btn-success');
             delete submitBtn.dataset.expenseId;
             document.getElementById('expenseForm').reset();
-            document.getElementById('date').value = today; // Reset date to today
+            document.getElementById('date').value = today;
             showStatus("Edit mode cancelled", "info");
           }
         }
       });
       
-      // Show welcome message
-      showStatus("Expense management system loaded successfully with updated categories!", "success");
+      showStatus(`Expense system loaded for ${currentYear}`, "success");
     });
   </script>
 </body>
