@@ -51,8 +51,20 @@
     .admin-panel {
       background: linear-gradient(135deg, #2c3e50, #4ca1af);
       color: white; padding: 1rem; border-radius: var(--border-radius);
-      margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
     }
+    
+    /* Year Selector Styles */
+    .year-select-container {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(255,255,255,0.2); padding: 0.25rem 0.75rem;
+      border-radius: var(--border-radius); color: white;
+    }
+    .year-select-container select {
+      border: none; background: white; padding: 0.25rem 0.5rem;
+      border-radius: 4px; font-weight: bold; color: #333; cursor: pointer;
+    }
+
     .year-status-badge {
       padding: 0.25rem 0.75rem; border-radius: 20px; font-weight: bold; font-size: 0.9rem;
       text-transform: uppercase; margin-left: 10px;
@@ -164,8 +176,18 @@
   <div class="container">
     
     <div class="admin-panel">
-      <div>
-        <h3><i class="fas fa-shield-alt"></i> Admin Control: <span id="displayYear">2024</span></h3>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <h3><i class="fas fa-shield-alt"></i> Admin Control</h3>
+        
+        <div class="year-select-container">
+            <label>Year:</label>
+            <select id="yearSelector" onchange="switchYear(this.value)">
+              <option value="2024">2024</option>
+              <option value="2025">2025</option>
+              <option value="2026">2026</option>
+            </select>
+        </div>
+
         <span id="yearStatusBadge" class="year-status-badge status-open">Checking...</span>
       </div>
       <div>
@@ -176,7 +198,7 @@
     </div>
 
     <div class="dashboard-header">
-      <h2 class="dashboard-title">Term <span id="currentTermDisplay">2</span> Overview</h2>
+      <h2 class="dashboard-title">Overview: Term <span id="currentTermDisplay">2</span>, <span id="displayYear">2025</span></h2>
       <div class="refresh-controls">
         <button class="btn btn-primary" onclick="loadAllFinancialData()">
           <i class="fas fa-sync-alt"></i> Refresh
@@ -190,9 +212,9 @@
     <div id="statusMessage" class="status-message"></div>
 
     <div style="margin-bottom: 20px; text-align: center;">
-      <button class="btn btn-primary" onclick="switchTerm(1)">Term 1</button>
-      <button class="btn btn-primary" onclick="switchTerm(2)">Term 2</button>
-      <button class="btn btn-primary" onclick="switchTerm(3)">Term 3</button>
+      <button class="btn btn-primary term-btn" data-term="1" onclick="switchTerm(1)">Term 1</button>
+      <button class="btn btn-primary term-btn" data-term="2" onclick="switchTerm(2)">Term 2</button>
+      <button class="btn btn-primary term-btn" data-term="3" onclick="switchTerm(3)">Term 3</button>
     </div>
 
     <div class="stats-grid">
@@ -347,8 +369,9 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    let currentTerm = parseInt(sessionStorage.getItem('heriwadi_current_term')) || 2;
-    let currentYear = new Date().getFullYear();
+    // UPDATED: Use h_term and h_year to match other pages
+    let currentTerm = parseInt(sessionStorage.getItem('h_term')) || 2;
+    let currentYear = parseInt(sessionStorage.getItem('h_year')) || new Date().getFullYear();
     let isYearClosed = false;
     
     // Complete Data Storage
@@ -360,8 +383,13 @@
     };
 
     document.addEventListener('DOMContentLoaded', () => {
+      // Set dropdown and displays on load
+      const ySelect = document.getElementById('yearSelector');
+      if(ySelect) ySelect.value = currentYear;
+      
       document.getElementById('displayYear').textContent = currentYear;
       document.getElementById('currentTermDisplay').textContent = currentTerm;
+      
       checkYearStatus();
       loadAllFinancialData();
     });
@@ -375,7 +403,19 @@
 
     function switchTerm(term) {
       currentTerm = term;
+      sessionStorage.setItem('h_term', term); // Save selection
       document.getElementById('currentTermDisplay').textContent = term;
+      loadAllFinancialData();
+    }
+
+    function switchYear(year) {
+      currentYear = parseInt(year);
+      sessionStorage.setItem('h_year', year); // Save selection
+      
+      document.getElementById('displayYear').textContent = currentYear;
+      showStatus(`Switched to Financial Year: ${currentYear}`, 'info');
+      
+      checkYearStatus(); // Check if new year is locked
       loadAllFinancialData();
     }
 
@@ -388,8 +428,12 @@
       try {
         const doc = await db.collection('system_settings').doc('financial_years').get();
         if (doc.exists) {
+          // Check specifically for the currently selected year
           isYearClosed = (doc.data()[currentYear] === 'closed');
           updateAdminPanelUI();
+        } else {
+            isYearClosed = false;
+            updateAdminPanelUI();
         }
       } catch (e) { console.error(e); }
     }
@@ -398,14 +442,15 @@
       const badge = document.getElementById('yearStatusBadge');
       const btn = document.getElementById('closeYearBtn');
       if (isYearClosed) {
-        badge.textContent = "CLOSED / READ-ONLY";
+        badge.textContent = `${currentYear} CLOSED`;
         badge.className = "year-status-badge status-closed";
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-lock"></i> Year Locked';
       } else {
-        badge.textContent = "OPEN";
+        badge.textContent = `${currentYear} OPEN`;
         badge.className = "year-status-badge status-open";
         btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-lock"></i> Close Financial Year';
       }
     }
 
@@ -417,12 +462,12 @@
       await db.collection('system_settings').doc('financial_years').set({ [currentYear]: 'closed' }, { merge: true });
       isYearClosed = true;
       updateAdminPanelUI();
-      alert("Year Closed Successfully.");
+      alert(`Financial Year ${currentYear} Closed Successfully.`);
     }
 
     // --- 2. Data Loading (Updated to include Students for Departments) ---
     async function loadAllFinancialData() {
-      showStatus("Loading all data...", "info");
+      showStatus(`Loading data for Term ${currentTerm}, ${currentYear}...`, "info");
       financialData = { students: [], receipts: [], expenses: [], bankTransactions: [] };
 
       try {
@@ -434,11 +479,12 @@
         const rSnap = await db.collection(`receipts_${currentYear}_term_${currentTerm}`).get();
         rSnap.forEach(doc => financialData.receipts.push({ id: doc.id, ...doc.data() }));
 
-        // 3. Load Expenses
+        // 3. Load Expenses (Filter by selected year in memory)
         const eSnap = await db.collection('expenses').get();
         eSnap.forEach(doc => {
           const d = doc.data();
-          if(getTermFromDate(d.date) === currentTerm && new Date(d.date).getFullYear() === currentYear) {
+          const expenseDate = new Date(d.date);
+          if(getTermFromDate(d.date) === currentTerm && expenseDate.getFullYear() === currentYear) {
             financialData.expenses.push(d);
           }
         });
@@ -608,7 +654,7 @@
         data: {
           labels: ['Income', 'Expenses', 'Net Profit'],
           datasets: [{
-            label: 'Current Term',
+            label: `Term ${currentTerm} (${currentYear})`,
             data: [inc, exp, inc-exp],
             backgroundColor: ['#28a745', '#dc3545', '#005fa3']
           }]
@@ -643,7 +689,7 @@
     }
 
     async function generateTaxReport() {
-      if(!confirm("Fetch Annual Data for Tax Report?")) return;
+      if(!confirm(`Fetch Annual Data for Tax Report for ${currentYear}?`)) return;
       let annInc = 0, annExp = 0;
       
       // Fetch All Terms (1-3)
