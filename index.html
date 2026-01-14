@@ -210,6 +210,33 @@
             align-items: center;
             gap: 0.5rem;
         }
+        
+        /* NEW YEAR SELECTOR STYLES */
+        .year-select-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--info-color);
+            padding: 0.4rem 0.8rem;
+            border-radius: var(--border-radius);
+            color: white;
+            box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);
+        }
+
+        .year-select-container label {
+            font-weight: 500;
+        }
+
+        .year-select-container select {
+            border: none;
+            background: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 6px;
+            font-weight: bold;
+            color: var(--dark-color);
+            cursor: pointer;
+            outline: none;
+        }
 
         .term-buttons {
             display: flex;
@@ -252,15 +279,6 @@
             color: white;
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(0, 95, 163, 0.3);
-        }
-
-        .current-term-info {
-            background: linear-gradient(135deg, var(--info-color), #138496);
-            color: white;
-            padding: 0.75rem 1.25rem;
-            border-radius: var(--border-radius);
-            font-weight: 600;
-            box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);
         }
 
         /* Dashboard Grid */
@@ -673,7 +691,6 @@
     </style>
 </head>
 <body>
-    <!-- Loading Screen -->
     <div class="loading-screen" id="loadingScreen">
         <div class="loading-logo">
             <i class="fas fa-school"></i>
@@ -699,16 +716,16 @@
     </nav>
 
     <div class="container">
-        <!-- Status Messages -->
         <div id="statusMessage" class="status-message"></div>
 
-        <!-- Term Selector -->
         <div class="term-selector">
-            <div>
-                <h3><i class="fas fa-calendar-alt"></i> Academic Term</h3>
-                <div class="current-term-info">
-                    Current Academic Year: <span id="currentYear">2024</span>
-                </div>
+            <div class="year-select-container">
+                <label><i class="fas fa-calendar-alt"></i> Academic Year:</label>
+                <select id="yearSelector" onchange="switchYear(this.value)">
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                    <option value="2026">2026</option>
+                </select>
             </div>
             <div class="term-buttons">
                 <button class="term-btn" data-term="1" onclick="switchTerm(1)">Term 1</button>
@@ -717,7 +734,6 @@
             </div>
         </div>
 
-        <!-- Dashboard Grid -->
         <div class="dashboard-grid">
             <div class="metric-card">
                 <div class="metric-header">
@@ -788,11 +804,10 @@
             </div>
         </div>
 
-        <!-- Charts Section -->
         <div class="charts-section">
             <div class="chart-card">
                 <h2 class="chart-title">
-                    <i class="fas fa-chart-line"></i> Financial Overview - <span id="chartTermDisplay">Term 2</span>
+                    <i class="fas fa-chart-line"></i> Financial Overview - <span id="chartTermDisplay">Term 2</span> (<span id="chartYearDisplay">2025</span>)
                 </h2>
                 <div class="chart-container">
                     <canvas id="financialChart"></canvas>
@@ -824,7 +839,6 @@
             </div>
         </div>
 
-        <!-- Quick Actions -->
         <div class="quick-actions">
             <a href="students.html" class="action-btn">
                 <div class="action-icon">
@@ -878,12 +892,10 @@
         </div>
     </div>
 
-    <!-- Refresh Button -->
     <button class="refresh-btn" id="refreshBtn" onclick="refreshAllData()" title="Refresh Data">
         <i class="fas fa-sync-alt"></i>
     </button>
 
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
@@ -915,9 +927,11 @@
             throw error;
         }
 
-        // Global state
-        let currentTerm = parseInt(sessionStorage.getItem('heriwadi_current_term')) || 2;
-        let currentYear = new Date().getFullYear();
+        // Global state - UPDATED to match receipts.html storage keys ('h_term', 'h_year')
+        // This ensures both pages are always in sync
+        let currentTerm = parseInt(sessionStorage.getItem('h_term')) || 1;
+        let currentYear = parseInt(sessionStorage.getItem('h_year')) || new Date().getFullYear();
+        
         let dashboardData = {
             students: [],
             staff: [],
@@ -951,23 +965,31 @@
 
         // Initialize term from storage and update UI
         function initializeTermFromStorage() {
+            // Update Term Buttons
             document.querySelectorAll('.term-btn').forEach(btn => {
                 btn.classList.toggle('active', parseInt(btn.dataset.term) === currentTerm);
             });
+            // Update Year Select dropdown
+            const yearSelector = document.getElementById('yearSelector');
+            if(yearSelector) yearSelector.value = currentYear;
+
             updateTermDisplays();
-            console.log(`Initialized with Term ${currentTerm} from storage`);
+            console.log(`Initialized with Term ${currentTerm}, Year ${currentYear} from storage`);
         }
 
         // Update all term displays
         function updateTermDisplays() {
-            document.getElementById('currentYear').textContent = currentYear;
+            // Updated to show year on chart title
+            const yearDisplay = document.getElementById('chartYearDisplay');
+            if(yearDisplay) yearDisplay.textContent = currentYear;
+            
             document.getElementById('chartTermDisplay').textContent = `Term ${currentTerm}`;
         }
 
         // Switch term function with persistent storage
         function switchTerm(term) {
             currentTerm = term;
-            sessionStorage.setItem('heriwadi_current_term', term.toString());
+            sessionStorage.setItem('h_term', term.toString());
             
             document.querySelectorAll('.term-btn').forEach(btn => {
                 btn.classList.toggle('active', parseInt(btn.dataset.term) === term);
@@ -978,10 +1000,20 @@
             showStatus(`Switched to Term ${term} - Data refreshed`, "success");
         }
 
+        // NEW: Switch Year Function
+        function switchYear(year) {
+            currentYear = parseInt(year);
+            sessionStorage.setItem('h_year', year.toString());
+            
+            updateTermDisplays();
+            loadDashboardData();
+            showStatus(`Switched to Year ${year} - Data refreshed`, "success");
+        }
+
         // Load all dashboard data
         async function loadDashboardData() {
             try {
-                showStatus("Loading dashboard data...", "info");
+                showStatus(`Loading data for Term ${currentTerm}, ${currentYear}...`, "info");
                 
                 // Show loading states
                 document.getElementById('totalStudents').innerHTML = '<span class="loading">Loading...</span>';
@@ -1054,7 +1086,7 @@
             // Students metrics
             const totalStudents = dashboardData.students.length;
             document.getElementById('totalStudents').textContent = totalStudents.toLocaleString();
-            document.getElementById('studentTrend').innerHTML = `<i class="fas fa-users"></i> Current term enrollment`;
+            document.getElementById('studentTrend').innerHTML = `<i class="fas fa-users"></i> Term ${currentTerm} enrollment`;
             document.getElementById('studentTrend').className = 'trend-up';
 
             // Staff metrics
@@ -1092,28 +1124,33 @@
             // Process receipts
             dashboardData.receipts.forEach(receipt => {
                 const date = receipt.date;
-                if (!dailyData[date]) {
-                    dailyData[date] = { revenue: 0, expenses: 0 };
+                // Normalize date string to group correctly if timestamps differ
+                const dateKey = new Date(date).toDateString();
+                
+                if (!dailyData[dateKey]) {
+                    dailyData[dateKey] = { revenue: 0, expenses: 0, rawDate: new Date(date) };
                 }
-                dailyData[date].revenue += receipt.paid || 0;
+                dailyData[dateKey].revenue += receipt.paid || 0;
             });
 
             // Process expenses
             dashboardData.expenses.forEach(expense => {
                 const date = expense.date;
-                if (!dailyData[date]) {
-                    dailyData[date] = { revenue: 0, expenses: 0 };
+                const dateKey = new Date(date).toDateString();
+
+                if (!dailyData[dateKey]) {
+                    dailyData[dateKey] = { revenue: 0, expenses: 0, rawDate: new Date(date) };
                 }
-                dailyData[date].expenses += expense.amount || 0;
+                dailyData[dateKey].expenses += expense.amount || 0;
             });
 
             // Sort dates and prepare data for chart
-            const sortedDates = Object.keys(dailyData).sort();
-            const last30Days = sortedDates.slice(-30); // Show last 30 days with data
+            const sortedDates = Object.values(dailyData).sort((a, b) => a.rawDate - b.rawDate);
+            const last30Days = sortedDates.slice(-30); // Show last 30 active days
             
-            const labels = last30Days.map(date => new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' }));
-            const revenueData = last30Days.map(date => dailyData[date].revenue);
-            const expenseData = last30Days.map(date => dailyData[date].expenses);
+            const labels = last30Days.map(d => d.rawDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' }));
+            const revenueData = last30Days.map(d => d.revenue);
+            const expenseData = last30Days.map(d => d.expenses);
 
             if (charts.financial) {
                 charts.financial.destroy();
@@ -1239,7 +1276,8 @@
                     icon: 'receipt',
                     title: `Payment received from ${receipt.name}`,
                     time: getRelativeTime(new Date(receipt.date)),
-                    amount: `KES ${receipt.paid.toLocaleString('en-KE')}`
+                    amount: `KES ${receipt.paid.toLocaleString('en-KE')}`,
+                    sortTime: new Date(receipt.date)
                 });
             });
 
@@ -1253,12 +1291,13 @@
                     icon: 'money-bill-wave',
                     title: expense.description,
                     time: getRelativeTime(new Date(expense.date)),
-                    amount: `KES ${expense.amount.toLocaleString('en-KE')}`
+                    amount: `KES ${expense.amount.toLocaleString('en-KE')}`,
+                    sortTime: new Date(expense.date)
                 });
             });
 
             // Sort all activities by date and take the most recent 5
-            const sortedActivities = activities.slice(0, 5);
+            const sortedActivities = activities.sort((a, b) => b.sortTime - a.sortTime).slice(0, 5);
 
             activitiesEl.innerHTML = sortedActivities.length > 0 ? 
                 sortedActivities.map(activity => `
