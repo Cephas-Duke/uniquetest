@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Enhanced Payroll | Heriwadi Christian Schools Ltd</title>
+  <title>Payroll Management | Heriwadi Christian Schools Ltd</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
@@ -22,381 +22,82 @@
       --info-color: #17a2b8;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--light-gray); color: var(--dark-gray); line-height: 1.6; }
 
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: var(--light-gray);
-      color: var(--dark-gray);
-      line-height: 1.6;
-    }
+    /* Header */
+    header { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: var(--white); padding: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+    header h1 { font-size: 1.8rem; display: flex; align-items: center; gap: 10px; }
+    .home-btn { background: rgba(255,255,255,0.2); color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 5px; transition: background 0.3s; font-weight: 500; }
+    .home-btn:hover { background: rgba(255,255,255,0.3); }
 
-    /* Header & Nav (Consistent with Dashboard) */
-    header {
-      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-      color: var(--white);
-      padding: 1.5rem;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+    /* Layout */
+    .container { max-width: 1400px; margin: 20px auto; padding: 0 20px; display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
+    .card { background: var(--white); border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow: hidden; display: flex; flex-direction: column; }
+    .card-header { background-color: var(--secondary-color); color: var(--white); padding: 15px 20px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+    .card-body { padding: 20px; flex: 1; overflow-y: auto; }
 
-    header h1 {
-      font-size: 1.8rem;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+    /* Form & Inputs */
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: 500; color: #555; }
+    .form-control { width: 100%; padding: 10px; border: 1px solid var(--medium-gray); border-radius: 5px; font-size: 14px; transition: border-color 0.3s; }
+    .form-control:focus { border-color: var(--primary-color); outline: none; }
+    .row { display: flex; gap: 10px; }
+    .col { flex: 1; }
 
-    .home-btn {
-      background: rgba(255,255,255,0.2);
-      color: white;
-      text-decoration: none;
-      padding: 0.5rem 1rem;
-      border-radius: 5px;
-      transition: background 0.3s;
-      font-weight: 500;
-    }
-
-    .home-btn:hover {
-      background: rgba(255,255,255,0.3);
-    }
-
-    /* Main Container */
-    .container {
-      max-width: 1400px;
-      margin: 20px auto;
-      padding: 0 20px;
-      display: grid;
-      grid-template-columns: 350px 1fr;
-      gap: 20px;
-    }
-
-    /* Cards */
-    .card {
-      background: var(--white);
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .card-header {
-      background-color: var(--secondary-color);
-      color: var(--white);
-      padding: 15px 20px;
-      font-weight: 600;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .card-body {
-      padding: 20px;
-      flex: 1;
-      overflow-y: auto;
-    }
-
-    /* Form Elements */
-    .form-group {
-      margin-bottom: 15px;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: 500;
-      color: #555;
-    }
-
-    .form-control {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid var(--medium-gray);
-      border-radius: 5px;
-      font-size: 14px;
-      transition: border-color 0.3s;
-    }
-
-    .form-control:focus {
-      border-color: var(--primary-color);
-      outline: none;
-    }
-
-    select.form-control {
-      background-color: white;
-    }
-    
-    .row {
-      display: flex;
-      gap: 10px;
-    }
-    
-    .col {
-      flex: 1;
-    }
-
-    /* Filters Section */
-    .filters {
-      display: flex;
-      gap: 15px;
-      margin-bottom: 20px;
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .filter-group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    .filter-group label {
-        font-weight: 600;
-        color: var(--secondary-color);
-    }
-    
-    .filter-group select {
-        padding: 8px 12px;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-        font-weight: 500;
-        background-color: #f8f9fa;
-        min-width: 120px;
-    }
-
-    .search-box {
-      flex: 1;
-      position: relative;
-    }
-
-    .search-box input {
-      width: 100%;
-      padding: 10px 10px 10px 35px;
-      border: 1px solid var(--medium-gray);
-      border-radius: 20px;
-    }
-
-    .search-box i {
-      position: absolute;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #999;
-    }
+    /* Filters */
+    .filters { display: flex; gap: 15px; margin-bottom: 20px; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); align-items: center; flex-wrap: wrap; }
+    .filter-group { display: flex; align-items: center; gap: 10px; }
+    .filter-group label { font-weight: 600; color: var(--secondary-color); }
+    .filter-group select { padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font-weight: 500; background-color: #f8f9fa; min-width: 120px; }
+    .search-box { flex: 1; position: relative; }
+    .search-box input { width: 100%; padding: 10px 10px 10px 35px; border: 1px solid var(--medium-gray); border-radius: 20px; }
+    .search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #999; }
 
     /* Staff List */
-    .staff-list {
-      list-style: none;
-      max-height: 500px;
-      overflow-y: auto;
-    }
-
-    .staff-item {
-      padding: 12px;
-      border-bottom: 1px solid var(--light-gray);
-      cursor: pointer;
-      transition: background 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .staff-item:hover {
-      background-color: #f0f7ff;
-    }
-
-    .staff-item.active {
-      background-color: #e6f2ff;
-      border-left: 4px solid var(--primary-color);
-    }
-
-    .staff-avatar {
-      width: 40px;
-      height: 40px;
-      background-color: var(--secondary-color);
-      color: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-    }
-
-    .staff-info h4 {
-      font-size: 15px;
-      margin-bottom: 2px;
-    }
-
-    .staff-info p {
-      font-size: 12px;
-      color: #777;
-    }
-    
-    .status-badge {
-        font-size: 10px;
-        padding: 2px 6px;
-        border-radius: 10px;
-        margin-left: auto;
-    }
-    
+    .staff-list { list-style: none; max-height: 500px; overflow-y: auto; }
+    .staff-item { padding: 12px; border-bottom: 1px solid var(--light-gray); cursor: pointer; transition: background 0.2s; display: flex; align-items: center; gap: 12px; }
+    .staff-item:hover { background-color: #f0f7ff; }
+    .staff-item.active { background-color: #e6f2ff; border-left: 4px solid var(--primary-color); }
+    .staff-avatar { width: 40px; height: 40px; background-color: var(--secondary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+    .staff-info h4 { font-size: 15px; margin-bottom: 2px; }
+    .staff-info p { font-size: 12px; color: #777; }
+    .status-badge { font-size: 10px; padding: 2px 6px; border-radius: 10px; margin-left: auto; }
     .status-paid { background: #d4edda; color: #155724; }
     .status-pending { background: #fff3cd; color: #856404; }
 
-    /* Payroll Table */
-    .table-container {
-      overflow-x: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-
-    th, td {
-      padding: 12px 15px;
-      text-align: left;
-      border-bottom: 1px solid var(--light-gray);
-    }
-
-    th {
-      background-color: #f8f9fa;
-      color: var(--secondary-color);
-      font-weight: 600;
-      position: sticky;
-      top: 0;
-    }
-
-    tr:hover {
-      background-color: #f9f9f9;
-    }
-
-    /* Buttons */
-    .btn {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: 500;
-      transition: all 0.3s;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .btn-primary { background-color: var(--primary-color); color: white; }
-    .btn-primary:hover { background-color: var(--secondary-color); }
-
-    .btn-success { background-color: var(--success-color); color: white; }
-    .btn-success:hover { background-color: #218838; }
-    
-    .btn-danger { background-color: var(--error-color); color: white; }
-    .btn-danger:hover { background-color: #c82333; }
-
-    .btn-block { width: 100%; justify-content: center; }
-
-    .action-btn {
-      padding: 5px 10px;
-      font-size: 12px;
-      border-radius: 4px;
-      margin-right: 5px;
-    }
-
-    /* Summary Section */
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-      margin-bottom: 20px;
-    }
-
-    .summary-card {
-      background: white;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-
-    .summary-icon {
-      width: 45px;
-      height: 45px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      color: white;
-    }
-
+    /* Tables & Summaries */
+    .table-container { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--light-gray); }
+    th { background-color: #f8f9fa; color: var(--secondary-color); font-weight: 600; position: sticky; top: 0; }
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .summary-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 15px; }
+    .summary-icon { width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; color: white; }
     .bg-blue { background: var(--info-color); }
     .bg-green { background: var(--success-color); }
     .bg-orange { background: var(--warning-color); }
+    .summary-text h3 { font-size: 18px; margin-bottom: 2px; }
+    .summary-text p { font-size: 12px; color: #666; }
 
-    .summary-text h3 {
-      font-size: 18px;
-      margin-bottom: 2px;
-    }
-    
-    .summary-text p {
-        font-size: 12px;
-        color: #666;
-    }
-    
-    /* Loading & Status */
-    .loading-overlay {
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(255,255,255,0.8);
-        display: none;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-        flex-direction: column;
-    }
-    
-    .spinner {
-        width: 40px; height: 40px;
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid var(--primary-color);
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin-bottom: 10px;
-    }
-    
+    /* Buttons */
+    .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: 500; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; }
+    .btn-primary { background-color: var(--primary-color); color: white; }
+    .btn-primary:hover { background-color: var(--secondary-color); }
+    .btn-success { background-color: var(--success-color); color: white; }
+    .btn-danger { background-color: var(--error-color); color: white; }
+    .btn-block { width: 100%; justify-content: center; }
+    .action-btn { padding: 5px 10px; font-size: 12px; border-radius: 4px; margin-right: 5px; }
+
+    /* Utilities */
+    .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; }
+    .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 10px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-    .status-msg {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 15px 25px;
-        border-radius: 5px;
-        color: white;
-        transform: translateX(150%);
-        transition: transform 0.3s ease-out;
-        z-index: 2000;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    
+    .status-msg { position: fixed; top: 20px; right: 20px; padding: 15px 25px; border-radius: 5px; color: white; transform: translateX(150%); transition: transform 0.3s ease-out; z-index: 2000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
     .status-msg.show { transform: translateX(0); }
     .status-msg.success { background-color: var(--success-color); }
     .status-msg.error { background-color: var(--error-color); }
 
-    /* Responsive */
     @media (max-width: 900px) {
       .container { grid-template-columns: 1fr; }
       .staff-list { max-height: 300px; }
@@ -416,13 +117,6 @@
   <header>
     <h1><i class="fas fa-money-check-alt"></i> Payroll Management</h1>
     <a href="index.html" class="home-btn"><i class="fas fa-home"></i> Dashboard</a>
-    <a href="receipts.html"><i class="fas fa-receipt"></i> Receipts</a>
-    <a href="students.html"><i class="fas fa-users"></i> Students</a>
-    <a href="expense.html"><i class="fas fa-money-bill-wave"></i> Expenses</a>
-    <a href="assets.html"><i class="fas fa-laptop-house"></i> Assets</a>
-    <a href="staff.html"><i class="fas fa-user-tie"></i> Staff</a>
-    <a href="payroll.html"><i class="fas fa-money-check-alt"></i> Payroll</a>
-    <a href="financials.html"><i class="fas fa-chart-line"></i> Financials</a>
   </header>
 
   <div class="container">
@@ -441,15 +135,14 @@
         
         <div class="filter-group">
             <label>Month:</label>
-            <select id="monthSelect" onchange="changeMonth(this.value)">
-                </select>
+            <select id="monthSelect" onchange="changeMonth(this.value)"></select>
         </div>
       </div>
       
       <div class="card">
         <div class="card-header">
           <span>Staff Directory</span>
-          <button class="action-btn btn-success" onclick="openStaffModal()"><i class="fas fa-plus"></i> New</button>
+          <small style="font-weight: 400; font-size: 0.8em; opacity: 0.8;">(From Staff Pg)</small>
         </div>
         <div class="card-body" style="padding: 10px;">
           <div class="search-box" style="margin-bottom: 15px;">
@@ -588,7 +281,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr><td colspan="9" style="text-align: center;">Select a month and year to view records</td></tr>
+              <tr><td colspan="9" style="text-align: center;">Loading records...</td></tr>
             </tbody>
           </table>
         </div>
@@ -616,7 +309,6 @@
     const db = firebase.firestore();
 
     // --- Global State ---
-    // Initialize Year from Session Storage (Same as Dashboard)
     let currentYear = parseInt(sessionStorage.getItem('h_year')) || new Date().getFullYear();
     const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     let currentMonth = months[new Date().getMonth()];
@@ -628,16 +320,16 @@
     function init() {
         populateMonths();
         
-        // Set Year Dropdown to match Session
+        // Sync Year UI
         const yearSelect = document.getElementById('yearSelect');
         if(yearSelect) yearSelect.value = currentYear;
         
-        // Set Month Dropdown
+        // Sync Month UI
         document.getElementById('monthSelect').value = currentMonth;
         
         updateDisplays();
-        loadStaff(); // Load staff list
-        loadPayroll(); // Load payroll for selected Month/Year
+        loadStaff(); // Load staff for specific year
+        loadPayroll(); // Load payroll records
     }
 
     function populateMonths() {
@@ -652,14 +344,15 @@
         });
     }
 
-    // Handle Year Change
     function changeYear(year) {
         currentYear = parseInt(year);
-        sessionStorage.setItem('h_year', year); // Persist logic
+        sessionStorage.setItem('h_year', year); 
         showStatus(`Year switched to ${year}`, 'info');
         updateDisplays();
-        loadPayroll(); // Reload data for new year
-        checkPaymentStatus(); // Update sidebar badges
+        
+        // IMPORTANT: Reload staff list because the collection name changes (e.g. staff_2024 -> staff_2025)
+        loadStaff(); 
+        loadPayroll();
     }
 
     function changeMonth(month) {
@@ -675,48 +368,74 @@
 
     // --- Data Loading ---
 
-    // Load Staff Directory
+    // CORRECTED: Fetches from dynamic collection based on year
     function loadStaff() {
-        db.collection('staff').orderBy('name').get().then(snapshot => {
+        const staffCollectionName = `staff_${currentYear}`; // Match the logic in staff.html
+        
+        const list = document.getElementById('staffList');
+        list.innerHTML = '<li style="text-align: center; color: #888; padding: 20px;">Loading staff...</li>';
+
+        db.collection(staffCollectionName).orderBy('fullName').get().then(snapshot => {
             staffData = [];
-            const list = document.getElementById('staffList');
             list.innerHTML = '';
             
+            if(snapshot.empty) {
+                list.innerHTML = `<li style="text-align: center; color: #888; padding: 20px;">No staff found for ${currentYear}</li>`;
+                document.getElementById('totalStaffCount').textContent = 0;
+                return;
+            }
+
             snapshot.forEach(doc => {
                 const staff = doc.data();
-                staff.id = doc.id;
+                // Ensure we have an ID. Prefer manual staffId, fallback to doc ID
+                staff.docId = doc.id; 
                 staffData.push(staff);
                 
                 const li = document.createElement('li');
                 li.className = 'staff-item';
                 li.onclick = () => selectStaff(staff);
-                li.id = `staff-${staff.id}`;
+                li.id = `staff-${doc.id}`;
                 
+                // Note: using staff.fullName (matches staff.html)
                 li.innerHTML = `
-                    <div class="staff-avatar">${getInitials(staff.name)}</div>
+                    <div class="staff-avatar">${getInitials(staff.fullName)}</div>
                     <div class="staff-info">
-                        <h4>${staff.name}</h4>
+                        <h4>${staff.fullName}</h4>
                         <p>${staff.role || 'Staff'}</p>
                     </div>
-                    <span class="status-badge status-pending" id="badge-${staff.id}">Pending</span>
+                    <span class="status-badge status-pending" id="badge-${doc.id}">Pending</span>
                 `;
                 list.appendChild(li);
             });
             
             document.getElementById('totalStaffCount').textContent = staffData.length;
-            checkPaymentStatus();
+            checkPaymentStatus(); // Update badges if payroll loaded first
             
         }).catch(err => {
             console.error("Error loading staff:", err);
+            list.innerHTML = `<li style="text-align: center; color: var(--error-color); padding: 20px;">Error loading staff list.</li>`;
             showStatus("Failed to load staff list", "error");
         });
     }
 
-    // Load Payroll Records for Current Month AND Year
+    function filterStaff() {
+        const query = document.getElementById('staffSearch').value.toLowerCase();
+        const list = document.getElementById('staffList');
+        const items = list.getElementsByClassName('staff-item');
+        
+        Array.from(items).forEach(item => {
+            const name = item.querySelector('h4').textContent.toLowerCase();
+            const role = item.querySelector('p').textContent.toLowerCase();
+            if(name.includes(query) || role.includes(query)) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+
     function loadPayroll() {
         showLoader(true);
-        // Query: collection('payroll') where month == currentMonth AND year == currentYear
-        // Note: We store year as Number to match Index.html logic
         db.collection('payroll')
           .where('month', '==', currentMonth)
           .where('year', '==', currentYear) 
@@ -751,15 +470,13 @@
                         <td style="font-weight:bold; color:var(--secondary-color)">${(record.netPay || 0).toLocaleString()}</td>
                         <td><span class="status-badge status-paid">Paid</span></td>
                         <td>
-                            <button class="action-btn btn-danger" onclick="deleteRecord('${record.id}', '${record.staffId}')"><i class="fas fa-trash"></i></button>
-                            <button class="action-btn btn-primary" onclick="printSlip('${record.id}')"><i class="fas fa-print"></i></button>
+                            <button class="action-btn btn-danger" onclick="deleteRecord('${record.id}')"><i class="fas fa-trash"></i></button>
                         </td>
                       `;
                       tbody.appendChild(tr);
                   });
               }
 
-              // Update Summary
               document.getElementById('totalPayout').textContent = `KES ${totalPayout.toLocaleString()}`;
               document.getElementById('paidCount').textContent = paidCount;
               
@@ -773,16 +490,16 @@
           });
     }
 
-    // Check who has been paid this month/year and update sidebar badges
     function checkPaymentStatus() {
-        // Reset all to pending
+        // Reset all badges
         document.querySelectorAll('.status-badge').forEach(el => {
             el.className = 'status-badge status-pending';
             el.textContent = 'Pending';
         });
 
-        // Update paid ones
+        // Mark paid staff
         payrollData.forEach(record => {
+            // We use the Firestore Document ID of the staff member to match
             const badge = document.getElementById(`badge-${record.staffId}`);
             if (badge) {
                 badge.className = 'status-badge status-paid';
@@ -796,27 +513,30 @@
     function selectStaff(staff) {
         // Highlight in sidebar
         document.querySelectorAll('.staff-item').forEach(i => i.classList.remove('active'));
-        document.getElementById(`staff-${staff.id}`).classList.add('active');
+        const activeItem = document.getElementById(`staff-${staff.docId}`);
+        if(activeItem) activeItem.classList.add('active');
 
-        // Check if already paid
-        const existingRecord = payrollData.find(r => r.staffId === staff.id);
+        // Check duplicate
+        const existingRecord = payrollData.find(r => r.staffId === staff.docId);
         if (existingRecord) {
-            showStatus(`${staff.name} has already been paid for ${currentMonth} ${currentYear}`, "warning");
+            showStatus(`${staff.fullName} has already been paid for this month`, "warning");
         }
 
         // Populate Form
         document.getElementById('formTitle').textContent = "Processing Payment for:";
-        document.getElementById('selectedStaffName').textContent = staff.name;
+        document.getElementById('selectedStaffName').textContent = staff.fullName;
         
-        document.getElementById('staffId').value = staff.id;
-        document.getElementById('staffName').value = staff.name;
+        document.getElementById('staffId').value = staff.docId; // Store doc ID
+        document.getElementById('staffName').value = staff.fullName;
         document.getElementById('staffRole').value = staff.role;
         document.getElementById('basicSalary').value = staff.salary || 0;
+        
+        // Auto-fill advance if it exists on staff record
+        document.getElementById('advance').value = staff.advance || 0;
         
         document.getElementById('submitBtn').disabled = false;
         calculateNet();
         
-        // Mobile UX: Scroll to form
         if(window.innerWidth < 900) {
             document.querySelector('.main-content').scrollIntoView({behavior: 'smooth'});
         }
@@ -853,12 +573,12 @@
             paymentMethod: document.getElementById('paymentMethod').value,
             reference: document.getElementById('reference').value,
             month: currentMonth,
-            year: currentYear, // SAVING WITH SELECTED YEAR
+            year: currentYear,
             date: new Date().toISOString(),
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
-        // Create a unique ID: Month_Year_StaffId to prevent duplicates
+        // Create ID to prevent duplicates per month
         const docId = `${currentMonth}_${currentYear}_${formData.staffId}`;
 
         db.collection('payroll').doc(docId).set(formData)
@@ -866,19 +586,18 @@
                 showLoader(false);
                 showStatus("Payment recorded successfully!", "success");
                 resetForm();
-                loadPayroll(); // Refresh list
+                loadPayroll(); 
                 
-                // Add to Expenses Collection (Global integration)
-                const expenseData = {
+                // Optional: Add to Expenses automatically
+                db.collection('expenses').add({
                     category: 'Salaries',
                     description: `Salary - ${formData.staffName} (${currentMonth})`,
                     amount: formData.netPay,
                     date: new Date().toISOString().split('T')[0],
-                    year: currentYear, // Crucial for Dashboard filtering
-                    term: getTermFromMonth(currentMonth), // Helper to guess term
+                    year: currentYear,
+                    term: getTermFromMonth(currentMonth),
                     recordedBy: 'Payroll System'
-                };
-                db.collection('expenses').add(expenseData);
+                });
             })
             .catch(err => {
                 showLoader(false);
@@ -887,7 +606,7 @@
             });
     }
 
-    function deleteRecord(docId, staffId) {
+    function deleteRecord(docId) {
         if(!confirm("Are you sure you want to void this payment record?")) return;
         
         showLoader(true);
@@ -896,7 +615,6 @@
                 showLoader(false);
                 showStatus("Record deleted", "success");
                 loadPayroll();
-                // Note: Ideally, you should also remove the corresponding Expense entry, but that's more complex without ID linkage.
             })
             .catch(err => {
                 showLoader(false);
@@ -913,7 +631,6 @@
     }
 
     // --- Helpers ---
-    
     function getInitials(name) {
         return name ? name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() : '??';
     }
@@ -929,7 +646,6 @@
         document.getElementById('loader').style.display = show ? 'flex' : 'none';
     }
 
-    // Helper to map month to term (approximate for Expense tagging)
     function getTermFromMonth(month) {
         const m = months.indexOf(month) + 1;
         if (m >= 1 && m <= 4) return 1;
@@ -937,7 +653,7 @@
         return 3;
     }
 
-    // --- PDF Generation ---
+    // --- PDF Ledger ---
     window.generateLedger = function() {
       if (payrollData.length === 0) {
         showStatus("No data available to generate ledger", "error");
@@ -947,16 +663,14 @@
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
 
-      // Header
       doc.setFontSize(18);
-      doc.setTextColor(0, 89, 163); // Brand color
+      doc.setTextColor(0, 89, 163);
       doc.text("Heriwadi Christian Schools Ltd", 105, 20, { align: "center" });
       
       doc.setFontSize(14);
       doc.setTextColor(60);
       doc.text(`Salary Ledger - ${currentMonth} ${currentYear}`, 105, 30, { align: "center" });
 
-      // Table
       const tableData = payrollData.map(row => [
         new Date(row.date).toLocaleDateString(),
         row.staffName,
@@ -965,7 +679,6 @@
         row.netPay.toLocaleString()
       ]);
 
-      // Calculate Total
       const grandTotal = payrollData.reduce((sum, r) => sum + r.netPay, 0);
       tableData.push(["", "", "TOTAL PAYOUT", "", grandTotal.toLocaleString()]);
 
@@ -987,9 +700,7 @@
       showStatus("Ledger generated successfully", "success");
     }
 
-    // Start
     document.addEventListener('DOMContentLoaded', init);
-
   </script>
 </body>
 </html>
