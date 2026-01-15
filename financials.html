@@ -54,7 +54,6 @@
       margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
     }
     
-    /* Year Selector Styles */
     .year-select-container {
       display: inline-flex; align-items: center; gap: 0.5rem;
       background: rgba(255,255,255,0.2); padding: 0.25rem 0.75rem;
@@ -115,14 +114,19 @@
     .department-content { padding: 1.5rem; display: none; }
     .department-content.active { display: block; }
 
+    /* Enhanced Mini Stat Grid */
     .mini-stat-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      display: grid; grid-template-columns: repeat(4, 1fr); /* Force 4 columns for P/L view */
       gap: 1rem; margin-bottom: 1.5rem;
     }
     .mini-stat {
       background: #f8f9fa; padding: 1rem; border-radius: var(--border-radius); text-align: center;
+      border: 1px solid #eee;
     }
-    .mini-stat label { font-size: 0.85rem; color: #666; display: block; margin-bottom: 0.5rem; }
+    /* Highlight the Net P/L box */
+    .mini-stat.pl-box { border: 2px solid #ddd; background: #fff; }
+
+    .mini-stat label { font-size: 0.85rem; color: #666; display: block; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; }
     .mini-stat span { font-size: 1.2rem; font-weight: bold; }
 
     .transactions-table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
@@ -245,7 +249,8 @@
         <div class="mini-stat-grid">
           <div class="mini-stat"><label>Total Income</label><span class="positive" id="bankIncome">KES 0</span></div>
           <div class="mini-stat"><label>Total Expenses</label><span class="negative" id="bankExpenses">KES 0</span></div>
-          <div class="mini-stat"><label>Net Flow</label><span id="bankNetFlow">KES 0</span></div>
+          <div class="mini-stat pl-box"><label>Net Flow</label><span id="bankNetFlow">KES 0</span></div>
+          <div class="mini-stat"><label>Transactions</label><span id="bankTxCount">0</span></div>
         </div>
         <table class="transactions-table">
           <thead><tr><th>Date</th><th>Description</th><th>Type</th><th>Amount</th><th>Balance</th></tr></thead>
@@ -261,20 +266,22 @@
       </div>
       <div class="department-content" id="transportContent">
         <div class="mini-stat-grid">
-          <div class="mini-stat"><label>Students</label><span id="transportStudents">0</span></div>
-          <div class="mini-stat"><label>Revenue</label><span class="positive" id="transportRevenue">KES 0</span></div>
-          <div class="mini-stat"><label>Expenses</label><span class="negative" id="transportExpenses">KES 0</span></div>
-          <div class="mini-stat"><label>Net P&L</label><span id="transportNet">KES 0</span></div>
+          <div class="mini-stat"><label>Revenue (Collected)</label><span class="positive" id="transportRevenue">KES 0</span></div>
+          <div class="mini-stat"><label>Expenses (Paid)</label><span class="negative" id="transportExpenses">KES 0</span></div>
+          <div class="mini-stat pl-box"><label>Net P/L</label><span id="transportNet">KES 0</span></div>
+          <div class="mini-stat"><label>Active Students</label><span id="transportStudents">0</span></div>
         </div>
-        <h4>Student Payments</h4>
-        <table class="transactions-table">
-          <thead><tr><th>Name</th><th>Fee</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead>
-          <tbody id="transportStudentsTable"></tbody>
-        </table>
-        <h4>Department Expenses</h4>
+        
+        <h4>Department Expenses (Debits)</h4>
         <table class="transactions-table">
           <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr></thead>
           <tbody id="transportExpensesTable"></tbody>
+        </table>
+
+        <h4 style="margin-top: 20px;">Student Payments (Credits)</h4>
+        <table class="transactions-table">
+          <thead><tr><th>Name</th><th>Fee Allocated</th><th>Paid</th><th>Balance</th></tr></thead>
+          <tbody id="transportStudentsTable"></tbody>
         </table>
       </div>
     </div>
@@ -286,20 +293,22 @@
       </div>
       <div class="department-content" id="foodContent">
         <div class="mini-stat-grid">
-          <div class="mini-stat"><label>Students</label><span id="foodStudents">0</span></div>
-          <div class="mini-stat"><label>Revenue</label><span class="positive" id="foodRevenue">KES 0</span></div>
-          <div class="mini-stat"><label>Expenses</label><span class="negative" id="foodExpenses">KES 0</span></div>
-          <div class="mini-stat"><label>Net P&L</label><span id="foodNet">KES 0</span></div>
+          <div class="mini-stat"><label>Revenue (Collected)</label><span class="positive" id="foodRevenue">KES 0</span></div>
+          <div class="mini-stat"><label>Expenses (Paid)</label><span class="negative" id="foodExpenses">KES 0</span></div>
+          <div class="mini-stat pl-box"><label>Net P/L</label><span id="foodNet">KES 0</span></div>
+          <div class="mini-stat"><label>Active Students</label><span id="foodStudents">0</span></div>
         </div>
-        <h4>Student Payments</h4>
-        <table class="transactions-table">
-          <thead><tr><th>Name</th><th>Fee</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead>
-          <tbody id="foodStudentsTable"></tbody>
-        </table>
-        <h4>Department Expenses</h4>
+
+        <h4>Department Expenses (Debits)</h4>
         <table class="transactions-table">
           <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr></thead>
           <tbody id="foodExpensesTable"></tbody>
+        </table>
+
+        <h4 style="margin-top: 20px;">Student Payments (Credits)</h4>
+        <table class="transactions-table">
+          <thead><tr><th>Name</th><th>Fee Allocated</th><th>Paid</th><th>Balance</th></tr></thead>
+          <tbody id="foodStudentsTable"></tbody>
         </table>
       </div>
     </div>
@@ -311,20 +320,22 @@
       </div>
       <div class="department-content" id="uniformContent">
         <div class="mini-stat-grid">
-          <div class="mini-stat"><label>Students</label><span id="uniformStudents">0</span></div>
-          <div class="mini-stat"><label>Revenue</label><span class="positive" id="uniformRevenue">KES 0</span></div>
-          <div class="mini-stat"><label>Expenses</label><span class="negative" id="uniformExpenses">KES 0</span></div>
-          <div class="mini-stat"><label>Net P&L</label><span id="uniformNet">KES 0</span></div>
+          <div class="mini-stat"><label>Revenue (Collected)</label><span class="positive" id="uniformRevenue">KES 0</span></div>
+          <div class="mini-stat"><label>Expenses (Paid)</label><span class="negative" id="uniformExpenses">KES 0</span></div>
+          <div class="mini-stat pl-box"><label>Net P/L</label><span id="uniformNet">KES 0</span></div>
+          <div class="mini-stat"><label>Active Students</label><span id="uniformStudents">0</span></div>
         </div>
-        <h4>Student Payments</h4>
-        <table class="transactions-table">
-          <thead><tr><th>Name</th><th>Fee</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead>
-          <tbody id="uniformStudentsTable"></tbody>
-        </table>
-        <h4>Department Expenses</h4>
+
+        <h4>Department Expenses (Debits)</h4>
         <table class="transactions-table">
           <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr></thead>
           <tbody id="uniformExpensesTable"></tbody>
+        </table>
+
+        <h4 style="margin-top: 20px;">Student Payments (Credits)</h4>
+        <table class="transactions-table">
+          <thead><tr><th>Name</th><th>Fee Allocated</th><th>Paid</th><th>Balance</th></tr></thead>
+          <tbody id="uniformStudentsTable"></tbody>
         </table>
       </div>
     </div>
@@ -369,7 +380,6 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // UPDATED: Use h_term and h_year to match other pages
     let currentTerm = parseInt(sessionStorage.getItem('h_term')) || 2;
     let currentYear = parseInt(sessionStorage.getItem('h_year')) || new Date().getFullYear();
     let isYearClosed = false;
@@ -383,7 +393,6 @@
     };
 
     document.addEventListener('DOMContentLoaded', () => {
-      // Set dropdown and displays on load
       const ySelect = document.getElementById('yearSelector');
       if(ySelect) ySelect.value = currentYear;
       
@@ -403,19 +412,19 @@
 
     function switchTerm(term) {
       currentTerm = term;
-      sessionStorage.setItem('h_term', term); // Save selection
+      sessionStorage.setItem('h_term', term);
       document.getElementById('currentTermDisplay').textContent = term;
       loadAllFinancialData();
     }
 
     function switchYear(year) {
       currentYear = parseInt(year);
-      sessionStorage.setItem('h_year', year); // Save selection
+      sessionStorage.setItem('h_year', year);
       
       document.getElementById('displayYear').textContent = currentYear;
       showStatus(`Switched to Financial Year: ${currentYear}`, 'info');
       
-      checkYearStatus(); // Check if new year is locked
+      checkYearStatus();
       loadAllFinancialData();
     }
 
@@ -423,12 +432,10 @@
       document.getElementById(id+'Content').classList.toggle('active');
     }
 
-    // --- 1. Admin Year Lock ---
     async function checkYearStatus() {
       try {
         const doc = await db.collection('system_settings').doc('financial_years').get();
         if (doc.exists) {
-          // Check specifically for the currently selected year
           isYearClosed = (doc.data()[currentYear] === 'closed');
           updateAdminPanelUI();
         } else {
@@ -465,13 +472,13 @@
       alert(`Financial Year ${currentYear} Closed Successfully.`);
     }
 
-    // --- 2. Data Loading (Updated to include Students for Departments) ---
+    // --- Data Loading with Fixes ---
     async function loadAllFinancialData() {
       showStatus(`Loading data for Term ${currentTerm}, ${currentYear}...`, "info");
       financialData = { students: [], receipts: [], expenses: [], bankTransactions: [] };
 
       try {
-        // 1. Load Students (Needed for fee allocation calculation)
+        // 1. Load Students
         const sSnap = await db.collection(`students_${currentYear}_term_${currentTerm}`).get();
         sSnap.forEach(doc => financialData.students.push({ id: doc.id, ...doc.data() }));
 
@@ -479,18 +486,22 @@
         const rSnap = await db.collection(`receipts_${currentYear}_term_${currentTerm}`).get();
         rSnap.forEach(doc => financialData.receipts.push({ id: doc.id, ...doc.data() }));
 
-        // 3. Load Expenses (Filter by selected year in memory)
+        // 3. Load Expenses (Fixes for date parsing)
         const eSnap = await db.collection('expenses').get();
         eSnap.forEach(doc => {
           const d = doc.data();
-          const expenseDate = new Date(d.date);
-          if(getTermFromDate(d.date) === currentTerm && expenseDate.getFullYear() === currentYear) {
+          const dDate = d.date ? new Date(d.date) : new Date(); // Fallback if date invalid
+          
+          // Check term and year matching
+          if(getTermFromDate(d.date) === currentTerm && dDate.getFullYear() === currentYear) {
             financialData.expenses.push(d);
           }
         });
 
-        processFinancials(); // Updates Bank & Charts
-        updateDepartmentSections(); // Updates Transport/Food/Uniform
+        console.log(`Loaded ${financialData.expenses.length} expenses for this term.`);
+
+        processFinancials(); 
+        updateDepartmentSections(); 
         showStatus("Dashboard Updated", "success");
 
       } catch (e) {
@@ -500,13 +511,14 @@
     }
 
     function getTermFromDate(dateString) {
+      if(!dateString) return currentTerm; // Fail safe
       const month = new Date(dateString).getMonth() + 1;
       if (month <= 4) return 1;
       if (month <= 8) return 2;
       return 3;
     }
 
-    // --- 3. General Processing (Bank & Overview) ---
+    // --- Processing ---
     function processFinancials() {
       let income = 0;
       let expense = 0;
@@ -536,6 +548,7 @@
       document.getElementById('bankIncome').textContent = `KES ${income.toLocaleString()}`;
       document.getElementById('bankExpenses').textContent = `KES ${expense.toLocaleString()}`;
       document.getElementById('bankNetFlow').textContent = `KES ${(income - expense).toLocaleString()}`;
+      document.getElementById('bankTxCount').textContent = transactions.length;
 
       // Render Bank Table (Last 20)
       const tbody = document.getElementById('bankTransactionsTable');
@@ -553,20 +566,29 @@
       renderChart(income, expense);
     }
 
-    // --- 4. Department Logic (Restored) ---
+    // --- Enhanced Department Logic ---
     function updateDepartmentSections() {
-      updateDepartment('transport', ['Motor vehicle expenses', 'Fuel & Gas', 'Transport']);
-      updateDepartment('lunch', ['Food']); // 'lunch' matches student field
-      updateDepartment('uniform', ['Uniform Purchase', 'Staff Uniforms']);
+      // BROADER CATEGORIES TO FIX FETCHING ISSUES
+      // This helper checks if the expense category loosely matches our targets
+      
+      updateDepartment('transport', ['Transport', 'Fuel', 'Gas', 'Bus', 'Van', 'Motor', 'Repair', 'Maintenance', 'Oil']);
+      updateDepartment('lunch', ['Food', 'Kitchen', 'Lunch', 'Meal', 'Cook', 'Charcoal', 'Gas', 'Groceries']); 
+      updateDepartment('uniform', ['Uniform', 'Tailor', 'Fabric', 'Material', 'Cloth']);
     }
 
-    function updateDepartment(feeType, expenseCategories) {
+    function isCategoryMatch(expenseCat, targetKeywords) {
+      if(!expenseCat) return false;
+      const normCat = expenseCat.toLowerCase().trim();
+      return targetKeywords.some(keyword => normCat.includes(keyword.toLowerCase()));
+    }
+
+    function updateDepartment(feeType, expenseKeywords) {
       let revenue = 0;
       const studentList = [];
       const expenseList = [];
       let totalExpenses = 0;
 
-      // 1. Calculate Revenue from Student Payments
+      // 1. Calculate Revenue (Allocated from Receipts)
       financialData.students.forEach(student => {
         if (student[feeType] && student[feeType] > 0) {
           // Find total paid by this student
@@ -593,28 +615,28 @@
         }
       });
 
-      // 2. Calculate Expenses
+      // 2. Calculate Expenses (Using Smart Match)
       financialData.expenses.forEach(e => {
-        if(expenseCategories.includes(e.category)) {
+        if(isCategoryMatch(e.category, expenseKeywords)) {
           totalExpenses += (e.amount || 0);
           expenseList.push(e);
         }
       });
 
       const profit = revenue - totalExpenses;
-      const prefix = feeType === 'lunch' ? 'food' : feeType; // UI ID mapping
+      const prefix = feeType === 'lunch' ? 'food' : feeType; 
 
       // Update UI Stats
       document.getElementById(`${prefix}Students`).textContent = studentList.length;
       document.getElementById(`${prefix}Revenue`).textContent = `KES ${revenue.toLocaleString(undefined, {maximumFractionDigits: 0})}`;
       document.getElementById(`${prefix}Expenses`).textContent = `KES ${totalExpenses.toLocaleString()}`;
+      
       const plEl = document.getElementById(`${prefix}Net`);
       const plStat = document.getElementById(`${prefix}PL`);
       
       plEl.textContent = `KES ${profit.toLocaleString(undefined, {maximumFractionDigits: 0})}`;
       plEl.className = profit >= 0 ? "positive" : "negative";
       
-      // Update Top Grid Stat
       if(plStat) {
         plStat.textContent = `KES ${profit.toLocaleString(undefined, {maximumFractionDigits: 0})}`;
         plStat.className = profit >= 0 ? "stat-value positive" : "stat-value negative";
@@ -628,22 +650,25 @@
           <td>${s.name}</td>
           <td>${s.fee.toLocaleString()}</td>
           <td>${s.paid.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
-          <td style="color:${s.bal>0?'red':'green'}">${s.bal.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
-          <td>${s.bal <= 0 ? 'Paid' : 'Due'}</td>
+          <td style="color:${s.bal>100?'red':'green'}">${s.bal.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
         </tr>`;
       });
 
       // Update Expense Table
       const eTable = document.getElementById(`${prefix}ExpensesTable`);
       eTable.innerHTML = '';
-      expenseList.forEach(e => {
-        eTable.innerHTML += `<tr>
-          <td>${new Date(e.date).toLocaleDateString()}</td>
-          <td>${e.description}</td>
-          <td>${e.category}</td>
-          <td>${e.amount.toLocaleString()}</td>
-        </tr>`;
-      });
+      if(expenseList.length === 0) {
+          eTable.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#777;">No expenses found for this category</td></tr>`;
+      } else {
+        expenseList.forEach(e => {
+          eTable.innerHTML += `<tr>
+            <td>${new Date(e.date).toLocaleDateString()}</td>
+            <td>${e.description}</td>
+            <td>${e.category}</td>
+            <td>${e.amount.toLocaleString()}</td>
+          </tr>`;
+        });
+      }
     }
 
     function renderChart(inc, exp) {
@@ -662,7 +687,7 @@
       });
     }
 
-    // --- 5. Report Logic ---
+    // --- Report Logic ---
     function openReportModal() { document.getElementById('reportModal').classList.add('show'); }
     function closeReportModal() { document.getElementById('reportModal').classList.remove('show'); }
 
@@ -677,7 +702,6 @@
       ];
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sData), "Summary");
       
-      // Ledger
       const lData = financialData.bankTransactions.map(t => ({
         Date: new Date(t.date).toLocaleDateString(),
         Desc: t.desc, Type: t.type, Debit: t.type==='Debit'?t.amount:0, Credit: t.type==='Credit'?t.amount:0, Bal: t.balance
@@ -692,7 +716,6 @@
       if(!confirm(`Fetch Annual Data for Tax Report for ${currentYear}?`)) return;
       let annInc = 0, annExp = 0;
       
-      // Fetch All Terms (1-3)
       for(let t=1; t<=3; t++) {
         try {
           const rSnap = await db.collection(`receipts_${currentYear}_term_${t}`).get();
