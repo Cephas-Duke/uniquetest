@@ -674,7 +674,7 @@
         <i class="fas fa-calendar-alt"></i> Academic Terms - <span id="currentYearDisplay"></span>
       </h2>
       <div class="term-tabs" id="termTabs">
-        <div class="term-tab active" onclick="setActiveTerm('all')">
+        <div class="term-tab active" id="tab-all" onclick="setActiveTerm('all')">
           <i class="fas fa-list"></i> All Terms
           <span class="badge" id="allTermsBadge">0</span>
         </div>
@@ -917,17 +917,29 @@
       }, 5000);
     }
 
-    // Year Switch Function
+    // FIXED: Year Switch Function
     function switchYear(year) {
         currentYear = parseInt(year);
         sessionStorage.setItem('h_year', year.toString());
         
+        // 1. Reset All Filters to prevent old year data conflict
+        document.getElementById('searchInput').value = '';
+        document.getElementById('categoryFilter').value = '';
+        document.getElementById('monthFilter').innerHTML = '<option value="">Filter by Month</option>'; // Clear months
+        document.getElementById('monthFilter').value = '';
+        
+        // 2. Reset Active Term to 'all'
+        currentActiveTerm = 'all';
+        document.querySelectorAll('.term-tab').forEach(tab => tab.classList.remove('active'));
+        const allTab = document.getElementById('tab-all');
+        if(allTab) allTab.classList.add('active');
+
         // Update UI displays
         updateYearDisplays();
         
         // Reload Data
         loadExpenses();
-        showStatus(`Switched to Year ${year}`, "success");
+        showStatus(`Switched to Financial Year ${year}`, "success");
     }
 
     function updateYearDisplays() {
@@ -958,6 +970,12 @@
       const searchQuery = document.getElementById('searchInput').value.toLowerCase();
       const categoryFilter = document.getElementById('categoryFilter').value;
       const monthFilter = document.getElementById('monthFilter').value;
+      
+      // FIXED: Ensure we don't apply a month filter from a different year
+      if(monthFilter && !monthFilter.startsWith(currentYear.toString())) {
+          console.warn("Cleared invalid month filter from previous year");
+          document.getElementById('monthFilter').value = "";
+      }
 
       // Use dynamic collection
       let query = getExpensesCollection();
@@ -968,6 +986,9 @@
         query = query.where('date', '>=', `${monthFilter}-01`)
                      .where('date', '<=', `${monthFilter}-31`);
       }
+
+      const container = document.getElementById("groupedExpenses");
+      container.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner"></i> Loading records...</div>';
 
       query.get().then(snapshot => {
         let expensesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -996,6 +1017,7 @@
         updateSummaryStats(expensesData);
       }).catch(error => {
         console.error('Error loading expenses:', error);
+        container.innerHTML = `<div class="status-message error">Error loading data: ${error.message}</div>`;
         showStatus(`Error loading expenses: ${error.message}`, "error");
       });
 
@@ -1080,9 +1102,11 @@
       let grandTotal = 0;
 
       expensesData.forEach(e => {
-        if (!groupedByTerm[e.term]) groupedByTerm[e.term] = {};
-        if (!groupedByTerm[e.term][e.category]) groupedByTerm[e.term][e.category] = [];
-        groupedByTerm[e.term][e.category].push(e);
+        // Handle undefined terms gracefully
+        const termName = e.term || "Unspecified Term";
+        if (!groupedByTerm[termName]) groupedByTerm[termName] = {};
+        if (!groupedByTerm[termName][e.category]) groupedByTerm[termName][e.category] = [];
+        groupedByTerm[termName][e.category].push(e);
         grandTotal += e.amount;
       });
 
@@ -1209,19 +1233,28 @@
       let overallTotal = 0;
 
       expensesData.forEach(expense => {
-        termTotals[expense.term] = (termTotals[expense.term] || 0) + expense.amount;
-        categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + expense.amount;
+        if(expense.term) termTotals[expense.term] = (termTotals[expense.term] || 0) + expense.amount;
+        if(expense.category) categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + expense.amount;
         
-        const month = expense.date.substring(0, 7);
-        monthlyTotals[month] = (monthlyTotals[month] || 0) + expense.amount;
+        if(expense.date) {
+            const month = expense.date.substring(0, 7);
+            monthlyTotals[month] = (monthlyTotals[month] || 0) + expense.amount;
+        }
         
         overallTotal += expense.amount;
       });
 
+      // Maintain current selection if it matches current year
       const monthFilter = document.getElementById('monthFilter');
+      const currentSelection = monthFilter.value;
+      
       const months = Object.keys(monthlyTotals).sort();
       monthFilter.innerHTML = '<option value="">Filter by Month</option>' + 
         months.map(m => `<option value="${m}">${new Date(m + '-01').toLocaleDateString('en-KE', { year: 'numeric', month: 'long' })}</option>`).join('');
+      
+      if(currentSelection && currentSelection.startsWith(currentYear.toString())) {
+          monthFilter.value = currentSelection;
+      }
 
       const currentTermText = currentActiveTerm === 'all' ? 'All Terms' : currentActiveTerm;
       summaryContainer.innerHTML = `
