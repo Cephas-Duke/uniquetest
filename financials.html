@@ -114,24 +114,32 @@
     .department-content { padding: 1.5rem; display: none; }
     .department-content.active { display: block; }
 
-    /* Enhanced Mini Stat Grid */
     .mini-stat-grid {
-      display: grid; grid-template-columns: repeat(4, 1fr); /* Force 4 columns for P/L view */
+      display: grid; grid-template-columns: repeat(4, 1fr);
       gap: 1rem; margin-bottom: 1.5rem;
     }
     .mini-stat {
       background: #f8f9fa; padding: 1rem; border-radius: var(--border-radius); text-align: center;
       border: 1px solid #eee;
     }
-    /* Highlight the Net P/L box */
     .mini-stat.pl-box { border: 2px solid #ddd; background: #fff; }
-
     .mini-stat label { font-size: 0.85rem; color: #666; display: block; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; }
     .mini-stat span { font-size: 1.2rem; font-weight: bold; }
 
     .transactions-table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
     .transactions-table th, .transactions-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #eee; }
     .transactions-table th { background: #f8f9fa; }
+    
+    /* TOTAL ROW STYLING */
+    .table-total-row {
+        background-color: #e9ecef;
+        font-weight: bold;
+        border-top: 2px solid #ced4da;
+    }
+    .table-total-row td {
+        font-size: 1rem;
+        color: var(--primary-color);
+    }
 
     /* Modals */
     .modal {
@@ -182,7 +190,6 @@
     <div class="admin-panel">
       <div style="display: flex; align-items: center; gap: 10px;">
         <h3><i class="fas fa-shield-alt"></i> Admin Control</h3>
-        
         <div class="year-select-container">
             <label>Year:</label>
             <select id="yearSelector" onchange="switchYear(this.value)">
@@ -191,7 +198,6 @@
               <option value="2026">2026</option>
             </select>
         </div>
-
         <span id="yearStatusBadge" class="year-status-badge status-open">Checking...</span>
       </div>
       <div>
@@ -282,6 +288,7 @@
         <table class="transactions-table">
           <thead><tr><th>Name</th><th>Fee Allocated</th><th>Paid</th><th>Balance</th></tr></thead>
           <tbody id="transportStudentsTable"></tbody>
+          <tfoot id="transportStudentsTableFooter"></tfoot>
         </table>
       </div>
     </div>
@@ -309,6 +316,7 @@
         <table class="transactions-table">
           <thead><tr><th>Name</th><th>Fee Allocated</th><th>Paid</th><th>Balance</th></tr></thead>
           <tbody id="foodStudentsTable"></tbody>
+          <tfoot id="foodStudentsTableFooter"></tfoot>
         </table>
       </div>
     </div>
@@ -336,6 +344,7 @@
         <table class="transactions-table">
           <thead><tr><th>Name</th><th>Fee Allocated</th><th>Paid</th><th>Balance</th></tr></thead>
           <tbody id="uniformStudentsTable"></tbody>
+          <tfoot id="uniformStudentsTableFooter"></tfoot>
         </table>
       </div>
     </div>
@@ -384,7 +393,13 @@
     let currentYear = parseInt(sessionStorage.getItem('h_year')) || new Date().getFullYear();
     let isYearClosed = false;
     
-    // Complete Data Storage
+    // Mapping numbers to string format used in expense.html
+    const termMapping = {
+      1: "First Term",
+      2: "Second Term",
+      3: "Third Term"
+    };
+
     let financialData = {
       students: [],
       receipts: [],
@@ -420,10 +435,8 @@
     function switchYear(year) {
       currentYear = parseInt(year);
       sessionStorage.setItem('h_year', year);
-      
       document.getElementById('displayYear').textContent = currentYear;
       showStatus(`Switched to Financial Year: ${currentYear}`, 'info');
-      
       checkYearStatus();
       loadAllFinancialData();
     }
@@ -472,7 +485,7 @@
       alert(`Financial Year ${currentYear} Closed Successfully.`);
     }
 
-    // --- Data Loading with Fixes ---
+    // --- Data Loading: Fixed Collection Name & Term Logic ---
     async function loadAllFinancialData() {
       showStatus(`Loading data for Term ${currentTerm}, ${currentYear}...`, "info");
       financialData = { students: [], receipts: [], expenses: [], bankTransactions: [] };
@@ -486,19 +499,24 @@
         const rSnap = await db.collection(`receipts_${currentYear}_term_${currentTerm}`).get();
         rSnap.forEach(doc => financialData.receipts.push({ id: doc.id, ...doc.data() }));
 
-        // 3. Load Expenses (Fixes for date parsing)
-        const eSnap = await db.collection('expenses').get();
+        // 3. Load Expenses (FIXED: Correct Collection & Term Filtering)
+        // Note: Using the specific year collection as seen in expense.html
+        const eSnap = await db.collection(`expenses_${currentYear}`).get();
+        
+        const targetTermString = termMapping[currentTerm]; // e.g., "Second Term"
+        
         eSnap.forEach(doc => {
           const d = doc.data();
-          const dDate = d.date ? new Date(d.date) : new Date(); // Fallback if date invalid
-          
-          // Check term and year matching
-          if(getTermFromDate(d.date) === currentTerm && dDate.getFullYear() === currentYear) {
-            financialData.expenses.push(d);
+          // Match by the stored term string (preferred) OR fallback to date logic
+          if (d.term === targetTermString) {
+             financialData.expenses.push(d);
+          } else if (!d.term && getTermFromDate(d.date) === currentTerm) {
+             // Fallback for legacy data without term string
+             financialData.expenses.push(d);
           }
         });
 
-        console.log(`Loaded ${financialData.expenses.length} expenses for this term.`);
+        console.log(`Loaded ${financialData.expenses.length} expenses for ${targetTermString}.`);
 
         processFinancials(); 
         updateDepartmentSections(); 
@@ -511,7 +529,7 @@
     }
 
     function getTermFromDate(dateString) {
-      if(!dateString) return currentTerm; // Fail safe
+      if(!dateString) return currentTerm;
       const month = new Date(dateString).getMonth() + 1;
       if (month <= 4) return 1;
       if (month <= 8) return 2;
@@ -550,7 +568,6 @@
       document.getElementById('bankNetFlow').textContent = `KES ${(income - expense).toLocaleString()}`;
       document.getElementById('bankTxCount').textContent = transactions.length;
 
-      // Render Bank Table (Last 20)
       const tbody = document.getElementById('bankTransactionsTable');
       tbody.innerHTML = '';
       transactions.slice().reverse().slice(0, 20).forEach(t => {
@@ -566,14 +583,12 @@
       renderChart(income, expense);
     }
 
-    // --- Enhanced Department Logic ---
+    // --- Enhanced Department Logic with Totals ---
     function updateDepartmentSections() {
-      // BROADER CATEGORIES TO FIX FETCHING ISSUES
-      // This helper checks if the expense category loosely matches our targets
-      
+      // Robust matching keywords based on expense.html categories
       updateDepartment('transport', ['Transport', 'Fuel', 'Gas', 'Bus', 'Van', 'Motor', 'Repair', 'Maintenance', 'Oil']);
       updateDepartment('lunch', ['Food', 'Kitchen', 'Lunch', 'Meal', 'Cook', 'Charcoal', 'Gas', 'Groceries']); 
-      updateDepartment('uniform', ['Uniform', 'Tailor', 'Fabric', 'Material', 'Cloth']);
+      updateDepartment('uniform', ['Uniform', 'Tailor', 'Fabric', 'Material', 'Cloth', 'Staff Uniforms']);
     }
 
     function isCategoryMatch(expenseCat, targetKeywords) {
@@ -587,6 +602,11 @@
       const studentList = [];
       const expenseList = [];
       let totalExpenses = 0;
+      
+      // Variables for Column Totals
+      let totalFeeAllocated = 0;
+      let totalPaidAllocated = 0;
+      let totalBalance = 0;
 
       // 1. Calculate Revenue (Allocated from Receipts)
       financialData.students.forEach(student => {
@@ -605,17 +625,24 @@
             allocatedPaid = totalPaid * (student[feeType] / totalFees);
           }
           revenue += allocatedPaid;
+          
+          const currentBalance = student[feeType] - allocatedPaid;
+
+          // Accumulate Totals
+          totalFeeAllocated += student[feeType];
+          totalPaidAllocated += allocatedPaid;
+          totalBalance += currentBalance;
 
           studentList.push({
             name: student.name,
             fee: student[feeType],
             paid: allocatedPaid,
-            bal: student[feeType] - allocatedPaid
+            bal: currentBalance
           });
         }
       });
 
-      // 2. Calculate Expenses (Using Smart Match)
+      // 2. Calculate Expenses
       financialData.expenses.forEach(e => {
         if(isCategoryMatch(e.category, expenseKeywords)) {
           totalExpenses += (e.amount || 0);
@@ -653,6 +680,17 @@
           <td style="color:${s.bal>100?'red':'green'}">${s.bal.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
         </tr>`;
       });
+
+      // Update Totals Footer
+      const tFooter = document.getElementById(`${prefix}StudentsTableFooter`);
+      tFooter.innerHTML = `
+        <tr class="table-total-row">
+            <td>TOTALS</td>
+            <td>${totalFeeAllocated.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
+            <td>${totalPaidAllocated.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
+            <td>${totalBalance.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
+        </tr>
+      `;
 
       // Update Expense Table
       const eTable = document.getElementById(`${prefix}ExpensesTable`);
@@ -723,9 +761,9 @@
         } catch(e){}
       }
       
-      const eSnap = await db.collection('expenses').get();
+      const eSnap = await db.collection(`expenses_${currentYear}`).get();
       eSnap.forEach(d => {
-        if(new Date(d.data().date).getFullYear() === currentYear) annExp += (d.data().amount || 0);
+         annExp += (d.data().amount || 0);
       });
 
       const wb = XLSX.utils.book_new();
