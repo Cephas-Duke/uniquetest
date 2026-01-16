@@ -82,23 +82,26 @@
       cursor: pointer; transition: var(--transition); display: inline-flex;
       align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 500;
     }
+    .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.8rem; }
     .btn-primary { background: var(--primary-color); color: white; }
     .btn-danger { background: var(--danger-color); color: white; }
     .btn-success { background: var(--success-color); color: white; }
     .btn-warning { background: var(--warning-color); color: #333; }
+    .btn-info { background: var(--info-color); color: white; }
 
     /* Stats Grid */
     .stats-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 1.5rem; margin-bottom: 2rem;
     }
     .stat-card {
       background: white; border-radius: var(--border-radius);
       box-shadow: var(--box-shadow); padding: 1.5rem; transition: var(--transition);
+      border-left: 4px solid var(--primary-color);
     }
     .stat-card:hover { transform: translateY(-2px); }
-    .stat-title { font-size: 1rem; color: #666; margin-bottom: 0.5rem; }
-    .stat-value { font-size: 1.8rem; font-weight: bold; }
+    .stat-title { font-size: 0.9rem; color: #666; margin-bottom: 0.5rem; font-weight: 500;}
+    .stat-value { font-size: 1.6rem; font-weight: bold; }
     .positive { color: var(--success-color); }
     .negative { color: var(--danger-color); }
 
@@ -111,6 +114,8 @@
       padding: 1rem 1.5rem; background: var(--primary-color); color: white;
       display: flex; justify-content: space-between; align-items: center; cursor: pointer;
     }
+    .department-header:hover { background: var(--secondary-color); }
+    
     .department-content { padding: 1.5rem; display: none; }
     .department-content.active { display: block; }
 
@@ -126,9 +131,11 @@
     .mini-stat label { font-size: 0.85rem; color: #666; display: block; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; }
     .mini-stat span { font-size: 1.2rem; font-weight: bold; }
 
+    .table-container { overflow-x: auto; }
     .transactions-table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
     .transactions-table th, .transactions-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #eee; }
-    .transactions-table th { background: #f8f9fa; }
+    .transactions-table th { background: #f8f9fa; color: #444; font-weight: 600; white-space: nowrap; }
+    .transactions-table tr:hover { background-color: #f1f1f1; }
     
     /* TOTAL ROW STYLING */
     .table-total-row {
@@ -157,11 +164,23 @@
     }
     .report-option:hover { background-color: #f0f8ff; border-color: var(--primary-color); }
 
-    .status-message { padding: 10px; margin: 10px 0; border-radius: 5px; display: none; }
+    .status-message { padding: 10px; margin: 10px 0; border-radius: 5px; display: none; text-align: center; }
     .status-message.active { display: block; }
     .status-success { background: #d4edda; color: #155724; }
     .status-error { background: #f8d7da; color: #721c24; }
     .status-info { background: #d1ecf1; color: #0c5460; }
+
+    /* Loading Overlay */
+    #loadingOverlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(255,255,255,0.9); z-index: 2000;
+        display: none; flex-direction: column; justify-content: center; align-items: center;
+    }
+    .spinner {
+        border: 5px solid #f3f3f3; border-top: 5px solid var(--primary-color);
+        border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
     @media (max-width: 768px) {
       .stats-grid, .mini-stat-grid { grid-template-columns: 1fr; }
@@ -169,6 +188,12 @@
   </style>
 </head>
 <body>
+
+  <div id="loadingOverlay">
+      <div class="spinner"></div>
+      <p style="margin-top: 15px; font-weight: 500; color: #555;">Processing Financial Data...</p>
+  </div>
+
   <header>
     <h1>Heriwadi Christian Schools Ltd</h1>
     <p>Financial Management Dashboard</p>
@@ -232,15 +257,19 @@
         <div class="stat-title">Net Bank Balance</div>
         <div class="stat-value" id="bankBalance">KES 0</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" style="border-left-color: var(--info-color);">
+        <div class="stat-title">Tuition P&L</div>
+        <div class="stat-value" id="tuitionPL">KES 0</div>
+      </div>
+      <div class="stat-card" style="border-left-color: var(--warning-color);">
         <div class="stat-title">Transport P&L</div>
         <div class="stat-value" id="transportPL">KES 0</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" style="border-left-color: var(--success-color);">
         <div class="stat-title">Food P&L</div>
         <div class="stat-value" id="foodPL">KES 0</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" style="border-left-color: var(--accent-color);">
         <div class="stat-title">Uniform P&L</div>
         <div class="stat-value" id="uniformPL">KES 0</div>
       </div>
@@ -258,10 +287,50 @@
           <div class="mini-stat pl-box"><label>Net Flow</label><span id="bankNetFlow">KES 0</span></div>
           <div class="mini-stat"><label>Transactions</label><span id="bankTxCount">0</span></div>
         </div>
-        <table class="transactions-table">
-          <thead><tr><th>Date</th><th>Description</th><th>Type</th><th>Amount</th><th>Balance</th></tr></thead>
-          <tbody id="bankTransactionsTable"></tbody>
-        </table>
+        <div class="table-container">
+            <table class="transactions-table" id="bankTable">
+            <thead><tr><th>Date</th><th>Description</th><th>Type</th><th>Amount</th><th>Balance</th></tr></thead>
+            <tbody id="bankTransactionsTable"></tbody>
+            </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="department-section">
+      <div class="department-header" onclick="toggleSection('tuition')">
+        <h3><i class="fas fa-graduation-cap"></i> Tuition & Admin Department</h3>
+        <i class="fas fa-chevron-down" id="tuitionChevron"></i>
+      </div>
+      <div class="department-content" id="tuitionContent">
+        <div class="mini-stat-grid">
+          <div class="mini-stat"><label>Revenue (Tuition Allocated)</label><span class="positive" id="tuitionRevenue">KES 0</span></div>
+          <div class="mini-stat"><label>Expenses (Admin/Salaries)</label><span class="negative" id="tuitionExpenses">KES 0</span></div>
+          <div class="mini-stat pl-box"><label>Net P/L</label><span id="tuitionNet">KES 0</span></div>
+          <div class="mini-stat"><label>Paying Students</label><span id="tuitionStudents">0</span></div>
+        </div>
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; margin-bottom:10px;">
+             <h4>Department Expenses (Debits)</h4>
+             <button class="btn btn-sm btn-info" onclick="exportTableToCSV('tuitionExpensesTable', 'Tuition_Expenses')"><i class="fas fa-download"></i> Export</button>
+        </div>
+        <div class="table-container">
+            <table class="transactions-table" id="tuitionExpensesTable">
+            <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr></thead>
+            <tbody id="tuitionExpensesTableBody"></tbody>
+            </table>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; margin-bottom:10px;">
+            <h4>Student Payments (Credits)</h4>
+            <button class="btn btn-sm btn-info" onclick="exportTableToCSV('tuitionStudentsTable', 'Tuition_Payments')"><i class="fas fa-download"></i> Export</button>
+       </div>
+        <div class="table-container">
+            <table class="transactions-table" id="tuitionStudentsTable">
+            <thead><tr><th>Name</th><th>Tuition Fee</th><th>Paid (Allocated)</th><th>Balance</th></tr></thead>
+            <tbody id="tuitionStudentsTableBody"></tbody>
+            <tfoot id="tuitionStudentsTableFooter"></tfoot>
+            </table>
+        </div>
       </div>
     </div>
 
@@ -278,18 +347,28 @@
           <div class="mini-stat"><label>Active Students</label><span id="transportStudents">0</span></div>
         </div>
         
-        <h4>Department Expenses (Debits)</h4>
-        <table class="transactions-table">
-          <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr></thead>
-          <tbody id="transportExpensesTable"></tbody>
-        </table>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; margin-bottom:10px;">
+            <h4>Department Expenses</h4>
+            <button class="btn btn-sm btn-info" onclick="exportTableToCSV('transportExpensesTable', 'Transport_Expenses')"><i class="fas fa-download"></i> Export</button>
+        </div>
+        <div class="table-container">
+            <table class="transactions-table" id="transportExpensesTable">
+            <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr></thead>
+            <tbody id="transportExpensesTableBody"></tbody>
+            </table>
+        </div>
 
-        <h4 style="margin-top: 20px;">Student Payments (Credits)</h4>
-        <table class="transactions-table">
-          <thead><tr><th>Name</th><th>Fee Allocated</th><th>Paid</th><th>Balance</th></tr></thead>
-          <tbody id="transportStudentsTable"></tbody>
-          <tfoot id="transportStudentsTableFooter"></tfoot>
-        </table>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; margin-bottom:10px;">
+            <h4>Student Payments</h4>
+            <button class="btn btn-sm btn-info" onclick="exportTableToCSV('transportStudentsTable', 'Transport_Payments')"><i class="fas fa-download"></i> Export</button>
+        </div>
+        <div class="table-container">
+            <table class="transactions-table" id="transportStudentsTable">
+            <thead><tr><th>Name</th><th>Fee Allocated</th><th>Paid</th><th>Balance</th></tr></thead>
+            <tbody id="transportStudentsTableBody"></tbody>
+            <tfoot id="transportStudentsTableFooter"></tfoot>
+            </table>
+        </div>
       </div>
     </div>
 
@@ -306,18 +385,28 @@
           <div class="mini-stat"><label>Active Students</label><span id="foodStudents">0</span></div>
         </div>
 
-        <h4>Department Expenses (Debits)</h4>
-        <table class="transactions-table">
-          <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr></thead>
-          <tbody id="foodExpensesTable"></tbody>
-        </table>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; margin-bottom:10px;">
+            <h4>Department Expenses</h4>
+            <button class="btn btn-sm btn-info" onclick="exportTableToCSV('foodExpensesTable', 'Food_Expenses')"><i class="fas fa-download"></i> Export</button>
+        </div>
+        <div class="table-container">
+            <table class="transactions-table" id="foodExpensesTable">
+            <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr></thead>
+            <tbody id="foodExpensesTableBody"></tbody>
+            </table>
+        </div>
 
-        <h4 style="margin-top: 20px;">Student Payments (Credits)</h4>
-        <table class="transactions-table">
-          <thead><tr><th>Name</th><th>Fee Allocated</th><th>Paid</th><th>Balance</th></tr></thead>
-          <tbody id="foodStudentsTable"></tbody>
-          <tfoot id="foodStudentsTableFooter"></tfoot>
-        </table>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; margin-bottom:10px;">
+            <h4>Student Payments</h4>
+            <button class="btn btn-sm btn-info" onclick="exportTableToCSV('foodStudentsTable', 'Food_Payments')"><i class="fas fa-download"></i> Export</button>
+        </div>
+        <div class="table-container">
+            <table class="transactions-table" id="foodStudentsTable">
+            <thead><tr><th>Name</th><th>Fee Allocated</th><th>Paid</th><th>Balance</th></tr></thead>
+            <tbody id="foodStudentsTableBody"></tbody>
+            <tfoot id="foodStudentsTableFooter"></tfoot>
+            </table>
+        </div>
       </div>
     </div>
 
@@ -334,18 +423,28 @@
           <div class="mini-stat"><label>Active Students</label><span id="uniformStudents">0</span></div>
         </div>
 
-        <h4>Department Expenses (Debits)</h4>
-        <table class="transactions-table">
-          <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr></thead>
-          <tbody id="uniformExpensesTable"></tbody>
-        </table>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; margin-bottom:10px;">
+            <h4>Department Expenses</h4>
+            <button class="btn btn-sm btn-info" onclick="exportTableToCSV('uniformExpensesTable', 'Uniform_Expenses')"><i class="fas fa-download"></i> Export</button>
+        </div>
+        <div class="table-container">
+            <table class="transactions-table" id="uniformExpensesTable">
+            <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr></thead>
+            <tbody id="uniformExpensesTableBody"></tbody>
+            </table>
+        </div>
 
-        <h4 style="margin-top: 20px;">Student Payments (Credits)</h4>
-        <table class="transactions-table">
-          <thead><tr><th>Name</th><th>Fee Allocated</th><th>Paid</th><th>Balance</th></tr></thead>
-          <tbody id="uniformStudentsTable"></tbody>
-          <tfoot id="uniformStudentsTableFooter"></tfoot>
-        </table>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; margin-bottom:10px;">
+            <h4>Student Payments</h4>
+            <button class="btn btn-sm btn-info" onclick="exportTableToCSV('uniformStudentsTable', 'Uniform_Payments')"><i class="fas fa-download"></i> Export</button>
+        </div>
+        <div class="table-container">
+            <table class="transactions-table" id="uniformStudentsTable">
+            <thead><tr><th>Name</th><th>Fee Allocated</th><th>Paid</th><th>Balance</th></tr></thead>
+            <tbody id="uniformStudentsTableBody"></tbody>
+            <tfoot id="uniformStudentsTableFooter"></tfoot>
+            </table>
+        </div>
       </div>
     </div>
 
@@ -386,14 +485,15 @@
       measurementId: "G-LLHS6GLB6E"
     };
 
-    firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
     const db = firebase.firestore();
 
     let currentTerm = parseInt(sessionStorage.getItem('h_term')) || 2;
     let currentYear = parseInt(sessionStorage.getItem('h_year')) || new Date().getFullYear();
     let isYearClosed = false;
     
-    // Mapping numbers to string format used in expense.html
     const termMapping = {
       1: "First Term",
       2: "Second Term",
@@ -417,6 +517,11 @@
       checkYearStatus();
       loadAllFinancialData();
     });
+
+    // Toggle Loading
+    function showLoading(show) {
+        document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+    }
 
     function showStatus(msg, type='info') {
       const el = document.getElementById('statusMessage');
@@ -479,15 +584,16 @@
       const password = prompt("Enter admin password:");
       if(password !== "admin2025") { alert("Incorrect password"); return; }
       
+      showLoading(true);
       await db.collection('system_settings').doc('financial_years').set({ [currentYear]: 'closed' }, { merge: true });
       isYearClosed = true;
       updateAdminPanelUI();
+      showLoading(false);
       alert(`Financial Year ${currentYear} Closed Successfully.`);
     }
 
-    // --- Data Loading: Fixed Collection Name & Term Logic ---
     async function loadAllFinancialData() {
-      showStatus(`Loading data for Term ${currentTerm}, ${currentYear}...`, "info");
+      showLoading(true);
       financialData = { students: [], receipts: [], expenses: [], bankTransactions: [] };
 
       try {
@@ -499,25 +605,20 @@
         const rSnap = await db.collection(`receipts_${currentYear}_term_${currentTerm}`).get();
         rSnap.forEach(doc => financialData.receipts.push({ id: doc.id, ...doc.data() }));
 
-        // 3. Load Expenses (FIXED: Correct Collection & Term Filtering)
-        // Note: Using the specific year collection as seen in expense.html
+        // 3. Load Expenses
         const eSnap = await db.collection(`expenses_${currentYear}`).get();
-        
-        const targetTermString = termMapping[currentTerm]; // e.g., "Second Term"
+        const targetTermString = termMapping[currentTerm]; 
         
         eSnap.forEach(doc => {
           const d = doc.data();
-          // Match by the stored term string (preferred) OR fallback to date logic
           if (d.term === targetTermString) {
              financialData.expenses.push(d);
           } else if (!d.term && getTermFromDate(d.date) === currentTerm) {
-             // Fallback for legacy data without term string
              financialData.expenses.push(d);
           }
         });
 
-        console.log(`Loaded ${financialData.expenses.length} expenses for ${targetTermString}.`);
-
+        console.log(`Loaded ${financialData.expenses.length} expenses.`);
         processFinancials(); 
         updateDepartmentSections(); 
         showStatus("Dashboard Updated", "success");
@@ -525,6 +626,8 @@
       } catch (e) {
         console.error(e);
         showStatus("Error: " + e.message, "error");
+      } finally {
+        showLoading(false);
       }
     }
 
@@ -536,7 +639,6 @@
       return 3;
     }
 
-    // --- Processing ---
     function processFinancials() {
       let income = 0;
       let expense = 0;
@@ -583,18 +685,31 @@
       renderChart(income, expense);
     }
 
-    // --- Enhanced Department Logic with Totals ---
+    // --- Enhanced Department Logic with Tuition ---
     function updateDepartmentSections() {
-      // Robust matching keywords based on expense.html categories
-      updateDepartment('transport', ['Transport', 'Fuel', 'Gas', 'Bus', 'Van', 'Motor', 'Repair', 'Maintenance', 'Oil']);
-      updateDepartment('lunch', ['Food', 'Kitchen', 'Lunch', 'Meal', 'Cook', 'Charcoal', 'Gas', 'Groceries']); 
+      // 1. Transport Keywords
+      updateDepartment('transport', ['Transport', 'Fuel', 'Gas', 'Bus', 'Van', 'Motor', 'Repair', 'Oil', 'Mechanic']);
+      
+      // 2. Food Keywords
+      updateDepartment('lunch', ['Food', 'Kitchen', 'Lunch', 'Meal', 'Cook', 'Charcoal', 'Gas', 'Groceries', 'Sugar', 'Milk']); 
+      
+      // 3. Uniform Keywords
       updateDepartment('uniform', ['Uniform', 'Tailor', 'Fabric', 'Material', 'Cloth', 'Staff Uniforms']);
+
+      // 4. Tuition/Admin Keywords (New)
+      // Note: We use 'tuition' fee field from student data
+      updateDepartment('tuition', [
+          'Salary', 'Salaries', 'Payroll', 'Wages', 'Staff', 'Teacher', 
+          'Book', 'Stationery', 'Exam', 'Printing', 'Paper', 
+          'Electricity', 'Water', 'Rent', 'Internet', 'Token', 
+          'Cleaning', 'Office', 'Admin', 'Misc'
+      ]);
     }
 
-    function isCategoryMatch(expenseCat, targetKeywords) {
-      if(!expenseCat) return false;
-      const normCat = expenseCat.toLowerCase().trim();
-      return targetKeywords.some(keyword => normCat.includes(keyword.toLowerCase()));
+    function isCategoryMatch(expenseCat, expenseDesc, targetKeywords) {
+        // Check Category AND Description for better matching
+        const textToCheck = ((expenseCat || '') + ' ' + (expenseDesc || '')).toLowerCase();
+        return targetKeywords.some(keyword => textToCheck.includes(keyword.toLowerCase()));
     }
 
     function updateDepartment(feeType, expenseKeywords) {
@@ -603,14 +718,21 @@
       const expenseList = [];
       let totalExpenses = 0;
       
-      // Variables for Column Totals
+      // Totals for columns
       let totalFeeAllocated = 0;
       let totalPaidAllocated = 0;
       let totalBalance = 0;
 
       // 1. Calculate Revenue (Allocated from Receipts)
       financialData.students.forEach(student => {
-        if (student[feeType] && student[feeType] > 0) {
+        // If feeType is 'tuition', we might also want to include 'adm' (admission) fees as generic revenue?
+        // For now, let's stick to the specific field requested.
+        let feeAmount = student[feeType] || 0;
+        
+        // Special case: For Tuition ledger, maybe combine Tuition + Exams + Activity?
+        // For simplicity in this code, we strictly map student['tuition'] to the Tuition Ledger.
+        
+        if (feeAmount > 0) {
           // Find total paid by this student
           const studentReceipts = financialData.receipts.filter(r => r.name === student.name);
           const totalPaid = studentReceipts.reduce((sum, r) => sum + (r.paid || 0), 0);
@@ -622,20 +744,20 @@
           
           let allocatedPaid = 0;
           if (totalFees > 0) {
-            allocatedPaid = totalPaid * (student[feeType] / totalFees);
+            allocatedPaid = totalPaid * (feeAmount / totalFees);
           }
           revenue += allocatedPaid;
           
-          const currentBalance = student[feeType] - allocatedPaid;
+          const currentBalance = feeAmount - allocatedPaid;
 
           // Accumulate Totals
-          totalFeeAllocated += student[feeType];
+          totalFeeAllocated += feeAmount;
           totalPaidAllocated += allocatedPaid;
           totalBalance += currentBalance;
 
           studentList.push({
             name: student.name,
-            fee: student[feeType],
+            fee: feeAmount,
             paid: allocatedPaid,
             bal: currentBalance
           });
@@ -644,68 +766,82 @@
 
       // 2. Calculate Expenses
       financialData.expenses.forEach(e => {
-        if(isCategoryMatch(e.category, expenseKeywords)) {
+        if(isCategoryMatch(e.category, e.description, expenseKeywords)) {
           totalExpenses += (e.amount || 0);
           expenseList.push(e);
         }
       });
 
       const profit = revenue - totalExpenses;
-      const prefix = feeType === 'lunch' ? 'food' : feeType; 
+      
+      // Determine UI prefix (Food uses 'food' ID, but data uses 'lunch')
+      let prefix = feeType;
+      if (feeType === 'lunch') prefix = 'food';
 
       // Update UI Stats
-      document.getElementById(`${prefix}Students`).textContent = studentList.length;
-      document.getElementById(`${prefix}Revenue`).textContent = `KES ${revenue.toLocaleString(undefined, {maximumFractionDigits: 0})}`;
-      document.getElementById(`${prefix}Expenses`).textContent = `KES ${totalExpenses.toLocaleString()}`;
+      const elStudents = document.getElementById(`${prefix}Students`);
+      const elRev = document.getElementById(`${prefix}Revenue`);
+      const elExp = document.getElementById(`${prefix}Expenses`);
+      const elNet = document.getElementById(`${prefix}Net`);
+      const elPL = document.getElementById(`${prefix}PL`);
+
+      if(elStudents) elStudents.textContent = studentList.length;
+      if(elRev) elRev.textContent = `KES ${revenue.toLocaleString(undefined, {maximumFractionDigits: 0})}`;
+      if(elExp) elExp.textContent = `KES ${totalExpenses.toLocaleString()}`;
       
-      const plEl = document.getElementById(`${prefix}Net`);
-      const plStat = document.getElementById(`${prefix}PL`);
+      if(elNet) {
+        elNet.textContent = `KES ${profit.toLocaleString(undefined, {maximumFractionDigits: 0})}`;
+        elNet.className = profit >= 0 ? "positive" : "negative";
+      }
       
-      plEl.textContent = `KES ${profit.toLocaleString(undefined, {maximumFractionDigits: 0})}`;
-      plEl.className = profit >= 0 ? "positive" : "negative";
-      
-      if(plStat) {
-        plStat.textContent = `KES ${profit.toLocaleString(undefined, {maximumFractionDigits: 0})}`;
-        plStat.className = profit >= 0 ? "stat-value positive" : "stat-value negative";
+      if(elPL) {
+        elPL.textContent = `KES ${profit.toLocaleString(undefined, {maximumFractionDigits: 0})}`;
+        elPL.className = profit >= 0 ? "stat-value positive" : "stat-value negative";
       }
 
       // Update Student Table
-      const sTable = document.getElementById(`${prefix}StudentsTable`);
-      sTable.innerHTML = '';
-      studentList.forEach(s => {
-        sTable.innerHTML += `<tr>
-          <td>${s.name}</td>
-          <td>${s.fee.toLocaleString()}</td>
-          <td>${s.paid.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
-          <td style="color:${s.bal>100?'red':'green'}">${s.bal.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
-        </tr>`;
-      });
+      const sTableBody = document.getElementById(`${prefix}StudentsTableBody`);
+      if(sTableBody) {
+        sTableBody.innerHTML = '';
+        studentList.forEach(s => {
+            sTableBody.innerHTML += `<tr>
+            <td>${s.name}</td>
+            <td>${s.fee.toLocaleString()}</td>
+            <td>${s.paid.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
+            <td style="color:${s.bal>100?'red':'green'}">${s.bal.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
+            </tr>`;
+        });
+      }
 
       // Update Totals Footer
       const tFooter = document.getElementById(`${prefix}StudentsTableFooter`);
-      tFooter.innerHTML = `
-        <tr class="table-total-row">
-            <td>TOTALS</td>
-            <td>${totalFeeAllocated.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
-            <td>${totalPaidAllocated.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
-            <td>${totalBalance.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
-        </tr>
-      `;
+      if(tFooter) {
+        tFooter.innerHTML = `
+            <tr class="table-total-row">
+                <td>TOTALS</td>
+                <td>${totalFeeAllocated.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
+                <td>${totalPaidAllocated.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
+                <td>${totalBalance.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
+            </tr>
+        `;
+      }
 
       // Update Expense Table
-      const eTable = document.getElementById(`${prefix}ExpensesTable`);
-      eTable.innerHTML = '';
-      if(expenseList.length === 0) {
-          eTable.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#777;">No expenses found for this category</td></tr>`;
-      } else {
-        expenseList.forEach(e => {
-          eTable.innerHTML += `<tr>
-            <td>${new Date(e.date).toLocaleDateString()}</td>
-            <td>${e.description}</td>
-            <td>${e.category}</td>
-            <td>${e.amount.toLocaleString()}</td>
-          </tr>`;
-        });
+      const eTableBody = document.getElementById(`${prefix}ExpensesTableBody`);
+      if(eTableBody) {
+        eTableBody.innerHTML = '';
+        if(expenseList.length === 0) {
+            eTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#777;">No expenses found for this category</td></tr>`;
+        } else {
+            expenseList.forEach(e => {
+            eTableBody.innerHTML += `<tr>
+                <td>${new Date(e.date).toLocaleDateString()}</td>
+                <td>${e.description}</td>
+                <td>${e.category}</td>
+                <td>${e.amount.toLocaleString()}</td>
+            </tr>`;
+            });
+        }
       }
     }
 
@@ -715,7 +851,7 @@
       window.myChart = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: ['Income', 'Expenses', 'Net Profit'],
+          labels: ['Total Income', 'Total Expenses', 'Net Profit'],
           datasets: [{
             label: `Term ${currentTerm} (${currentYear})`,
             data: [inc, exp, inc-exp],
@@ -729,29 +865,43 @@
     function openReportModal() { document.getElementById('reportModal').classList.add('show'); }
     function closeReportModal() { document.getElementById('reportModal').classList.remove('show'); }
 
+    // Export Table Helper
+    function exportTableToCSV(tableId, filename) {
+        const table = document.getElementById(tableId);
+        const wb = XLSX.utils.table_to_book(table, {sheet: "Sheet1"});
+        XLSX.writeFile(wb, `${filename}_${currentYear}_T${currentTerm}.xlsx`);
+    }
+
     async function generateAccountantReport() {
       const wb = XLSX.utils.book_new();
+      
+      // 1. Summary Sheet
       const sData = [
         ["Accountant Report", `Year: ${currentYear} | Term: ${currentTerm}`],
-        [], ["Category", "Amount"],
-        ["Bank Income", document.getElementById('bankIncome').textContent],
-        ["Bank Expense", document.getElementById('bankExpenses').textContent],
-        ["Net", document.getElementById('bankNetFlow').textContent]
+        [], 
+        ["Department", "Revenue", "Expense", "Net"],
+        ["General Bank", document.getElementById('bankIncome').textContent, document.getElementById('bankExpenses').textContent, document.getElementById('bankNetFlow').textContent],
+        ["Tuition & Admin", document.getElementById('tuitionRevenue').textContent, document.getElementById('tuitionExpenses').textContent, document.getElementById('tuitionNet').textContent],
+        ["Transport", document.getElementById('transportRevenue').textContent, document.getElementById('transportExpenses').textContent, document.getElementById('transportNet').textContent],
+        ["Food", document.getElementById('foodRevenue').textContent, document.getElementById('foodExpenses').textContent, document.getElementById('foodNet').textContent],
+        ["Uniform", document.getElementById('uniformRevenue').textContent, document.getElementById('uniformExpenses').textContent, document.getElementById('uniformNet').textContent]
       ];
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sData), "Summary");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sData), "Executive Summary");
       
+      // 2. Ledger Sheet
       const lData = financialData.bankTransactions.map(t => ({
         Date: new Date(t.date).toLocaleDateString(),
         Desc: t.desc, Type: t.type, Debit: t.type==='Debit'?t.amount:0, Credit: t.type==='Credit'?t.amount:0, Bal: t.balance
       }));
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(lData), "Ledger");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(lData), "General Ledger");
 
       XLSX.writeFile(wb, `Accountant_Report_${currentYear}_T${currentTerm}.xlsx`);
       closeReportModal();
     }
 
     async function generateTaxReport() {
-      if(!confirm(`Fetch Annual Data for Tax Report for ${currentYear}?`)) return;
+      if(!confirm(`Fetch Annual Data for Tax Report for ${currentYear}? This may take a moment.`)) return;
+      showLoading(true);
       let annInc = 0, annExp = 0;
       
       for(let t=1; t<=3; t++) {
@@ -770,10 +920,11 @@
       const data = [
         ["HERIWADI SCHOOLS - ANNUAL TAX SUMMARY"],
         [`Year: ${currentYear}`], [],
-        ["REVENUE", annInc], ["EXPENSES", annExp], ["NET INCOME", annInc - annExp]
+        ["TOTAL ANNUAL REVENUE", annInc], ["TOTAL ANNUAL EXPENSES", annExp], ["NET TAXABLE INCOME", annInc - annExp]
       ];
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), "Income Statement");
       XLSX.writeFile(wb, `Tax_Report_${currentYear}.xlsx`);
+      showLoading(false);
       closeReportModal();
     }
   </script>
