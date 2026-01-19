@@ -605,15 +605,26 @@
         const rSnap = await db.collection(`receipts_${currentYear}_term_${currentTerm}`).get();
         rSnap.forEach(doc => financialData.receipts.push({ id: doc.id, ...doc.data() }));
 
-        // 3. Load Expenses
-        const eSnap = await db.collection(`expenses_${currentYear}`).get();
+        // 3. Load Expenses - UPDATED LOGIC HERE
+        const expensesRef = db.collection('expenses');
+        const startOfYear = `${currentYear}-01-01`;
+        const endOfYear = `${currentYear}-12-31`;
+
+        const eSnap = await expensesRef
+            .where('date', '>=', startOfYear)
+            .where('date', '<=', endOfYear)
+            .get();
+
         const targetTermString = termMapping[currentTerm]; 
         
         eSnap.forEach(doc => {
           const d = doc.data();
+          // STRICT MATCH: Only add if it matches the selected Term name
           if (d.term === targetTermString) {
              financialData.expenses.push(d);
-          } else if (!d.term && getTermFromDate(d.date) === currentTerm) {
+          } 
+          // FALLBACK: If term name is missing/different, calculate term from the date
+          else if (!d.term && getTermFromDate(d.date) === currentTerm) {
              financialData.expenses.push(d);
           }
         });
@@ -911,9 +922,12 @@
         } catch(e){}
       }
       
-      const eSnap = await db.collection(`expenses_${currentYear}`).get();
+      const eSnap = await db.collection(`expenses`).get(); // FIX: Filter annual here if needed
       eSnap.forEach(d => {
-         annExp += (d.data().amount || 0);
+         // Add manual date check if necessary for true annual report
+         if(d.data().date && d.data().date.startsWith(currentYear.toString())) {
+            annExp += (d.data().amount || 0);
+         }
       });
 
       const wb = XLSX.utils.book_new();
