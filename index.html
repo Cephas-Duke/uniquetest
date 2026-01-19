@@ -1055,11 +1055,18 @@
                 expensesSnapshot.forEach(doc => {
                     const expense = doc.data();
                     
-                    // Normalize Term and Year for comparison
+                    // Normalize Term
                     const expenseTerm = getTermFromName(expense.term);
-                    const expenseYear = expense.year ? parseInt(expense.year) : null;
                     
-                    // Filter: Must match current Term AND current Year
+                    // FIX: Extract Year dynamically from the date string (e.g., "2026-01-15")
+                    let expenseYear = null;
+                    if (expense.date) {
+                        expenseYear = parseInt(expense.date.substring(0, 4)); // Grabs first 4 chars: "2026"
+                    } else if (expense.year) {
+                        expenseYear = parseInt(expense.year); // Fallback for old data
+                    }
+                    
+                    // Filter: Must match selected Term AND selected Year
                     if (expenseTerm === currentTerm && expenseYear === currentYear) {
                         dashboardData.expenses.push({ id: doc.id, ...expense });
                     }
