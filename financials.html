@@ -16,6 +16,8 @@
       --danger-color: #dc3545;
       --warning-color: #ffc107;
       --info-color: #17a2b8;
+      --purple-color: #6f42c1;  /* New Color for Assessment */
+      --teal-color: #20c997;    /* New Color for Medical */
       --light-color: #f8f9fa;
       --dark-color: #343a40;
       --border-radius: 8px;
@@ -269,9 +271,13 @@
         <div class="stat-title">Food P&L</div>
         <div class="stat-value" id="foodPL">KES 0</div>
       </div>
-      <div class="stat-card" style="border-left-color: var(--accent-color);">
-        <div class="stat-title">Uniform P&L</div>
-        <div class="stat-value" id="uniformPL">KES 0</div>
+      <div class="stat-card" style="border-left-color: var(--purple-color);">
+        <div class="stat-title">Assessment P&L</div>
+        <div class="stat-value" id="assessmentPL">KES 0</div>
+      </div>
+      <div class="stat-card" style="border-left-color: var(--teal-color);">
+        <div class="stat-title">Medical P&L</div>
+        <div class="stat-value" id="medicalPL">KES 0</div>
       </div>
     </div>
 
@@ -448,6 +454,82 @@
       </div>
     </div>
 
+    <div class="department-section">
+      <div class="department-header" onclick="toggleSection('assessment')">
+        <h3><i class="fas fa-file-alt"></i> Assessment Department</h3>
+        <i class="fas fa-chevron-down" id="assessmentChevron"></i>
+      </div>
+      <div class="department-content" id="assessmentContent">
+        <div class="mini-stat-grid">
+          <div class="mini-stat"><label>Revenue (Collected)</label><span class="positive" id="assessmentRevenue">KES 0</span></div>
+          <div class="mini-stat"><label>Expenses (Paid)</label><span class="negative" id="assessmentExpenses">KES 0</span></div>
+          <div class="mini-stat pl-box"><label>Net P/L</label><span id="assessmentNet">KES 0</span></div>
+          <div class="mini-stat"><label>Active Students</label><span id="assessmentStudents">0</span></div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; margin-bottom:10px;">
+            <h4>Department Expenses</h4>
+            <button class="btn btn-sm btn-info" onclick="exportTableToCSV('assessmentExpensesTable', 'Assessment_Expenses')"><i class="fas fa-download"></i> Export</button>
+        </div>
+        <div class="table-container">
+            <table class="transactions-table" id="assessmentExpensesTable">
+            <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr></thead>
+            <tbody id="assessmentExpensesTableBody"></tbody>
+            </table>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; margin-bottom:10px;">
+            <h4>Student Payments</h4>
+            <button class="btn btn-sm btn-info" onclick="exportTableToCSV('assessmentStudentsTable', 'Assessment_Payments')"><i class="fas fa-download"></i> Export</button>
+        </div>
+        <div class="table-container">
+            <table class="transactions-table" id="assessmentStudentsTable">
+            <thead><tr><th>Name</th><th>Fee Allocated</th><th>Paid</th><th>Balance</th></tr></thead>
+            <tbody id="assessmentStudentsTableBody"></tbody>
+            <tfoot id="assessmentStudentsTableFooter"></tfoot>
+            </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="department-section">
+      <div class="department-header" onclick="toggleSection('medical')">
+        <h3><i class="fas fa-user-nurse"></i> Medical Department</h3>
+        <i class="fas fa-chevron-down" id="medicalChevron"></i>
+      </div>
+      <div class="department-content" id="medicalContent">
+        <div class="mini-stat-grid">
+          <div class="mini-stat"><label>Revenue (Collected)</label><span class="positive" id="medicalRevenue">KES 0</span></div>
+          <div class="mini-stat"><label>Expenses (Paid)</label><span class="negative" id="medicalExpenses">KES 0</span></div>
+          <div class="mini-stat pl-box"><label>Net P/L</label><span id="medicalNet">KES 0</span></div>
+          <div class="mini-stat"><label>Active Students</label><span id="medicalStudents">0</span></div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; margin-bottom:10px;">
+            <h4>Department Expenses</h4>
+            <button class="btn btn-sm btn-info" onclick="exportTableToCSV('medicalExpensesTable', 'Medical_Expenses')"><i class="fas fa-download"></i> Export</button>
+        </div>
+        <div class="table-container">
+            <table class="transactions-table" id="medicalExpensesTable">
+            <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr></thead>
+            <tbody id="medicalExpensesTableBody"></tbody>
+            </table>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; margin-bottom:10px;">
+            <h4>Student Payments</h4>
+            <button class="btn btn-sm btn-info" onclick="exportTableToCSV('medicalStudentsTable', 'Medical_Payments')"><i class="fas fa-download"></i> Export</button>
+        </div>
+        <div class="table-container">
+            <table class="transactions-table" id="medicalStudentsTable">
+            <thead><tr><th>Name</th><th>Fee Allocated</th><th>Paid</th><th>Balance</th></tr></thead>
+            <tbody id="medicalStudentsTableBody"></tbody>
+            <tfoot id="medicalStudentsTableFooter"></tfoot>
+            </table>
+        </div>
+      </div>
+    </div>
+
     <div style="background: white; padding: 20px; border-radius: 8px;">
       <h3 style="text-align:center; color:var(--primary-color)">Profit & Loss Overview</h3>
       <canvas id="profitLossChart" style="max-height: 400px;"></canvas>
@@ -605,7 +687,7 @@
         const rSnap = await db.collection(`receipts_${currentYear}_term_${currentTerm}`).get();
         rSnap.forEach(doc => financialData.receipts.push({ id: doc.id, ...doc.data() }));
 
-        // 3. Load Expenses - UPDATED LOGIC HERE
+        // 3. Load Expenses
         const expensesRef = db.collection('expenses');
         const startOfYear = `${currentYear}-01-01`;
         const endOfYear = `${currentYear}-12-31`;
@@ -696,7 +778,7 @@
       renderChart(income, expense);
     }
 
-    // --- Enhanced Department Logic with Tuition ---
+    // --- Enhanced Department Logic with Assessment & Medical ---
     function updateDepartmentSections() {
       // 1. Transport Keywords
       updateDepartment('transport', ['Transport', 'Fuel', 'Gas', 'Bus', 'Van', 'Motor', 'Repair', 'Oil', 'Mechanic']);
@@ -706,12 +788,17 @@
       
       // 3. Uniform Keywords
       updateDepartment('uniform', ['Uniform', 'Tailor', 'Fabric', 'Material', 'Cloth', 'Staff Uniforms']);
+      
+      // 4. Assessment Keywords (NEW)
+      updateDepartment('assessment', ['Assessment', 'CBA', 'CBC', 'Exam', 'KPSEA', 'Test', 'Printing', 'Paper']);
+      
+      // 5. Medical Keywords (NEW)
+      updateDepartment('medical', ['Medical', 'Health', 'First Aid', 'Nurse', 'Medicine', 'Drug', 'Clinic', 'Hospital']);
 
-      // 4. Tuition/Admin Keywords (New)
-      // Note: We use 'tuition' fee field from student data
+      // 6. Tuition/Admin Keywords
       updateDepartment('tuition', [
           'Salary', 'Salaries', 'Payroll', 'Wages', 'Staff', 'Teacher', 
-          'Book', 'Stationery', 'Exam', 'Printing', 'Paper', 
+          'Book', 'Stationery', 
           'Electricity', 'Water', 'Rent', 'Internet', 'Token', 
           'Cleaning', 'Office', 'Admin', 'Misc'
       ]);
@@ -736,22 +823,18 @@
 
       // 1. Calculate Revenue (Allocated from Receipts)
       financialData.students.forEach(student => {
-        // If feeType is 'tuition', we might also want to include 'adm' (admission) fees as generic revenue?
-        // For now, let's stick to the specific field requested.
         let feeAmount = student[feeType] || 0;
-        
-        // Special case: For Tuition ledger, maybe combine Tuition + Exams + Activity?
-        // For simplicity in this code, we strictly map student['tuition'] to the Tuition Ledger.
         
         if (feeAmount > 0) {
           // Find total paid by this student
           const studentReceipts = financialData.receipts.filter(r => r.name === student.name);
           const totalPaid = studentReceipts.reduce((sum, r) => sum + (r.paid || 0), 0);
 
-          // Calculate Proportional Share
+          // Calculate Proportional Share - ADDED ASSESSMENT AND MEDICAL TO SUM
           const totalFees = (student.tuition||0) + (student.adm||0) + (student.books||0) + 
                             (student.stationery||0) + (student.uniform||0) + (student.lunch||0) + 
-                            (student.transport||0) + (student.trip||0) + (student.graduation||0);
+                            (student.transport||0) + (student.trip||0) + (student.graduation||0) + 
+                            (student.assessment||0) + (student.medical||0);
           
           let allocatedPaid = 0;
           if (totalFees > 0) {
@@ -895,7 +978,9 @@
         ["Tuition & Admin", document.getElementById('tuitionRevenue').textContent, document.getElementById('tuitionExpenses').textContent, document.getElementById('tuitionNet').textContent],
         ["Transport", document.getElementById('transportRevenue').textContent, document.getElementById('transportExpenses').textContent, document.getElementById('transportNet').textContent],
         ["Food", document.getElementById('foodRevenue').textContent, document.getElementById('foodExpenses').textContent, document.getElementById('foodNet').textContent],
-        ["Uniform", document.getElementById('uniformRevenue').textContent, document.getElementById('uniformExpenses').textContent, document.getElementById('uniformNet').textContent]
+        ["Uniform", document.getElementById('uniformRevenue').textContent, document.getElementById('uniformExpenses').textContent, document.getElementById('uniformNet').textContent],
+        ["Assessment", document.getElementById('assessmentRevenue').textContent, document.getElementById('assessmentExpenses').textContent, document.getElementById('assessmentNet').textContent],
+        ["Medical", document.getElementById('medicalRevenue').textContent, document.getElementById('medicalExpenses').textContent, document.getElementById('medicalNet').textContent]
       ];
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sData), "Executive Summary");
       
@@ -922,9 +1007,8 @@
         } catch(e){}
       }
       
-      const eSnap = await db.collection(`expenses`).get(); // FIX: Filter annual here if needed
+      const eSnap = await db.collection(`expenses`).get(); 
       eSnap.forEach(d => {
-         // Add manual date check if necessary for true annual report
          if(d.data().date && d.data().date.startsWith(currentYear.toString())) {
             annExp += (d.data().amount || 0);
          }
